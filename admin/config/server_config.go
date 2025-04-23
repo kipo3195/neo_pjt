@@ -23,7 +23,7 @@ type DBConfig struct {
 
 func NewServerConfig() *ServerConfig {
 
-	fmt.Println("Init ServerConfig !")
+	fmt.Println("Init admin ServerConfig !")
 	// DB 설정을 읽어야함.
 	dbConfig := &DBConfig{Host: "127.0.0.1", Id: "neo", Pw: "neo", Port: "3306", Database: "admin"}
 
@@ -43,6 +43,6 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	db.AutoMigrate(&models.Rule{}) // 자동 마이그레이션 -> 테이블 자동 생성 (테이블 = 모델)
 	db.AutoMigrate(&models.Admin{})
 
-	fmt.Println("Database Connected !")
+	fmt.Println("Admin Database Connected !")
 	return db
 }
