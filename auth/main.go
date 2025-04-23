@@ -22,7 +22,7 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	authRepo := repositories.NewAuthRepository(db)
-	authUC := usecases.NewAuthUsecase(authRepo)
+	authUC := usecases.NewAuthUsecase(authRepo, sfg.GetJWTConfig())
 	authHandler := handlers.NewAuthHandler(authUC)
 
 	router := routes.SetupRoutes(authHandler)

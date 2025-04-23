@@ -1,21 +1,23 @@
 package usecases
 
 import (
+	"auth/config"
 	"auth/dto"
 	"auth/entities"
 	"auth/repositories"
 )
 
 type authUsecase struct {
-	repo repositories.AuthRepository
+	repo   repositories.AuthRepository
+	jwtCfg *config.JWTConfig
 }
 
 type AuthUsecase interface {
 	GetAuth(dto.AuthRequest) (*entities.Auth, error)
 }
 
-func NewAuthUsecase(repo repositories.AuthRepository) AuthUsecase {
-	return &authUsecase{repo: repo}
+func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) AuthUsecase {
+	return &authUsecase{repo: repo, jwtCfg: jwtCfg}
 }
 
 func (u *authUsecase) GetAuth(req dto.AuthRequest) (*entities.Auth, error) {
@@ -25,20 +27,15 @@ func (u *authUsecase) GetAuth(req dto.AuthRequest) (*entities.Auth, error) {
 		return nil, err
 	}
 
-	var result string
-	var accessToken string
-	var refreshToken string
-	var configKey string
+	var result, accessToken, refreshToken, configKey string
+
 	// 인증정보 없음.
 	if auth.Id == "" {
 		result = "fail"
-		accessToken = ""
-		refreshToken = ""
-		configKey = ""
 	} else {
 		result = "success"
-		accessToken = getAccessToken()
-		refreshToken = getRefreshToken()
+		accessToken = getAccessToken(auth.Id, u.jwtCfg.AccessExp)
+		refreshToken = getRefreshToken(auth.Id, u.jwtCfg.RefressExp)
 		configKey = getConfigkey()
 	}
 
@@ -54,12 +51,12 @@ func getConfigkey() string {
 	return ""
 }
 
-func getAccessToken() string {
+func getAccessToken(id string, accessExp int) string {
 
 	return ""
 }
 
-func getRefreshToken() string {
+func getRefreshToken(id string, refreshExp int) string {
 
 	return ""
 }

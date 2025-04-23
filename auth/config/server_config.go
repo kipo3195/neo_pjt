@@ -10,7 +10,8 @@ import (
 )
 
 type ServerConfig struct {
-	dbConfig *DBConfig
+	dbConfig  *DBConfig
+	jwtConfig *JWTConfig // jwt를 소문자로 정의했으므로 외부에서 접근할 수 없음 = 그래서 GetJWTConfig 메소드를 만들어서 외부에서 사용 할 수 있게함.
 }
 
 type DBConfig struct {
@@ -21,13 +22,28 @@ type DBConfig struct {
 	Database string
 }
 
+type JWTConfig struct {
+	AccessExp  int
+	RefressExp int
+}
+
 func NewServerConfig() *ServerConfig {
 	fmt.Println("Init auth serverConfig")
+
+	// DB 설정
 	dbConfig := &DBConfig{Host: "127.0.0.1", Id: "neo", Pw: "neo", Port: "3306", Database: "auth"}
 
+	// jwt 설정
+	jwtConfig := &JWTConfig{AccessExp: 1, RefressExp: 30}
+
 	return &ServerConfig{
-		dbConfig: dbConfig,
+		dbConfig:  dbConfig,
+		jwtConfig: jwtConfig,
 	}
+}
+
+func (s *ServerConfig) GetJWTConfig() *JWTConfig {
+	return s.jwtConfig
 }
 
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
