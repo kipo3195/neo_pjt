@@ -28,7 +28,7 @@ type JWTConfig struct {
 }
 
 func NewServerConfig() *ServerConfig {
-	fmt.Println("Init auth serverConfig")
+	fmt.Println("Init auth serverConfig !")
 
 	// DB 설정
 	dbConfig := &DBConfig{Host: "127.0.0.1", Id: "neo", Pw: "neo", Port: "3306", Database: "auth"}
