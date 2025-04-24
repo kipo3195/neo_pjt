@@ -4,7 +4,10 @@ import (
 	"auth/models"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -23,23 +26,56 @@ type DBConfig struct {
 }
 
 type JWTConfig struct {
+	Key        string
 	AccessExp  int
 	RefressExp int
 }
 
+func isLocal() bool {
+	// Getenv는 로컬과 운영(k8s)환경에서 다르게 동작함.
+	// k8s에서는 이미 환경변수로 주입되어 있기 때문에 godotenv.Load()를 하지않아도 os.Getenv("값")을 호출해서 접근 할 수 있는 반면
+	// 로컬 환경에서는 godotenv.Load()해야 .env 파일을 읽고 환경변수에 등록하기 때문에 이후에나 os.Getenv("값")에 호출 할 수 있게됨.
+	return os.Getenv("ENV") == "" // 로컬일때는 환경변수에 등록되어 있지않으므로 .env에 ENV가 있어도 빈값을 반환함 그러므로 return true
+}
+
 func NewServerConfig() *ServerConfig {
-	fmt.Println("Init auth serverConfig !")
+	if isLocal() {
+		godotenv.Load()
+	}
 
 	// DB 설정
-	dbConfig := &DBConfig{Host: "127.0.0.1", Id: "neo", Pw: "neo", Port: "3306", Database: "auth"}
-
+	dbConfig := initDBConfig()
 	// jwt 설정
-	jwtConfig := &JWTConfig{AccessExp: 1, RefressExp: 30}
+	jwtConfig := initJwtConfig()
 
 	return &ServerConfig{
 		dbConfig:  dbConfig,
 		jwtConfig: jwtConfig,
 	}
+}
+func initDBConfig() *DBConfig {
+	host := os.Getenv("HOST")
+	id := os.Getenv("ID")
+	pw := os.Getenv("PW")
+	port := os.Getenv("PORT")
+	database := os.Getenv("DATABASE")
+
+	return &DBConfig{
+		Host: host, Id: id, Pw: pw, Port: port, Database: database}
+}
+
+// jwt 설정 조회
+func initJwtConfig() *JWTConfig {
+	key := os.Getenv("JWT_SECRET_KEY")
+	accessExp, err := strconv.Atoi(os.Getenv("ACCESS_TOKEN_EXP_M"))
+	if err != nil {
+		fmt.Println("ACCESS_TOKEN_EXP_M is invalid. :", err)
+	}
+	refreshExp, err := strconv.Atoi(os.Getenv("REFRESH_TOKEN_EXP_D"))
+	if err != nil {
+		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
+	}
+	return &JWTConfig{Key: key, AccessExp: accessExp, RefressExp: refreshExp}
 }
 
 func (s *ServerConfig) GetJWTConfig() *JWTConfig {
