@@ -75,7 +75,10 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 		// Subscribe to NATS roomKey
 		// Subscribe는 NATS 클라이언트 라이브러리의 내부 구현이 콜백 실행을 고루틴으로 처리한다.
 		// 즉, 비동기로 대기중인 상태이므로 종료되지 않는다.
+		//  func(m *nats.Msg) 가 콜백함수
+
 		sub, err := nc.Subscribe(roomKey, func(m *nats.Msg) {
+			// sender가 보낸 처리를 막음
 			var initReq incomming
 			_ = json.Unmarshal(m.Data, &initReq)
 			senderID := initReq.Sender
@@ -85,6 +88,7 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 			}
 			conn.WriteMessage(websocket.TextMessage, m.Data)
 		})
+
 		if err != nil {
 			log.Println("NATS subscribe error:", err)
 			return
