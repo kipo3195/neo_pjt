@@ -42,7 +42,7 @@ func main() {
 func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		// WebSocket 업그레이드
+		// /ws 경로로 클라이언트가 접속하면 HTTP를 웹소켓 프로토콜로 업그레이드
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println("WebSocket upgrade error:", err)
@@ -50,7 +50,7 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 		}
 		defer conn.Close()
 
-		// 최초 메시지에서 roomKey 추출
+		// 최초 메시지에서 roomKey와 userId 추출
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Read roomKey error:", err)
@@ -96,6 +96,7 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 		defer sub.Unsubscribe()
 
 		// WebSocket → NATS publisher
+		// 이 루프가 계속 돌아가므로 이 핸들러의 메인 루틴은 종료되지 않고 유지
 		for {
 			_, msg, err := conn.ReadMessage()
 			if err != nil {

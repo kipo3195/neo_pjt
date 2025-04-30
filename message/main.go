@@ -2,11 +2,6 @@ package main
 
 import (
 	"log"
-	"message/config"
-	"message/handlers"
-	"message/repositories"
-	"message/routes"
-	"message/usecases"
 	"net/http"
 )
 
@@ -20,17 +15,17 @@ func main() {
 
 func InitServer() *http.Server {
 
-	sfg := config.NewServerConfig()
-	db := config.ConnectDatabase(sfg)
+	// sfg := config.NewServerConfig()
+	// db := config.ConnectDatabase(sfg)
 
-	messageRepo := repositories.NewChatRepository(db)
-	messageUC := usecases.NewChatUsecase(messageRepo)
-	messageHandler := handlers.NewChatHandler(messageUC)
+	// messageRepo := repositories.NewChatRepository(db)
+	// messageUC := usecases.NewChatUsecase(messageRepo)
+	// messageHandler := handlers.NewChatHandler(messageUC)
 
-	router := routes.SetupRoutes(messageHandler)
+	// //router := routes.SetupRoutes(messageHandler)
 
-	return &http.Server{
-		Addr:    ":8087",
-		Handler: router,
-	}
+	// return &http.Server{
+	// 	Addr:    ":8087",
+	// 	Handler: router,
+	// }
 }
