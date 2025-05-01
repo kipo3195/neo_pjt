@@ -57,22 +57,23 @@ func (n *NatsSubscription) Unsubscribe() error {
 }
 
 /*NATS용 브로커 (덕타이핑)*/
-type NatsBroker struct {
-	conn *nats.Conn
-}
+// type NatsBroker struct {
+// 	conn *nats.Conn
+// }
 
 /*NATS용 구독 메소드 정의 */
-func (b *NatsBroker) Subscribe(roomId string) (Subscription, error) {
-	msgChan := make(chan *nats.Msg, 64)
-	natsSub, err := b.conn.ChanSubscribe(roomId, msgChan)
-	if err != nil {
-		return nil, err
-	}
-	return &NatsSubscription{sub: natsSub}, nil
-}
+// func (b *NatsBroker) Subscribe(roomId string) (Subscription, error) {
+// 	msgChan := make(chan *nats.Msg, 64)
+// 	natsSub, err := b.conn.ChanSubscribe(roomId, msgChan)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &NatsSubscription{sub: natsSub}, nil
+// }
 
 type incomming struct {
 	Content string `json:"content"`
+	Sender  string `json:"sender"`
 }
 
 // MessageHandler의 메소드 SetupRoutes에서 등록됨.
@@ -128,7 +129,7 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 		}
 
 		fmt.Println("인증 완료된 계정 :", data["userId"])
-
+		userId := data["userId"]
 		// 채팅방을 구독하더라도 쪽지를 보낼 수 있어야 한다.
 		cmd := data[CMD].(string)
 		payload := data["payload"].(map[string]interface{})
@@ -150,7 +151,20 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 				sub = &NatsSubscription{sub: natsSub}
 				fmt.Printf("roomId : %s 구독 하였습니다.\n", roomId)
 
+				go func() {
+					for {
+						m := <-msgChan
+						var initReq incomming
+						_ = json.Unmarshal(m.Data, &initReq)
+						// fmt.Println("채널에서 수신받은 데이터 :", initReq.Content)
+						if initReq.Sender == userId {
+							continue
+						}
+						conn.WriteMessage(websocket.TextMessage, m.Data)
+					}
+				}()
 			} else if cmd == "joinRoomCancel" {
+				// 구독을 해제 하였을때도 sendMessage가 동작해야하나? TODO
 				if sub != nil {
 					sub.Unsubscribe() // 인터페이스 메서드 호출 (OK!)
 					sub = nil
@@ -158,8 +172,10 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 				}
 			} else if cmd == "sendMessage" {
 				// 별도의 고루틴으로 처리?
-				content := payload["content"].([]byte)
-				if err := h.mb.(*nats.Conn).Publish(roomId, content); err != nil {
+				content := payload["content"].(string)
+				payload := map[string]string{"content": content, "sender": userId.(string)}
+				jsonBytes, _ := json.Marshal(payload)
+				if err := h.mb.(*nats.Conn).Publish(roomId, jsonBytes); err != nil {
 					log.Println("NATS publish error:", err)
 				}
 			}
