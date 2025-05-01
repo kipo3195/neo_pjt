@@ -89,8 +89,10 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 
 		log.Printf("Client joined room: %s", roomKey)
 
+		// 채널 생성
 		msgChan := make(chan *nats.Msg, 64)
 
+		// NATS 서버에 roomKey라는 subject(=토픽)에 대한 구독을 설정하고, 이 subject로 발행되는 메시지를 msgChan이라는 Go 채널로 전달받게 합니다
 		sub, err := nc.ChanSubscribe(roomKey, msgChan)
 		if err != nil {
 			log.Println("NATS subscribe error:", err)
@@ -103,7 +105,7 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 			case m := <-msgChan:
 				var initReq incomming
 				_ = json.Unmarshal(m.Data, &initReq)
-				fmt.Println("채팅 수신 : ", initReq.Message)
+				fmt.Printf("채널에서 채팅 수신 ! sender : %s , message : %s \n", initReq.Sender, initReq.Message)
 				senderID := initReq.Sender
 				if req.UserId == senderID {
 					continue
@@ -122,7 +124,9 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 			default:
 				// SetReadDeadline()은 pongWait 주기로 계속 갱신됨 → 타임아웃은 죽은 연결에만 발생.
 				conn.SetReadDeadline(time.Now().Add(pongWait))
-				_, msg, err := conn.ReadMessage()
+				// 웹소켓에서 메시지를 읽는 부분
+				_, msg, err := conn.ReadMessage() // conn.ReadMessage()는 블록킹 함수임. 블록킹은
+				fmt.Println("웹소켓 데이터 수신 ! msg : ", string(msg))
 				if err != nil {
 					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 						log.Printf("Unexpected close error: %v", err)
@@ -131,6 +135,7 @@ func websocketHandler(nc *nats.Conn) http.HandlerFunc {
 					}
 					return
 				}
+				fmt.Println("웹소켓 데이터 수신한 데이터를 room에 발송 : ", roomKey)
 				if err := nc.Publish(roomKey, msg); err != nil {
 					log.Println("NATS publish error:", err)
 				}
