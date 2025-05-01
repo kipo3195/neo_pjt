@@ -7,12 +7,20 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/nats-io/nats.go"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
+const (
+	NATS     = "NATS"
+	KAFKA    = "KAFKA"
+	RABBITMQ = "RABBITMQ"
+)
+
 type ServerConfig struct {
 	dbConfig *DBConfig
+	mbConfig *MessageBrokerConfig
 }
 
 type DBConfig struct {
@@ -21,6 +29,10 @@ type DBConfig struct {
 	Id       string
 	Pw       string
 	Database string
+}
+
+type MessageBrokerConfig struct {
+	Mb string
 }
 
 func isLocal() bool {
@@ -37,18 +49,21 @@ func NewServerConfig() *ServerConfig {
 
 	// DB 설정
 	dbConfig := initDBConfig()
+	mbConfig := initMBConfig()
 
 	return &ServerConfig{
 		dbConfig: dbConfig,
+		mbConfig: mbConfig,
 	}
 }
 
+/* DATABASE */
 func initDBConfig() *DBConfig {
-	host := os.Getenv("HOST")
-	id := os.Getenv("ID")
-	pw := os.Getenv("PW")
-	port := os.Getenv("PORT")
-	database := os.Getenv("DATABASE")
+	host := os.Getenv("DB_HOST")
+	id := os.Getenv("DB_ID")
+	pw := os.Getenv("DB_PW")
+	port := os.Getenv("DB_PORT")
+	database := os.Getenv("DB_DATABASE")
 
 	return &DBConfig{
 		Host: host, Id: id, Pw: pw, Port: port, Database: database}
@@ -68,4 +83,31 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
 	fmt.Println("Auth Database Connected !")
 	return db
+}
+
+/* MESSAGE BROKER */
+func initMBConfig() *MessageBrokerConfig {
+	mb := os.Getenv("MB")
+
+	return &MessageBrokerConfig{
+		Mb: mb,
+	}
+}
+
+func ConnectMessageBroker(sfg *ServerConfig) interface{} {
+
+	// 메시지 브로커 분기처리
+	if sfg.mbConfig.Mb == NATS {
+		nc, err := nats.Connect(nats.DefaultURL)
+		if err != nil {
+			log.Println("Failed to connect to NATS:", err)
+			return nil
+		}
+		return nc
+	} else if sfg.mbConfig.Mb == KAFKA {
+		log.Println("kafka is not available.")
+	} else if sfg.mbConfig.Mb == RABBITMQ {
+		log.Println("RabbitMQ is not available.")
+	}
+	return nil
 }
