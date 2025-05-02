@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"message/broker"
 	"message/usecases"
 	"net/http"
 
@@ -28,11 +29,11 @@ var upgrader = websocket.Upgrader{
 type MessageHandler struct {
 	au usecases.AuthUsecase
 	cu usecases.ChatUsecase
-	mb interface{}
+	mb broker.Broker
 }
 
 // 웹소켓은 하나의 핸들러에서 처리 단, useCase를 여러개 둘 수 있음.
-func NewMessageHandler(cu usecases.ChatUsecase, au usecases.AuthUsecase, mb interface{}) *MessageHandler {
+func NewMessageHandler(cu usecases.ChatUsecase, au usecases.AuthUsecase, mb broker.Broker) *MessageHandler {
 	return &MessageHandler{
 		cu: cu,
 		au: au,
@@ -40,20 +41,30 @@ func NewMessageHandler(cu usecases.ChatUsecase, au usecases.AuthUsecase, mb inte
 	}
 }
 
+// 덕타이핑스러운 처리
 // 구독 정보 interface Unsubscribe를 가짐
-// nats의 NatsSubscription은 Unsubscribe를 가지고 있기 때문에 처리가능함.
-type Subscription interface {
-	Unsubscribe() error
+//
+//	nats의 NatsSubscription은 Unsubscribe를 가지고 있기 때문에 처리가능함.
+// type Subscription interface {
+// 	Unsubscribe() error
+// }
+
+// /*NATS용 래퍼 정의*/
+// type NatsSubscription struct {
+// 	sub *nats.Subscription
+// }
+
+// /*NATS용 구독해제 메소드 정의 */
+// func (n *NatsSubscription) Unsubscribe() error {
+// 	return n.sub.Unsubscribe()
+// }
+
+type NatsMessage struct {
+	msg *nats.Msg
 }
 
-/*NATS용 래퍼 정의*/
-type NatsSubscription struct {
-	sub *nats.Subscription
-}
-
-/*NATS용 구독해제 메소드 정의 */
-func (n *NatsSubscription) Unsubscribe() error {
-	return n.sub.Unsubscribe()
+func (n *NatsMessage) Data() []byte {
+	return n.msg.Data
 }
 
 /*NATS용 브로커 (덕타이핑)*/
@@ -89,7 +100,7 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 	// 인증 처리 flag
 	authenticated := false
 
-	var sub Subscription // 구독 정보
+	var sub broker.Subscription // 구독 정보
 
 	for {
 		// 메시지는 반복해서 수신
@@ -135,32 +146,34 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 		payload := data["payload"].(map[string]interface{})
 		if msgType == CHAT {
 
-			msgChan := make(chan *nats.Msg, 64) // 채널은 생성, 채널에 데이터를 구독하는건 joinRoom에서
+			//msgChan := make(chan *nats.Msg, 64) // 채널은 생성, 채널에 데이터를 구독하는건 joinRoom에서
+			var msgChan chan broker.BrokerMessage
 
 			roomId := payload["roomId"].(string)
 			if cmd == "joinRoom" {
 				// 채널 생성
 
 				// interface였던 브로커를 꺼내기 위함. -> 다른 mb라면???
-				natsSub, err := h.mb.(*nats.Conn).ChanSubscribe(roomId, msgChan)
+				mbSub, bm, err := h.mb.Subscribe(roomId)
 				if err != nil {
 					log.Println("NATS subscribe error:", err)
 					return
 				}
 				// 래퍼로 감싸서 인터페이스로 저장
-				sub = &NatsSubscription{sub: natsSub}
+				sub = mbSub
+				msgChan = bm
 				fmt.Printf("roomId : %s 구독 하였습니다.\n", roomId)
 
 				go func() {
 					for {
 						m := <-msgChan
 						var initReq incomming
-						_ = json.Unmarshal(m.Data, &initReq)
+						_ = json.Unmarshal(m.Data(), &initReq)
 						// fmt.Println("채널에서 수신받은 데이터 :", initReq.Content)
 						if initReq.Sender == userId {
 							continue
 						}
-						conn.WriteMessage(websocket.TextMessage, m.Data)
+						conn.WriteMessage(websocket.TextMessage, m.Data())
 					}
 				}()
 			} else if cmd == "joinRoomCancel" {
@@ -176,8 +189,9 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 				content := payload["content"].(string)
 				payload := map[string]string{"content": content, "sender": userId.(string)}
 				jsonBytes, _ := json.Marshal(payload)
-				if err := h.mb.(*nats.Conn).Publish(roomId, jsonBytes); err != nil {
-					log.Println("NATS publish error:", err)
+
+				if err := h.mb.Publish(roomId, jsonBytes); err != nil {
+					log.Println("Publish error:", err)
 				}
 			}
 
