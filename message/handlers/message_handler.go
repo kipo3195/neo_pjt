@@ -170,8 +170,9 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 					sub = nil
 					fmt.Printf("roomId : %s 구독해제 하였습니다.\n", roomId)
 				}
-			} else if cmd == "sendMessage" {
+			} else if sub != nil && cmd == "sendMessage" {
 				// 별도의 고루틴으로 처리?
+				// 채팅방을 구독하지 않는 상태에서는 메시지를 보낼 수 없는 것이 맞지않을까?
 				content := payload["content"].(string)
 				payload := map[string]string{"content": content, "sender": userId.(string)}
 				jsonBytes, _ := json.Marshal(payload)
