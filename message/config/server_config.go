@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"message/broker"
 	"message/models"
 	"os"
 
@@ -94,7 +95,7 @@ func initMBConfig() *MessageBrokerConfig {
 	}
 }
 
-func ConnectMessageBroker(sfg *ServerConfig) interface{} {
+func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
 
 	// 메시지 브로커 분기처리
 	if sfg.mbConfig.Mb == NATS {
@@ -103,7 +104,7 @@ func ConnectMessageBroker(sfg *ServerConfig) interface{} {
 			log.Println("Failed to connect to NATS:", err)
 			return nil
 		}
-		return nc
+		return &broker.NatsBroker{Conn: nc}
 	} else if sfg.mbConfig.Mb == KAFKA {
 		log.Println("kafka is not available.")
 	} else if sfg.mbConfig.Mb == RABBITMQ {
