@@ -38,12 +38,15 @@ func InitServer() *http.Server {
 	if db != nil && mb != nil {
 
 		chatRepo := repositories.NewChatRepository(db)
-		chatUC := usecases.NewChatUsecase(chatRepo)
+		chatUC := usecases.NewChatUsecase(chatRepo, mb)
 
 		authRepo := repositories.NewAuthRepository(db)
 		authUC := usecases.NewAuthUsecase(authRepo)
 
-		messageHandler := handlers.NewMessageHandler(chatUC, authUC, mb)
+		noteRepo := repositories.NewNoteRepository(db)
+		noteUC := usecases.NewNoteUsecase(noteRepo)
+
+		messageHandler := handlers.NewMessageHandler(chatUC, authUC, noteUC, mb)
 		router := routes.SetupRoutes(messageHandler)
 
 		return &http.Server{

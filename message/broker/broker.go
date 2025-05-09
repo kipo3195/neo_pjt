@@ -1,7 +1,8 @@
 package broker
 
 type Broker interface {
-	Subscribe(roomId string) (Subscription, chan BrokerMessage, error)
+	Subscribe(roomId string) (chan BrokerMessage, error)
+	Unsubscribe(roomId string)
 	Publish(roomId string, data []byte) error
 }
 

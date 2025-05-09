@@ -104,7 +104,10 @@ func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
 			log.Println("Failed to connect to NATS:", err)
 			return nil
 		}
-		return &broker.NatsBroker{Conn: nc}
+		return &broker.NatsBroker{
+			Conn:          nc,
+			Subscriptions: make(map[string]chan broker.BrokerMessage),
+		}
 	} else if sfg.mbConfig.Mb == KAFKA {
 		log.Println("kafka is not available.")
 	} else if sfg.mbConfig.Mb == RABBITMQ {
