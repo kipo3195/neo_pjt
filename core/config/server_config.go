@@ -1,6 +1,7 @@
 package config
 
 import (
+	"core/models"
 	"fmt"
 	"log"
 	"os"
@@ -11,7 +12,8 @@ import (
 )
 
 type ServerConfig struct {
-	dbConfig *DBConfig
+	dbConfig  *DBConfig
+	ApiConfig *ApiConfig
 }
 
 type DBConfig struct {
@@ -20,6 +22,10 @@ type DBConfig struct {
 	Id       string
 	Pw       string
 	Database string
+}
+
+type ApiConfig struct {
+	NeoHeaderPrefix string
 }
 
 func isLocal() bool {
@@ -37,10 +43,17 @@ func NewServerConfig() *ServerConfig {
 	// DB 설정
 	dbConfig := initDBConfig()
 
+	// API 요청 설정
+	apiConfig := initApiConfig()
+
 	return &ServerConfig{
-		dbConfig: dbConfig,
+		dbConfig:  dbConfig,
+		ApiConfig: apiConfig,
 	}
 }
+
+/* DB Config Area*/
+
 func initDBConfig() *DBConfig {
 	host := os.Getenv("HOST")
 	id := os.Getenv("ID")
@@ -49,7 +62,12 @@ func initDBConfig() *DBConfig {
 	database := os.Getenv("DATABASE")
 
 	return &DBConfig{
-		Host: host, Id: id, Pw: pw, Port: port, Database: database}
+		Host:     host,
+		Id:       id,
+		Pw:       pw,
+		Port:     port,
+		Database: database,
+	}
 }
 
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
@@ -63,6 +81,22 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 		log.Fatal("Failed to connect to database!")
 	}
 
+	/* 마이그레이션 */
+	db.AutoMigrate(&models.AppValidation{})
+	db.AutoMigrate(&models.WorksInfo{})
+
 	fmt.Println("Common Database Connected !")
 	return db
+}
+
+/* API Config Area*/
+
+func initApiConfig() *ApiConfig {
+
+	neoHeaderPrefix := os.Getenv("NEO_HEADER_PREFIX")
+
+	return &ApiConfig{
+		NeoHeaderPrefix: neoHeaderPrefix,
+	}
+
 }

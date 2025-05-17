@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"core/config"
+	consts "core/consts"
 	"core/dto"
 	"core/usecases"
 	"encoding/json"
@@ -9,34 +11,63 @@ import (
 
 type CoreHandler struct {
 	usecase usecases.CoreUsecase
+	sfg     *config.ServerConfig
 }
 
-func NewCoreHandler(uc usecases.CoreUsecase) *CoreHandler {
-	return &CoreHandler{usecase: uc}
+func NewCoreHandler(sfg *config.ServerConfig, uc usecases.CoreUsecase) *CoreHandler {
+	return &CoreHandler{usecase: uc, sfg: sfg}
 }
 
-func (h *CoreHandler) GetValidation(w http.ResponseWriter, r *http.Request) {
+// /app-validation
+func (h *CoreHandler) GetAppValidation(w http.ResponseWriter, r *http.Request) {
 
-	header, body, err := h.usecase.GetValidationData(r)
+	header, body, err := h.usecase.GetAppValidationData(r, h.sfg)
+
+	var res = dto.AppValidationResponse{}
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	var res = dto.ValidationResponse{}
-	if h.usecase.CheckValidation(header) {
-		data, err := h.usecase.GetWorksInfo(body)
-		if err != nil {
-			res.Code = 200
-			res.Data = "일치하는 도메인 없음. "
-		} else {
-			res.Code = 200
-			res.Data = data
-
+		// // http status code 400
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
 		}
-		json.NewEncoder(w).Encode(res)
+		w.WriteHeader(http.StatusBadRequest)
+
 	} else {
-		res.Code = 200
-		res.Data = "앱 검증 실패"
+
+		// 배포 앱 hash 검증
+		if h.usecase.CheckValidation(header) {
+
+			// 클라이언트가 넘겨준 Domain : 테넌트 정보로 검증
+			data, err := h.usecase.GetWorksInfo(body)
+			if err == nil {
+				// http status code 200
+				res.Code = consts.SUCCESS
+				res.Data = data
+
+			} else {
+				// http status code 400
+				res.Code = consts.ERROR
+				res.Data = err
+				w.WriteHeader(http.StatusBadRequest)
+			}
+		} else {
+			// http status code 400
+			res.Code = consts.FAIL
+			res.Data = dto.ErrorResponse{
+				Code:    consts.F_101,
+				Message: consts.F_101_MSG,
+			}
+			w.WriteHeader(http.StatusBadRequest)
+		}
 	}
+
+	json.NewEncoder(w).Encode(res)
+
+}
+
+// /config
+func (h *CoreHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
+
 }

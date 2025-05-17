@@ -8,6 +8,12 @@ import (
 
 func SetupRoutes(coreHandler *handlers.CoreHandler) *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/v{version:[0-9]+}/getValidation", coreHandler.GetValidation).Methods("POST")
+	// 메인 /core + 서브 라우터 활용
+	// v2 생성시 coreV2 := r.PathPrefix("/core/v2").Subrouter()..
+	coreV1 := r.PathPrefix("/core/v1").Subrouter()
+
+	coreV1.HandleFunc("/app-validation", coreHandler.GetAppValidation).Methods("POST")
+	coreV1.HandleFunc("/config", coreHandler.GetConfig).Methods("POST")
+
 	return r
 }

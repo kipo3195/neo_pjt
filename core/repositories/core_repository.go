@@ -1,10 +1,18 @@
 package repositories
 
 import (
+	coreerrors "core/consts"
+	"core/dto"
 	"core/entities"
 	"core/models"
+	"log"
 
 	"gorm.io/gorm"
+)
+
+const (
+	DOMAIN = "domain"
+	CODE   = "code"
 )
 
 type coreRepository struct {
@@ -13,7 +21,7 @@ type coreRepository struct {
 
 type CoreRepository interface {
 	GetValidation(where entities.ValidationWhere) (bool, error)
-	GetWorksInfo(body string) (entities.WorksInfo, error)
+	GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, error)
 }
 
 func NewCoreRepository(db *gorm.DB) CoreRepository {
@@ -24,7 +32,7 @@ func NewCoreRepository(db *gorm.DB) CoreRepository {
 func (r *coreRepository) GetValidation(where entities.ValidationWhere) (bool, error) {
 	var validation models.AppValidation
 
-	result := r.db.Where("version_id = ?", where.Hash).First(&validation)
+	result := r.db.Where("app_hash = ?", where.Hash).First(&validation)
 
 	// 에러 처리
 	if result.Error != nil {
@@ -40,28 +48,42 @@ func (r *coreRepository) GetValidation(where entities.ValidationWhere) (bool, er
 
 }
 
-func (r *coreRepository) GetWorksInfo(domain string) (entities.WorksInfo, error) {
+func (r *coreRepository) GetWorksInfo(data dto.AppValidationRequest) (*entities.WorksInfo, error) {
 
+	// model
 	var worksInfo models.WorksInfo
 
-	result := r.db.Where("w_domain = ? and use_yn = ?", domain, "Y").First(&worksInfo)
+	var sql = ""
+	var param interface{}
 
-	// model -> entity 변환처리
+	if data.Type == DOMAIN {
+		sql = "works_domain = ? and use_yn = ?"
+		param = data.Domain
+	} else if data.Type == CODE {
+		sql = "works_code = ? and use_yn = ?"
+		param = data.Code
+	} else {
+		log.Println("[GetWorksInfo] - repo type invalid")
+		return &entities.WorksInfo{}, coreerrors.ErrInvalidType
+	}
+
+	result := r.db.Where(sql, param, "Y").First(&worksInfo)
 
 	// 에러 처리
 	if result.Error != nil {
-		return entities.WorksInfo{}, result.Error
+		log.Println("[GetWorksInfo] - DB error")
+		return &entities.WorksInfo{}, result.Error
 	}
 
 	if result.RowsAffected > 0 {
-		return entities.WorksInfo{
-			WCode:   worksInfo.WCode,
-			WName:   worksInfo.WName,
-			RegDate: worksInfo.RegDate,
-			WDomain: worksInfo.WDomain,
+		return &entities.WorksInfo{
+			WorksCode: worksInfo.Code,
+			WorksName: worksInfo.Name,
+			UseYn:     worksInfo.UseYn,
 		}, nil
 	} else {
-		return entities.WorksInfo{}, nil
+		log.Println("[GetWorksInfo] - DB select X")
+		return &entities.WorksInfo{}, nil
 	}
 
 }

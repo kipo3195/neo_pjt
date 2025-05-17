@@ -1,10 +1,14 @@
 package usecases
 
 import (
+	"core/config"
+	consts "core/consts"
 	"core/dto"
 	"core/entities"
 	"core/repositories"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 )
 
@@ -13,57 +17,92 @@ type coreUsecase struct {
 }
 
 type CoreUsecase interface {
-	GetValidationData(r *http.Request) (dto.ValidationRequestHeader, dto.ValidationRequest, error)
 
-	CheckValidation(header dto.ValidationRequestHeader) bool
-	ToValidationWhereEntity(header dto.ValidationRequestHeader) entities.ValidationWhere
+	// usecase
+	GetAppValidationData(r *http.Request, sfg *config.ServerConfig) (dto.AppValidationRequestHeader, dto.AppValidationRequest, error)
 
-	GetWorksInfo(body dto.ValidationRequest) (entities.WorksInfo, error)
+	CheckValidation(header dto.AppValidationRequestHeader) bool
+
+	GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, *dto.ErrorResponse)
+
+	// 변환
+	ToValidationWhereEntity(header dto.AppValidationRequestHeader) entities.ValidationWhere
 }
 
 func NewCoreUsecase(repo repositories.CoreRepository) CoreUsecase {
 	return &coreUsecase{repo: repo}
 }
 
-func (u *coreUsecase) GetValidationData(r *http.Request) (dto.ValidationRequestHeader, dto.ValidationRequest, error) {
+func (u *coreUsecase) GetAppValidationData(r *http.Request, sfg *config.ServerConfig) (dto.AppValidationRequestHeader, dto.AppValidationRequest, error) {
 
-	validationHeader := dto.ValidationRequestHeader{
-		Hash:     r.Header.Get("Hash"),
-		Device:   r.Header.Get("Device"),
-		Version:  r.Header.Get("Version"),
-		Works:    r.Header.Get("Works"),
-		DeviceId: r.Header.Get("Device_Id"),
+	var headerPrefix = sfg.ApiConfig.NeoHeaderPrefix
+
+	appValidationHeader := dto.AppValidationRequestHeader{
+		Hash:   r.Header.Get(headerPrefix + "Hash"),
+		Device: r.Header.Get(headerPrefix + "Device"),
+		Uuid:   r.Header.Get(headerPrefix + "Uuid"),
 	}
 
-	var validationRequest dto.ValidationRequest
-	if err := json.NewDecoder(r.Body).Decode(&validationRequest); err != nil {
-		return dto.ValidationRequestHeader{}, dto.ValidationRequest{}, err
-	}
+	var appValidationRequest dto.AppValidationRequest
 
-	return validationHeader, validationRequest, nil
+	if err := json.NewDecoder(r.Body).Decode(&appValidationRequest); err != nil {
+		log.Println(err.Error())
+		return dto.AppValidationRequestHeader{}, dto.AppValidationRequest{}, err
+	}
+	return appValidationHeader, appValidationRequest, nil
 }
 
-func (u *coreUsecase) CheckValidation(header dto.ValidationRequestHeader) bool {
+func (u *coreUsecase) CheckValidation(header dto.AppValidationRequestHeader) bool {
 
 	validationWhere := u.ToValidationWhereEntity(header)
+
 	flag, err := u.repo.GetValidation(validationWhere)
+
 	if !flag || err != nil {
 		return false
 	}
+
 	return true
 }
 
-func (u *coreUsecase) ToValidationWhereEntity(header dto.ValidationRequestHeader) entities.ValidationWhere {
+func (u *coreUsecase) ToValidationWhereEntity(header dto.AppValidationRequestHeader) entities.ValidationWhere {
 	return entities.ValidationWhere{
 		Hash: header.Hash,
 	}
 }
 
-func (u *coreUsecase) GetWorksInfo(body dto.ValidationRequest) (entities.WorksInfo, error) {
-	result, err := u.repo.GetWorksInfo(body.Domain)
+func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, *dto.ErrorResponse) {
+
+	// 에러타입이 뭐냐에따라 처리..
+	result, err := u.repo.GetWorksInfo(body)
+
 	if err != nil {
-		return entities.WorksInfo{}, err
+
+		switch {
+		case errors.Is(err, consts.ErrInvalidType):
+			// 타입에러
+			return nil, &dto.ErrorResponse{
+				Code:    consts.E_101,
+				Message: consts.E_101_MSG,
+			}
+		default:
+			// 기타 DB 에러
+			return nil, &dto.ErrorResponse{
+				Code:    consts.E_102,
+				Message: consts.E_102_MSG,
+			}
+		}
+
 	} else {
+
+		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
+
+		worksAuth := entities.WorksAuth{}
+		connectInfo := entities.ConnectInfo{}
+
+		result.WorksAuth = worksAuth
+		result.ConnectInfo = connectInfo
+
 		return result, nil
 	}
 

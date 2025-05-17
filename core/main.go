@@ -23,7 +23,7 @@ func InitServer() *http.Server {
 
 	coreRepo := repositories.NewCoreRepository(db)
 	coreUC := usecases.NewCoreUsecase(coreRepo)
-	coreHandler := handlers.NewCoreHandler(coreUC)
+	coreHandler := handlers.NewCoreHandler(sfg, coreUC)
 
 	router := routes.SetupRoutes(coreHandler)
 

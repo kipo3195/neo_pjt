@@ -3,7 +3,7 @@ package models
 // 인증 처리를 위한 정보
 
 type AppValidation struct {
-	VersionId  int    `json:"version_id"`
+	AppHash    string `json:"app_hash"`
 	DeviceKind string `json:"device_kind"`
 	UdtDate    string `json:"udt_date"`
 	Version    string `json:"version"`
