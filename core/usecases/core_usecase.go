@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bytes"
 	"core/config"
 	consts "core/consts"
 	"core/dto"
@@ -8,6 +9,7 @@ import (
 	"core/repositories"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -24,6 +26,8 @@ type CoreUsecase interface {
 	CheckValidation(header dto.AppValidationRequestHeader) bool
 
 	GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, *dto.ErrorResponse)
+
+	GetConnectInfo() (string, error)
 
 	// 변환
 	ToValidationWhereEntity(header dto.AppValidationRequestHeader) entities.ValidationWhere
@@ -98,12 +102,43 @@ func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest) (*entities.Wor
 		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
 
 		worksAuth := entities.WorksAuth{}
-		connectInfo := entities.ConnectInfo{}
+		connectInfo, err := u.GetConnectInfo()
+
+		if err != nil {
+			fmt.Println("에러")
+		}
 
 		result.WorksAuth = worksAuth
-		result.ConnectInfo = connectInfo
+		result.ConnectInfo.ServerInfo = connectInfo
 
 		return result, nil
 	}
 
+}
+
+func (u *coreUsecase) GetConnectInfo() (string, error) {
+	// 소스 모듈화 처리하기
+	data := map[string]string{
+		"domain": "ucneo.net",
+		"uuid":   "1234",
+	}
+
+	// JSON 변환
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	// POST 요청 보내기
+	resp, err := http.Post("http://localhost:8086/common/v1/device-init", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// 응답 출력
+	var result map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&result)
+	fmt.Println("Response:", result)
+	return result["result"].(string), nil
 }

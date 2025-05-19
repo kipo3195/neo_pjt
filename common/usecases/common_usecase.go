@@ -1,10 +1,13 @@
 package usecases
 
 import (
+	consts "common/consts"
 	"common/dto"
 	"common/entities"
 	"common/repositories"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -15,6 +18,9 @@ type commonUsecase struct {
 
 type CommonUsecase interface {
 	GetConfig(dto.ConfigRequest) (*entities.Config, error)
+
+	GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, error)
+	DeviceInit(body dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
@@ -40,4 +46,30 @@ func (u *commonUsecase) GetConfig(req dto.ConfigRequest) (*entities.Config, erro
 		FileName: fileName,
 		Content:  content,
 	}, nil
+}
+
+func (u *commonUsecase) GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, error) {
+	// request 데이터 -> dto로 변경
+	var deviceInitRequest dto.DeviceInitRequest
+	if err := json.NewDecoder(r.Body).Decode(&deviceInitRequest); err != nil {
+		return dto.DeviceInitRequest{}, err
+	} else {
+		return deviceInitRequest, nil
+	}
+}
+
+func (u *commonUsecase) DeviceInit(body dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
+
+	// DB 조회
+	result, err := u.repo.GetConnectInfo(body.Domain)
+	if err != nil {
+		return &entities.InitResult{}, &dto.ErrorResponse{
+			Code:    consts.E_102,
+			Message: consts.E_102_MSG,
+		}
+	}
+	// AUTH에 JWT 요청
+	result.AuthToken = "test jwt"
+
+	return result, nil
 }

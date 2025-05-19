@@ -1,6 +1,7 @@
 package config
 
 import (
+	"common/models"
 	"fmt"
 	"log"
 	"os"
@@ -62,6 +63,8 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	if err != nil {
 		log.Fatal("Failed to connect to database!")
 	}
+
+	db.AutoMigrate(&models.ConnectInfo{})
 
 	fmt.Println("Common Database Connected !")
 	return db

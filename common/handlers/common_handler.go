@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	consts "common/consts"
 	"common/dto"
 	"common/usecases"
 	"encoding/json"
@@ -14,6 +15,38 @@ type CommonHandler struct {
 
 func NewCommonHandler(uc usecases.CommonUsecase) *CommonHandler {
 	return &CommonHandler{usecase: uc}
+}
+
+func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
+
+	body, err := h.usecase.GetDeviceInitData(r)
+
+	fmt.Println("클라이언트 요청 수신 : ", body)
+	var res = dto.DeviceInitResponse{}
+	if err != nil {
+		// // http status code 400
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+
+	} else {
+		data, err := h.usecase.DeviceInit(body)
+
+		if err != nil {
+			res.Code = consts.FAIL
+			res.Data = err
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			res.Code = consts.SUCCESS
+			res.Data = data
+		}
+	}
+
+	json.NewEncoder(w).Encode(res)
+
 }
 
 func (h *CommonHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
