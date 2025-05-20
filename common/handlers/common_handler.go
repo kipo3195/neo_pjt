@@ -19,30 +19,50 @@ func NewCommonHandler(uc usecases.CommonUsecase) *CommonHandler {
 
 func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 
-	body, header, err := h.usecase.GetDeviceInitData(r)
-
-	fmt.Println("클라이언트 요청 수신 : ", body)
+	// 해당 API의 response
 	var res = dto.DeviceInitResponse{}
-	if err != nil {
-		// // http status code 400
+
+	// request의 header 데이터 -> dto로 변경
+	header := &dto.DeviceInitRequestHeader{
+		Token: r.Header.Get("Token"),
+	}
+	// usecase의 토큰 검증로직 TODO
+	fmt.Println("CORE 서버에서 호출, 토큰 정보 : ", header.Token)
+
+	if header.Token == "" {
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_104,
+			Message: consts.E_104_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// request body 데이터 -> dto로 변경
+	var body *dto.DeviceInitRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
 		}
 		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
 
+	// DB에서 해당 works의 정보조회 + AUTH에서 토큰 발급 요청
+	data, err := h.usecase.DeviceInit(body)
+
+	if err != nil {
+		res.Code = consts.FAIL
+		res.Data = err
+		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		data, err := h.usecase.DeviceInit(body)
-
-		if err != nil {
-			res.Code = consts.FAIL
-			res.Data = err
-			w.WriteHeader(http.StatusBadRequest)
-		} else {
-			res.Code = consts.SUCCESS
-			res.Data = data
-		}
+		res.Code = consts.SUCCESS
+		res.Data = data
 	}
 
 	json.NewEncoder(w).Encode(res)

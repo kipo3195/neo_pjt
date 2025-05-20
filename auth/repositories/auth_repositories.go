@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"auth/dto"
+	"auth/entities"
 	"auth/models"
 
 	"gorm.io/gorm"
@@ -13,6 +14,7 @@ type authRepository struct {
 
 type AuthRepository interface {
 	GetAuth(dto.AuthRequest) (*models.AuthInfo, error)
+	PutDeviceToken(token *entities.DeviceToken) (bool, error)
 }
 
 func NewAuthRepository(db *gorm.DB) AuthRepository {
@@ -29,4 +31,13 @@ func (r *authRepository) GetAuth(req dto.AuthRequest) (*models.AuthInfo, error) 
 	// find안에 auth가 포인터 변수가 아닌 값일때 발생할 수 있음. gorm.Find()는 포인터로 받은 값을 채워 넣어야 합니다.
 
 	return &auth, err
+}
+
+func (r *authRepository) PutDeviceToken(token *entities.DeviceToken) (bool, error) {
+
+	// Insert 실행
+	if err := r.db.Create(&token).Error; err != nil {
+		return false, err
+	}
+	return true, nil
 }

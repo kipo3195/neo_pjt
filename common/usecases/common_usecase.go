@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bytes"
 	consts "common/consts"
 	"common/dto"
 	"common/entities"
@@ -18,9 +19,8 @@ type commonUsecase struct {
 
 type CommonUsecase interface {
 	GetConfig(dto.ConfigRequest) (*entities.Config, error)
-
-	GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, dto.DeviceInitRequestHeader, error)
-	DeviceInit(body dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
+	DeviceInit(body *dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
+	GenerateDeviceToken(body *dto.DeviceInitRequest) (string, error)
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
@@ -48,17 +48,7 @@ func (u *commonUsecase) GetConfig(req dto.ConfigRequest) (*entities.Config, erro
 	}, nil
 }
 
-func (u *commonUsecase) GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, dto.DeviceInitRequestHeader, error) {
-	// request 데이터 -> dto로 변경
-	var deviceInitRequest dto.DeviceInitRequest
-	if err := json.NewDecoder(r.Body).Decode(&deviceInitRequest); err != nil {
-		return dto.DeviceInitRequest{}, err
-	} else {
-		return deviceInitRequest, nil
-	}
-}
-
-func (u *commonUsecase) DeviceInit(body dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
+func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
 
 	// DB 조회
 	result, err := u.repo.GetConnectInfo(body.Domain)
@@ -69,7 +59,38 @@ func (u *commonUsecase) DeviceInit(body dto.DeviceInitRequest) (*entities.InitRe
 		}
 	}
 	// AUTH에 JWT 요청
-	result.AuthToken = "test jwt"
-
+	result.AuthToken, err = u.GenerateDeviceToken(body)
+	if err != nil {
+		return &entities.InitResult{}, &dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
+	}
 	return result, nil
+}
+
+func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest) (string, error) {
+	// 소스 모듈화 처리하기
+	data := map[string]string{
+		"uuid": body.Uuid,
+	}
+
+	// JSON 변환
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	// POST 요청 보내기
+	resp, err := http.Post("http://localhost:8088/auth/v1/generate-device-token", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// 응답 출력
+	var result map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&result)
+	fmt.Println("Response:", result)
+	return result["token"].(string), nil
 }

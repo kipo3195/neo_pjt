@@ -9,5 +9,6 @@ import (
 func SetupRoutes(authHandler *handlers.AuthHandler) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/auth", authHandler.GetAuth).Methods("POST")
+	r.HandleFunc("/generate-device-token", authHandler.GenerateDeviceToken).Methods("POST")
 	return r
 }

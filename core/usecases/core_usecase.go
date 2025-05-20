@@ -2,7 +2,6 @@ package usecases
 
 import (
 	"bytes"
-	"core/config"
 	consts "core/consts"
 	"core/dto"
 	"core/entities"
@@ -10,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -19,44 +17,21 @@ type coreUsecase struct {
 }
 
 type CoreUsecase interface {
-
-	// usecase
-	GetAppValidationData(r *http.Request, sfg *config.ServerConfig) (dto.AppValidationRequestHeader, dto.AppValidationRequest, error)
-
-	CheckValidation(header dto.AppValidationRequestHeader) bool
+	CheckValidation(header *dto.AppValidationRequestHeader) bool
 
 	GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, *dto.ErrorResponse)
 
 	GetConnectInfo() (string, error)
 
 	// 변환
-	ToValidationWhereEntity(header dto.AppValidationRequestHeader) entities.ValidationWhere
+	ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere
 }
 
 func NewCoreUsecase(repo repositories.CoreRepository) CoreUsecase {
 	return &coreUsecase{repo: repo}
 }
 
-func (u *coreUsecase) GetAppValidationData(r *http.Request, sfg *config.ServerConfig) (dto.AppValidationRequestHeader, dto.AppValidationRequest, error) {
-
-	var headerPrefix = sfg.ApiConfig.NeoHeaderPrefix
-
-	appValidationHeader := dto.AppValidationRequestHeader{
-		Hash:   r.Header.Get(headerPrefix + "Hash"),
-		Device: r.Header.Get(headerPrefix + "Device"),
-		Uuid:   r.Header.Get(headerPrefix + "Uuid"),
-	}
-
-	var appValidationRequest dto.AppValidationRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&appValidationRequest); err != nil {
-		log.Println(err.Error())
-		return dto.AppValidationRequestHeader{}, dto.AppValidationRequest{}, err
-	}
-	return appValidationHeader, appValidationRequest, nil
-}
-
-func (u *coreUsecase) CheckValidation(header dto.AppValidationRequestHeader) bool {
+func (u *coreUsecase) CheckValidation(header *dto.AppValidationRequestHeader) bool {
 
 	validationWhere := u.ToValidationWhereEntity(header)
 
@@ -69,7 +44,7 @@ func (u *coreUsecase) CheckValidation(header dto.AppValidationRequestHeader) boo
 	return true
 }
 
-func (u *coreUsecase) ToValidationWhereEntity(header dto.AppValidationRequestHeader) entities.ValidationWhere {
+func (u *coreUsecase) ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere {
 	return entities.ValidationWhere{
 		Hash: header.Hash,
 	}
