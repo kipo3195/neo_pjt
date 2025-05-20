@@ -19,7 +19,7 @@ type commonUsecase struct {
 type CommonUsecase interface {
 	GetConfig(dto.ConfigRequest) (*entities.Config, error)
 
-	GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, error)
+	GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, dto.DeviceInitRequestHeader, error)
 	DeviceInit(body dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
 }
 
@@ -48,7 +48,7 @@ func (u *commonUsecase) GetConfig(req dto.ConfigRequest) (*entities.Config, erro
 	}, nil
 }
 
-func (u *commonUsecase) GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, error) {
+func (u *commonUsecase) GetDeviceInitData(r *http.Request) (dto.DeviceInitRequest, dto.DeviceInitRequestHeader, error) {
 	// request 데이터 -> dto로 변경
 	var deviceInitRequest dto.DeviceInitRequest
 	if err := json.NewDecoder(r.Body).Decode(&deviceInitRequest); err != nil {
