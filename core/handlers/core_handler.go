@@ -61,7 +61,7 @@ func (h *CoreHandler) GetAppValidation(w http.ResponseWriter, r *http.Request) {
 	if h.usecase.CheckValidation(header) {
 
 		// 클라이언트가 넘겨준 Domain : 테넌트 정보로 검증
-		data, err := h.usecase.GetWorksInfo(body)
+		data, err := h.usecase.GetWorksInfo(body, header.Uuid)
 		if err == nil {
 			// http status code 200
 			res.Code = consts.SUCCESS

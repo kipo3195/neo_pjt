@@ -24,9 +24,9 @@ func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 
 	// request의 header 데이터 -> dto로 변경
 	header := &dto.DeviceInitRequestHeader{
-		Token: r.Header.Get("Token"),
+		Token: r.Header.Get("Authorization"), // const로 TODO
 	}
-	// usecase의 토큰 검증로직 TODO
+
 	fmt.Println("CORE 서버에서 호출, 토큰 정보 : ", header.Token)
 
 	if header.Token == "" {
@@ -39,6 +39,8 @@ func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(res)
 		return
 	}
+
+	// core서비스에서 온 토큰 검증 필요 todo
 
 	// request body 데이터 -> dto로 변경
 	var body *dto.DeviceInitRequest

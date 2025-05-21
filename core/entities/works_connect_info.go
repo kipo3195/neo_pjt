@@ -1,5 +1,5 @@
 package entities
 
 type ConnectInfo struct {
-	ServerInfo string `json:"serverInfo"`
+	ServerDomain string `json:"serverDomain"`
 }

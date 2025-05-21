@@ -1,4 +1,4 @@
-package errors
+package consts
 
 const (
 	SUCCESS = "success"

@@ -15,6 +15,7 @@ type authRepository struct {
 type AuthRepository interface {
 	GetAuth(dto.AuthRequest) (*models.AuthInfo, error)
 	PutDeviceToken(token *entities.DeviceToken) (bool, error)
+	ToEntityDeviceToken(m *entities.DeviceToken) *models.DeviceToken
 }
 
 func NewAuthRepository(db *gorm.DB) AuthRepository {
@@ -35,9 +36,19 @@ func (r *authRepository) GetAuth(req dto.AuthRequest) (*models.AuthInfo, error) 
 
 func (r *authRepository) PutDeviceToken(token *entities.DeviceToken) (bool, error) {
 
+	// entity -> model
+	models := r.ToEntityDeviceToken(token)
+
 	// Insert 실행
-	if err := r.db.Create(&token).Error; err != nil {
+	if err := r.db.Create(&models).Error; err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *authRepository) ToEntityDeviceToken(m *entities.DeviceToken) *models.DeviceToken {
+	return &models.DeviceToken{
+		Uuid:  m.Uuid,
+		Token: m.Token,
+	}
 }

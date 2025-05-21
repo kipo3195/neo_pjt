@@ -20,7 +20,7 @@ type commonUsecase struct {
 type CommonUsecase interface {
 	GetConfig(dto.ConfigRequest) (*entities.Config, error)
 	DeviceInit(body *dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
-	GenerateDeviceToken(body *dto.DeviceInitRequest) (string, error)
+	GenerateDeviceToken(body *dto.DeviceInitRequest, domain string) (string, error)
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
@@ -59,7 +59,7 @@ func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitR
 		}
 	}
 	// AUTH에 JWT 요청
-	result.AuthToken, err = u.GenerateDeviceToken(body)
+	result.AuthToken, err = u.GenerateDeviceToken(body, result.ConnectInfo)
 	if err != nil {
 		return &entities.InitResult{}, &dto.ErrorResponse{
 			Code:    consts.E_500,
@@ -69,7 +69,7 @@ func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitR
 	return result, nil
 }
 
-func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest) (string, error) {
+func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest, domain string) (string, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid": body.Uuid,
@@ -81,8 +81,19 @@ func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest) (string
 		return "", err
 	}
 
+	url := domain + "/auth/v1/generate-device-token"
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer serverToken") // 서버 api key
+
 	// POST 요청 보내기
-	resp, err := http.Post("http://localhost:8088/auth/v1/generate-device-token", "application/json", bytes.NewBuffer(jsonData))
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}

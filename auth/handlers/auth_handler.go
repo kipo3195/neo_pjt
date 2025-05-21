@@ -47,7 +47,7 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 
 	// request의 header 데이터 -> dto로 변경
 	header := &dto.GenerateDeviceTokenRequestHeader{
-		Token: r.Header.Get("token"),
+		Token: r.Header.Get("Authorization"),
 	}
 
 	if header.Token == "" {

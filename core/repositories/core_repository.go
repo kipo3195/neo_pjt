@@ -77,6 +77,9 @@ func (r *coreRepository) GetWorksInfo(data dto.AppValidationRequest) (*entities.
 
 	if result.RowsAffected > 0 {
 		return &entities.WorksInfo{
+			ConnectInfo: entities.ConnectInfo{
+				ServerDomain: worksInfo.Domain,
+			},
 			WorksCode: worksInfo.Code,
 			WorksName: worksInfo.Name,
 			UseYn:     worksInfo.UseYn,

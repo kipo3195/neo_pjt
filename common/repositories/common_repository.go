@@ -21,13 +21,13 @@ func NewCommonRepository(db *gorm.DB) CommonRepository {
 	return &commonRepository{db: db}
 }
 
-func (r *commonRepository) GetConnectInfo(where string) (*entities.InitResult, error) {
+func (r *commonRepository) GetConnectInfo(domain string) (*entities.InitResult, error) {
 
 	// model
 	var connectInfo models.ConnectInfo
 
 	// domain으로 auth에 접근할 것인가?
-	result := r.db.Where("domain = ?", where).First(&connectInfo)
+	result := r.db.Where("domain = ?", domain).First(&connectInfo)
 
 	// 에러 처리
 	if result.Error != nil {

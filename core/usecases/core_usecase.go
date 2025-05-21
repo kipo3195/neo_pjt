@@ -19,9 +19,9 @@ type coreUsecase struct {
 type CoreUsecase interface {
 	CheckValidation(header *dto.AppValidationRequestHeader) bool
 
-	GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, *dto.ErrorResponse)
+	GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse)
 
-	GetConnectInfo() (string, error)
+	GetConnectInfo(uuid string, serverDomain string) (string, error)
 
 	// 변환
 	ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere
@@ -50,7 +50,7 @@ func (u *coreUsecase) ToValidationWhereEntity(header *dto.AppValidationRequestHe
 	}
 }
 
-func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, *dto.ErrorResponse) {
+func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse) {
 
 	// 에러타입이 뭐냐에따라 처리..
 	result, err := u.repo.GetWorksInfo(body)
@@ -77,25 +77,24 @@ func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest) (*entities.Wor
 		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
 
 		worksAuth := entities.WorksAuth{}
-		connectInfo, err := u.GetConnectInfo()
+		connectInfo, err := u.GetConnectInfo(uuid, result.ConnectInfo.ServerDomain)
 
 		if err != nil {
 			fmt.Println("에러")
 		}
 
 		result.WorksAuth = worksAuth
-		result.ConnectInfo.ServerInfo = connectInfo
+		result.ConnectInfo.ServerDomain = connectInfo
 
 		return result, nil
 	}
 
 }
 
-func (u *coreUsecase) GetConnectInfo() (string, error) {
+func (u *coreUsecase) GetConnectInfo(uuid string, serverDomain string) (string, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
-		"domain": "ucneo.net",
-		"uuid":   "1234",
+		"uuid": uuid,
 	}
 
 	// JSON 변환
@@ -105,10 +104,21 @@ func (u *coreUsecase) GetConnectInfo() (string, error) {
 	}
 
 	// POST 요청 보내기
-	resp, err := http.Post("http://localhost:8086/common/v1/device-init", "application/json", bytes.NewBuffer(jsonData))
+	url := serverDomain + "/common/v1/device-init" // http://localhost:8086
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", err
 	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer serverToken") // works 서버 호출시 필요한 키 작성하기 TODO
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
 	defer resp.Body.Close()
 
 	// 응답 출력
