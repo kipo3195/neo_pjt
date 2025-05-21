@@ -13,9 +13,10 @@ type authRepository struct {
 }
 
 type AuthRepository interface {
-	GetAuth(dto.AuthRequest) (*models.AuthInfo, error)
+	GetAuth(body *dto.AuthRequest) (*models.AuthInfo, error)
 	PutDeviceToken(token *entities.DeviceToken) (bool, error)
 	ToEntityDeviceToken(m *entities.DeviceToken) *models.DeviceToken
+	GetValidation(header *dto.AuthRequestHeader) (bool, error)
 }
 
 func NewAuthRepository(db *gorm.DB) AuthRepository {
@@ -23,11 +24,11 @@ func NewAuthRepository(db *gorm.DB) AuthRepository {
 	return &authRepository{db: db}
 }
 
-func (r *authRepository) GetAuth(req dto.AuthRequest) (*models.AuthInfo, error) {
+func (r *authRepository) GetAuth(body *dto.AuthRequest) (*models.AuthInfo, error) {
 
 	var auth models.AuthInfo
 
-	err := r.db.Where("id = ?", req.Id).Where("password = ?", req.Password).Find(&auth).Error
+	err := r.db.Where("id = ?", body.Id).Where("password = ?", body.Password).Find(&auth).Error
 	// reflect: reflect.Value.SetString using unaddressable value
 	// find안에 auth가 포인터 변수가 아닌 값일때 발생할 수 있음. gorm.Find()는 포인터로 받은 값을 채워 넣어야 합니다.
 
@@ -51,4 +52,13 @@ func (r *authRepository) ToEntityDeviceToken(m *entities.DeviceToken) *models.De
 		Uuid:  m.Uuid,
 		Token: m.Token,
 	}
+}
+
+func (r *authRepository) GetValidation(header *dto.AuthRequestHeader) (bool, error) {
+
+	var validation models.DeviceToken
+	if err := r.db.Where("uuid = ?", header.Uuid).Where("token = ?", header.Token).Find(&validation).Error; err != nil {
+		return false, err
+	}
+	return true, nil
 }

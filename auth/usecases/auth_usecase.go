@@ -17,7 +17,7 @@ type authUsecase struct {
 }
 
 type AuthUsecase interface {
-	GetAuth(dto.AuthRequest) (*entities.Auth, error)
+	GetAuth(*dto.AuthRequestHeader, *dto.AuthRequest) (*entities.Auth, error)
 	GenerateDeviceToken(body dto.GenerateDeviceTokenRequest) (*entities.DeviceToken, error)
 	GenerateJWT(uuid string) (string, error)
 }
@@ -26,9 +26,16 @@ func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) 
 	return &authUsecase{repo: repo, jwtCfg: jwtCfg}
 }
 
-func (u *authUsecase) GetAuth(req dto.AuthRequest) (*entities.Auth, error) {
+func (u *authUsecase) GetAuth(header *dto.AuthRequestHeader, body *dto.AuthRequest) (*entities.Auth, error) {
 
-	auth, err := u.repo.GetAuth(req)
+	auth, err := u.repo.GetAuth(body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	flag, err := u.repo.GetValidation(header)
+
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +43,7 @@ func (u *authUsecase) GetAuth(req dto.AuthRequest) (*entities.Auth, error) {
 	var result, accessToken, refreshToken, configKey string
 
 	// 인증정보 없음.
-	if auth.Id == "" {
+	if auth.Id == "" || !flag {
 		result = "fail"
 	} else {
 		result = "success"
@@ -60,7 +67,6 @@ func (u *authUsecase) GetAuth(req dto.AuthRequest) (*entities.Auth, error) {
 }
 
 func getConfigkey() string {
-
 	return ""
 }
 
