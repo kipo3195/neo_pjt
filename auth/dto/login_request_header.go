@@ -1,6 +1,6 @@
 package dto
 
-type AuthRequestHeader struct {
+type LoginRequestHeader struct {
 	Token string
 	Uuid  string
 }

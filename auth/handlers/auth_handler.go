@@ -17,19 +17,19 @@ func NewAuthHandler(uc usecases.AuthUsecase) *AuthHandler {
 	return &AuthHandler{usecase: uc}
 }
 
-func (h *AuthHandler) GetAuth(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// response
 	var res dto.Response
 
 	// request의 header 데이터 -> dto로 변경
-	header := &dto.AuthRequestHeader{
-		Token: r.Header.Get("Authorization"),
-		Uuid:  r.Header.Get("Uuid"),
+	header := &dto.LoginRequestHeader{
+		Token: r.Header.Get("X-NEO-AuthToken"),
+		Uuid:  r.Header.Get("X-NEO-Uuid"),
 	}
-
+	// header 검증
 	if header.Token == "" {
-		res.Code = consts.FAIL
+		res.Code = consts.ERROR
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_104,
 			Message: consts.E_104_MSG,
@@ -42,7 +42,7 @@ func (h *AuthHandler) GetAuth(w http.ResponseWriter, r *http.Request) {
 	// request body 데이터 -> dto로 변경
 	var body *dto.AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		res.Code = consts.FAIL
+		res.Code = consts.ERROR
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
@@ -53,25 +53,28 @@ func (h *AuthHandler) GetAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 비즈니스 로직 호출
-	Auth, err := h.usecase.GetAuth(header, body)
+	Auth, err, failFlag := h.usecase.GetAuth(header, body)
 
-	if err != nil {
+	if failFlag {
 		res.Code = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_500,
-			Message: consts.E_500_MSG,
-		}
-		return
+		res.Data = err
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+	} else if err != nil {
+		res.Code = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(res)
 	} else {
 		// Entity -> dto로 변환은 handler에서 처리함.
 		res.Code = consts.SUCCESS
 		res.Data = dto.AuthResponse{
-			Result:       Auth.Result,
 			AccessToken:  Auth.AccessToken,
 			RefreshToken: Auth.RefreshToken,
-			ConfigKey:    Auth.ConfigKey}
-
+		}
+		json.NewEncoder(w).Encode(res)
 	}
+
 }
 
 func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request) {

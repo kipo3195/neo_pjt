@@ -24,4 +24,13 @@ const (
 	// FAIL
 	F_101     = "F001"
 	F_101_MSG = "hash invalid."
+
+	F_103     = "F003"
+	F_103_MSG = "unregistered uuid"
+
+	F_104     = "F004"
+	F_104_MSG = "token info mismatch"
+
+	F_105     = "F005"
+	F_105_MSG = "authentication failed"
 )

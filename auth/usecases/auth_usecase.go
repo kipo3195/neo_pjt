@@ -2,13 +2,16 @@ package usecases
 
 import (
 	"auth/config"
+	consts "auth/consts"
 	"auth/dto"
 	"auth/entities"
 	"auth/repositories"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 type authUsecase struct {
@@ -17,7 +20,7 @@ type authUsecase struct {
 }
 
 type AuthUsecase interface {
-	GetAuth(*dto.AuthRequestHeader, *dto.AuthRequest) (*entities.Auth, error)
+	GetAuth(*dto.LoginRequestHeader, *dto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool)
 	GenerateDeviceToken(body dto.GenerateDeviceTokenRequest) (*entities.DeviceToken, error)
 	GenerateJWT(uuid string) (string, error)
 }
@@ -26,42 +29,73 @@ func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) 
 	return &authUsecase{repo: repo, jwtCfg: jwtCfg}
 }
 
-func (u *authUsecase) GetAuth(header *dto.AuthRequestHeader, body *dto.AuthRequest) (*entities.Auth, error) {
+func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool) {
 
+	// app hash 부터 검증
+	flag, err := u.repo.GetValidation(header)
+	if err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			// 매핑된 hash 정보가 없음
+			return nil, &dto.ErrorResponse{
+				Code:    consts.F_103,
+				Message: consts.F_103_MSG,
+			}, true
+		default:
+			// 기타 DB 에러
+			return nil, &dto.ErrorResponse{
+				Code:    consts.E_102,
+				Message: consts.E_102_MSG,
+			}, false
+		}
+	}
+	// 토큰 정보 불일치
+	if !flag {
+		return nil, &dto.ErrorResponse{
+			Code:    consts.F_104,
+			Message: consts.F_104_MSG,
+		}, true
+	}
+
+	// 사용자 정보 검증
 	auth, err := u.repo.GetAuth(body)
 
 	if err != nil {
-		return nil, err
-	}
-
-	flag, err := u.repo.GetValidation(header)
-
-	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			// 매핑된 hash 정보가 없음
+			return nil, &dto.ErrorResponse{
+				Code:    consts.F_105,
+				Message: consts.F_105_MSG,
+			}, true
+		default:
+			// 기타 DB 에러
+			return nil, &dto.ErrorResponse{
+				Code:    consts.E_102,
+				Message: consts.E_102_MSG,
+			}, false
+		}
 	}
 
 	var result, accessToken, refreshToken, configKey string
 
-	// 인증정보 없음.
-	if auth.Id == "" || !flag {
-		result = "fail"
-	} else {
-		result = "success"
-		acc, re, err := GenerateJWT(auth.Id, u.jwtCfg.AccessExp, u.jwtCfg.RefressExp, []byte(u.jwtCfg.Key))
-		if err != nil {
-			println("JWT TOKEN MAKE ERROR ! :", err)
-			return nil, err
-		} else {
-			accessToken = acc
-			refreshToken = re
-		}
-		// config 파일을 풀 수 있는 대칭키
-		configKey = getConfigkey()
-	}
+	result = "success"
 
-	return &entities.Auth{
-		Result: result, AccessToken: accessToken, RefreshToken: refreshToken, ConfigKey: configKey,
-	}, err
+	acc, re, err := GenerateJWT(auth.Id, u.jwtCfg.AccessExp, u.jwtCfg.RefressExp, []byte(u.jwtCfg.Key))
+	if err != nil {
+		println("JWT TOKEN MAKE ERROR ! :", err)
+		return nil, &dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}, false
+	} else {
+		accessToken = acc
+		refreshToken = re
+	}
+	// config 파일을 풀 수 있는 대칭키
+	configKey = getConfigkey()
+
+	return &entities.Auth{Result: result, AccessToken: accessToken, RefreshToken: refreshToken, ConfigKey: configKey}, nil, false
 }
 
 func getConfigkey() string {
