@@ -7,6 +7,7 @@ import (
 	"common/entities"
 	"common/repositories"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -58,6 +59,9 @@ func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitR
 			Message: consts.E_102_MSG,
 		}
 	}
+
+	fmt.Println("DB 조회 결과 : ", result)
+
 	// AUTH에 JWT 요청
 	result.AuthToken, err = u.GenerateDeviceToken(body, result.ConnectInfo)
 	if err != nil {
@@ -81,7 +85,10 @@ func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest, domain 
 		return "", err
 	}
 
-	url := domain + "/auth/v1/generate-device-token"
+	fmt.Println("auth service 호출! 1")
+
+	url := "http://172.16.10.114:8087/auth/v1/generate-device-token"
+	//url := domain + "/auth/v1/generate-device-token"
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -95,13 +102,33 @@ func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest, domain 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Println("auth service 호출 에러 1")
 		return "", err
 	}
 	defer resp.Body.Close()
 
+	// 구조체로 반환해야 하는거아닌가?
+	// 서버간 통신에서 var result dto.ServerResponsed 이 구조를 사용할 것인지 고민
+
 	// 응답 출력
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	fmt.Println("Response:", result)
-	return result["token"].(string), nil
+	var result dto.ServerResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		fmt.Println("serverReponse 파싱시 에러")
+		return "", err
+	}
+
+	resultData, ok := result.Data.(map[string]interface{})
+	if !ok {
+		fmt.Println("Data 필드를 map으로 변환하는 데 실패했습니다.")
+		return "", errors.New("invalid data format")
+	}
+
+	token, tokenOk := resultData["token"].(string)
+
+	if !tokenOk {
+		fmt.Println("token 또는 uuid를 string으로 변환하는 데 실패했습니다.")
+		return "", errors.New("invalid token format")
+	}
+	fmt.Println("auth service 호출 후 발급 받은 토큰 : ", token)
+	return token, nil
 }

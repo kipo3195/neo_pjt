@@ -3,10 +3,10 @@ package models
 // 인증 처리를 위한 정보
 
 type AppValidation struct {
-	AppHash    string `json:"app_hash"`
-	DeviceKind string `json:"device_kind"`
-	UdtDate    string `json:"udt_date"`
-	Version    string `json:"version"`
+	AppHash    string `gorm:"column:app_hash"`
+	DeviceKind string `gorm:"column:device_kind"`
+	UdtDate    string `gorm:"column:udt_date"`
+	Version    string `gorm:"column:version"`
 }
 
 func (AppValidation) TableName() string {

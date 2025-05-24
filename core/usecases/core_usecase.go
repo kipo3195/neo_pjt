@@ -19,9 +19,9 @@ type coreUsecase struct {
 type CoreUsecase interface {
 	CheckValidation(header *dto.AppValidationRequestHeader) bool
 
-	GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse)
+	GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool)
 
-	GetConnectInfo(uuid string, serverDomain string) (string, error)
+	GetConnectInfo(uuid string, serverDomain string) (*dto.DeviceInitResponse, error)
 
 	// 변환
 	ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere
@@ -46,68 +46,84 @@ func (u *coreUsecase) CheckValidation(header *dto.AppValidationRequestHeader) bo
 
 func (u *coreUsecase) ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere {
 	return entities.ValidationWhere{
-		Hash: header.Hash,
+		Hash:   header.Hash,
+		Device: header.Device,
 	}
 }
 
-func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse) {
+func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool) {
 
 	// 에러타입이 뭐냐에따라 처리..
 	result, err := u.repo.GetWorksInfo(body)
 
-	if err != nil {
+	fmt.Println("클라이언트가 전달한 도메인, 코드로 전달했을때 조회된 서버 정보 : ", result)
 
+	if err != nil {
 		switch {
 		case errors.Is(err, consts.ErrInvalidType):
 			// 타입에러
 			return nil, &dto.ErrorResponse{
 				Code:    consts.E_101,
 				Message: consts.E_101_MSG,
-			}
+			}, false
+		case errors.Is(err, consts.ErrInvalidMappingServer):
+			// 매핑된 서버 정보 없음
+			return nil, &dto.ErrorResponse{
+				Code:    consts.F_102,
+				Message: consts.F_102_MSG,
+			}, true
 		default:
 			// 기타 DB 에러
 			return nil, &dto.ErrorResponse{
 				Code:    consts.E_102,
 				Message: consts.E_102_MSG,
-			}
+			}, false
 		}
 
 	} else {
 
 		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
 
-		worksAuth := entities.WorksAuth{}
-		connectInfo, err := u.GetConnectInfo(uuid, result.ConnectInfo.ServerDomain)
+		deviceInitResponse, err := u.GetConnectInfo(uuid, result.ConnectInfo.ServerUrl)
 
 		if err != nil {
-			fmt.Println("에러")
+			fmt.Println("common service 호출시 에러 발생함.")
+			return &entities.WorksInfo{}, &dto.ErrorResponse{
+				Code:    consts.E_500,
+				Message: consts.E_500_MSG,
+			}, false
 		}
 
+		worksAuth := entities.WorksAuth{AppToken: deviceInitResponse.AppToken}
 		result.WorksAuth = worksAuth
-		result.ConnectInfo.ServerDomain = connectInfo
+		result.ConnectInfo.ServerUrl = deviceInitResponse.ServerUrl
 
-		return result, nil
+		return result, nil, false
 	}
 
 }
 
-func (u *coreUsecase) GetConnectInfo(uuid string, serverDomain string) (string, error) {
+func (u *coreUsecase) GetConnectInfo(uuid string, serverUrl string) (*dto.DeviceInitResponse, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
-		"uuid": uuid,
+		"uuid":   uuid,
+		"domain": serverUrl,
 	}
 
 	// JSON 변환
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return "", err
+		return &dto.DeviceInitResponse{}, err
 	}
 
 	// POST 요청 보내기
-	url := serverDomain + "/common/v1/device-init" // http://localhost:8086
+	url := "http://" + serverUrl + "/common/v1/device-init" // http://localhost:8086
+
+	fmt.Println("common service 호출! url : ", url)
+
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return "", err
+		return &dto.DeviceInitResponse{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -116,14 +132,35 @@ func (u *coreUsecase) GetConnectInfo(uuid string, serverDomain string) (string, 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return &dto.DeviceInitResponse{}, err
 	}
 
 	defer resp.Body.Close()
 
-	// 응답 출력
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	fmt.Println("Response:", result)
-	return result["result"].(string), nil
+	// serverResponse로 전달받기
+
+	var result dto.ServerResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		fmt.Println("serverReponse 파싱시 에러")
+		return &dto.DeviceInitResponse{}, err
+	}
+
+	resultData, ok := result.Data.(map[string]interface{})
+	if !ok {
+		fmt.Println("Data 필드를 map으로 변환하는 데 실패했습니다.")
+		return &dto.DeviceInitResponse{}, errors.New("invalid data format")
+	}
+
+	authToken, authTokenOk := resultData["authToken"].(string)
+	connectInfo, connectInfoOk := resultData["connectInfo"].(string)
+
+	if !authTokenOk || !connectInfoOk {
+		fmt.Println("authToken 또는 connectInfo string으로 변환하는 데 실패했습니다.")
+		return &dto.DeviceInitResponse{}, errors.New("invalid token format")
+	}
+
+	return &dto.DeviceInitResponse{
+		AppToken:  authToken,
+		ServerUrl: connectInfo,
+	}, nil
 }

@@ -59,11 +59,9 @@ func (u *authUsecase) GetAuth(header *dto.AuthRequestHeader, body *dto.AuthReque
 		configKey = getConfigkey()
 	}
 
-	response := &entities.Auth{
+	return &entities.Auth{
 		Result: result, AccessToken: accessToken, RefreshToken: refreshToken, ConfigKey: configKey,
-	}
-
-	return response, err
+	}, err
 }
 
 func getConfigkey() string {
@@ -128,7 +126,9 @@ func (r *authUsecase) GenerateDeviceToken(body dto.GenerateDeviceTokenRequest) (
 
 	// 토큰 발급
 	token, err := r.GenerateJWT(body.Uuid)
-	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s", body.Uuid, token)
+
+	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, token)
+
 	if err != nil {
 		return &entities.DeviceToken{}, err
 	}
@@ -157,6 +157,8 @@ func (r *authUsecase) GenerateJWT(uuid string) (string, error) {
 	// Access 토큰 유효기간 설정
 	accExpTime := now.Add(time.Duration(3) * time.Minute)
 
+	fmt.Println("jwt 토큰 생성  1 :", accExpTime)
+
 	// 사용자 정보 포함한 Claims 생성
 	uuidClaim := JWTClaims{
 		Username: uuid,
@@ -169,7 +171,12 @@ func (r *authUsecase) GenerateJWT(uuid string) (string, error) {
 
 	// 토큰 생성 (HS256 사용)
 	accToken := jwt.NewWithClaims(jwt.SigningMethodHS256, uuidClaim)
+
+	secret := []byte("neo-test-secret-key")
+
 	// 서명 및 문자열 반환
-	accessToken, err := accToken.SignedString("auth")
+	accessToken, err := accToken.SignedString(secret)
+
+	fmt.Println("jwt 토큰 생성  2 :", accessToken)
 	return accessToken, err
 }

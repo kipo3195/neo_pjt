@@ -55,6 +55,8 @@ func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Printf("CORE 서버에서 호출, uuid : %s, domain : %s \n", body.Uuid, body.Domain)
+
 	// DB에서 해당 works의 정보조회 + AUTH에서 토큰 발급 요청
 	data, err := h.usecase.DeviceInit(body)
 

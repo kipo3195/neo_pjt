@@ -83,7 +83,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
 	/* 마이그레이션 */
 	db.AutoMigrate(&models.AppValidation{})
-	db.AutoMigrate(&models.WorksInfo{})
+	db.AutoMigrate(&models.WorksList{})
 
 	fmt.Println("Common Database Connected !")
 	return db

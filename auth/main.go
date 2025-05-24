@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	log.Println("Auth service is running on :8088")
+	log.Println("Auth service is running on :8087")
 	server := InitServer()
 	log.Fatal(server.ListenAndServe())
 }
@@ -28,7 +28,7 @@ func InitServer() *http.Server {
 	router := routes.SetupRoutes(authHandler)
 
 	return &http.Server{
-		Addr:    ":8088",
+		Addr:    ":8087",
 		Handler: router,
 	}
 }

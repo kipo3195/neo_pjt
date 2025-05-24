@@ -18,7 +18,13 @@ const (
 	E_104     = "E104"
 	E_104_MSG = "header invalid."
 
+	E_500     = "E500"
+	E_500_MSG = "server error."
+
 	// FAIL
 	F_101     = "F001"
 	F_101_MSG = "hash invalid."
+
+	F_102     = "F002"
+	F_102_MSG = "domain or code invalid."
 )

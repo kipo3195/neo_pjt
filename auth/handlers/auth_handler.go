@@ -5,6 +5,7 @@ import (
 	"auth/dto"
 	"auth/usecases"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -82,6 +83,8 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 		Token: r.Header.Get("Authorization"),
 	}
 
+	fmt.Println("common service에서 호출시 던진 토큰 ", header.Token)
+
 	if header.Token == "" {
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{
@@ -110,6 +113,8 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 
 	// 토큰 발급, DB 저장.
 	result, err := h.usecase.GenerateDeviceToken(body)
+	fmt.Println("handler에서 토큰 구조체 반환 result : ", result)
+
 	if err != nil {
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{
@@ -121,6 +126,7 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 		res.Code = consts.SUCCESS
 		res.Data = result
 	}
+	fmt.Println("handler에서 결과 반환 res : ", res)
 
 	json.NewEncoder(w).Encode(res)
 
