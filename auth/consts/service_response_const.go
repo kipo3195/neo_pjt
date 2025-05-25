@@ -2,12 +2,12 @@ package consts
 
 const (
 	// FAIL
-	F_103     = "F003"
-	F_103_MSG = "unregistered uuid"
+	AUTH_F001     = "AUTH_F001"
+	AUTH_F001_MSG = "Unregistered uuid."
 
-	F_104     = "F004"
-	F_104_MSG = "token info mismatch"
+	AUTH_F002     = "AUTH_F002"
+	AUTH_F002_MSG = "Token info mismatch."
 
-	F_105     = "F005"
-	F_105_MSG = "authentication failed"
+	AUTH_F003     = "AUTH_F003"
+	AUTH_F003_MSG = "Authentication failed."
 )

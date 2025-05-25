@@ -69,8 +69,8 @@ func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (
 		case errors.Is(err, consts.ErrInvalidMappingServer):
 			// 매핑된 서버 정보 없음
 			return nil, &dto.ErrorResponse{
-				Code:    consts.F_102,
-				Message: consts.F_102_MSG,
+				Code:    consts.CORE_F102,
+				Message: consts.CORE_F102_MSG,
 			}, true
 		default:
 			// 기타 DB 에러

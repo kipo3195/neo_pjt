@@ -38,8 +38,8 @@ func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequ
 		case errors.Is(err, gorm.ErrRecordNotFound):
 			// 매핑된 hash 정보가 없음
 			return nil, &dto.ErrorResponse{
-				Code:    consts.F_103,
-				Message: consts.F_103_MSG,
+				Code:    consts.AUTH_F001,
+				Message: consts.AUTH_F001_MSG,
 			}, true
 		default:
 			// 기타 DB 에러
@@ -49,11 +49,11 @@ func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequ
 			}, false
 		}
 	}
-	// 토큰 정보 불일치
+	// 토큰 정보 불일치, 재발급 필요.
 	if !flag {
 		return nil, &dto.ErrorResponse{
-			Code:    consts.F_104,
-			Message: consts.F_104_MSG,
+			Code:    consts.AUTH_F002,
+			Message: consts.AUTH_F002_MSG,
 		}, true
 	}
 
@@ -63,10 +63,10 @@ func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequ
 	if err != nil {
 		switch {
 		case errors.Is(err, gorm.ErrRecordNotFound):
-			// 매핑된 hash 정보가 없음
+			// ID, PW와 일치하는 사용자가 없음
 			return nil, &dto.ErrorResponse{
-				Code:    consts.F_105,
-				Message: consts.F_105_MSG,
+				Code:    consts.AUTH_F003,
+				Message: consts.AUTH_F003_MSG,
 			}, true
 		default:
 			// 기타 DB 에러
@@ -77,9 +77,7 @@ func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequ
 		}
 	}
 
-	var result, accessToken, refreshToken, configKey string
-
-	result = "success"
+	var accessToken, refreshToken string
 
 	acc, re, err := GenerateJWT(auth.Id, u.jwtCfg.AccessExp, u.jwtCfg.RefressExp, []byte(u.jwtCfg.Key))
 	if err != nil {
@@ -93,14 +91,17 @@ func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequ
 		refreshToken = re
 	}
 	// config 파일을 풀 수 있는 대칭키
-	configKey = getConfigkey()
+	// configKey = getConfigkey()
 
-	return &entities.Auth{Result: result, AccessToken: accessToken, RefreshToken: refreshToken, ConfigKey: configKey}, nil, false
+	return &entities.Auth{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil, false
 }
 
-func getConfigkey() string {
-	return ""
-}
+// func getConfigkey() string {
+// 	return ""
+// }
 
 type JWTClaims struct {
 	Username string `json:"username"`

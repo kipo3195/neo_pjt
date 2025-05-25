@@ -55,16 +55,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// 비즈니스 로직 호출
 	Auth, err, failFlag := h.usecase.GetAuth(header, body)
 
-	if failFlag {
+	if failFlag { // 인증 실패
 		res.Code = consts.FAIL
 		res.Data = err
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-	} else if err != nil {
+	} else if err != nil { // 에러
 		res.Code = consts.ERROR
 		res.Data = err
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(res)
 	} else {
 		// Entity -> dto로 변환은 handler에서 처리함.
 		res.Code = consts.SUCCESS
@@ -72,8 +70,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			AccessToken:  Auth.AccessToken,
 			RefreshToken: Auth.RefreshToken,
 		}
-		json.NewEncoder(w).Encode(res)
 	}
+	json.NewEncoder(w).Encode(res)
 
 }
 

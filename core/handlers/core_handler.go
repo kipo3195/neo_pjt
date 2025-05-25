@@ -81,8 +81,8 @@ func (h *CoreHandler) GetAppValidation(w http.ResponseWriter, r *http.Request) {
 		// http status code 400
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{
-			Code:    consts.F_101,
-			Message: consts.F_101_MSG,
+			Code:    consts.CORE_F101,
+			Message: consts.CORE_F101_MSG,
 		}
 		w.WriteHeader(http.StatusBadRequest)
 	}
