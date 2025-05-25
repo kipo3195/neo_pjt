@@ -7,17 +7,17 @@ const (
 
 	// ERROR
 	E_101     = "E101"
-	E_101_MSG = "type invalid."
+	E_101_MSG = "Type invalid."
 
 	E_102     = "E102"
-	E_102_MSG = "sql exception."
+	E_102_MSG = "Sql exception."
 
 	E_103     = "E103"
-	E_103_MSG = "data invalid."
+	E_103_MSG = "Data invalid."
 
 	E_104     = "E104"
-	E_104_MSG = "header invalid."
+	E_104_MSG = "Header invalid."
 
 	E_500     = "E500"
-	E_500_MSG = "server error."
+	E_500_MSG = "Server error."
 )

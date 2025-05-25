@@ -6,6 +6,7 @@ import (
 	"auth/models"
 	"errors"
 	"fmt"
+	"log"
 
 	"gorm.io/gorm"
 )
@@ -38,6 +39,7 @@ func (r *authRepository) GetAuth(body *dto.AuthRequest) (*models.AuthInfo, error
 
 	if err == gorm.ErrRecordNotFound {
 		// SQL 실행 중 에러가 발생한 경우
+		log.Println("[GetAuth] - No record found or DB error")
 		return nil, gorm.ErrRecordNotFound
 	} else if err != nil {
 		return nil, err
@@ -53,6 +55,7 @@ func (r *authRepository) PutDeviceToken(token *entities.DeviceToken) (bool, erro
 
 	// Insert 실행
 	if err := r.db.Create(&models).Error; err != nil {
+		log.Println("[PutDeviceToken] - DB error")
 		return false, err
 	}
 	return true, nil
@@ -74,10 +77,10 @@ func (r *authRepository) GetValidation(header *dto.LoginRequestHeader) (bool, er
 	result := r.db.Where("uuid = ?", header.Uuid).Order("seq DESC").First(&validation)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		fmt.Println("레코드를 찾을 수 없습니다.")
+		log.Println("[GetValidation] - No record found")
 		return false, gorm.ErrRecordNotFound
 	} else if result.Error != nil {
-		fmt.Println("sql exception : ", result.Error)
+		log.Println("[GetValidation] - DB error")
 		return false, result.Error
 	} else {
 		serverToken := validation.Token
@@ -87,6 +90,7 @@ func (r *authRepository) GetValidation(header *dto.LoginRequestHeader) (bool, er
 			return true, nil
 		} else {
 			// 토큰 불일치
+			log.Println("[GetValidation] - token mismatch")
 			return false, nil
 		}
 	}

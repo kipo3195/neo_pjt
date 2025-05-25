@@ -36,17 +36,18 @@ func (r *coreRepository) GetValidation(where entities.ValidationWhere) (bool, er
 
 	result := r.db.Where("app_hash = ?", where.Hash).Where("device_kind = ?", where.Device).First(&validation)
 
-	fmt.Println("appvalidation 에러 여부 ", result.Error)
-
 	// 에러 처리
 	if result.Error != nil {
+		log.Println("[GetValidation] - No record found or DB error")
 		return false, result.Error
 	}
 	fmt.Println("appvalidation 조회 수  ", result.RowsAffected)
+
 	if result.RowsAffected > 0 {
 		// 1개이상 조회시만 true
 		return true, nil
 	} else {
+		log.Println("[GetValidation] - DB select X")
 		return false, nil
 	}
 
@@ -57,21 +58,7 @@ func (r *coreRepository) GetWorksInfo(data dto.AppValidationRequest) (*entities.
 	// model
 	var worksList models.WorksList
 
-	var sql = ""
-	var param interface{}
-
-	if data.Type == DOMAIN {
-		sql = "works_domain = ? and use_yn = ?"
-		param = data.Domain
-	} else if data.Type == CODE {
-		sql = "works_code = ? and use_yn = ?"
-		param = data.Code
-	} else {
-		log.Println("[GetWorksInfo] - repo type invalid")
-		return &entities.WorksInfo{}, coreerrors.ErrInvalidType
-	}
-
-	result := r.db.Where(sql, param, "Y").First(&worksList)
+	result := r.db.Where("works_code = ? and use_yn = ?", data.WorksCode, "Y").First(&worksList)
 
 	fmt.Println("도메인이나 코드를 전달 받아서 등록된 테넌트 인지 조회 결과 : ", result)
 
