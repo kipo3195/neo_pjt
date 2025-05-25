@@ -21,7 +21,7 @@ type CoreUsecase interface {
 
 	GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool)
 
-	GetConnectInfo(uuid string, serverDomain string) (*dto.DeviceInitResponse, error)
+	GetConnectInfo(uuid string, worksCode string, serverDomain string) (*dto.DeviceInitResponse, error)
 
 	// 변환
 	ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere
@@ -84,7 +84,7 @@ func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (
 
 		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
 
-		deviceInitResponse, err := u.GetConnectInfo(uuid, result.ConnectInfo.ServerUrl)
+		deviceInitResponse, err := u.GetConnectInfo(uuid, body.WorksCode, result.ConnectInfo.ServerUrl)
 
 		if err != nil {
 			fmt.Println("common service 호출시 에러 발생함.")
@@ -103,11 +103,11 @@ func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (
 
 }
 
-func (u *coreUsecase) GetConnectInfo(uuid string, serverUrl string) (*dto.DeviceInitResponse, error) {
+func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl string) (*dto.DeviceInitResponse, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
-		"uuid":   uuid,
-		"domain": serverUrl,
+		"uuid":      uuid,
+		"worksCode": worksCode,
 	}
 
 	// JSON 변환
@@ -117,7 +117,7 @@ func (u *coreUsecase) GetConnectInfo(uuid string, serverUrl string) (*dto.Device
 	}
 
 	// POST 요청 보내기
-	url := "http://" + serverUrl + "/common/v1/device-init" // http://localhost:8086
+	url := "http://" + serverUrl + "/common/v1/device-init"
 
 	fmt.Println("common service 호출! url : ", url)
 

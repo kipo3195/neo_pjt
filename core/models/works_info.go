@@ -5,7 +5,6 @@ type WorksList struct {
 	ServerUrl string `gorm:"column:server_url"` // 실제로 접속하는 url domain
 	Code      string `gorm:"column:works_code"`
 	Name      string `gorm:"column:works_name"`
-	Domain    string `gorm:"column:works_domain"`
 	UseYn     string `gorm:"column:use_yn"`
 	RegDate   string `gorm:"column:reg_date"`
 }

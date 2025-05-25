@@ -21,7 +21,7 @@ type commonUsecase struct {
 type CommonUsecase interface {
 	GetConfig(dto.ConfigRequest) (*entities.Config, error)
 	DeviceInit(body *dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
-	GenerateDeviceToken(body *dto.DeviceInitRequest, domain string) (string, error)
+	GenerateDeviceToken(body *dto.DeviceInitRequest, serverUrl string) (string, error)
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
@@ -52,7 +52,7 @@ func (u *commonUsecase) GetConfig(req dto.ConfigRequest) (*entities.Config, erro
 func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
 
 	// DB 조회
-	result, err := u.repo.GetConnectInfo(body.Domain)
+	result, err := u.repo.GetConnectInfo(body.WorksCode)
 	if err != nil {
 		return &entities.InitResult{}, &dto.ErrorResponse{
 			Code:    consts.E_102,
@@ -73,7 +73,7 @@ func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitR
 	return result, nil
 }
 
-func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest, domain string) (string, error) {
+func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest, serverUrl string) (string, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid": body.Uuid,
@@ -87,7 +87,7 @@ func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest, domain 
 
 	fmt.Println("auth service 호출! 1")
 
-	url := "http://172.16.10.114:8087/auth/v1/generate-device-token"
+	url := "http://" + serverUrl + "/auth/v1/generate-device-token"
 	//url := domain + "/auth/v1/generate-device-token"
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))

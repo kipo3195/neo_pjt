@@ -1,6 +1,6 @@
 package dto
 
 type DeviceInitRequest struct {
-	Domain string `json:"domain"`
-	Uuid   string `json:"uuid"`
+	WorksCode string `json:"worksCode"`
+	Uuid      string `json:"uuid"`
 }
