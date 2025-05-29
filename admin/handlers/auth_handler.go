@@ -1,11 +1,30 @@
 package handlers
 
-import "admin/usecases"
+import (
+	"admin/usecases"
+	"net/http"
+)
 
-type AuthHandler struct {
-	usecase usecases.AuthUsecase
+type AdminHandler struct {
+	usecase usecases.AdminUsecase
 }
 
-func NewAuthHandler(r usecases.AuthUsecase) *AuthHandler {
-	return &AuthHandler{usecase: r}
+func NewAdminHandler(r usecases.AdminUsecase) *AdminHandler {
+	return &AdminHandler{usecase: r}
+}
+
+func (h *AdminHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (h *AdminHandler) GetDept(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (h *AdminHandler) UpdateDept(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (h *AdminHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
+
 }

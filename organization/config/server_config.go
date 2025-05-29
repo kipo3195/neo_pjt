@@ -75,7 +75,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
 	/* 마이그레이션 */
 
-	fmt.Println("Common Database Connected !")
+	fmt.Println("Org Database Connected !")
 	return db
 }
 

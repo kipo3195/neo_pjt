@@ -22,15 +22,11 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
-	ruleRepo := repositories.NewRuleRepository(db)
-	ruleUC := usecases.NewRuleUsecase(ruleRepo)
-	ruleHandler := handlers.NewRuleHandler(ruleUC)
+	adminRepo := repositories.NewAdminRepository(db)
+	adminUC := usecases.NewAdminUsecase(adminRepo)
+	adminHandler := handlers.NewAdminHandler(adminUC)
 
-	authRepo := repositories.NewAuthRepository(db)
-	authUC := usecases.NewAuthUsecase(authRepo)
-	authHandler := handlers.NewAuthHandler(authUC)
-
-	router := routes.SetupRoutes(ruleHandler, authHandler)
+	router := routes.SetupRoutes(adminHandler)
 
 	return &http.Server{
 		Addr:    ":8089",

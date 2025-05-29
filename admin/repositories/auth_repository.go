@@ -4,13 +4,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type authRepository struct {
+type adminRepository struct {
 	db *gorm.DB
 }
 
-type AuthRepository interface {
+type AdminRepository interface {
 }
 
-func NewAuthRepository(db *gorm.DB) AuthRepository {
-	return &authRepository{db: db}
+func NewAdminRepository(db *gorm.DB) AdminRepository {
+	return &adminRepository{db: db}
 }

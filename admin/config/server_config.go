@@ -1,7 +1,6 @@
 package config
 
 import (
-	"admin/models"
 	"fmt"
 	"log"
 
@@ -39,9 +38,6 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	if err != nil {
 		log.Fatal("Failed to connect to database!")
 	}
-
-	db.AutoMigrate(&models.Rule{}) // 자동 마이그레이션 -> 테이블 자동 생성 (테이블 = 모델)
-	db.AutoMigrate(&models.Admin{})
 
 	fmt.Println("Admin Database Connected !")
 	return db
