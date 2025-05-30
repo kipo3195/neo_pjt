@@ -18,7 +18,7 @@ type authRepository struct {
 type AuthRepository interface {
 	GetAuth(body *dto.AuthRequest) (*models.AuthInfo, error)
 	PutDeviceToken(token *entities.DeviceToken) (bool, error)
-	ToEntityDeviceToken(m *entities.DeviceToken) *models.DeviceToken
+	ToDeviceTokenModel(e *entities.DeviceToken) *models.DeviceToken
 	GetValidation(header *dto.LoginRequestHeader) (bool, error)
 }
 
@@ -51,7 +51,7 @@ func (r *authRepository) GetAuth(body *dto.AuthRequest) (*models.AuthInfo, error
 func (r *authRepository) PutDeviceToken(token *entities.DeviceToken) (bool, error) {
 
 	// entity -> model
-	models := r.ToEntityDeviceToken(token)
+	models := r.ToDeviceTokenModel(token)
 
 	// Insert 실행
 	if err := r.db.Create(&models).Error; err != nil {
@@ -61,10 +61,10 @@ func (r *authRepository) PutDeviceToken(token *entities.DeviceToken) (bool, erro
 	return true, nil
 }
 
-func (r *authRepository) ToEntityDeviceToken(m *entities.DeviceToken) *models.DeviceToken {
+func (r *authRepository) ToDeviceTokenModel(e *entities.DeviceToken) *models.DeviceToken {
 	return &models.DeviceToken{
-		Uuid:  m.Uuid,
-		Token: m.Token,
+		Uuid:  e.Uuid,
+		Token: e.Token,
 	}
 }
 
