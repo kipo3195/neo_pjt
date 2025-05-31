@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"auth/claims"
 	"auth/config"
 	consts "auth/consts"
 	"auth/dto"
@@ -103,11 +104,6 @@ func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequ
 // 	return ""
 // }
 
-type JWTClaims struct {
-	Username string `json:"username"`
-	jwt.RegisteredClaims
-}
-
 // 사인을 위한 key는 byte[]여야 함
 func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) (string, string, error) {
 	// 현재 기준 시간
@@ -119,7 +115,7 @@ func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) 
 	accExpTime := now.Add(time.Duration(accessExp) * time.Minute)
 
 	// 사용자 정보 포함한 Claims 생성
-	accessClaims := JWTClaims{
+	accessClaims := &claims.JWTClaims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accExpTime),
@@ -131,7 +127,7 @@ func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) 
 	// Refresh 토큰 유효기간 설정
 	reExpTime := now.Add(time.Duration(refreshExp) * 24 * time.Hour)
 
-	refreshClaims := JWTClaims{
+	refreshClaims := &claims.JWTClaims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(reExpTime),
@@ -195,7 +191,7 @@ func (r *authUsecase) GenerateJWT(uuid string) (string, error) {
 	fmt.Println("jwt 토큰 생성  1 :", accExpTime)
 
 	// 사용자 정보 포함한 Claims 생성
-	uuidClaim := JWTClaims{
+	uuidClaim := &claims.JWTClaims{
 		Username: uuid,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accExpTime),

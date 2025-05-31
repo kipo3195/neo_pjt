@@ -10,19 +10,23 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecretKey = []byte("your-very-secure-server-secret-key")
+var serverJwtSecretKey = []byte("neo-test-secret-key")
 
 func ServerAuthMiddleware(next http.Handler) http.Handler {
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 토큰 추출 및 검증 로직
-		tokenStr, err := extractTokenFromHeader(r.Header)
+		tokenStr, err := serverExtractTokenFromHeader(r.Header)
 		if err != nil {
+			fmt.Println("토큰 전달 형식이 맞지 않음. header check.")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		_, err = verifyJWT(tokenStr)
+		_, err = serverVerifyJWT(tokenStr)
+		fmt.Println(err.Error())
 		if err != nil {
+			fmt.Println("인증된 토큰이 아님. ")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -32,7 +36,7 @@ func ServerAuthMiddleware(next http.Handler) http.Handler {
 }
 
 // Authorization 헤더에서 "Bearer <token>" 형태로 된 토큰 추출
-func extractTokenFromHeader(header http.Header) (string, error) {
+func serverExtractTokenFromHeader(header http.Header) (string, error) {
 	authHeader := header.Get("Authorization")
 	if authHeader == "" {
 		return "", errors.New("authorization header is missing")
@@ -44,7 +48,7 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 	return parts[1], nil
 }
 
-func verifyJWT(tokenStr string) (bool, error) {
+func serverVerifyJWT(tokenStr string) (bool, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// 서명 알고리즘 확인
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

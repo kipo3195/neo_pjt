@@ -7,6 +7,7 @@ import (
 	"org/config"
 	"org/consts"
 	"org/dto"
+	clDto "org/dto/client"
 	svDto "org/dto/server"
 	"org/usecases"
 	"time"
@@ -25,14 +26,45 @@ func NewOrgHandler(sfg *config.ServerConfig, uc usecases.OrgUsecase) *OrgHandler
 func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 	// response dto 생성
+	var res = clDto.GetOrgResponse{}
 
 	// request 데이터 파싱 header, body -> dto
+	var req = clDto.GetOrgRequest{
+		OrgCode: r.URL.Query().Get("orgCode"),
+	}
 
+	if req.OrgCode == "" {
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_104,
+			Message: consts.E_104_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
 	// usecase 호출
+	data, err := h.usecase.GetOrg(ctx, req)
 
 	// response.
+	if err == nil {
+		// http status code 200
+		res.Code = consts.SUCCESS
+		res.Data = data
+	} else {
+		// http status code 400
+		res.Code = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
 
 }
 

@@ -19,6 +19,15 @@ const (
 	E_104     = "E104"
 	E_104_MSG = "Header invalid."
 
+	E_105     = "E105"
+	E_105_MSG = "Token format invalid."
+
+	E_106     = "E106"
+	E_106_MSG = "Unauthorized."
+
+	E_107     = "E107"
+	E_107_MSG = "Token expired."
+
 	E_500     = "E500"
 	E_500_MSG = "Server error."
 )

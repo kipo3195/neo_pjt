@@ -22,6 +22,7 @@ type orgRepository struct {
 type OrgRepository interface {
 	SaveDepartment(ctx context.Context, entity entities.CreateDepartmentEntity) (interface{}, error)
 	DeleteDepartment(ctx context.Context, entity entities.DeleteDepartmentEntity) (interface{}, error)
+	GetOrg(ctx context.Context, entity entities.GetOrgEntity) (*[]models.WorksOrg, error)
 }
 
 func NewOrgRepository(db *gorm.DB) OrgRepository {
@@ -70,12 +71,12 @@ func (r *orgRepository) ToWorksDeptsModel(e entities.CreateDepartmentEntity) mod
 
 func (r *orgRepository) ToWorksDeptsMultiLangModel(e entities.CreateDepartmentEntity) models.WorksDeptMultiLang {
 	return models.WorksDeptMultiLang{
-		DeptCode:   e.DeptCode,
-		DeptOrg:    e.DeptOrg,
-		DeptNameKr: e.DeptNameKr,
-		DeptNameEn: e.DeptNameEn,
-		DeptNameCn: e.DeptNameCn,
-		DeptNameJp: e.DeptNameJp,
+		DeptCode: e.DeptCode,
+		DeptOrg:  e.DeptOrg,
+		KrLang:   e.KrLang,
+		EnLang:   e.EnLang,
+		JpLang:   e.JpLang,
+		CnLang:   e.CnLang,
 	}
 }
 
@@ -110,4 +111,34 @@ func (r *orgRepository) DeleteDepartment(ctx context.Context, entity entities.De
 	// DB 저장 성공
 	fmt.Println("[DeleteDepartment] success !")
 	return true, nil
+}
+
+func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity) (*[]models.WorksOrg, error) {
+
+	var orgTree *[]models.WorksOrg
+	treeSql := `WITH RECURSIVE dept_tree AS (
+			SELECT 
+				dept_code,
+				parent_dept_code,
+				dept_update_hash
+			FROM works_dept
+			WHERE parent_dept_code = 'root'
+			UNION ALL
+			SELECT 
+				d.dept_code,
+				d.parent_dept_code,
+				d.dept_update_hash
+			FROM works_dept d
+			INNER JOIN dept_tree dt ON d.parent_dept_code = dt.dept_code
+		) SELECT a.dept_code, a.parent_dept_code, b.kr_lang, b.en_lang, b.cn_lang, b.jp_lang, a.dept_update_hash 
+		FROM dept_tree as a join works_dept_multi_lang as b on a.dept_code = b.dept_code ;`
+
+	err := r.db.Raw(treeSql).Scan(&orgTree).Error
+
+	if err != nil {
+		log.Println("[GetOrg] - No record found or DB error")
+		return nil, err
+	}
+
+	return orgTree, nil
 }

@@ -66,6 +66,7 @@ func initDBConfig() *DBConfig {
 
 // jwt 설정 조회
 func initJwtConfig() *JWTConfig {
+	// 이 값이 환경변수에 등록되어있지않으면 검증하는 쪽에서 signature에러 발생.
 	key := os.Getenv("JWT_SECRET_KEY")
 	accessExp, err := strconv.Atoi(os.Getenv("ACCESS_TOKEN_EXP_M"))
 	if err != nil {

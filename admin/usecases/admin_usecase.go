@@ -43,10 +43,10 @@ func toCreateDepartmentEntity(req dto.CreateDeptRequest) entities.CreateDepartme
 		DeptCode:       req.DeptCode,
 		DeptOrg:        req.DeptOrg,
 		ParentDeptCode: req.ParentDeptCode,
-		DeptNameKr:     req.DeptNameKr,
-		DeptNameEn:     req.DeptNameEn,
-		DeptNameJp:     req.DeptNameJp,
-		DeptNameCn:     req.DeptNameCn,
+		KrLang:         req.KrLang,
+		EnLang:         req.EnLang,
+		JpLang:         req.JpLang,
+		CnLang:         req.CnLang,
 	}
 }
 
