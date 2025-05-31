@@ -20,13 +20,19 @@ func SetupRoutes(orgHandler *handlers.OrgHandler) *mux.Router {
 	// 요청하는 부서에 대한 조회. DB 방식, 최상위 포함.
 	orgV1.HandleFunc("/departments", orgHandler.GetDept).Methods("GET")
 
+	//----------------------------------------------------------------------------------------------------------------------------//
+
 	/* 서버에서 호출하는 API */
-	orgSV1 := r.PathPrefix("org/sv1").Subrouter()
+	orgSV1 := r.PathPrefix("/org/sv1").Subrouter()
+
 	// 서버 간 토큰 인증용 미들웨어
-	orgSV1.Use(ServerAuthMiddleware)
+	// orgSV1.Use(ServerAuthMiddleware)
 
 	// 부서 생성
 	orgSV1.HandleFunc("/departments", orgHandler.ServerCreateDept).Methods("POST")
+
+	// 삭제
+	orgSV1.HandleFunc("/departments", orgHandler.ServerDeleteDept).Methods("DELETE")
 
 	return r
 }

@@ -92,3 +92,45 @@ func (h *OrgHandler) ServerCreateDept(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 
 }
+
+func (h *OrgHandler) ServerDeleteDept(w http.ResponseWriter, r *http.Request) {
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// response dto 생성
+	var res = svDto.ServerDeleteDeptResponse{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = svDto.ServerDeleteDeptRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// usecase 호출
+	data, err := h.usecase.ServerDeleteDepartment(ctx, req)
+
+	if err == nil {
+		// http status code 200
+		res.Code = consts.SUCCESS
+		res.Data = data
+	} else {
+		// http status code 400
+		res.Code = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
+
+}

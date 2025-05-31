@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"org/models"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -74,6 +75,8 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	}
 
 	/* 마이그레이션 */
+	db.AutoMigrate(&models.WorksDept{})
+	db.AutoMigrate(&models.WorksDeptMultiLang{})
 
 	fmt.Println("Org Database Connected !")
 	return db
