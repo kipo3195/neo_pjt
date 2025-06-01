@@ -12,7 +12,12 @@ func SetupRoutes(coreHandler *handlers.CoreHandler) *mux.Router {
 	// v2 생성시 coreV2 := r.PathPrefix("/core/v2").Subrouter()..
 	coreV1 := r.PathPrefix("/core/v1").Subrouter()
 
+	// TODO client 미들웨어
 	coreV1.HandleFunc("/app-validation", coreHandler.GetAppValidation).Methods("POST")
+
+	//----------------------------------------------------------------------------------------------------------------------------//
+
+	// TODO server 미들웨어
 	coreV1.HandleFunc("/config", coreHandler.GetConfig).Methods("POST")
 
 	return r

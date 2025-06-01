@@ -3,7 +3,9 @@ package usecases
 import (
 	"bytes"
 	consts "core/consts"
-	"core/dto"
+	clDto "core/dto/client"
+	dto "core/dto/common"
+	svDto "core/dto/server"
 	"core/entities"
 	"core/repositories"
 	"encoding/json"
@@ -17,21 +19,21 @@ type coreUsecase struct {
 }
 
 type CoreUsecase interface {
-	CheckValidation(header *dto.AppValidationRequestHeader) bool
+	CheckValidation(header *clDto.AppValidationRequestHeader) bool
 
-	GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool)
+	GetWorksInfo(body clDto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool)
 
-	GetConnectInfo(uuid string, worksCode string, serverDomain string) (*dto.DeviceInitResponse, error)
+	GetConnectInfo(uuid string, worksCode string, serverDomain string) (*svDto.SvDeviceInitResponse, error)
 
 	// 변환
-	ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere
+	ToValidationWhereEntity(header *clDto.AppValidationRequestHeader) entities.ValidationWhere
 }
 
 func NewCoreUsecase(repo repositories.CoreRepository) CoreUsecase {
 	return &coreUsecase{repo: repo}
 }
 
-func (u *coreUsecase) CheckValidation(header *dto.AppValidationRequestHeader) bool {
+func (u *coreUsecase) CheckValidation(header *clDto.AppValidationRequestHeader) bool {
 
 	validationWhere := u.ToValidationWhereEntity(header)
 
@@ -44,14 +46,14 @@ func (u *coreUsecase) CheckValidation(header *dto.AppValidationRequestHeader) bo
 	return true
 }
 
-func (u *coreUsecase) ToValidationWhereEntity(header *dto.AppValidationRequestHeader) entities.ValidationWhere {
+func (u *coreUsecase) ToValidationWhereEntity(header *clDto.AppValidationRequestHeader) entities.ValidationWhere {
 	return entities.ValidationWhere{
 		Hash:   header.Hash,
 		Device: header.Device,
 	}
 }
 
-func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool) {
+func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool) {
 
 	// 에러타입이 뭐냐에따라 처리..
 	result, err := u.repo.GetWorksInfo(body)
@@ -103,7 +105,7 @@ func (u *coreUsecase) GetWorksInfo(body dto.AppValidationRequest, uuid string) (
 
 }
 
-func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl string) (*dto.DeviceInitResponse, error) {
+func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl string) (*svDto.SvDeviceInitResponse, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid":      uuid,
@@ -113,7 +115,7 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 	// JSON 변환
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return &dto.DeviceInitResponse{}, err
+		return &svDto.SvDeviceInitResponse{}, err
 	}
 
 	// POST 요청 보내기
@@ -123,7 +125,7 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return &dto.DeviceInitResponse{}, err
+		return &svDto.SvDeviceInitResponse{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -132,7 +134,7 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return &dto.DeviceInitResponse{}, err
+		return &svDto.SvDeviceInitResponse{}, err
 	}
 
 	defer resp.Body.Close()
@@ -142,13 +144,13 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 	var result dto.ServerResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
-		return &dto.DeviceInitResponse{}, err
+		return &svDto.SvDeviceInitResponse{}, err
 	}
 
 	resultData, ok := result.Data.(map[string]interface{})
 	if !ok {
 		fmt.Println("Data 필드를 map으로 변환하는 데 실패했습니다.")
-		return &dto.DeviceInitResponse{}, errors.New("invalid data format")
+		return &svDto.SvDeviceInitResponse{}, errors.New("invalid data format")
 	}
 
 	authToken, authTokenOk := resultData["authToken"].(string)
@@ -156,10 +158,10 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 
 	if !authTokenOk || !connectInfoOk {
 		fmt.Println("authToken 또는 connectInfo string으로 변환하는 데 실패했습니다.")
-		return &dto.DeviceInitResponse{}, errors.New("invalid token format")
+		return &svDto.SvDeviceInitResponse{}, errors.New("invalid token format")
 	}
 
-	return &dto.DeviceInitResponse{
+	return &svDto.SvDeviceInitResponse{
 		AppToken:  authToken,
 		ServerUrl: connectInfo,
 	}, nil

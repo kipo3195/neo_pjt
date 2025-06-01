@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"org/claims"
 	"org/consts"
-	"org/dto"
+	dto "org/dto/common"
 	"strings"
 	"time"
 

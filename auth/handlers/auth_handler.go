@@ -2,7 +2,9 @@ package handlers
 
 import (
 	consts "auth/consts"
-	"auth/dto"
+	clDto "auth/dto/client"
+	dto "auth/dto/common"
+	svDto "auth/dto/server"
 	"auth/usecases"
 	"encoding/json"
 	"fmt"
@@ -23,7 +25,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var res dto.Response
 
 	// request의 header 데이터 -> dto로 변경
-	header := &dto.LoginRequestHeader{
+	header := &clDto.LoginRequestHeader{
 		Token: r.Header.Get("X-NEO-AuthToken"),
 		Uuid:  r.Header.Get("X-NEO-Uuid"),
 	}
@@ -40,7 +42,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// request body 데이터 -> dto로 변경
-	var body *dto.AuthRequest
+	var body *clDto.AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.ERROR
 		res.Data = dto.ErrorResponse{
@@ -66,7 +68,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Entity -> dto로 변환은 handler에서 처리함.
 		res.Code = consts.SUCCESS
-		res.Data = dto.AuthResponse{
+		res.Data = clDto.AuthResponse{
 			AccessToken:  Auth.AccessToken,
 			RefreshToken: Auth.RefreshToken,
 		}
@@ -77,10 +79,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request) {
 	// response
-	var res dto.GenerateDeviceTokenResponse
+	var res svDto.SvGenerateDeviceTokenResponse
 
 	// request의 header 데이터 -> dto로 변경
-	header := &dto.GenerateDeviceTokenRequestHeader{
+	header := &svDto.SvGenerateDeviceTokenRequestHeader{
 		Token: r.Header.Get("Authorization"),
 	}
 
@@ -99,7 +101,7 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 	// 서버의 토큰 검증 필요
 
 	// request body 데이터 -> dto로 변경
-	var body dto.GenerateDeviceTokenRequest
+	var body svDto.SvGenerateDeviceTokenRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.FAIL

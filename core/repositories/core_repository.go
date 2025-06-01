@@ -2,7 +2,8 @@ package repositories
 
 import (
 	coreerrors "core/consts"
-	"core/dto"
+	clDto "core/dto/client"
+	dto "core/dto/client"
 	"core/entities"
 	"core/models"
 	"errors"
@@ -23,7 +24,7 @@ type coreRepository struct {
 
 type CoreRepository interface {
 	GetValidation(where entities.ValidationWhere) (bool, error)
-	GetWorksInfo(body dto.AppValidationRequest) (*entities.WorksInfo, error)
+	GetWorksInfo(body clDto.AppValidationRequest) (*entities.WorksInfo, error)
 }
 
 func NewCoreRepository(db *gorm.DB) CoreRepository {

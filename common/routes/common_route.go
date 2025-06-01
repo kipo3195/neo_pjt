@@ -11,8 +11,13 @@ func SetupRoutes(commonHandler *handlers.CommonHandler) *mux.Router {
 
 	commonV1 := r.PathPrefix("/common/v1").Subrouter()
 
-	commonV1.HandleFunc("/device-init", commonHandler.DeviceInit).Methods("POST")
+	// TODO 클라이언트 middleware
 	commonV1.HandleFunc("/get-config", commonHandler.GetConfig).Methods("POST")
+
+	//----------------------------------------------------------------------------------------------------------------------------//
+
+	// TODO 서버 middleware
+	commonV1.HandleFunc("/device-init", commonHandler.DeviceInit).Methods("POST")
 
 	return r
 }

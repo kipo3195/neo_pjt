@@ -3,7 +3,8 @@ package handlers
 import (
 	"core/config"
 	consts "core/consts"
-	"core/dto"
+	clDto "core/dto/client"
+	dto "core/dto/common"
 	"core/usecases"
 	"encoding/json"
 	"net/http"
@@ -22,11 +23,11 @@ func NewCoreHandler(sfg *config.ServerConfig, uc usecases.CoreUsecase) *CoreHand
 func (h *CoreHandler) GetAppValidation(w http.ResponseWriter, r *http.Request) {
 
 	// 해당 API의 response
-	var res = dto.AppValidationResponse{}
+	var res = clDto.AppValidationResponse{}
 
 	// request의 header 데이터 -> dto로 변경
 	var headerPrefix = h.sfg.ApiConfig.NeoHeaderPrefix
-	header := &dto.AppValidationRequestHeader{
+	header := &clDto.AppValidationRequestHeader{
 		Hash:   r.Header.Get(headerPrefix + "Hash"),
 		Device: r.Header.Get(headerPrefix + "Device"),
 		Uuid:   r.Header.Get(headerPrefix + "Uuid"),
@@ -44,7 +45,7 @@ func (h *CoreHandler) GetAppValidation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// request body 데이터 -> dto로 변경
-	var body dto.AppValidationRequest
+	var body clDto.AppValidationRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.FAIL

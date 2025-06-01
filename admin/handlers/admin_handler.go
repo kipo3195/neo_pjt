@@ -2,7 +2,8 @@ package handlers
 
 import (
 	"admin/consts"
-	"admin/dto"
+	clDto "admin/dto/client"
+	dto "admin/dto/common"
 	"admin/usecases"
 	"encoding/json"
 	"fmt"
@@ -25,10 +26,10 @@ func (h *AdminHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// response dto 생성
-	var res = dto.CreateDeptResponse{}
+	var res = clDto.CreateDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = dto.CreateDeptRequest{}
+	var req = clDto.CreateDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Code = consts.FAIL
@@ -84,10 +85,10 @@ func (h *AdminHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// response dto 생성
-	var res = dto.DeleteDeptResponse{}
+	var res = clDto.DeleteDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = dto.DeleteDeptRequest{}
+	var req = clDto.DeleteDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Code = consts.FAIL

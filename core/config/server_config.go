@@ -85,7 +85,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	db.AutoMigrate(&models.AppValidation{})
 	db.AutoMigrate(&models.WorksList{})
 
-	fmt.Println("Common Database Connected !")
+	fmt.Println("Core Database Connected !")
 	return db
 }
 

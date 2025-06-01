@@ -1,6 +1,6 @@
 package dto
 
-type DeviceInitResponse struct {
+type SvDeviceInitResponse struct {
 	AppToken  string
 	ServerUrl string
 }

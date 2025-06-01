@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"auth/dto"
+	clDto "auth/dto/client"
 	"auth/entities"
 	"auth/models"
 	"errors"
@@ -16,10 +16,10 @@ type authRepository struct {
 }
 
 type AuthRepository interface {
-	GetAuth(body *dto.AuthRequest) (*models.AuthInfo, error)
+	GetAuth(body *clDto.AuthRequest) (*models.AuthInfo, error)
 	PutDeviceToken(token *entities.DeviceToken) (bool, error)
 	ToDeviceTokenModel(e *entities.DeviceToken) *models.DeviceToken
-	GetValidation(header *dto.LoginRequestHeader) (bool, error)
+	GetValidation(header *clDto.LoginRequestHeader) (bool, error)
 }
 
 func NewAuthRepository(db *gorm.DB) AuthRepository {
@@ -27,7 +27,7 @@ func NewAuthRepository(db *gorm.DB) AuthRepository {
 	return &authRepository{db: db}
 }
 
-func (r *authRepository) GetAuth(body *dto.AuthRequest) (*models.AuthInfo, error) {
+func (r *authRepository) GetAuth(body *clDto.AuthRequest) (*models.AuthInfo, error) {
 
 	var auth *models.AuthInfo
 
@@ -68,7 +68,7 @@ func (r *authRepository) ToDeviceTokenModel(e *entities.DeviceToken) *models.Dev
 	}
 }
 
-func (r *authRepository) GetValidation(header *dto.LoginRequestHeader) (bool, error) {
+func (r *authRepository) GetValidation(header *clDto.LoginRequestHeader) (bool, error) {
 
 	var validation models.DeviceToken
 

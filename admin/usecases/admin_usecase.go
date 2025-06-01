@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"admin/dto"
+	clDto "admin/dto/client"
 	"admin/entities"
 	"admin/repositories"
 	"bytes"
@@ -16,15 +16,15 @@ type adminUsecase struct {
 }
 
 type AdminUsecase interface {
-	CreateDepartment(ctx context.Context, req dto.CreateDeptRequest) (interface{}, error)
-	DeleteDepartment(ctx context.Context, req dto.DeleteDeptRequest) (interface{}, error)
+	CreateDepartment(ctx context.Context, req clDto.CreateDeptRequest) (interface{}, error)
+	DeleteDepartment(ctx context.Context, req clDto.DeleteDeptRequest) (interface{}, error)
 }
 
 func NewAdminUsecase(repo repositories.AdminRepository) AdminUsecase {
 	return &adminUsecase{repo: repo}
 }
 
-func (r *adminUsecase) CreateDepartment(ctx context.Context, req dto.CreateDeptRequest) (interface{}, error) {
+func (r *adminUsecase) CreateDepartment(ctx context.Context, req clDto.CreateDeptRequest) (interface{}, error) {
 	entity := toCreateDepartmentEntity(req)
 	// org 서비스 호출
 
@@ -37,7 +37,7 @@ func (r *adminUsecase) CreateDepartment(ctx context.Context, req dto.CreateDeptR
 	return nil, nil
 }
 
-func toCreateDepartmentEntity(req dto.CreateDeptRequest) entities.CreateDepartmentEntity {
+func toCreateDepartmentEntity(req clDto.CreateDeptRequest) entities.CreateDepartmentEntity {
 
 	return entities.CreateDepartmentEntity{
 		DeptCode:       req.DeptCode,
@@ -87,7 +87,7 @@ func createDepartmentInOrg(ctx context.Context, entity entities.CreateDepartment
 	return nil
 }
 
-func (r *adminUsecase) DeleteDepartment(ctx context.Context, req dto.DeleteDeptRequest) (interface{}, error) {
+func (r *adminUsecase) DeleteDepartment(ctx context.Context, req clDto.DeleteDeptRequest) (interface{}, error) {
 	entity := toDeleteDepartmentEntity(req)
 	// org 서비스 호출
 
@@ -100,7 +100,7 @@ func (r *adminUsecase) DeleteDepartment(ctx context.Context, req dto.DeleteDeptR
 	return nil, nil
 }
 
-func toDeleteDepartmentEntity(req dto.DeleteDeptRequest) entities.DeleteDepartmentEntity {
+func toDeleteDepartmentEntity(req clDto.DeleteDeptRequest) entities.DeleteDepartmentEntity {
 
 	return entities.DeleteDepartmentEntity{
 		DeptCode: req.DeptCode,

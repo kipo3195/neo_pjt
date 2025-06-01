@@ -1,6 +1,6 @@
 package dto
 
-type DeviceInitRequest struct {
+type SvDeviceInitRequest struct {
 	WorksCode string `json:"worksCode"`
 	Uuid      string `json:"uuid"`
 }

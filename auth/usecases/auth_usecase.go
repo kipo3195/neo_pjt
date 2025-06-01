@@ -4,7 +4,9 @@ import (
 	"auth/claims"
 	"auth/config"
 	consts "auth/consts"
-	"auth/dto"
+	clDto "auth/dto/client"
+	dto "auth/dto/common"
+	svDto "auth/dto/server"
 	"auth/entities"
 	"auth/repositories"
 	"errors"
@@ -21,8 +23,8 @@ type authUsecase struct {
 }
 
 type AuthUsecase interface {
-	GetAuth(*dto.LoginRequestHeader, *dto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool)
-	GenerateDeviceToken(body dto.GenerateDeviceTokenRequest) (*entities.DeviceToken, error)
+	GetAuth(*clDto.LoginRequestHeader, *clDto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool)
+	GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceToken, error)
 	GenerateJWT(uuid string) (string, error)
 }
 
@@ -30,7 +32,7 @@ func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) 
 	return &authUsecase{repo: repo, jwtCfg: jwtCfg}
 }
 
-func (u *authUsecase) GetAuth(header *dto.LoginRequestHeader, body *dto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool) {
+func (u *authUsecase) GetAuth(header *clDto.LoginRequestHeader, body *clDto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool) {
 
 	// app hash 부터 검증
 	flag, err := u.repo.GetValidation(header)
@@ -153,7 +155,7 @@ func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) 
 	return accessToken, refreshToken, nil
 }
 
-func (r *authUsecase) GenerateDeviceToken(body dto.GenerateDeviceTokenRequest) (*entities.DeviceToken, error) {
+func (r *authUsecase) GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceToken, error) {
 
 	// 토큰 발급
 	token, err := r.GenerateJWT(body.Uuid)

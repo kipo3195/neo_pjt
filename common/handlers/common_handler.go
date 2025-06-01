@@ -2,7 +2,9 @@ package handlers
 
 import (
 	consts "common/consts"
-	"common/dto"
+	clDto "common/dto/client"
+	dto "common/dto/common"
+	svDto "common/dto/server"
 	"common/usecases"
 	"encoding/json"
 	"fmt"
@@ -20,10 +22,10 @@ func NewCommonHandler(uc usecases.CommonUsecase) *CommonHandler {
 func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 
 	// 해당 API의 response
-	var res = dto.DeviceInitResponse{}
+	var res = svDto.SvDeviceInitResponse{}
 
 	// request의 header 데이터 -> dto로 변경
-	header := &dto.DeviceInitRequestHeader{
+	header := &svDto.SvDeviceInitRequestHeader{
 		Token: r.Header.Get("Authorization"), // const로 TODO
 	}
 
@@ -43,7 +45,7 @@ func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 	// core서비스에서 온 토큰 검증 필요 todo
 
 	// request body 데이터 -> dto로 변경
-	var body *dto.DeviceInitRequest
+	var body *svDto.SvDeviceInitRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{
@@ -76,7 +78,7 @@ func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 func (h *CommonHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
 
 	// request 데이터 -> dto로 변경
-	var configRequest dto.ConfigRequest
+	var configRequest clDto.ConfigRequest
 	if err := json.NewDecoder(r.Body).Decode(&configRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

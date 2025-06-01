@@ -3,7 +3,9 @@ package usecases
 import (
 	"bytes"
 	consts "common/consts"
-	"common/dto"
+	clDto "common/dto/client"
+	dto "common/dto/common"
+	svDto "common/dto/server"
 	"common/entities"
 	"common/repositories"
 	"encoding/json"
@@ -19,16 +21,16 @@ type commonUsecase struct {
 }
 
 type CommonUsecase interface {
-	GetConfig(dto.ConfigRequest) (*entities.Config, error)
-	DeviceInit(body *dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
-	GenerateDeviceToken(body *dto.DeviceInitRequest, serverUrl string) (string, error)
+	GetConfig(clDto.ConfigRequest) (*entities.Config, error)
+	DeviceInit(body *svDto.SvDeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
+	GenerateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (string, error)
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
 	return &commonUsecase{repo: repo}
 }
 
-func (u *commonUsecase) GetConfig(req dto.ConfigRequest) (*entities.Config, error) {
+func (u *commonUsecase) GetConfig(req clDto.ConfigRequest) (*entities.Config, error) {
 	// 대부분의 시스템에서는 단일 파일 다운로드 시 다음과 같은 패턴을 따릅니다:
 	// Content-Type: application/octet-stream 또는 해당 파일 타입 (예: application/json, text/plain, application/x-yaml 등)
 
@@ -49,7 +51,7 @@ func (u *commonUsecase) GetConfig(req dto.ConfigRequest) (*entities.Config, erro
 	}, nil
 }
 
-func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
+func (u *commonUsecase) DeviceInit(body *svDto.SvDeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
 
 	// DB 조회
 	result, err := u.repo.GetConnectInfo(body.WorksCode)
@@ -73,7 +75,7 @@ func (u *commonUsecase) DeviceInit(body *dto.DeviceInitRequest) (*entities.InitR
 	return result, nil
 }
 
-func (u *commonUsecase) GenerateDeviceToken(body *dto.DeviceInitRequest, serverUrl string) (string, error) {
+func (u *commonUsecase) GenerateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (string, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid": body.Uuid,
