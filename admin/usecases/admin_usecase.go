@@ -18,6 +18,7 @@ type adminUsecase struct {
 type AdminUsecase interface {
 	CreateDepartment(ctx context.Context, req clDto.CreateDeptRequest) (interface{}, error)
 	DeleteDepartment(ctx context.Context, req clDto.DeleteDeptRequest) (interface{}, error)
+	CreateOrgFile(ctx context.Context, req clDto.CreateOrgFileRequest) (interface{}, error)
 }
 
 func NewAdminUsecase(repo repositories.AdminRepository) AdminUsecase {
@@ -97,6 +98,7 @@ func (r *adminUsecase) DeleteDepartment(ctx context.Context, req clDto.DeleteDep
 		return nil, err
 	}
 
+	// 여기 수정해야할듯.
 	return nil, nil
 }
 
@@ -143,4 +145,62 @@ func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartment
 	}
 
 	return nil
+}
+
+func (r *adminUsecase) CreateOrgFile(ctx context.Context, req clDto.CreateOrgFileRequest) (interface{}, error) {
+
+	entity := toCreateOrgFileEntity(req)
+	// org 서비스 호출
+
+	// 이 함수 내부에서 호출
+	result, err := CreateOrgFileInOrg(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func toCreateOrgFileEntity(req clDto.CreateOrgFileRequest) entities.CreateOrgFileEntity {
+	return entities.CreateOrgFileEntity{
+		OrgCode: req.OrgCode,
+	}
+}
+
+func CreateOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity) (interface{}, error) {
+
+	payload, _ := json.Marshal(entity)
+
+	url := "http://172.16.10.114/org/sv1/org/file"
+
+	fmt.Println("create org file api 호출! url : ", url)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer serverToken")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println("org error : ", err)
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+		default:
+			return nil, fmt.Errorf("request failed: %w", err)
+		}
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("org service returned status %d", resp.StatusCode)
+	}
+
+	return http.StatusOK, nil
 }

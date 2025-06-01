@@ -1,6 +1,6 @@
 package server
 
-type ServerDeleteDeptRequest struct {
+type SvDeleteDeptRequest struct {
 	DeptOrg  string `json:"deptOrg"`
 	DeptCode string `json:"deptCode"`
 }

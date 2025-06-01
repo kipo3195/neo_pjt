@@ -7,8 +7,8 @@ import (
 )
 
 func SetupRoutes(orgHandler *handlers.OrgHandler) *mux.Router {
-	r := mux.NewRouter()
 	// 메인 /org + 서브 라우터 활용
+	r := mux.NewRouter()
 
 	/* 클라이언트가 호출하는 API */
 	// v2 생성시 coreV2 := r.PathPrefix("/org/v2").Subrouter()..
@@ -35,6 +35,9 @@ func SetupRoutes(orgHandler *handlers.OrgHandler) *mux.Router {
 
 	// 삭제
 	orgSV1.HandleFunc("/departments", orgHandler.ServerDeleteDept).Methods("DELETE")
+
+	// 현재 기준으로 org 파일 및 DB 저장
+	orgSV1.HandleFunc("/org/file", orgHandler.ServerCreateOrgFile).Methods("POST")
 
 	return r
 }

@@ -1,6 +1,6 @@
 package server
 
-type ServerCreateDeptRequest struct {
+type SvCreateDeptRequest struct {
 	DeptOrg        string `json:"deptOrg"`
 	DeptCode       string `json:"deptCode"`
 	ParentDeptCode string `json:"parentDeptCode"`

@@ -129,3 +129,76 @@ func (h *AdminHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 
 }
+
+func (h *AdminHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
+	ctx := r.Context()
+
+	// response dto 생성
+	var res = clDto.CreateOrgFileResponse{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = clDto.CreateOrgFileRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		// 검증 실패 처리
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	// usecase 호출
+	data, err := h.usecase.CreateOrgFile(ctx, req)
+
+	fmt.Println(data)
+
+	if err == nil {
+		// http status code 200
+		res.Code = consts.SUCCESS
+		res.Data = data
+	} else {
+		// 서버 - 서버 통신이 실패했다는 의미.
+		res.Code = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
+
+}
+
+func (h *AdminHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
+	//ctx := r.Context()
+
+	// response dto 생성
+	var res = clDto.CreateOrgFileResponse{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = clDto.CreateOrgFileRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+}

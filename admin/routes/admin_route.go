@@ -21,5 +21,9 @@ func SetupRoutes(adminHandler *handlers.AdminHandler) *mux.Router {
 	adminV1.HandleFunc("/departments", adminHandler.UpdateDept).Methods("PUT")
 	adminV1.HandleFunc("/departments", adminHandler.DeleteDept).Methods("DELETE")
 
+	// 현재 DB를 기준으로 org를 파일로 만드는 API
+	adminV1.HandleFunc("/org/file", adminHandler.CreateOrgFile).Methods("POST") // 생성
+	adminV1.HandleFunc("/org/file", adminHandler.GetOrgFile).Methods("GET")     // 조회
+
 	return r
 }

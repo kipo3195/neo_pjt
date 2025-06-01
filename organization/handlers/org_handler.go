@@ -90,10 +90,10 @@ func (h *OrgHandler) ServerCreateDept(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = svDto.ServerCreateDeptResponse{}
+	var res = svDto.SvCreateDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = svDto.ServerCreateDeptRequest{}
+	var req = svDto.SvCreateDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Code = consts.FAIL
@@ -132,10 +132,10 @@ func (h *OrgHandler) ServerDeleteDept(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = svDto.ServerDeleteDeptResponse{}
+	var res = svDto.SvDeleteDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = svDto.ServerDeleteDeptRequest{}
+	var req = svDto.SvDeleteDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Code = consts.FAIL
@@ -160,6 +160,49 @@ func (h *OrgHandler) ServerDeleteDept(w http.ResponseWriter, r *http.Request) {
 		res.Code = consts.ERROR
 		res.Data = err
 		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
+
+}
+
+func (h *OrgHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// response dto 생성
+	var res = dto.Response{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = svDto.SvCreateOrgFileRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// usecase 호출
+	data, err := h.usecase.ServerCreateOrgFile(ctx, req)
+
+	if err == nil {
+		// http status code 200
+		res.Code = consts.SUCCESS
+		res.Data = data
+	} else {
+		// http status code 500
+		res.Code = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	// response.

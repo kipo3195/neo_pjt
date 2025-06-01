@@ -122,7 +122,7 @@ func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity
 				parent_dept_code,
 				dept_update_hash
 			FROM works_dept
-			WHERE parent_dept_code = 'root'
+			WHERE parent_dept_code = 'root' and dept_org = ?
 			UNION ALL
 			SELECT 
 				d.dept_code,
@@ -130,10 +130,11 @@ func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity
 				d.dept_update_hash
 			FROM works_dept d
 			INNER JOIN dept_tree dt ON d.parent_dept_code = dt.dept_code
+			where dept_org = ?
 		) SELECT a.dept_code, a.parent_dept_code, b.kr_lang, b.en_lang, b.cn_lang, b.jp_lang, a.dept_update_hash 
 		FROM dept_tree as a join works_dept_multi_lang as b on a.dept_code = b.dept_code ;`
 
-	err := r.db.Raw(treeSql).Scan(&orgTree).Error
+	err := r.db.Raw(treeSql, entity.OrgCode, entity.OrgCode).Scan(&orgTree).Error
 
 	if err != nil {
 		log.Println("[GetOrg] - No record found or DB error")
