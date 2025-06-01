@@ -20,6 +20,7 @@ type orgUsecase struct {
 
 type OrgUsecase interface {
 	GetOrg(ctx context.Context, req clDto.GetOrgRequest) (*entities.OrgEntity, error)
+	GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest) (interface{}, error)
 
 	ServerCreateDepartment(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
 	ServerDeleteDepartment(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
@@ -210,4 +211,14 @@ func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreate
 // 경로가 없으면 생성
 func ensureDir(dirPath string) error {
 	return os.MkdirAll(dirPath, os.ModePerm)
+}
+
+func (r *orgUsecase) GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest) (interface{}, error) {
+	filePath := "./storage/org_files/org_entity.json" // 전달할 파일 경로
+	fileBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return fileBytes, nil
 }

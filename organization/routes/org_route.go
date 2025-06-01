@@ -19,6 +19,8 @@ func SetupRoutes(orgHandler *handlers.OrgHandler) *mux.Router {
 	// 최초에 한하여 org의 모든 조직도 정보. 로컬 방식, response는 프로토콜 버퍼나 압축된 형태여야함
 	orgV1.HandleFunc("/orgs", orgHandler.GetOrg).Methods("GET")
 
+	orgV1.HandleFunc("/orgs/file", orgHandler.GetOrgFile).Methods("GET") // 토큰 검증?
+
 	// 요청하는 부서에 대한 조회. DB 방식, 최상위 포함.
 	orgV1.HandleFunc("/departments", orgHandler.GetDept).Methods("GET")
 

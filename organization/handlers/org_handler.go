@@ -209,3 +209,49 @@ func (h *OrgHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(res)
 
 }
+
+func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// response dto 생성
+	var res = clDto.GetOrgFileResponse{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = clDto.GetOrgFileRequest{
+		OrgCode: r.URL.Query().Get("orgCode"),
+	}
+
+	if req.OrgCode == "" {
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_104,
+			Message: consts.E_104_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	// usecase 호출
+	data, err := h.usecase.GetOrgFile(ctx, req)
+
+	// response.
+	if err == nil {
+		// http status code 200
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", `attachment; filename="org_entity.zip"`)
+		w.Write(data.([]byte))
+	} else {
+		// http status code 400
+		res.Code = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
+
+}
