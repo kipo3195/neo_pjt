@@ -113,7 +113,7 @@ func (u *commonUsecase) GenerateDeviceToken(body *svDto.SvDeviceInitRequest, ser
 	// 서버간 통신에서 var result dto.ServerResponsed 이 구조를 사용할 것인지 고민
 
 	// 응답 출력
-	var result dto.ServerResponse
+	var result dto.Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
 		return "", err

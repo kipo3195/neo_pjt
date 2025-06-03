@@ -11,21 +11,21 @@ import (
 	"net/http"
 )
 
-type adminUsecase struct {
-	repo repositories.AdminRepository
+type adminOrgUsecase struct {
+	repo repositories.AdminOrgRepository
 }
 
-type AdminUsecase interface {
+type AdminOrgUsecase interface {
 	CreateDepartment(ctx context.Context, req clDto.CreateDeptRequest) (interface{}, error)
 	DeleteDepartment(ctx context.Context, req clDto.DeleteDeptRequest) (interface{}, error)
 	CreateOrgFile(ctx context.Context, req clDto.CreateOrgFileRequest) (interface{}, error)
 }
 
-func NewAdminUsecase(repo repositories.AdminRepository) AdminUsecase {
-	return &adminUsecase{repo: repo}
+func NewAdminOrgUsecase(repo repositories.AdminOrgRepository) AdminOrgUsecase {
+	return &adminOrgUsecase{repo: repo}
 }
 
-func (r *adminUsecase) CreateDepartment(ctx context.Context, req clDto.CreateDeptRequest) (interface{}, error) {
+func (r *adminOrgUsecase) CreateDepartment(ctx context.Context, req clDto.CreateDeptRequest) (interface{}, error) {
 	entity := toCreateDepartmentEntity(req)
 	// org 서비스 호출
 
@@ -88,7 +88,7 @@ func createDepartmentInOrg(ctx context.Context, entity entities.CreateDepartment
 	return nil
 }
 
-func (r *adminUsecase) DeleteDepartment(ctx context.Context, req clDto.DeleteDeptRequest) (interface{}, error) {
+func (r *adminOrgUsecase) DeleteDepartment(ctx context.Context, req clDto.DeleteDeptRequest) (interface{}, error) {
 	entity := toDeleteDepartmentEntity(req)
 	// org 서비스 호출
 
@@ -147,7 +147,7 @@ func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartment
 	return nil
 }
 
-func (r *adminUsecase) CreateOrgFile(ctx context.Context, req clDto.CreateOrgFileRequest) (interface{}, error) {
+func (r *adminOrgUsecase) CreateOrgFile(ctx context.Context, req clDto.CreateOrgFileRequest) (interface{}, error) {
 
 	entity := toCreateOrgFileEntity(req)
 	// org 서비스 호출

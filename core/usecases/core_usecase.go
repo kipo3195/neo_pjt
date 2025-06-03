@@ -141,7 +141,7 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 
 	// serverResponse로 전달받기
 
-	var result dto.ServerResponse
+	var result dto.Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
 		return &svDto.SvDeviceInitResponse{}, err

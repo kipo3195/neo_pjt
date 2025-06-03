@@ -31,7 +31,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	// header 검증
 	if header.Token == "" {
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_104,
 			Message: consts.E_104_MSG,
@@ -44,7 +44,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// request body 데이터 -> dto로 변경
 	var body *clDto.AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
@@ -58,16 +58,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	Auth, err, failFlag := h.usecase.GetAuth(header, body)
 
 	if failFlag { // 인증 실패
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = err
 		w.WriteHeader(http.StatusBadRequest)
 	} else if err != nil { // 에러
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = err
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		// Entity -> dto로 변환은 handler에서 처리함.
-		res.Code = consts.SUCCESS
+		res.Result = consts.SUCCESS
 		res.Data = clDto.AuthResponse{
 			AccessToken:  Auth.AccessToken,
 			RefreshToken: Auth.RefreshToken,

@@ -22,11 +22,16 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
-	adminRepo := repositories.NewAdminRepository(db)
-	adminUC := usecases.NewAdminUsecase(adminRepo)
-	adminHandler := handlers.NewAdminHandler(adminUC)
+	// org - 조직도 관리
+	adminOrgRepo := repositories.NewAdminOrgRepository(db)
+	adminOrgUC := usecases.NewAdminOrgUsecase(adminOrgRepo)
+	adminOrgHandler := handlers.NewAdminHandler(adminOrgUC)
 
-	router := routes.SetupRoutes(adminHandler)
+	handlers := &handlers.AdminHandlers{
+		AdminOrgHandler: adminOrgHandler,
+	}
+
+	router := routes.SetupRoutes(handlers)
 
 	return &http.Server{
 		Addr:    ":8089",

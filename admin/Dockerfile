@@ -24,4 +24,4 @@ EXPOSE 8089
 CMD ["./main"]
 
 
-# 20250531 Core
+# 20250531 Admin
