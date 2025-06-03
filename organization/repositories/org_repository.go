@@ -23,6 +23,7 @@ type OrgRepository interface {
 	SaveDepartment(ctx context.Context, entity entities.CreateDepartmentEntity) (interface{}, error)
 	DeleteDepartment(ctx context.Context, entity entities.DeleteDepartmentEntity) (interface{}, error)
 	GetOrg(ctx context.Context, entity entities.GetOrgEntity) (*[]models.WorksOrg, error)
+	SaveDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error)
 }
 
 func NewOrgRepository(db *gorm.DB) OrgRepository {
@@ -120,18 +121,18 @@ func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity
 			SELECT 
 				dept_code,
 				parent_dept_code,
-				dept_update_hash
+				update_hash
 			FROM works_dept
-			WHERE parent_dept_code = 'root' and dept_org = ?
+			WHERE parent_dept_code = 'root' and use_yn = 'Y' and dept_org = ?
 			UNION ALL
 			SELECT 
 				d.dept_code,
 				d.parent_dept_code,
-				d.dept_update_hash
+				d.update_hash
 			FROM works_dept d
 			INNER JOIN dept_tree dt ON d.parent_dept_code = dt.dept_code
-			where dept_org = ?
-		) SELECT a.dept_code, a.parent_dept_code, b.kr_lang, b.en_lang, b.cn_lang, b.jp_lang, a.dept_update_hash 
+			where dept_org = ? and use_yn = 'Y' 
+		) SELECT a.dept_code, a.parent_dept_code, b.kr_lang, b.en_lang, b.cn_lang, b.jp_lang, a.update_hash 
 		FROM dept_tree as a join works_dept_multi_lang as b on a.dept_code = b.dept_code ;`
 
 	err := r.db.Raw(treeSql, entity.OrgCode, entity.OrgCode).Scan(&orgTree).Error
@@ -142,4 +143,39 @@ func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity
 	}
 
 	return orgTree, nil
+}
+
+func (r *orgRepository) SaveDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error) {
+	// 트랜잭션 시작
+	// tx := r.db.WithContext(ctx).Begin()
+	// if tx.Error != nil {
+	// 	return false, tx.Error
+	// }
+
+	models := toWorksDeptUser(entity)
+	if err := r.db.Create(&models).Error; err != nil {
+		log.Println("[SaveDeptUser] - DB error")
+		// tx.Rollback()
+		return false, err
+	}
+
+	// if err := tx.Commit().Error; err != nil {
+	// 	log.Println("[SaveDeptUser] - Commit failed")
+	// 	return false, err
+	// }
+	// DB 저장 성공
+	fmt.Println("[SaveDeptUser] success !")
+	return true, nil
+}
+
+func toWorksDeptUser(entity entities.CreateDeptUserEntity) *models.WorksDeptUser {
+	return &models.WorksDeptUser{
+		DeptCode:             entity.DeptCode,
+		DeptOrg:              entity.DeptOrg,
+		UserHash:             entity.UserHash,
+		PositionCode:         entity.PositionCode,
+		RoleCode:             entity.RoleCode,
+		IsConcurrentPosition: entity.IsConcurrentPosition,
+		UpdateHash:           entity.UpdateHash,
+	}
 }

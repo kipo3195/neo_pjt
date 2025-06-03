@@ -142,7 +142,7 @@ func (h *AdminOrgHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) 
 	var req = clDto.CreateOrgFileRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
@@ -166,11 +166,11 @@ func (h *AdminOrgHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) 
 
 	if err == nil {
 		// http status code 200
-		res.Code = consts.SUCCESS
+		res.Result = consts.SUCCESS
 		res.Data = data
 	} else {
 		// 서버 - 서버 통신이 실패했다는 의미.
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = err
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -192,7 +192,7 @@ func (h *AdminOrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 	var req = clDto.CreateOrgFileRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
@@ -208,13 +208,13 @@ func (h *AdminOrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// response dto 생성
-	var res = clDto.CreateDeptResponse{}
+	var res = clDto.CreateDeptUserResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.CreateDeptRequest{}
+	var req = clDto.CreateDeptUserRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
@@ -233,17 +233,17 @@ func (h *AdminOrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// usecase 호출
-	data, err := h.usecase.CreateDepartment(ctx, req)
+	data, err := h.usecase.CreateDeptUser(ctx, req)
 
 	fmt.Println(data)
 
 	if err == nil {
 		// http status code 200
-		res.Code = consts.SUCCESS
+		res.Result = consts.SUCCESS
 		res.Data = data
 	} else {
 		// http status code 400
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = err
 		w.WriteHeader(http.StatusBadRequest)
 	}

@@ -2,9 +2,8 @@ package models
 
 import "time"
 
-type WorksDeptMultiLang struct {
-	DeptCode   string    `gorm:"column:dept_code;primaryKey;comment:'부서 코드 - 다국어 매핑용'"`
-	DeptOrg    string    `gorm:"column:dept_org;comment:'부서 코드 - 다국어 매핑용'"`
+type RoleMultiLang struct {
+	RoleCode   string    `gorm:"column:role_code;primaryKey;comment:'직책 - 파트장, 팀장, 본부장'"`
 	KrLang     string    `gorm:"column:kr_lang;comment:'한국어'"`
 	EnLang     string    `gorm:"column:en_lang;comment:'영어'"`
 	CnLang     string    `gorm:"column:cn_lang;comment:'중국어'"`
@@ -12,7 +11,7 @@ type WorksDeptMultiLang struct {
 	CreateDate time.Time `gorm:"column:create_date;default:CURRENT_TIMESTAMP;comment:'등록일'"`
 }
 
-// 부서 다국어
-func (WorksDeptMultiLang) TableName() string {
-	return "works_dept_multi_lang"
+// 직책 (파트장, 팀장) 다국어 처리
+func (RoleMultiLang) TableName() string {
+	return "role_multi_lang"
 }

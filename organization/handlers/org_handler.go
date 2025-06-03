@@ -181,7 +181,7 @@ func (h *OrgHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request)
 	var req = svDto.SvCreateOrgFileRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
@@ -196,11 +196,11 @@ func (h *OrgHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request)
 
 	if err == nil {
 		// http status code 200
-		res.Code = consts.SUCCESS
+		res.Result = consts.SUCCESS
 		res.Data = data
 	} else {
 		// http status code 500
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = err
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -254,4 +254,46 @@ func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 	// response.
 	json.NewEncoder(w).Encode(res)
 
+}
+
+func (h *OrgHandler) ServerCreateDeptUser(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// response dto 생성
+	var res = dto.Response{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = svDto.SvCreateDeptUserRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Result = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// usecase 호출
+	data, err := h.usecase.ServerCreateDeptUser(ctx, req)
+
+	if err == nil {
+		// http status code 200
+		res.Result = consts.SUCCESS
+		res.Data = data
+	} else {
+		// http status code 500
+		res.Result = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
 }

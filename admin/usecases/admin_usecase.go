@@ -19,6 +19,8 @@ type AdminOrgUsecase interface {
 	CreateDepartment(ctx context.Context, req clDto.CreateDeptRequest) (interface{}, error)
 	DeleteDepartment(ctx context.Context, req clDto.DeleteDeptRequest) (interface{}, error)
 	CreateOrgFile(ctx context.Context, req clDto.CreateOrgFileRequest) (interface{}, error)
+
+	CreateDeptUser(ctx context.Context, req clDto.CreateDeptUserRequest) (interface{}, error)
 }
 
 func NewAdminOrgUsecase(repo repositories.AdminOrgRepository) AdminOrgUsecase {
@@ -172,6 +174,68 @@ func CreateOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity
 	payload, _ := json.Marshal(entity)
 
 	url := "http://172.16.10.114/org/sv1/org/file"
+
+	fmt.Println("create org file api 호출! url : ", url)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer serverToken")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println("org error : ", err)
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+		default:
+			return nil, fmt.Errorf("request failed: %w", err)
+		}
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("org service returned status %d", resp.StatusCode)
+	}
+
+	return http.StatusOK, nil
+}
+
+func (r *adminOrgUsecase) CreateDeptUser(ctx context.Context, req clDto.CreateDeptUserRequest) (interface{}, error) {
+
+	entity := toCreateDeptUserEntity(req)
+	// org 서비스 호출
+
+	// 이 함수 내부에서 호출
+	result, err := CreateDeptUserInOrg(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func toCreateDeptUserEntity(req clDto.CreateDeptUserRequest) entities.CreateDeptUserEntity {
+	return entities.CreateDeptUserEntity{
+		UserHash:             req.UserHash,
+		DeptCode:             req.DeptCode,
+		PositionCode:         req.PositionCode,
+		RoleCode:             req.RoleCode,
+		IsConcurrentPosition: req.IsConcurrentPosition,
+	}
+}
+
+func CreateDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error) {
+
+	payload, _ := json.Marshal(entity)
+
+	url := "http://172.16.10.114/org/sv1/departments/user"
 
 	fmt.Println("create org file api 호출! url : ", url)
 

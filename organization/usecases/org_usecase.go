@@ -3,6 +3,9 @@ package usecases
 import (
 	"archive/zip"
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"org/consts"
@@ -12,6 +15,7 @@ import (
 	"org/models"
 	"org/repositories"
 	"os"
+	"time"
 )
 
 type orgUsecase struct {
@@ -28,6 +32,8 @@ type OrgUsecase interface {
 	ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error)
 
 	ToGetOrgEntity(req interface{}) entities.GetOrgEntity
+
+	ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error)
 }
 
 func NewOrgUsecase(repo repositories.OrgRepository) OrgUsecase {
@@ -64,6 +70,11 @@ func (r *orgUsecase) ToGetOrgEntity(req interface{}) entities.GetOrgEntity {
 
 func parseOrgTree(orgTree *[]models.WorksOrg) *entities.OrgEntity {
 
+	if orgTree == nil {
+		fmt.Println("조회된 조직도 정보가 없음. ")
+		return nil
+	}
+
 	// 최상위 구조
 	var rootOrgInfos []entities.OrgInfo
 	var flatList []entities.OrgInfo // 트리 구성용 전체 flat 리스트
@@ -76,7 +87,7 @@ func parseOrgTree(orgTree *[]models.WorksOrg) *entities.OrgEntity {
 			EnLang:         org.EnLang,
 			JpLang:         org.JpLang,
 			CnLang:         org.CnLang,
-			DeptUpdateHash: org.DeptUpdateHash,
+			UpdateHash:     org.UpdateHash,
 		}
 
 		if org.ParentDeptCode == "root" {
@@ -109,8 +120,9 @@ func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.Org
 				EnLang:         org.EnLang,
 				JpLang:         org.JpLang,
 				CnLang:         org.CnLang,
-				DeptUpdateHash: org.DeptUpdateHash,
+				UpdateHash:     org.UpdateHash,
 				SubDept:        sub,
+				Kind:           org.Kind,
 			})
 		}
 	}
@@ -221,4 +233,49 @@ func (r *orgUsecase) GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest
 	}
 
 	return fileBytes, nil
+}
+
+func (r *orgUsecase) ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error) {
+
+	updateHash := makeUpdateHash()
+	fmt.Println("사용자 추가시 update Hash 생성 : ", updateHash)
+
+	return r.repo.SaveDeptUser(ctx, toCreateDeptUserEntity(req, updateHash))
+}
+
+func toCreateDeptUserEntity(req svDto.SvCreateDeptUserRequest, updateHash string) entities.CreateDeptUserEntity {
+
+	return entities.CreateDeptUserEntity{
+		UserHash:             req.UserHash,
+		DeptCode:             req.DeptCode,
+		DeptOrg:              req.DeptOrg,
+		PositionCode:         req.PositionCode,
+		RoleCode:             req.RoleCode,
+		IsConcurrentPosition: req.IsConcurrentPosition,
+		UpdateHash:           updateHash,
+	}
+}
+
+func makeUpdateHash() string {
+	// 현재 시간 밀리초 문자열
+	now := time.Now().UnixNano() // 나노초 단위 시간값
+
+	// 16바이트 랜덤 바이트 생성
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	// 시간값을 바이트 배열로 변환 (int64 -> []byte)
+	timeBytes := []byte(fmt.Sprintf("%d", now))
+
+	// 시간 + 랜덤 바이트 합치기
+	data := append(timeBytes, randomBytes...)
+
+	// SHA-256 해시 생성
+	hash := sha256.Sum256(data)
+
+	// 16진수 인코딩해서 문자열 반환
+	return hex.EncodeToString(hash[:])
 }

@@ -26,7 +26,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		tokenStr, err := extractTokenFromHeader(r.Header)
 		if err != nil {
 			fmt.Println("토큰 전달 형식이 맞지 않음. header check.")
-			res.Code = consts.ERROR
+			res.Result = consts.ERROR
 			res.Data = dto.ErrorResponse{
 				Code:    consts.E_105,
 				Message: consts.E_105_MSG,
@@ -41,7 +41,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			fmt.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
 				fmt.Println("토큰 만료")
-				res.Code = consts.ERROR
+				res.Result = consts.ERROR
 				res.Data = dto.ErrorResponse{
 					Code:    consts.E_107,
 					Message: consts.E_107_MSG,
@@ -49,7 +49,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 			} else {
 				fmt.Println("토큰 검증 실패")
-				res.Code = consts.ERROR
+				res.Result = consts.ERROR
 				res.Data = dto.ErrorResponse{
 					Code:    consts.E_106,
 					Message: consts.E_106_MSG,

@@ -11,5 +11,6 @@ type OrgInfo struct {
 	EnLang         string `json:"enLang"`
 	CnLang         string `json:"cnLang"`
 	JpLang         string `json:"jpLang"`
-	DeptUpdateHash string `json:"deptUpdateHash"`
+	UpdateHash     string `json:"updateHash"`
+	Kind           string `json:"kind"`
 }

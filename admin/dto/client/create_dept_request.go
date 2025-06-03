@@ -1,8 +1,8 @@
 package dto
 
 type CreateDeptRequest struct {
-	DeptOrg        string `json:"deptOrg" validate:"required"`
 	DeptCode       string `json:"deptCode" validate:"required"`
+	DeptOrg        string `json:"deptOrg" validate:"required"`
 	ParentDeptCode string `json:"parentDeptCode" validate:"required"`
 	KrLang         string `json:"krLang"`
 	EnLang         string `json:"enLang"`

@@ -32,6 +32,9 @@ func SetupRoutes(orgHandler *handlers.OrgHandler) *mux.Router {
 	// 서버 간 토큰 인증용 미들웨어
 	// orgSV1.Use(ServerAuthMiddleware)
 
+	// 사용자 생성
+	orgSV1.HandleFunc("/departments/user", orgHandler.ServerCreateDeptUser).Methods("POST")
+
 	// 부서 생성
 	orgSV1.HandleFunc("/departments", orgHandler.ServerCreateDept).Methods("POST")
 

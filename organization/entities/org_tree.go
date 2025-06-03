@@ -7,6 +7,7 @@ type OrgTreeInfos struct {
 	EnLang         string         `json:"enLang"`
 	CnLang         string         `json:"cnLang"`
 	JpLang         string         `json:"jpLang"`
-	DeptUpdateHash string         `json:"deptUpdateHash"`
+	UpdateHash     string         `json:"updateHash"`
 	SubDept        []OrgTreeInfos `json:"subDept,omitempty"` // 재귀 구조
+	Kind           string         `json:"kind"`              // 사용자, 부서 구분
 }
