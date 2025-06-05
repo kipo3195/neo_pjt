@@ -117,25 +117,27 @@ func (r *orgRepository) DeleteDepartment(ctx context.Context, entity entities.De
 func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity) (*[]models.WorksOrg, error) {
 
 	var orgTree *[]models.WorksOrg
-	treeSql := `WITH RECURSIVE dept_tree AS (
-			SELECT 
-				dept_code,
-				parent_dept_code,
-				update_hash
-			FROM works_dept
-			WHERE parent_dept_code = 'root' and use_yn = 'Y' and dept_org = ?
-			UNION ALL
-			SELECT 
-				d.dept_code,
-				d.parent_dept_code,
-				d.update_hash
-			FROM works_dept d
-			INNER JOIN dept_tree dt ON d.parent_dept_code = dt.dept_code
-			where dept_org = ? and use_yn = 'Y' 
-		) SELECT a.dept_code, a.parent_dept_code, b.kr_lang, b.en_lang, b.cn_lang, b.jp_lang, a.update_hash 
-		FROM dept_tree as a join works_dept_multi_lang as b on a.dept_code = b.dept_code ;`
+	viewSql := `SELECT * FROM org.vw_dept_and_user_tree where org = ?`
+	// treeSql := `WITH RECURSIVE dept_tree AS (
+	// 		SELECT
+	// 			dept_code,
+	// 			parent_dept_code,
+	// 			update_hash
+	// 		FROM works_dept
+	// 		WHERE parent_dept_code = 'root' and use_yn = 'Y' and dept_org = ?
+	// 		UNION ALL
+	// 		SELECT
+	// 			d.dept_code,
+	// 			d.parent_dept_code,
+	// 			d.update_hash
+	// 		FROM works_dept d
+	// 		INNER JOIN dept_tree dt ON d.parent_dept_code = dt.dept_code
+	// 		where dept_org = ? and use_yn = 'Y'
+	// 	) SELECT a.dept_code, a.parent_dept_code, b.kr_lang, b.en_lang, b.cn_lang, b.jp_lang, a.update_hash
+	// 	FROM dept_tree as a join works_dept_multi_lang as b on a.dept_code = b.dept_code ;`
 
-	err := r.db.Raw(treeSql, entity.OrgCode, entity.OrgCode).Scan(&orgTree).Error
+	//err := r.db.Raw(treeSql, entity.OrgCode, entity.OrgCode).Scan(&orgTree).Error
+	err := r.db.Raw(viewSql, entity.OrgCode).Scan(&orgTree).Error
 
 	if err != nil {
 		log.Println("[GetOrg] - No record found or DB error")

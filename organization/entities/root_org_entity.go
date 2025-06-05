@@ -5,12 +5,9 @@ type RootOrg struct {
 }
 
 type OrgInfo struct {
-	DeptCode       string `json:"deptCode"`
-	ParentDeptCode string `json:"parentDeptCode"`
-	KrLang         string `json:"krLang"`
-	EnLang         string `json:"enLang"`
-	CnLang         string `json:"cnLang"`
-	JpLang         string `json:"jpLang"`
-	UpdateHash     string `json:"updateHash"`
-	Kind           string `json:"kind"`
+	DeptCode       string     `json:"deptCode"`
+	ParentDeptCode string     `json:"parentDeptCode"`
+	Name           NameEntity `json:"name"`
+	UpdateHash     string     `json:"updateHash"`
+	Kind           string     `json:"kind"`
 }

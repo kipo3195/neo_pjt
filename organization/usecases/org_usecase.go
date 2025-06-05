@@ -80,14 +80,20 @@ func parseOrgTree(orgTree *[]models.WorksOrg) *entities.OrgEntity {
 	var flatList []entities.OrgInfo // 트리 구성용 전체 flat 리스트
 
 	for _, org := range *orgTree {
+		// 이름 다국어 처리
+		name := entities.NameEntity{
+			Kr: org.KrLang,
+			En: org.EnLang,
+			Jp: org.JpLang,
+			Cn: org.CnLang,
+		}
+
 		info := entities.OrgInfo{
 			DeptCode:       org.DeptCode,
 			ParentDeptCode: org.ParentDeptCode,
-			KrLang:         org.KrLang,
-			EnLang:         org.EnLang,
-			JpLang:         org.JpLang,
-			CnLang:         org.CnLang,
+			Name:           name,
 			UpdateHash:     org.UpdateHash,
+			Kind:           org.Kind,
 		}
 
 		if org.ParentDeptCode == "root" {
@@ -116,10 +122,7 @@ func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.Org
 			tree = append(tree, entities.OrgTreeInfos{
 				DeptCode:       org.DeptCode,
 				ParentDeptCode: org.ParentDeptCode,
-				KrLang:         org.KrLang,
-				EnLang:         org.EnLang,
-				JpLang:         org.JpLang,
-				CnLang:         org.CnLang,
+				Name:           org.Name,
 				UpdateHash:     org.UpdateHash,
 				SubDept:        sub,
 				Kind:           org.Kind,
@@ -162,6 +165,7 @@ func toDeleteDepartmentEntity(req svDto.SvDeleteDeptRequest) entities.DeleteDepa
 func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error) {
 
 	orgTree, err := r.repo.GetOrg(ctx, r.ToGetOrgEntity(req))
+
 	if err != nil {
 		return nil, err
 	}
