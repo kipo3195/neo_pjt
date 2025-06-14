@@ -13,13 +13,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	TYPE = "type" // 이벤트의 대분류
-	AUTH = "auth"
-	CHAT = "chat"
-	NOTE = "note"
-)
-
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -77,7 +70,7 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 		var data map[string]interface{}
 		json.Unmarshal(msg, &data)
 		fmt.Println("웹소켓 메시지 수신시 최초 로깅 : ", data)
-		msgType, ok := data[TYPE].(string)
+		msgType, ok := data[consts.TYPE].(string)
 		if !ok {
 			res.Result = consts.ERROR
 			res.Data = &dto.ErrorResponse{
@@ -91,7 +84,7 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 		/*최초 인증 처리*/
 		if !authenticated {
 			switch msgType {
-			case AUTH:
+			case consts.AUTH:
 				result, err := h.au.HandleAuth(conn, data)
 				if !result && err != nil {
 					res.Result = consts.ERROR
@@ -122,9 +115,9 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 
 			// 인증 이후에는 웹소켓 수신 메시지를 가지고 이쪽으로
 			switch msgType {
-			case CHAT:
+			case consts.CHAT:
 				h.cu.HandleChat(conn, data)
-			case NOTE:
+			case consts.NOTE:
 				h.nu.HandleNote(conn, data)
 			}
 		}

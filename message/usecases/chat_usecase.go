@@ -2,9 +2,9 @@ package usecases
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"message/broker"
+	"message/consts"
 	"message/repositories"
 
 	"github.com/gorilla/websocket"
@@ -21,7 +21,7 @@ type chatUsecase struct {
 
 type ChatUsecase interface {
 	HandleChat(conn *websocket.Conn, data map[string]interface{})
-	handleJoinRoom(payload map[string]interface{})
+	handleJoinRoom(payload map[string]interface{}, conn *websocket.Conn)
 	handleJoinRoomCancle(payload map[string]interface{})
 	handleSendMessage(userId string, payload map[string]interface{})
 }
@@ -40,40 +40,32 @@ func (r *chatUsecase) HandleChat(conn *websocket.Conn, data map[string]interface
 	userId := data["userId"].(string)
 
 	switch cmd {
-	case "joinRoom":
-		r.handleJoinRoom(payload)
-	case "joinRoomCancel":
+	case consts.JoinRoom:
+		r.handleJoinRoom(payload, conn)
+	case consts.JoinRoomCancle:
 		r.handleJoinRoomCancle(payload)
-	case "sendMessage":
+	case consts.SendMessage:
 		r.handleSendMessage(userId, payload)
 	}
 }
 
-func (r *chatUsecase) handleJoinRoom(payload map[string]interface{}) {
-	roomId := payload["roomId"].(string)
-	ch, err := r.mb.SubscribeChatRoom(roomId)
-
-	if err != nil {
-		log.Println("subscribe error:", err)
-		return
-	}
-
-	go func() {
-		for msg := range ch {
-			fmt.Printf("Received message in room %s: %s\n", roomId, msg)
-		}
-	}()
+func (r *chatUsecase) handleJoinRoom(payload map[string]interface{}, conn *websocket.Conn) {
+	// SoC, usecase에서는 '구독' 만 처리, broker에서 구독에 대한 상세 처리.
+	roomId := payload[consts.RoomId].(string)
+	userId := payload[consts.UserId].(string)
+	r.mb.SubscribeChatRoom(roomId, userId, conn)
 }
 
 func (r *chatUsecase) handleJoinRoomCancle(payload map[string]interface{}) {
-	roomId := payload["roomId"].(string)
-	r.mb.UnsubscribeChatRoom(roomId)
+	roomId := payload[consts.RoomId].(string)
+	userId := payload[consts.UserId].(string)
+	r.mb.UnSubscribeChatRoom(roomId, userId)
 
 }
 
 func (r *chatUsecase) handleSendMessage(userId string, payload map[string]interface{}) {
-	roomId := payload["roomId"].(string)
-	content := payload["content"].(string)
+	roomId := payload[consts.RoomId].(string)
+	content := payload[consts.Content].(string)
 	jsonBytes, _ := json.Marshal(content)
 
 	if err := r.mb.PublishToChatRoom(roomId, jsonBytes); err != nil { // Publish도 하나의 인터페이스에 속한 메소드 구현한다면 Broker의 인터페이스. (덕타이핑)

@@ -1,15 +1,17 @@
 package broker
 
 import (
+	"errors"
 	"sync"
 
+	"github.com/gorilla/websocket"
 	"github.com/nats-io/nats.go"
 )
 
 type NatsBroker struct {
-	Conn                  *nats.Conn
-	mu                    sync.RWMutex
-	ChatRoomSubscriptions map[string]chan BrokerMessage // 일반 채팅용 채널 관리용 map
+	Conn      *nats.Conn
+	mu        sync.RWMutex         // 명시적으로 초기화하지 않아도 자동으로 초기화됩니다.
+	ChatRooms map[string]*ChatRoom // 일반 채팅용 채널 관리용 map
 }
 
 // 추후 entity로 변경
@@ -22,48 +24,73 @@ func (m *SimpleMessage) Data() []byte {
 	return m.data
 }
 
-func (mb *NatsBroker) SubscribeChatRoom(room string) (chan BrokerMessage, error) {
+func (mb *NatsBroker) SubscribeChatRoom(roomId string, userId string, conn *websocket.Conn) {
 	mb.mu.Lock()
 	defer mb.mu.Unlock()
 
-	// 맵에 해당 방이 있는지 체크, 구독하는 사용자는 모두 같은 채널을 받음
-	ch, exists := mb.ChatRoomSubscriptions[room]
+	// 맵에 해당 방이 있는지 체크, 없으면 메모리에 추가를 위한 정보 생성
+	room, exists := mb.ChatRooms[roomId]
 	if !exists {
-		ch = make(chan BrokerMessage, 100)
-		mb.ChatRoomSubscriptions[room] = ch
+		room = &ChatRoom{
+			ch:      make(chan BrokerMessage, 100),
+			clients: make(map[string]*websocket.Conn),
+		}
+
+		mb.ChatRooms[roomId] = room
+
+		// fan-out goroutine 시작
+		go func(r *ChatRoom) {
+			for msg := range r.ch {
+				r.mu.RLock()
+				for _, c := range r.clients {
+					go func(c *websocket.Conn) {
+						c.WriteMessage(websocket.TextMessage, msg.Data())
+					}(c)
+				}
+				r.mu.RUnlock()
+			}
+		}(room)
 	}
-	return ch, nil
+
+	// 구독 사용자 추가
+	room.mu.Lock()
+	room.clients[userId] = conn
+	room.mu.Unlock()
 }
 
-func (mb *NatsBroker) UnsubscribeChatRoom(room string) {
+func (mb *NatsBroker) UnSubscribeChatRoom(roomId string, userId string) {
 	mb.mu.Lock()
 	defer mb.mu.Unlock()
 
-	if ch, exists := mb.ChatRoomSubscriptions[room]; exists {
-		close(ch)                              // 채널 닫기
-		delete(mb.ChatRoomSubscriptions, room) // 방의 채널을 맵에서 제거
+	if room, exists := mb.ChatRooms[roomId]; exists {
+
+		// 유저 삭제
+		room.mu.Lock()
+		delete(room.clients, userId)
+		roomEmpty := len(room.clients) == 0
+		room.mu.Unlock()
+
+		// 현재 방을 구독하는 유저가 없을때만
+		if roomEmpty {
+			close(room.ch)               // 채널 닫기
+			delete(mb.ChatRooms, roomId) // 방의 채널을 맵에서 제거
+		}
 	}
 }
 
 func (mb *NatsBroker) PublishToChatRoom(roomId string, data []byte) error {
 	mb.mu.RLock()
+	room, exists := mb.ChatRooms[roomId]
 	defer mb.mu.RUnlock()
 
-	msg := &SimpleMessage{
-		roomId: roomId,
-		data:   data,
+	if !exists {
+		return errors.New("room is not exist")
 	}
 
-	if ch, exists := mb.ChatRoomSubscriptions[roomId]; exists {
-		ch <- msg
+	select {
+	case room.ch <- &SimpleMessage{roomId: roomId, data: data}:
+		return nil
+	default:
+		return errors.New("room channel is full") // fan-out 병목 가능성 알림
 	}
-	return nil
 }
-
-// type NatsMessage struct {
-// 	msg *nats.Msg
-// }
-
-// func (n *NatsMessage) Data() []byte {
-// 	return n.msg.Data
-// }

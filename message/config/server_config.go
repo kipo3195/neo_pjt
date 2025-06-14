@@ -98,19 +98,20 @@ func initMBConfig() *MessageBrokerConfig {
 func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
 
 	// 메시지 브로커 분기처리
-	if sfg.mbConfig.Mb == NATS {
+	switch sfg.mbConfig.Mb {
+	case NATS:
 		nc, err := nats.Connect(nats.DefaultURL)
 		if err != nil {
 			log.Println("Failed to connect to NATS:", err)
 			return nil
 		}
 		return &broker.NatsBroker{
-			Conn:                  nc,
-			ChatRoomSubscriptions: make(map[string]chan broker.BrokerMessage),
+			Conn:      nc,
+			ChatRooms: make(map[string]*broker.ChatRoom),
 		}
-	} else if sfg.mbConfig.Mb == KAFKA {
+	case KAFKA:
 		log.Println("kafka is not available.")
-	} else if sfg.mbConfig.Mb == RABBITMQ {
+	case RABBITMQ:
 		log.Println("RabbitMQ is not available.")
 	}
 	return nil
