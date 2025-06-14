@@ -1,9 +1,9 @@
 package broker
 
 type Broker interface {
-	Subscribe(roomId string) (chan BrokerMessage, error)
-	Unsubscribe(roomId string)
-	Publish(roomId string, data []byte) error
+	SubscribeChatRoom(roomId string) (chan BrokerMessage, error)
+	UnsubscribeChatRoom(roomId string)
+	PublishToChatRoom(roomId string, data []byte) error
 }
 
 type Subscription interface {

@@ -105,8 +105,8 @@ func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
 			return nil
 		}
 		return &broker.NatsBroker{
-			Conn:          nc,
-			Subscriptions: make(map[string]chan broker.BrokerMessage),
+			Conn:                  nc,
+			ChatRoomSubscriptions: make(map[string]chan broker.BrokerMessage),
 		}
 	} else if sfg.mbConfig.Mb == KAFKA {
 		log.Println("kafka is not available.")

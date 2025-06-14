@@ -51,7 +51,7 @@ func (r *chatUsecase) HandleChat(conn *websocket.Conn, data map[string]interface
 
 func (r *chatUsecase) handleJoinRoom(payload map[string]interface{}) {
 	roomId := payload["roomId"].(string)
-	ch, err := r.mb.Subscribe(roomId)
+	ch, err := r.mb.SubscribeChatRoom(roomId)
 
 	if err != nil {
 		log.Println("subscribe error:", err)
@@ -67,7 +67,7 @@ func (r *chatUsecase) handleJoinRoom(payload map[string]interface{}) {
 
 func (r *chatUsecase) handleJoinRoomCancle(payload map[string]interface{}) {
 	roomId := payload["roomId"].(string)
-	r.mb.Unsubscribe(roomId)
+	r.mb.UnsubscribeChatRoom(roomId)
 
 }
 
@@ -76,7 +76,7 @@ func (r *chatUsecase) handleSendMessage(userId string, payload map[string]interf
 	content := payload["content"].(string)
 	jsonBytes, _ := json.Marshal(content)
 
-	if err := r.mb.Publish(roomId, jsonBytes); err != nil { // Publish도 하나의 인터페이스에 속한 메소드 구현한다면 Broker의 인터페이스. (덕타이핑)
+	if err := r.mb.PublishToChatRoom(roomId, jsonBytes); err != nil { // Publish도 하나의 인터페이스에 속한 메소드 구현한다면 Broker의 인터페이스. (덕타이핑)
 		log.Println("Publish error:", err)
 	}
 }
