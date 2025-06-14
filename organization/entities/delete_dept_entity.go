@@ -1,6 +1,6 @@
 package entities
 
-type DeleteDepartmentEntity struct {
+type DeleteDeptEntity struct {
 	DeptOrg  string `json:"deptOrg"`
 	DeptCode string `json:"deptCode"`
 }

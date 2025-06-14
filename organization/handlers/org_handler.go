@@ -68,7 +68,7 @@ func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// 눌려서 일부 부서 조회
+// 눌려서 일부 부서 조회 -> hash가 바뀌었는지 조회 필요.
 func (h *OrgHandler) GetDept(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
@@ -107,7 +107,7 @@ func (h *OrgHandler) ServerCreateDept(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// usecase 호출
-	data, err := h.usecase.ServerCreateDepartment(ctx, req)
+	data, err := h.usecase.ServerCreateDept(ctx, req)
 
 	if err == nil {
 		// http status code 200
@@ -149,7 +149,7 @@ func (h *OrgHandler) ServerDeleteDept(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// usecase 호출
-	data, err := h.usecase.ServerDeleteDepartment(ctx, req)
+	data, err := h.usecase.ServerDeleteDept(ctx, req)
 
 	if err == nil {
 		// http status code 200
@@ -282,6 +282,47 @@ func (h *OrgHandler) ServerCreateDeptUser(w http.ResponseWriter, r *http.Request
 
 	// usecase 호출
 	data, err := h.usecase.ServerCreateDeptUser(ctx, req)
+
+	if err == nil {
+		// http status code 200
+		res.Result = consts.SUCCESS
+		res.Data = data
+	} else {
+		// http status code 500
+		res.Result = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
+}
+
+func (h *OrgHandler) ServerDeleteDeptUser(w http.ResponseWriter, r *http.Request) {
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// response dto 생성
+	var res = dto.Response{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = svDto.SvDeleteDeptUserRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Result = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// usecase 호출
+	data, err := h.usecase.ServerDeleteDeptUser(ctx, req)
 
 	if err == nil {
 		// http status code 200

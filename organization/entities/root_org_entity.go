@@ -8,6 +8,6 @@ type OrgInfo struct {
 	DeptCode       string     `json:"deptCode"`
 	ParentDeptCode string     `json:"parentDeptCode"`
 	Name           NameEntity `json:"name"`
-	UpdateHash     string     `json:"updateHash"`
-	Kind           string     `json:"kind"`
+	//UpdateHash     string     `json:"updateHash"`
+	Kind string `json:"kind"`
 }

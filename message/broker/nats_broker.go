@@ -2,6 +2,7 @@ package broker
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -84,13 +85,16 @@ func (mb *NatsBroker) PublishToChatRoom(roomId string, data []byte) error {
 	defer mb.mu.RUnlock()
 
 	if !exists {
+		fmt.Printf("room %s is not exist", roomId)
 		return errors.New("room is not exist")
 	}
 
 	select {
 	case room.ch <- &SimpleMessage{roomId: roomId, data: data}:
+		fmt.Printf("sending success room %s ", string(roomId))
 		return nil
 	default:
+		fmt.Printf("room %s channel is full", roomId)
 		return errors.New("room channel is full") // fan-out 병목 가능성 알림
 	}
 }

@@ -26,14 +26,15 @@ type OrgUsecase interface {
 	GetOrg(ctx context.Context, req clDto.GetOrgRequest) (*entities.OrgEntity, error)
 	GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest) (interface{}, error)
 
-	ServerCreateDepartment(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
-	ServerDeleteDepartment(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
+	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
+	ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
 
 	ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error)
 
 	ToGetOrgEntity(req interface{}) entities.GetOrgEntity
 
 	ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error)
+	ServerDeleteDeptUser(ctx context.Context, req svDto.SvDeleteDeptUserRequest) (interface{}, error)
 }
 
 func NewOrgUsecase(repo repositories.OrgRepository) OrgUsecase {
@@ -92,7 +93,6 @@ func parseOrgTree(orgTree *[]models.WorksOrg) *entities.OrgEntity {
 			DeptCode:       org.DeptCode,
 			ParentDeptCode: org.ParentDeptCode,
 			Name:           name,
-			UpdateHash:     org.UpdateHash,
 			Kind:           org.Kind,
 		}
 
@@ -123,7 +123,6 @@ func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.Org
 				DeptCode:       org.DeptCode,
 				ParentDeptCode: org.ParentDeptCode,
 				Name:           org.Name,
-				UpdateHash:     org.UpdateHash,
 				SubDept:        sub,
 				Kind:           org.Kind,
 			})
@@ -133,13 +132,13 @@ func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.Org
 	return tree
 }
 
-func (r *orgUsecase) ServerCreateDepartment(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error) {
-	return r.repo.SaveDepartment(ctx, toCreateDepartmentEntity(req))
+func (r *orgUsecase) ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error) {
+	return r.repo.SaveDept(ctx, toCreateDepartmentEntity(req))
 }
 
-func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDepartmentEntity {
+func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDeptEntity {
 
-	return entities.CreateDepartmentEntity{
+	return entities.CreateDeptEntity{
 		DeptCode:       req.DeptCode,
 		DeptOrg:        req.DeptOrg,
 		ParentDeptCode: req.ParentDeptCode,
@@ -150,13 +149,13 @@ func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDepa
 	}
 }
 
-func (r *orgUsecase) ServerDeleteDepartment(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error) {
-	return r.repo.DeleteDepartment(ctx, toDeleteDepartmentEntity(req))
+func (r *orgUsecase) ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error) {
+	return r.repo.DeleteDept(ctx, toDeleteDepartmentEntity(req))
 }
 
-func toDeleteDepartmentEntity(req svDto.SvDeleteDeptRequest) entities.DeleteDepartmentEntity {
+func toDeleteDepartmentEntity(req svDto.SvDeleteDeptRequest) entities.DeleteDeptEntity {
 
-	return entities.DeleteDepartmentEntity{
+	return entities.DeleteDeptEntity{
 		DeptCode: req.DeptCode,
 		DeptOrg:  req.DeptOrg,
 	}
@@ -282,4 +281,17 @@ func makeUpdateHash() string {
 
 	// 16진수 인코딩해서 문자열 반환
 	return hex.EncodeToString(hash[:])
+}
+
+func (r *orgUsecase) ServerDeleteDeptUser(ctx context.Context, req svDto.SvDeleteDeptUserRequest) (interface{}, error) {
+	return r.repo.DeleteDeptUser(ctx, toDeleteDeptUserEntity(req))
+}
+
+func toDeleteDeptUserEntity(req svDto.SvDeleteDeptUserRequest) entities.DeleteDeptUserEntity {
+
+	return entities.DeleteDeptUserEntity{
+		UserHash: req.UserHash,
+		DeptCode: req.DeptCode,
+		DeptOrg:  req.DeptOrg,
+	}
 }

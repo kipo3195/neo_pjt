@@ -20,10 +20,11 @@ type orgRepository struct {
 }
 
 type OrgRepository interface {
-	SaveDepartment(ctx context.Context, entity entities.CreateDepartmentEntity) (interface{}, error)
-	DeleteDepartment(ctx context.Context, entity entities.DeleteDepartmentEntity) (interface{}, error)
+	SaveDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error)
+	DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error)
 	GetOrg(ctx context.Context, entity entities.GetOrgEntity) (*[]models.WorksOrg, error)
 	SaveDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error)
+	DeleteDeptUser(txt context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error)
 }
 
 func NewOrgRepository(db *gorm.DB) OrgRepository {
@@ -31,7 +32,7 @@ func NewOrgRepository(db *gorm.DB) OrgRepository {
 }
 
 // 추가
-func (r *orgRepository) SaveDepartment(ctx context.Context, entity entities.CreateDepartmentEntity) (interface{}, error) {
+func (r *orgRepository) SaveDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error) {
 
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
@@ -62,7 +63,7 @@ func (r *orgRepository) SaveDepartment(ctx context.Context, entity entities.Crea
 	return true, nil
 }
 
-func (r *orgRepository) ToWorksDeptsModel(e entities.CreateDepartmentEntity) models.WorksDept {
+func (r *orgRepository) ToWorksDeptsModel(e entities.CreateDeptEntity) models.WorksDept {
 	return models.WorksDept{
 		DeptCode:        e.DeptCode,
 		DeptOrg:         e.DeptOrg,
@@ -70,7 +71,7 @@ func (r *orgRepository) ToWorksDeptsModel(e entities.CreateDepartmentEntity) mod
 	}
 }
 
-func (r *orgRepository) ToWorksDeptsMultiLangModel(e entities.CreateDepartmentEntity) models.WorksDeptMultiLang {
+func (r *orgRepository) ToWorksDeptsMultiLangModel(e entities.CreateDeptEntity) models.WorksDeptMultiLang {
 	return models.WorksDeptMultiLang{
 		DeptCode: e.DeptCode,
 		DeptOrg:  e.DeptOrg,
@@ -82,7 +83,7 @@ func (r *orgRepository) ToWorksDeptsMultiLangModel(e entities.CreateDepartmentEn
 }
 
 // 삭제
-func (r *orgRepository) DeleteDepartment(ctx context.Context, entity entities.DeleteDepartmentEntity) (interface{}, error) {
+func (r *orgRepository) DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error) {
 
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
@@ -180,4 +181,10 @@ func toWorksDeptUser(entity entities.CreateDeptUserEntity) *models.WorksDeptUser
 		IsConcurrentPosition: entity.IsConcurrentPosition,
 		UpdateHash:           entity.UpdateHash,
 	}
+}
+
+func (r *orgRepository) DeleteDeptUser(txt context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error) {
+
+	result := r.db.Model(&models.WorksDeptUser{}).Where("dept_org = ? AND dept_code = ? AND user_hash = ? ", entity.DeptOrg, entity.DeptCode, entity.UserHash).Update("use_yn", "N")
+	return nil, result.Error
 }

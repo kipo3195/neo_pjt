@@ -21,6 +21,7 @@ type AdminOrgUsecase interface {
 	CreateOrgFile(ctx context.Context, req clDto.CreateOrgFileRequest) (interface{}, error)
 
 	CreateDeptUser(ctx context.Context, req clDto.CreateDeptUserRequest) (interface{}, error)
+	DeleteDeptUser(ctx context.Context, req clDto.DeleteDeptUserRequest) (interface{}, error)
 }
 
 func NewAdminOrgUsecase(repo repositories.AdminOrgRepository) AdminOrgUsecase {
@@ -240,6 +241,67 @@ func CreateDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEnti
 	fmt.Println("create org file api 호출! url : ", url)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer serverToken")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println("org error : ", err)
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+		default:
+			return nil, fmt.Errorf("request failed: %w", err)
+		}
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("org service returned status %d", resp.StatusCode)
+	}
+
+	return http.StatusOK, nil
+}
+
+func (r *adminOrgUsecase) DeleteDeptUser(ctx context.Context, req clDto.DeleteDeptUserRequest) (interface{}, error) {
+	entity := toDeleteDeptUserEntity(req)
+	// org 서비스 호출
+
+	// 이 함수 내부에서 호출
+	result, err := DeptUserInOrg(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func toDeleteDeptUserEntity(req clDto.DeleteDeptUserRequest) entities.DeleteDeptUserEntity {
+
+	return entities.DeleteDeptUserEntity{
+		UserHash: req.UserHash,
+		DeptCode: req.DeptCode,
+		DeptOrg:  req.DeptOrg,
+	}
+
+}
+
+func DeptUserInOrg(ctx context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error) {
+
+	payload, _ := json.Marshal(entity)
+
+	url := "http://172.16.10.114/org/sv1/departments/user"
+
+	fmt.Println("create org file api 호출! url : ", url)
+
+	req, err := http.NewRequest("DELETE", url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}

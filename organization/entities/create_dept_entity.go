@@ -1,6 +1,6 @@
 package entities
 
-type CreateDepartmentEntity struct {
+type CreateDeptEntity struct {
 	DeptOrg        string `json:"deptOrg"`
 	DeptCode       string `json:"deptCode"`
 	ParentDeptCode string `json:"parentDeptCode"`

@@ -254,6 +254,52 @@ func (h *AdminOrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminOrgHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
+	ctx := r.Context()
+
+	// response dto 생성
+	var res = dto.Response{}
+
+	// request 데이터 파싱 header, body -> dto
+	var req = clDto.DeleteDeptUserRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Result = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		// 검증 실패 처리
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// usecase 호출
+	data, err := h.usecase.DeleteDeptUser(ctx, req)
+
+	fmt.Println(data)
+
+	if err == nil {
+		// http status code 200
+		res.Result = consts.SUCCESS
+		res.Data = data
+	} else {
+		// http status code 400
+		res.Result = consts.ERROR
+		res.Data = err
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	// response.
+	json.NewEncoder(w).Encode(res)
 
 }
 
