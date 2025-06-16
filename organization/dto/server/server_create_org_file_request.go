@@ -1,5 +1,5 @@
 package server
 
 type SvCreateOrgFileRequest struct {
-	OrgCode string `json:"orgCode"`
+	OrgCode []string `json:"orgCode"`
 }

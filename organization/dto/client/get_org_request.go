@@ -1,5 +1,5 @@
 package client
 
 type GetOrgRequest struct {
-	OrgCode string `json:"orgCode"`
+	OrgHash []string `json:"orgHash"`
 }

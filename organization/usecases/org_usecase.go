@@ -15,6 +15,7 @@ import (
 	"org/models"
 	"org/repositories"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -23,15 +24,13 @@ type orgUsecase struct {
 }
 
 type OrgUsecase interface {
-	GetOrg(ctx context.Context, req clDto.GetOrgRequest) (*entities.OrgEntity, error)
+	GetOrgs(ctx context.Context, req clDto.GetOrgRequest) (map[string]any, error)
 	GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest) (interface{}, error)
 
 	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
 	ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
 
 	ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error)
-
-	ToGetOrgEntity(req interface{}) entities.GetOrgEntity
 
 	ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error)
 	ServerDeleteDeptUser(ctx context.Context, req svDto.SvDeleteDeptUserRequest) (interface{}, error)
@@ -41,31 +40,54 @@ func NewOrgUsecase(repo repositories.OrgRepository) OrgUsecase {
 	return &orgUsecase{repo: repo}
 }
 
-func (r *orgUsecase) GetOrg(ctx context.Context, req clDto.GetOrgRequest) (*entities.OrgEntity, error) {
+func (r *orgUsecase) GetOrgs(ctx context.Context, req clDto.GetOrgRequest) (map[string]any, error) {
 
-	orgTree, err := r.repo.GetOrg(ctx, r.ToGetOrgEntity(req))
-	if err != nil {
-		return nil, err
+	orgMap := make(map[string]any)
+	for i := 0; i < len(req.OrgHash); i++ {
+		parts := strings.Split(req.OrgHash[i], "_")
+		if len(parts) == 2 {
+			// hash 비교 로직
+			fileFlag, events, err := r.repo.CheckHashAndEvent(ctx, parts[0], parts[1])
+
+			if err != nil {
+				fmt.Printf("GetOrgs org : %s is invalid !", req.OrgHash[i])
+				orgMap[req.OrgHash[i]] = "error"
+			} else if fileFlag {
+				// 파일로 받아야함.
+				orgMap[req.OrgHash[i]] = "full"
+			} else {
+				// 이벤트로 처리가능함.
+				orgMap[req.OrgHash[i]] = parseToOrgEventEntities(events)
+			}
+		} else {
+			fmt.Printf("GetOrgs org : %s is invalid !", req.OrgHash[i])
+			continue
+		}
 	}
 
-	orgEntity := parseOrgTree(orgTree)
-	return orgEntity, nil
+	return orgMap, nil
+}
+
+func parseToOrgEventEntities(models []models.OrgEvent) []entities.OrgEventEntity {
+	var eventList []entities.OrgEventEntity
+
+	for _, m := range models {
+		entity := entities.OrgEventEntity{
+			Seq:        m.Seq,
+			OrgCode:    m.OrgCode,
+			Kind:       m.Kind,
+			EventType:  m.EventType,
+			UpdateHash: m.UpdateHash,
+		}
+		eventList = append(eventList, entity)
+	}
+	return eventList
 }
 
 // 클라이언트, 서버에서 요청하여 현재의 ORG를 가져오기 위해 각자의 타입에 맞춰 entity 생성하는 코드 (오버라이드를 지원하지 않기 때문에 사용함)
-func (r *orgUsecase) ToGetOrgEntity(req interface{}) entities.GetOrgEntity {
-	switch v := req.(type) {
-	case clDto.GetOrgRequest:
-		return entities.GetOrgEntity{
-			OrgCode: v.OrgCode,
-		}
-	case svDto.SvCreateOrgFileRequest:
-		return entities.GetOrgEntity{
-			OrgCode: v.OrgCode,
-		}
-	default:
-		// 에러 처리하거나 빈 값 리턴
-		return entities.GetOrgEntity{}
+func (r *orgUsecase) toGetOrgEntity(orgCode string) entities.GetOrgEntity {
+	return entities.GetOrgEntity{
+		OrgCode: orgCode,
 	}
 }
 
@@ -163,64 +185,79 @@ func toDeleteDepartmentEntity(req svDto.SvDeleteDeptRequest) entities.DeleteDept
 
 func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error) {
 
-	orgTree, err := r.repo.GetOrg(ctx, r.ToGetOrgEntity(req))
+	for i := 0; i < len(req.OrgCode); i++ {
 
-	if err != nil {
-		return nil, err
+		orgTree, err := r.repo.GetOrg(ctx, r.toGetOrgEntity(req.OrgCode[i]))
+
+		if err != nil {
+			fmt.Printf("ServerCreateOrgFile org : %s is invalid ! \n", req.OrgCode[i])
+			continue
+		}
+
+		// 파일 명 생성.
+		fileName := req.OrgCode[i] + "_" + getNow()
+		fmt.Printf("org %s file name : %s ", req.OrgCode[i], fileName)
+
+		orgEntity := parseOrgTree(orgTree)
+		// orgEntity를 JSON 등으로 직렬화 하고 내용을 ZIP 파일 내에 저장
+
+		// 1. OrgEntity → JSON 직렬화
+		fmt.Println("OrgEntity → JSON 직렬화")
+		orgJson, err := json.MarshalIndent(orgEntity, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal OrgEntity: %w", err)
+		}
+		fmt.Println("OrgEntity → JSON 직렬화 ok")
+
+		// 경로에 파일명을 포함시켜야 함
+		var zipPath = "./storage/org_files/" + fileName
+
+		// 1. 디렉터리 없으면 생성 (디렉터리 경로만 던져야함.) -> 실행시 마운트 필요
+		err = ensureDir("./storage/org_files/")
+		if err != nil {
+			return nil, fmt.Errorf("디렉터리 생성 실패: %w", err)
+		}
+
+		// 2. ZIP 파일 생성
+		fmt.Println("ZIP 파일 생성")
+		zipFile, err := os.Create(zipPath)
+		if err != nil {
+			fmt.Println(err.Error())
+			return nil, fmt.Errorf("failed to create zip file: %w", err)
+		}
+		defer zipFile.Close()
+		fmt.Println("ZIP 파일 생성 ok")
+
+		// 3. ZIP writer 생성
+		fmt.Println("ZIP writer 생성")
+		zipWriter := zip.NewWriter(zipFile)
+		defer zipWriter.Close()
+		fmt.Println("ZIP writer 생성 ok")
+
+		// 4. ZIP 내 파일 생성
+		fmt.Println("ZIP 내 파일 생성")
+		fileWriter, err := zipWriter.Create(fileName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create file in zip: %w", err)
+		}
+		fmt.Println("ZIP 내 파일 생성 ok")
+
+		// 5. write
+		fmt.Println("Write")
+		_, err = fileWriter.Write(orgJson)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write data to zip: %w", err)
+		}
+		fmt.Println("Write ok")
+
 	}
-
-	orgEntity := parseOrgTree(orgTree)
-	// orgEntity를 JSON 등으로 직렬화 하고 내용을 ZIP 파일 내에 저장
-
-	// 1. OrgEntity → JSON 직렬화
-	fmt.Println("OrgEntity → JSON 직렬화")
-	orgJson, err := json.MarshalIndent(orgEntity, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal OrgEntity: %w", err)
-	}
-	fmt.Println("OrgEntity → JSON 직렬화 ok")
-
-	// 경로에 파일명을 포함시켜야 함
-	var zipPath = "./storage/org_files/org_entity.json"
-
-	// 1. 디렉터리 없으면 생성 (디렉터리 경로만 던져야함.) -> 실행시 마운트 필요
-	err = ensureDir("./storage/org_files/")
-	if err != nil {
-		return nil, fmt.Errorf("디렉터리 생성 실패: %w", err)
-	}
-
-	// 2. ZIP 파일 생성
-	fmt.Println("ZIP 파일 생성")
-	zipFile, err := os.Create(zipPath)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, fmt.Errorf("failed to create zip file: %w", err)
-	}
-	defer zipFile.Close()
-	fmt.Println("ZIP 파일 생성 ok")
-
-	// 3. ZIP writer 생성
-	fmt.Println("ZIP writer 생성")
-	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
-	fmt.Println("ZIP writer 생성 ok")
-
-	// 4. ZIP 내 파일 생성
-	fmt.Println("ZIP 내 파일 생성")
-	fileWriter, err := zipWriter.Create("org_entity.json")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create file in zip: %w", err)
-	}
-	fmt.Println("ZIP 내 파일 생성 ok")
-
-	// 5. write
-	fmt.Println("Write")
-	_, err = fileWriter.Write(orgJson)
-	if err != nil {
-		return nil, fmt.Errorf("failed to write data to zip: %w", err)
-	}
-	fmt.Println("Write ok")
 	return consts.SUCCESS, nil
+}
+
+func getNow() string {
+	now := time.Now()
+	formatted := now.Format("20060102150405") // yyyyMMddHHmmss
+	return formatted
 }
 
 // 경로가 없으면 생성

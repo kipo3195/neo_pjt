@@ -28,6 +28,9 @@ const (
 	E_107     = "E107"
 	E_107_MSG = "Token expired."
 
+	E_108     = "E108"
+	E_108_MSG = "Query string is invalid."
+
 	E_500     = "E500"
 	E_500_MSG = "Server error."
 )

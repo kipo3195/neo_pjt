@@ -35,21 +35,23 @@ func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
 
 	// request 데이터 파싱 header, body -> dto
 	var req = clDto.GetOrgRequest{
-		OrgCode: r.URL.Query().Get("orgCode"),
+		// 배열의 형태로 받음. org가 하나 이상일 수도 있기 때문.
+		OrgHash: r.URL.Query()["orgHash"],
 	}
 
-	if req.OrgCode == "" {
+	if len(req.OrgHash) == 0 {
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{
-			Code:    consts.E_104,
-			Message: consts.E_104_MSG,
+			Code:    consts.E_108,
+			Message: consts.E_108_MSG,
 		}
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(res)
 		return
 	}
+
 	// usecase 호출
-	data, err := h.usecase.GetOrg(ctx, req)
+	data, err := h.usecase.GetOrgs(ctx, req)
 
 	// response.
 	if err == nil {
@@ -222,14 +224,14 @@ func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 
 	// request 데이터 파싱 header, body -> dto
 	var req = clDto.GetOrgFileRequest{
-		OrgCode: r.URL.Query().Get("orgCode"),
+		OrgCode: r.URL.Query()["orgCode"],
 	}
 
-	if req.OrgCode == "" {
+	if len(req.OrgCode) == 0 {
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{
-			Code:    consts.E_104,
-			Message: consts.E_104_MSG,
+			Code:    consts.E_108,
+			Message: consts.E_108_MSG,
 		}
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(res)
