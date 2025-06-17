@@ -20,7 +20,7 @@ type orgRepository struct {
 }
 
 type OrgRepository interface {
-	CheckHashAndEvent(ctx context.Context, org string, hash string) (bool, []models.OrgEvent, error)
+	CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error)
 	SaveDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error)
 	DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error)
 	GetOrg(ctx context.Context, entity entities.GetOrgEntity) (*[]models.WorksOrg, error)
@@ -171,24 +171,27 @@ func (r *orgRepository) DeleteDeptUser(txt context.Context, entity entities.Dele
 	return nil, result.Error
 }
 
-func (r *orgRepository) CheckHashAndEvent(ctx context.Context, org string, hash string) (bool, []models.OrgEvent, error) {
+func (r *orgRepository) CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error) {
 
-	var events []models.OrgEvent
 	var count int64
+	var events models.OrgEvent
 
 	// hash 검증 'req'데이터를 '_' 기준으로 split하면 [0]은 org code, [1]은 hash
 
-	r.db.Model(events).Where("update_hash >= ? AND update_hash <= ? AND org_code = ?", hash, 9999999999999999, org).Count(&count)
+	result := r.db.Model(events).
+		Where("update_hash >= ? AND update_hash <= ? AND org_code = ?", hash, 9999999999999999, org).
+		Count(&count)
+
+	if result.Error != nil {
+		// 에러
+		log.Printf("Count query failed: %v", result.Error)
+		return false, false, result.Error
+	}
 
 	// 50개 이상이면 파일로 처리 필요.
 	if count >= 50 {
-		return true, nil, nil
-	}
-	err := r.db.Where("update_hash >= ? AND update_hash <= ? AND org_code = ?", hash, 9999999999999999, org).Find(&events).Error
-
-	if err != nil {
-		return false, nil, err
+		return true, false, nil
 	} else {
-		return false, events, nil
+		return false, true, nil
 	}
 }

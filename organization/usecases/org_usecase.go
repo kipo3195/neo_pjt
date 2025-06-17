@@ -24,7 +24,7 @@ type orgUsecase struct {
 }
 
 type OrgUsecase interface {
-	GetOrgs(ctx context.Context, req clDto.GetOrgRequest) (map[string]any, error)
+	GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest) (map[string]any, error)
 	GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest) (interface{}, error)
 
 	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
@@ -40,24 +40,25 @@ func NewOrgUsecase(repo repositories.OrgRepository) OrgUsecase {
 	return &orgUsecase{repo: repo}
 }
 
-func (r *orgUsecase) GetOrgs(ctx context.Context, req clDto.GetOrgRequest) (map[string]any, error) {
+func (r *orgUsecase) GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest) (map[string]any, error) {
 
 	orgMap := make(map[string]any)
+
 	for i := 0; i < len(req.OrgHash); i++ {
 		parts := strings.Split(req.OrgHash[i], "_")
 		if len(parts) == 2 {
 			// hash 비교 로직
-			fileFlag, events, err := r.repo.CheckHashAndEvent(ctx, parts[0], parts[1])
+			fileFlag, _, err := r.repo.CheckOrgHash(ctx, parts[0], parts[1])
 
 			if err != nil {
 				fmt.Printf("GetOrgs org : %s is invalid !", req.OrgHash[i])
 				orgMap[req.OrgHash[i]] = "error"
 			} else if fileFlag {
 				// 파일로 받아야함.
-				orgMap[req.OrgHash[i]] = "full"
+				orgMap[req.OrgHash[i]] = "file"
 			} else {
 				// 이벤트로 처리가능함.
-				orgMap[req.OrgHash[i]] = parseToOrgEventEntities(events)
+				orgMap[req.OrgHash[i]] = "events"
 			}
 		} else {
 			fmt.Printf("GetOrgs org : %s is invalid !", req.OrgHash[i])
@@ -68,21 +69,21 @@ func (r *orgUsecase) GetOrgs(ctx context.Context, req clDto.GetOrgRequest) (map[
 	return orgMap, nil
 }
 
-func parseToOrgEventEntities(models []models.OrgEvent) []entities.OrgEventEntity {
-	var eventList []entities.OrgEventEntity
+// func parseToOrgEventEntities(models []models.OrgEvent) []entities.OrgEventEntity {
+// 	var eventList []entities.OrgEventEntity
 
-	for _, m := range models {
-		entity := entities.OrgEventEntity{
-			Seq:        m.Seq,
-			OrgCode:    m.OrgCode,
-			Kind:       m.Kind,
-			EventType:  m.EventType,
-			UpdateHash: m.UpdateHash,
-		}
-		eventList = append(eventList, entity)
-	}
-	return eventList
-}
+// 	for _, m := range models {
+// 		entity := entities.OrgEventEntity{
+// 			Seq:        m.Seq,
+// 			OrgCode:    m.OrgCode,
+// 			Kind:       m.Kind,
+// 			EventType:  m.EventType,
+// 			UpdateHash: m.UpdateHash,
+// 		}
+// 		eventList = append(eventList, entity)
+// 	}
+// 	return eventList
+// }
 
 // 클라이언트, 서버에서 요청하여 현재의 ORG를 가져오기 위해 각자의 타입에 맞춰 entity 생성하는 코드 (오버라이드를 지원하지 않기 때문에 사용함)
 func (r *orgUsecase) toGetOrgEntity(orgCode string) entities.GetOrgEntity {

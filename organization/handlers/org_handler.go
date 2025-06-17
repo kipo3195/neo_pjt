@@ -23,7 +23,7 @@ func NewOrgHandler(sfg *config.ServerConfig, uc usecases.OrgUsecase) *OrgHandler
 }
 
 // 조직도 전체 조회
-func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetOrgHash(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
 	ctx := r.Context()
@@ -31,10 +31,10 @@ func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = clDto.GetOrgResponse{}
+	var res = clDto.GetOrgHashResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.GetOrgRequest{
+	var req = clDto.GetOrgHashRequest{
 		// 배열의 형태로 받음. org가 하나 이상일 수도 있기 때문.
 		OrgHash: r.URL.Query()["orgHash"],
 	}
@@ -51,7 +51,7 @@ func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// usecase 호출
-	data, err := h.usecase.GetOrgs(ctx, req)
+	data, err := h.usecase.GetOrgHash(ctx, req)
 
 	// response.
 	if err == nil {
