@@ -1,7 +1,7 @@
 package entities
 
 type OrgEventEntity struct {
-	Seq        int    `json:"seq"`
+	Id         string `json:"id"`
 	EventType  string `json:"eventType"`
 	Kind       string `json:"kind"`
 	OrgCode    string `json:"orgCode"`

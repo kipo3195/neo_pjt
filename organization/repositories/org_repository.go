@@ -22,12 +22,12 @@ type orgRepository struct {
 
 type OrgRepository interface {
 	CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error)
-	SaveDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error)
+	PutDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error)
 	DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error)
 	GetOrg(ctx context.Context, entity entities.GetOrgEntity) ([]models.WorksOrg, error)
-	SaveDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error)
-	DeleteDeptUser(txt context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error)
-
+	PutDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error)
+	DeleteDeptUser(ctx context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error)
+	PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error)
 	GetOrgLatestVersion(ctx context.Context, org string) (string, error)
 	GetOrgDiffEvent(ctx context.Context, orgCode string, orgHash string) ([]models.OrgEvent, error)
 }
@@ -37,7 +37,7 @@ func NewOrgRepository(db *gorm.DB) OrgRepository {
 }
 
 // 추가
-func (r *orgRepository) SaveDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error) {
+func (r *orgRepository) PutDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error) {
 
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
@@ -47,14 +47,14 @@ func (r *orgRepository) SaveDept(ctx context.Context, entity entities.CreateDept
 
 	worksDept := toWorksDeptsModel(entity)
 	if err := tx.Create(&worksDept).Error; err != nil {
-		log.Println("[SaveDepartment] - DB error")
+		log.Println("[PutDept] - DB error")
 		tx.Rollback()
 		return false, err
 	}
 
 	worksDeptMultiLang := toWorksDeptsMultiLangModel(entity)
 	if err := tx.Create(&worksDeptMultiLang).Error; err != nil {
-		log.Println("[SaveDepartment Multi lang] - DB error")
+		log.Println("[PutDept Multi lang] - DB error")
 		tx.Rollback()
 		return false, err
 	}
@@ -62,17 +62,17 @@ func (r *orgRepository) SaveDept(ctx context.Context, entity entities.CreateDept
 	// org_event에 추가.
 	orgEventModel := toOrgCreateEventModel(entity)
 	if err := tx.Create(&orgEventModel).Error; err != nil {
-		log.Println("[SaveDepartment org event] - DB error")
+		log.Println("[PutDept org event] - DB error")
 		tx.Rollback()
 		return false, err
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Println("[SaveDepartment] - Commit failed")
+		log.Println("[PutDept] - Commit failed")
 		return false, err
 	}
 	// DB 저장 성공
-	fmt.Println("[SaveDepartment] success !")
+	fmt.Println("[PutDept] success !")
 	return true, nil
 }
 
@@ -170,7 +170,7 @@ func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity
 	return orgTree, nil
 }
 
-func (r *orgRepository) SaveDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error) {
+func (r *orgRepository) PutDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error) {
 	// 트랜잭션 시작
 	// tx := r.db.WithContext(ctx).Begin()
 	// if tx.Error != nil {
@@ -179,7 +179,7 @@ func (r *orgRepository) SaveDeptUser(ctx context.Context, entity entities.Create
 
 	models := toWorksDeptUser(entity)
 	if err := r.db.Create(&models).Error; err != nil {
-		log.Println("[SaveDeptUser] - DB error")
+		log.Println("[PutDeptUser] - DB error")
 		// tx.Rollback()
 		return false, err
 	}
@@ -189,7 +189,7 @@ func (r *orgRepository) SaveDeptUser(ctx context.Context, entity entities.Create
 	// 	return false, err
 	// }
 	// DB 저장 성공
-	fmt.Println("[SaveDeptUser] success !")
+	fmt.Println("[PutDeptUser] success !")
 	return true, nil
 }
 
@@ -256,11 +256,28 @@ func (r *orgRepository) GetOrgDiffEvent(ctx context.Context, orgCode string, org
 
 	var events []models.OrgEvent
 
-	err := r.db.Where("update_hash > ? AND org_code = ?", orgHash, orgCode).Find(&events).Error
+	err := r.db.Where("org_code = ? AND update_hash > ?", orgCode, orgHash).Find(&events).Error
 
 	if err != nil {
 		return nil, err
 	}
 
 	return events, nil
+}
+
+func (r *orgRepository) PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error) {
+
+	models := toOrgEventHashModel(org, hash)
+	if err := r.db.Create(&models).Error; err != nil {
+		log.Println("[PutOrgEventHash] - DB error")
+		return false, err
+	}
+	return true, nil
+}
+
+func toOrgEventHashModel(org string, hash string) models.OrgEventHash {
+	return models.OrgEventHash{
+		OrgCode:    org,
+		UpdateHash: hash,
+	}
 }

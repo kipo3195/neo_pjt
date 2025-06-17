@@ -23,6 +23,12 @@ type orgUsecase struct {
 	repo repositories.OrgRepository
 }
 
+func getNow() string {
+	now := time.Now()
+	formatted := now.Format(consts.YYYYMMDDHHMSS)
+	return formatted
+}
+
 type OrgUsecase interface {
 	GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest) (map[string]any, error)
 	GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (bool, interface{}, error)
@@ -70,22 +76,6 @@ func (r *orgUsecase) GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest
 
 	return orgMap, nil
 }
-
-// func parseToOrgEventEntities(models []models.OrgEvent) []entities.OrgEventEntity {
-// 	var eventList []entities.OrgEventEntity
-
-// 	for _, m := range models {
-// 		entity := entities.OrgEventEntity{
-// 			Seq:        m.Seq,
-// 			OrgCode:    m.OrgCode,
-// 			Kind:       m.Kind,
-// 			EventType:  m.EventType,
-// 			UpdateHash: m.UpdateHash,
-// 		}
-// 		eventList = append(eventList, entity)
-// 	}
-// 	return eventList
-// }
 
 // 클라이언트, 서버에서 요청하여 현재의 ORG를 가져오기 위해 각자의 타입에 맞춰 entity 생성하는 코드 (오버라이드를 지원하지 않기 때문에 사용함)
 func (r *orgUsecase) toGetOrgEntity(orgCode string) entities.GetOrgEntity {
@@ -158,7 +148,7 @@ func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.Org
 }
 
 func (r *orgUsecase) ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error) {
-	return r.repo.SaveDept(ctx, toCreateDepartmentEntity(req))
+	return r.repo.PutDept(ctx, toCreateDepartmentEntity(req))
 }
 
 func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDeptEntity {
@@ -197,8 +187,10 @@ func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreate
 			continue
 		}
 
+		var hash = getNow()
+
 		// 파일 명 생성.
-		fileName := req.OrgCode[i] + "_" + getNow()
+		fileName := hash
 		fmt.Printf("org %s file name : %s ", req.OrgCode[i], fileName)
 
 		orgEntity := parseOrgTree(orgTree)
@@ -213,10 +205,10 @@ func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreate
 		fmt.Println("OrgEntity → JSON 직렬화 ok")
 
 		// 경로에 파일명을 포함시켜야 함
-		var zipPath = "./storage/org_files/" + fileName
+		var zipPath = "./storage/" + req.OrgCode[i] + "/org_files/" + fileName
 
 		// 1. 디렉터리 없으면 생성 (디렉터리 경로만 던져야함.) -> 실행시 마운트 필요
-		err = ensureDir("./storage/org_files/")
+		err = ensureDir("./storage/" + req.OrgCode[i] + "/org_files/")
 		if err != nil {
 			return nil, fmt.Errorf("디렉터리 생성 실패: %w", err)
 		}
@@ -229,7 +221,7 @@ func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreate
 			return nil, fmt.Errorf("failed to create zip file: %w", err)
 		}
 		defer zipFile.Close()
-		fmt.Println("ZIP 파일 생성 ok")
+		fmt.Println("ZIP 파일 생성 ok path :", zipPath)
 
 		// 3. ZIP writer 생성
 		fmt.Println("ZIP writer 생성")
@@ -253,14 +245,15 @@ func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreate
 		}
 		fmt.Println("Write ok")
 
+		result, err := r.repo.PutOrgEventHash(ctx, req.OrgCode[i], hash)
+		if err != nil {
+			return nil, fmt.Errorf("insert error %w", err)
+		}
+		if result {
+			fmt.Println("DB saved ok org :", req.OrgCode[i])
+		}
 	}
 	return consts.SUCCESS, nil
-}
-
-func getNow() string {
-	now := time.Now()
-	formatted := now.Format(consts.YYYYMMDDHHMSS)
-	return formatted
 }
 
 // 경로가 없으면 생성
@@ -291,7 +284,7 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest
 		if err != nil {
 			return false, nil, err
 		}
-		return false, events, nil
+		return false, toEventEntity(events), nil
 
 	} else {
 		// 명확하지 않은 타입으로 요청함.
@@ -300,12 +293,29 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest
 
 }
 
+func toEventEntity(events []models.OrgEvent) []entities.OrgEventEntity {
+
+	var eventList []entities.OrgEventEntity
+
+	for _, event := range events {
+		entity := entities.OrgEventEntity{
+			OrgCode:    event.OrgCode,
+			EventType:  event.EventType,
+			Id:         event.Id,
+			Kind:       event.Kind,
+			UpdateHash: event.UpdateHash,
+		}
+		eventList = append(eventList, entity)
+	}
+	return eventList
+}
+
 func (r *orgUsecase) ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error) {
 
 	updateHash := makeUpdateHash()
 	fmt.Println("사용자 추가시 update Hash 생성 : ", updateHash)
 
-	return r.repo.SaveDeptUser(ctx, toCreateDeptUserEntity(req, updateHash))
+	return r.repo.PutDeptUser(ctx, toCreateDeptUserEntity(req, updateHash))
 }
 
 func toCreateDeptUserEntity(req svDto.SvCreateDeptUserRequest, updateHash string) entities.CreateDeptUserEntity {

@@ -208,9 +208,12 @@ func (h *OrgHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request)
 		res.Data = data
 	} else {
 		// http status code 500
-		res.Result = consts.ERROR
-		res.Data = err
 		w.WriteHeader(http.StatusInternalServerError)
+		res.Result = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
 	}
 
 	// response.
