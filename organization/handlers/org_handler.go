@@ -118,10 +118,12 @@ func (h *OrgHandler) ServerCreateDept(w http.ResponseWriter, r *http.Request) {
 		res.Code = consts.SUCCESS
 		res.Data = data
 	} else {
-		// http status code 400
-		res.Code = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
 	}
 
 	// response.
@@ -160,10 +162,12 @@ func (h *OrgHandler) ServerDeleteDept(w http.ResponseWriter, r *http.Request) {
 		res.Code = consts.SUCCESS
 		res.Data = data
 	} else {
-		// http status code 400
+		w.WriteHeader(http.StatusInternalServerError)
 		res.Code = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
 	}
 
 	// response.
@@ -214,7 +218,7 @@ func (h *OrgHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request)
 
 }
 
-func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetOrgData(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
 	ctx := r.Context()

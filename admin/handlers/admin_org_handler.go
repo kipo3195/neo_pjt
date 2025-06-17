@@ -46,7 +46,12 @@ func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 	validate := validator.New()
 	if err := validate.Struct(req); err != nil {
 		// 검증 실패 처리
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		res.Code = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_108,
+			Message: consts.E_108_MSG,
+		}
 		return
 	}
 
@@ -60,10 +65,12 @@ func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 		res.Code = consts.SUCCESS
 		res.Data = data
 	} else {
-		// http status code 400
+		w.WriteHeader(http.StatusInternalServerError)
 		res.Code = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
 	}
 
 	// response.

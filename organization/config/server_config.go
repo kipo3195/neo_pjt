@@ -86,6 +86,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	// db.AutoMigrate(&models.WorksDeptUser{})
 	// db.AutoMigrate(&models.WorksUserMultiLang{})
 	db.AutoMigrate(&models.OrgEvent{})
+	db.AutoMigrate(&models.OrgEventHash{})
 	fmt.Println("Org Database Connected !")
 	return db
 }

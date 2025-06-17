@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"org/consts"
 	"org/entities"
 	"org/models"
+	"time"
 
 	"gorm.io/gorm"
 )
 
-const (
-	DOMAIN = "domain"
-	CODE   = "code"
-)
+func generateUpdateHash() string {
+	return time.Now().Format(consts.YYYYMMDDHHMSS)
+}
 
 type orgRepository struct {
 	db *gorm.DB
@@ -44,16 +45,24 @@ func (r *orgRepository) SaveDept(ctx context.Context, entity entities.CreateDept
 		return false, tx.Error
 	}
 
-	models := r.ToWorksDeptsModel(entity)
-	if err := tx.Create(&models).Error; err != nil {
+	worksDept := toWorksDeptsModel(entity)
+	if err := tx.Create(&worksDept).Error; err != nil {
 		log.Println("[SaveDepartment] - DB error")
 		tx.Rollback()
 		return false, err
 	}
 
-	multiLangModels := r.ToWorksDeptsMultiLangModel(entity)
-	if err := tx.Create(&multiLangModels).Error; err != nil {
+	worksDeptMultiLang := toWorksDeptsMultiLangModel(entity)
+	if err := tx.Create(&worksDeptMultiLang).Error; err != nil {
 		log.Println("[SaveDepartment Multi lang] - DB error")
+		tx.Rollback()
+		return false, err
+	}
+
+	// org_event에 추가.
+	orgEventModel := toOrgCreateEventModel(entity)
+	if err := tx.Create(&orgEventModel).Error; err != nil {
+		log.Println("[SaveDepartment org event] - DB error")
 		tx.Rollback()
 		return false, err
 	}
@@ -67,7 +76,7 @@ func (r *orgRepository) SaveDept(ctx context.Context, entity entities.CreateDept
 	return true, nil
 }
 
-func (r *orgRepository) ToWorksDeptsModel(e entities.CreateDeptEntity) models.WorksDept {
+func toWorksDeptsModel(e entities.CreateDeptEntity) models.WorksDept {
 	return models.WorksDept{
 		DeptCode:        e.DeptCode,
 		DeptOrg:         e.DeptOrg,
@@ -75,7 +84,7 @@ func (r *orgRepository) ToWorksDeptsModel(e entities.CreateDeptEntity) models.Wo
 	}
 }
 
-func (r *orgRepository) ToWorksDeptsMultiLangModel(e entities.CreateDeptEntity) models.WorksDeptMultiLang {
+func toWorksDeptsMultiLangModel(e entities.CreateDeptEntity) models.WorksDeptMultiLang {
 	return models.WorksDeptMultiLang{
 		DeptCode: e.DeptCode,
 		DeptOrg:  e.DeptOrg,
@@ -83,6 +92,16 @@ func (r *orgRepository) ToWorksDeptsMultiLangModel(e entities.CreateDeptEntity) 
 		EnLang:   e.EnLang,
 		JpLang:   e.JpLang,
 		CnLang:   e.CnLang,
+	}
+}
+
+func toOrgCreateEventModel(e entities.CreateDeptEntity) models.OrgEvent {
+	return models.OrgEvent{
+		EventType:  "C",
+		Id:         e.DeptCode,
+		Kind:       "0",
+		OrgCode:    e.DeptOrg,
+		UpdateHash: generateUpdateHash(),
 	}
 }
 
@@ -111,12 +130,30 @@ func (r *orgRepository) DeleteDept(ctx context.Context, entity entities.DeleteDe
 		return false, err
 	}
 
+	// org_event에 추가.
+	orgEventModel := toOrgDeleteEventModel(entity)
+	if err := tx.Create(&orgEventModel).Error; err != nil {
+		log.Println("[SaveDepartment org event] - DB error")
+		tx.Rollback()
+		return false, err
+	}
+
 	// 트랜잭션 반영
 	tx.Commit()
 
 	// DB 저장 성공
 	fmt.Println("[DeleteDepartment] success !")
 	return true, nil
+}
+
+func toOrgDeleteEventModel(e entities.DeleteDeptEntity) models.OrgEvent {
+	return models.OrgEvent{
+		EventType:  "D",
+		Id:         e.DeptCode,
+		Kind:       "0",
+		OrgCode:    e.DeptOrg,
+		UpdateHash: generateUpdateHash(),
+	}
 }
 
 func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity) ([]models.WorksOrg, error) {

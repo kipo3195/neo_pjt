@@ -19,7 +19,7 @@ func SetupRoutes(orgHandler *handlers.OrgHandler) *mux.Router {
 	// org_hash의 형태로 서버에 요청. 해당 org의 조직도 정보가 변경되었는지 판단하여 이벤트 또는 조직도 전체 데이터를 response.
 	orgV1.HandleFunc("/orgs/hash", orgHandler.GetOrgHash).Methods("GET")
 
-	orgV1.HandleFunc("/orgs/", orgHandler.GetOrg).Methods("GET")
+	orgV1.HandleFunc("/orgs/data", orgHandler.GetOrgData).Methods("GET")
 
 	// 요청하는 부서에 대한 조회. DB 방식, 최상위 포함.
 	orgV1.HandleFunc("/departments", orgHandler.GetDept).Methods("GET")
