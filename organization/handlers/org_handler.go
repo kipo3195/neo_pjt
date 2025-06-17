@@ -31,7 +31,7 @@ func (h *OrgHandler) GetOrgHash(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = clDto.GetOrgHashResponse{}
+	var res = dto.Response{}
 
 	// request 데이터 파싱 header, body -> dto
 	var req = clDto.GetOrgHashRequest{
@@ -40,7 +40,7 @@ func (h *OrgHandler) GetOrgHash(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(req.OrgHash) == 0 {
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_108,
 			Message: consts.E_108_MSG,
@@ -56,15 +56,17 @@ func (h *OrgHandler) GetOrgHash(w http.ResponseWriter, r *http.Request) {
 	// response.
 	if err == nil {
 		// http status code 200
-		res.Code = consts.SUCCESS
+		res.Result = consts.SUCCESS
 		res.Data = data
 	} else {
 		// http status code 400
-		res.Code = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
+		res.Result = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
 	}
-
 	// response.
 	json.NewEncoder(w).Encode(res)
 
@@ -240,21 +242,29 @@ func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// usecase 호출
-	data, err := h.usecase.GetOrgData(ctx, req)
+	Fileflag, data, err := h.usecase.GetOrgData(ctx, req)
 
 	// response.
-	if err == nil {
+	if Fileflag {
 		// http status code 200
+		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", `attachment; filename="org_entity.zip"`)
 		w.Write(data.([]byte))
-	} else {
-		// http status code 400
-		res.Code = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
-	}
+		return
 
+	} else if err != nil {
+		// http status code 400
+		w.WriteHeader(http.StatusBadRequest)
+		res.Code = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
+	} else {
+		res.Code = consts.SUCCESS
+		res.Data = data
+	}
 	// response.
 	json.NewEncoder(w).Encode(res)
 

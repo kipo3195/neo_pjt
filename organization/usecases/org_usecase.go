@@ -25,7 +25,7 @@ type orgUsecase struct {
 
 type OrgUsecase interface {
 	GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest) (map[string]any, error)
-	GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (interface{}, error)
+	GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (bool, interface{}, error)
 
 	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
 	ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
@@ -94,7 +94,7 @@ func (r *orgUsecase) toGetOrgEntity(orgCode string) entities.GetOrgEntity {
 	}
 }
 
-func parseOrgTree(orgTree *[]models.WorksOrg) *entities.OrgEntity {
+func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
 
 	if orgTree == nil {
 		fmt.Println("조회된 조직도 정보가 없음. ")
@@ -105,7 +105,7 @@ func parseOrgTree(orgTree *[]models.WorksOrg) *entities.OrgEntity {
 	var rootOrgInfos []entities.OrgInfo
 	var flatList []entities.OrgInfo // 트리 구성용 전체 flat 리스트
 
-	for _, org := range *orgTree {
+	for _, org := range orgTree {
 		// 이름 다국어 처리
 		name := entities.NameEntity{
 			Kr: org.KrLang,
@@ -268,31 +268,34 @@ func ensureDir(dirPath string) error {
 	return os.MkdirAll(dirPath, os.ModePerm)
 }
 
-func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (interface{}, error) {
+func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (bool, interface{}, error) {
 
 	if req.Type == consts.FILE {
 		version, err := r.repo.GetOrgLatestVersion(ctx, req.OrgCode)
 		if err != nil {
-			return nil, err
+			return false, nil, err
 		}
 
-		filePath := "./storage/org_files/" + version // 전달할 파일 경로
+		filePath := "./storage/" + req.OrgCode + "/org_files/" + version // 전달할 파일 경로
+		// 파일을 메모리에 가지고 있도록 수정 할 것.
 		fileBytes, err := os.ReadFile(filePath)
 		if err != nil {
-			return nil, err
+			fmt.Printf("파일을 찾을 수 없음 %s \n", filePath)
+			return false, nil, err
 		}
-		return fileBytes, nil
+		return true, fileBytes, nil
 
 	} else if req.Type == consts.EVENT {
+
 		events, err := r.repo.GetOrgDiffEvent(ctx, req.OrgCode, req.OrgHash)
 		if err != nil {
-			return nil, err
+			return false, nil, err
 		}
-		return events, nil
+		return false, events, nil
 
 	} else {
 		// 명확하지 않은 타입으로 요청함.
-		return nil, fmt.Errorf("invalid request type")
+		return false, nil, fmt.Errorf("invalid request type")
 	}
 
 }
