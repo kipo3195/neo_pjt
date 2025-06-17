@@ -25,7 +25,7 @@ type orgUsecase struct {
 
 type OrgUsecase interface {
 	GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest) (map[string]any, error)
-	GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest) (interface{}, error)
+	GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (interface{}, error)
 
 	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
 	ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
@@ -47,18 +47,20 @@ func (r *orgUsecase) GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest
 	for i := 0; i < len(req.OrgHash); i++ {
 		parts := strings.Split(req.OrgHash[i], "_")
 		if len(parts) == 2 {
-			// hash 비교 로직
-			fileFlag, _, err := r.repo.CheckOrgHash(ctx, parts[0], parts[1])
+
+			fileFlag, eventFlag, err := r.repo.CheckOrgHash(ctx, parts[0], parts[1])
 
 			if err != nil {
-				fmt.Printf("GetOrgs org : %s is invalid !", req.OrgHash[i])
-				orgMap[req.OrgHash[i]] = "error"
+				return nil, err
 			} else if fileFlag {
 				// 파일로 받아야함.
 				orgMap[req.OrgHash[i]] = "file"
+			} else if eventFlag {
+				// 이벤트로 받아야함.
+				orgMap[req.OrgHash[i]] = "event"
 			} else {
-				// 이벤트로 처리가능함.
-				orgMap[req.OrgHash[i]] = "events"
+				// 최신 버전.
+				orgMap[req.OrgHash[i]] = "latest"
 			}
 		} else {
 			fmt.Printf("GetOrgs org : %s is invalid !", req.OrgHash[i])
@@ -257,7 +259,7 @@ func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreate
 
 func getNow() string {
 	now := time.Now()
-	formatted := now.Format("20060102150405") // yyyyMMddHHmmss
+	formatted := now.Format(consts.YYYYMMDDHHMSS)
 	return formatted
 }
 
@@ -266,14 +268,33 @@ func ensureDir(dirPath string) error {
 	return os.MkdirAll(dirPath, os.ModePerm)
 }
 
-func (r *orgUsecase) GetOrgFile(ctx context.Context, req clDto.GetOrgFileRequest) (interface{}, error) {
-	filePath := "./storage/org_files/org_entity.json" // 전달할 파일 경로
-	fileBytes, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
+func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (interface{}, error) {
+
+	if req.Type == consts.FILE {
+		version, err := r.repo.GetOrgLatestVersion(ctx, req.OrgCode)
+		if err != nil {
+			return nil, err
+		}
+
+		filePath := "./storage/org_files/" + version // 전달할 파일 경로
+		fileBytes, err := os.ReadFile(filePath)
+		if err != nil {
+			return nil, err
+		}
+		return fileBytes, nil
+
+	} else if req.Type == consts.EVENT {
+		events, err := r.repo.GetOrgDiffEvent(ctx, req.OrgCode, req.OrgHash)
+		if err != nil {
+			return nil, err
+		}
+		return events, nil
+
+	} else {
+		// 명확하지 않은 타입으로 요청함.
+		return nil, fmt.Errorf("invalid request type")
 	}
 
-	return fileBytes, nil
 }
 
 func (r *orgUsecase) ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error) {

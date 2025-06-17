@@ -212,7 +212,7 @@ func (h *OrgHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request)
 
 }
 
-func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetOrg(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
 	ctx := r.Context()
@@ -220,11 +220,13 @@ func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = clDto.GetOrgFileResponse{}
+	var res = clDto.GetOrgDataResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.GetOrgFileRequest{
-		OrgCode: r.URL.Query()["orgCode"],
+	var req = clDto.GetOrgDataRequest{
+		OrgCode: r.URL.Query().Get("orgCode"),
+		Type:    r.URL.Query().Get("type"),
+		OrgHash: r.URL.Query().Get("orgHash"),
 	}
 
 	if len(req.OrgCode) == 0 {
@@ -238,7 +240,7 @@ func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// usecase 호출
-	data, err := h.usecase.GetOrgFile(ctx, req)
+	data, err := h.usecase.GetOrgData(ctx, req)
 
 	// response.
 	if err == nil {

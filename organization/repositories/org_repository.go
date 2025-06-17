@@ -26,6 +26,9 @@ type OrgRepository interface {
 	GetOrg(ctx context.Context, entity entities.GetOrgEntity) (*[]models.WorksOrg, error)
 	SaveDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error)
 	DeleteDeptUser(txt context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error)
+
+	GetOrgLatestVersion(ctx context.Context, org string) (string, error)
+	GetOrgDiffEvent(ctx context.Context, orgCode string, orgHash string) (models.OrgEvent, error)
 }
 
 func NewOrgRepository(db *gorm.DB) OrgRepository {
@@ -191,7 +194,34 @@ func (r *orgRepository) CheckOrgHash(ctx context.Context, org string, hash strin
 	// 50개 이상이면 파일로 처리 필요.
 	if count >= 50 {
 		return true, false, nil
+	} else if count == 0 {
+		return false, false, nil
 	} else {
 		return false, true, nil
 	}
+}
+
+func (r *orgRepository) GetOrgLatestVersion(ctx context.Context, org string) (string, error) {
+
+	var result models.OrgEventHash
+	err := r.db.Where("org_code", org).Order("hash DESC").First(&result).Error
+	if err != nil {
+		log.Println("Error fetching latest hash:", err)
+	}
+	fmt.Printf("org : %s Latest hash record : %s \n", org, result.UpdateHash)
+	return result.UpdateHash, nil
+
+}
+
+func (r *orgRepository) GetOrgDiffEvent(ctx context.Context, orgCode string, orgHash string) (models.OrgEvent, error) {
+
+	var events models.OrgEvent
+
+	err := r.db.Where("update_hash >= ? AND update_hash <= ? AND org_code = ?", orgHash, 9999999999999999, orgCode).Find(&events).Error
+
+	if err != nil {
+		return events, err
+	}
+
+	return events, nil
 }
