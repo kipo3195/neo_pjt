@@ -1,8 +1,8 @@
 package models
 
 type ServiceUserTenant struct {
-	UserHash   string `gorm:"column:user_hash;primaryKey;comment:'pk'"`
-	TenantCode string `gorm:"column:tenant_code;commont:'테넌트 코드'"`
+	UserHash   string `gorm:"column:user_hash;primaryKey;comment:pk"`
+	TenantCode string `gorm:"column:tenant_code;commont:테넌트 코드"`
 }
 
 func (ServiceUserTenant) TableName() string {

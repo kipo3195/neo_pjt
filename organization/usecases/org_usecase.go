@@ -31,7 +31,7 @@ func getNow() string {
 
 type OrgUsecase interface {
 	GetOrgHash(ctx context.Context, req clDto.GetOrgHashRequest) (map[string]any, error)
-	GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (bool, interface{}, error)
+	GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (string, interface{}, error)
 
 	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
 	ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
@@ -109,6 +109,7 @@ func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
 			ParentDeptCode: org.ParentDeptCode,
 			Name:           name,
 			Kind:           org.Kind,
+			Id:             org.Id,
 		}
 
 		if org.ParentDeptCode == "root" {
@@ -140,6 +141,7 @@ func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.Org
 				Name:           org.Name,
 				SubDept:        sub,
 				Kind:           org.Kind,
+				Id:             org.Id,
 			})
 		}
 	}
@@ -261,12 +263,12 @@ func ensureDir(dirPath string) error {
 	return os.MkdirAll(dirPath, os.ModePerm)
 }
 
-func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (bool, interface{}, error) {
+func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest) (string, interface{}, error) {
 
 	if req.Type == consts.FILE {
 		version, err := r.repo.GetOrgLatestVersion(ctx, req.OrgCode)
 		if err != nil {
-			return false, nil, err
+			return "", nil, err
 		}
 
 		filePath := "./storage/" + req.OrgCode + "/org_files/" + version // 전달할 파일 경로
@@ -274,21 +276,21 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req clDto.GetOrgDataRequest
 		fileBytes, err := os.ReadFile(filePath)
 		if err != nil {
 			fmt.Printf("파일을 찾을 수 없음 %s \n", filePath)
-			return false, nil, err
+			return "", nil, err
 		}
-		return true, fileBytes, nil
+		return version, fileBytes, nil
 
 	} else if req.Type == consts.EVENT {
 
 		events, err := r.repo.GetOrgDiffEvent(ctx, req.OrgCode, req.OrgHash)
 		if err != nil {
-			return false, nil, err
+			return "", nil, err
 		}
-		return false, toEventEntity(events), nil
+		return "", toEventEntity(events), nil
 
 	} else {
 		// 명확하지 않은 타입으로 요청함.
-		return false, nil, fmt.Errorf("invalid request type")
+		return "", nil, fmt.Errorf("invalid request type")
 	}
 
 }

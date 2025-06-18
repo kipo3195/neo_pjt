@@ -11,4 +11,5 @@ type WorksOrg struct {
 	JpLang         string `gorm:"column:jp_lang"     json:"jpLang"`
 	UpdateHash     string `gorm:"column:update_hash" json:"update_hash"`
 	Kind           string `gorm:"column:kind" json:"kind"` // 추가
+	Id             string `gorm:"column:id" json:"id"`
 }

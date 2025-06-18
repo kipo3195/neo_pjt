@@ -1,8 +1,8 @@
 package models
 
 type ServiceUsers struct {
-	UserHash string `gorm:"column:user_hash;primaryKey;comment:'pk'"`
-	UserId   string `gorm:"column:user_id;commont:'사용자 ID'"`
+	UserHash string `gorm:"column:user_hash;primaryKey;comment:pk"`
+	UserId   string `gorm:"column:user_id;commont:사용자 ID"`
 }
 
 func (ServiceUsers) TableName() string {

@@ -10,4 +10,5 @@ type OrgInfo struct {
 	Name           NameEntity `json:"name"`
 	//UpdateHash     string     `json:"updateHash"`
 	Kind string `json:"kind"`
+	Id   string `json:"id"`
 }

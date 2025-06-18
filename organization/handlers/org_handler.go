@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"org/config"
 	"org/consts"
@@ -249,15 +250,17 @@ func (h *OrgHandler) GetOrgData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// usecase 호출
-	Fileflag, data, err := h.usecase.GetOrgData(ctx, req)
+	file, data, err := h.usecase.GetOrgData(ctx, req)
 
 	// response.
-	if Fileflag {
+	if file != "" {
+		orgCode := req.OrgCode
 		// http status code 200
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", `attachment; filename="org_entity.zip"`)
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.zip"`, orgCode+"_"+file)) // 요청한 org code + 최신 hash
 		w.Write(data.([]byte))
+		// 전송 헤더의 순서가 영향을 미침 - 파일명 적용이 안됨.
+		w.WriteHeader(http.StatusOK)
 		return
 
 	} else if err != nil {

@@ -6,5 +6,6 @@ type OrgTreeInfos struct {
 	Name           NameEntity `json:"name"`
 	//UpdateHash     string         `json:"updateHash"`
 	SubDept []OrgTreeInfos `json:"subDept,omitempty"` // 재귀 구조
-	Kind    string         `json:"kind"`              // 사용자, 부서 구분
+	Id      string         `json:"id"`
+	Kind    string         `json:"kind"` // 사용자, 부서 구분
 }
