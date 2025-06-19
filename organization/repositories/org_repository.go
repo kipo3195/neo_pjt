@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"org/consts"
-	"org/entities"
 	"org/models"
 	"time"
 
@@ -23,29 +22,12 @@ type orgRepository struct {
 type OrgRepository interface {
 	CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error)
 
-	GetOrg(ctx context.Context, entity entities.GetOrgEntity) ([]models.WorksOrg, error)
-
-	PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error)
 	GetOrgLatestVersion(ctx context.Context, org string) (string, error)
 	GetOrgDiffEvent(ctx context.Context, orgCode string, orgHash string) ([]models.OrgEvent, error)
 }
 
 func NewOrgRepository(db *gorm.DB) OrgRepository {
 	return &orgRepository{db: db}
-}
-
-func (r *orgRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity) ([]models.WorksOrg, error) {
-
-	var orgTree []models.WorksOrg
-	viewSql := `SELECT * FROM org.vw_dept_and_user_tree where org = ?`
-	err := r.db.Raw(viewSql, entity.OrgCode).Scan(&orgTree).Error
-
-	if err != nil {
-		log.Println("[GetOrg] - No record found or DB error")
-		return nil, err
-	}
-
-	return orgTree, nil
 }
 
 func (r *orgRepository) CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error) {
@@ -100,21 +82,4 @@ func (r *orgRepository) GetOrgDiffEvent(ctx context.Context, orgCode string, org
 	}
 
 	return events, nil
-}
-
-func (r *orgRepository) PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error) {
-
-	models := toOrgEventHashModel(org, hash)
-	if err := r.db.Create(&models).Error; err != nil {
-		log.Println("[PutOrgEventHash] - DB error")
-		return false, err
-	}
-	return true, nil
-}
-
-func toOrgEventHashModel(org string, hash string) models.OrgEventHash {
-	return models.OrgEventHash{
-		OrgCode:    org,
-		UpdateHash: hash,
-	}
 }

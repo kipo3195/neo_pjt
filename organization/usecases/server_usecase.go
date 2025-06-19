@@ -18,10 +18,9 @@ type serverUsecase struct {
 	// 관심사 (책임)의 분리 측면에서 봤을때 GetOrg는 OrgRepo에서 처리. 동일한 두개의 로직을 만들지 않음.
 }
 
-func NewServerUsecase(repo repositories.ServerRepository, orgRepo repositories.OrgRepository) ServerUsecase {
+func NewServerUsecase(repo repositories.ServerRepository) ServerUsecase {
 	return &serverUsecase{
-		repo:    repo,
-		orgRepo: orgRepo,
+		repo: repo,
 	}
 }
 
@@ -29,10 +28,10 @@ type ServerUsecase interface {
 	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
 	ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
 
-	ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error)
-
 	ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error)
 	ServerDeleteDeptUser(ctx context.Context, req svDto.SvDeleteDeptUserRequest) (interface{}, error)
+
+	ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error)
 }
 
 func (r *serverUsecase) ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error) {
@@ -102,7 +101,7 @@ func (r *serverUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCre
 
 	for i := 0; i < len(req.OrgCode); i++ {
 
-		orgTree, err := r.orgRepo.GetOrg(ctx, r.toGetOrgEntity(req.OrgCode[i]))
+		orgTree, err := r.repo.GetOrg(ctx, r.toGetOrgEntity(req.OrgCode[i]))
 
 		if err != nil {
 			fmt.Printf("ServerCreateOrgFile org : %s is invalid ! \n", req.OrgCode[i])
@@ -167,7 +166,7 @@ func (r *serverUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCre
 		}
 		fmt.Println("Write ok")
 
-		result, err := r.orgRepo.PutOrgEventHash(ctx, req.OrgCode[i], hash)
+		result, err := r.repo.PutOrgEventHash(ctx, req.OrgCode[i], hash)
 		if err != nil {
 			return nil, fmt.Errorf("insert error %w", err)
 		}

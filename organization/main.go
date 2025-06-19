@@ -30,7 +30,7 @@ func InitServer() *http.Server {
 	userHandler := handlers.NewUserHandler(sfg, userUsecase)
 
 	serverRepo := repositories.NewServerRepository(db)
-	serverUsecase := usecases.NewServerUsecase(serverRepo, orgRepo)
+	serverUsecase := usecases.NewServerUsecase(serverRepo)
 	serverHandler := handlers.NewServerHandler(sfg, serverUsecase)
 
 	router := routes.SetupRoutes(orgHandler, userHandler, serverHandler)
