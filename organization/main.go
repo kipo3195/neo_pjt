@@ -22,10 +22,18 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	orgRepo := repositories.NewOrgRepository(db)
-	orgUC := usecases.NewOrgUsecase(orgRepo)
-	orgHandler := handlers.NewOrgHandler(sfg, orgUC)
+	orgUsecase := usecases.NewOrgUsecase(orgRepo)
+	orgHandler := handlers.NewOrgHandler(sfg, orgUsecase)
 
-	router := routes.SetupRoutes(orgHandler)
+	userRepo := repositories.NewUserRepository(db)
+	userUsecase := usecases.NewUserUsecase(userRepo)
+	userHandler := handlers.NewUserHandler(sfg, userUsecase)
+
+	serverRepo := repositories.NewServerRepository(db)
+	serverUsecase := usecases.NewServerUsecase(serverRepo, orgRepo)
+	serverHandler := handlers.NewServerHandler(sfg, serverUsecase)
+
+	router := routes.SetupRoutes(orgHandler, userHandler, serverHandler)
 
 	return &http.Server{
 		Addr:    ":8088",
