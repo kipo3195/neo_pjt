@@ -62,10 +62,10 @@ func (u *commonUsecase) DeviceInit(body *svDto.SvDeviceInitRequest) (*entities.I
 		}
 	}
 
-	fmt.Println("DB 조회 결과 : ", result)
+	fmt.Println("DeviceInit DB 조회 결과 : ", result)
 
 	// AUTH에 JWT 요청
-	result.AuthToken, err = u.GenerateDeviceToken(body, result.ConnectInfo)
+	result.AppToken, err = u.GenerateDeviceToken(body, result.ConnectInfo)
 	if err != nil {
 		return &entities.InitResult{}, &dto.ErrorResponse{
 			Code:    consts.E_500,

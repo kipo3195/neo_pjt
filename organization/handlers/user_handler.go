@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"org/config"
 	"org/consts"
+	"org/contextkey"
 	userDto "org/dto/client/user"
 	dto "org/dto/common"
 	"org/usecases"
@@ -34,9 +36,22 @@ func (h *UserHandler) GetMyInfo(w http.ResponseWriter, r *http.Request) {
 	// response dto 생성
 	var res = dto.Response{}
 
-	// request 데이터 파싱 header, body -> dto
+	// 인증 토큰에서 요청 사용자의 hash 정보 추출
+	val := r.Context().Value(contextkey.UserHashKey)
+	myHash, ok := val.(string)
+	if !ok {
+		fmt.Println("인증 토큰의 userHash 데이터 에러 ")
+		res.Result = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.ORG_F101,
+			Message: consts.ORG_F101_MSG,
+		}
+	}
+
+	fmt.Println("내 정보 요청시 myHash : ", myHash)
+	// dto 생성
 	var req = userDto.GetMyInfoRequest{
-		MyHash: "",
+		MyHash: myHash,
 	}
 
 	data, err := h.usecase.GetMyInfo(ctx, req)

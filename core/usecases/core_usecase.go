@@ -153,7 +153,7 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 		return &svDto.SvDeviceInitResponse{}, errors.New("invalid data format")
 	}
 
-	authToken, authTokenOk := resultData["authToken"].(string)
+	appToken, authTokenOk := resultData["appToken"].(string)
 	connectInfo, connectInfoOk := resultData["connectInfo"].(string)
 
 	if !authTokenOk || !connectInfoOk {
@@ -162,7 +162,7 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 	}
 
 	return &svDto.SvDeviceInitResponse{
-		AppToken:  authToken,
+		AppToken:  appToken,
 		ServerUrl: connectInfo,
 	}, nil
 }

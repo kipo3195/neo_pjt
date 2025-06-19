@@ -35,10 +35,10 @@ type ServerUsecase interface {
 }
 
 func (r *serverUsecase) ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error) {
-	return r.repo.PutDept(ctx, toCreateDepartmentEntity(req))
+	return r.repo.PutDept(ctx, toCreateDepartmentDto(req))
 }
 
-func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDeptEntity {
+func toCreateDepartmentDto(req svDto.SvCreateDeptRequest) entities.CreateDeptEntity {
 
 	return entities.CreateDeptEntity{
 		DeptCode:       req.DeptCode,

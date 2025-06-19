@@ -10,4 +10,7 @@ const (
 
 	AUTH_F003     = "AUTH_F003"
 	AUTH_F003_MSG = "Authentication failed."
+
+	AUTH_F004     = "AUTH_F004"
+	AUTH_F004_MSG = "Unregistered user."
 )

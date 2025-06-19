@@ -1,6 +1,6 @@
 package entities
 
 type InitResult struct {
-	AuthToken   string `json:"authToken"`
+	AppToken    string `json:"appToken"`
 	ConnectInfo string `json:"connectInfo"`
 }

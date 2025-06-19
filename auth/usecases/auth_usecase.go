@@ -25,7 +25,6 @@ type authUsecase struct {
 type AuthUsecase interface {
 	GetAuth(*clDto.LoginRequestHeader, *clDto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool)
 	GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceToken, error)
-	GenerateJWT(uuid string) (string, error)
 }
 
 func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) AuthUsecase {
@@ -61,8 +60,9 @@ func (u *authUsecase) GetAuth(header *clDto.LoginRequestHeader, body *clDto.Auth
 	}
 
 	// 사용자 정보 검증
-	auth, err := u.repo.GetAuth(body)
+	auth, err := u.repo.CheckAuth(toGetAuthEntity(body))
 
+	// ID, PW 일치하는 사용자가 없음.
 	if err != nil {
 		switch {
 		case errors.Is(err, gorm.ErrRecordNotFound):
@@ -80,9 +80,22 @@ func (u *authUsecase) GetAuth(header *clDto.LoginRequestHeader, body *clDto.Auth
 		}
 	}
 
+	// 등록 사용자 검증 (user_hash 구하기)
+	auth.Userhash, err = u.repo.GetUserHash(toGetAuthEntity(body))
+
+	// 등록된 사용자가 아님.
+	if auth.Userhash == "" || err != nil {
+		// 단, repo.GetAuth에서 Scan으로 조회하고 있으므로 이건 ErrRecordNotFound하지 않지만.. err이 발생할 수 있으니 추가함.
+		// service_users에 등록된 사용자가 아님.
+		return nil, &dto.ErrorResponse{
+			Code:    consts.AUTH_F004,
+			Message: consts.AUTH_F004_MSG,
+		}, true
+	}
+
 	var accessToken, refreshToken string
 
-	acc, re, err := GenerateJWT(auth.Id, u.jwtCfg.AccessExp, u.jwtCfg.RefressExp, []byte(u.jwtCfg.Key))
+	acc, re, err := GenerateAuthJWT(auth.Userhash, u.jwtCfg.AccessExp, u.jwtCfg.RefressExp, []byte(u.jwtCfg.Key))
 	if err != nil {
 		println("JWT TOKEN MAKE ERROR ! :", err)
 		return nil, &dto.ErrorResponse{
@@ -102,12 +115,15 @@ func (u *authUsecase) GetAuth(header *clDto.LoginRequestHeader, body *clDto.Auth
 	}, nil, false
 }
 
-// func getConfigkey() string {
-// 	return ""
-// }
+func toGetAuthEntity(body *clDto.AuthRequest) entities.AuthInfo {
+	return entities.AuthInfo{
+		Id:       body.Id,
+		Password: body.Password,
+	}
+}
 
 // 사인을 위한 key는 byte[]여야 함
-func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) (string, string, error) {
+func GenerateAuthJWT(userHash string, accessExp int, refreshExp int, jwtKey []byte) (string, string, error) {
 	// 현재 기준 시간
 	now := time.Now()
 	// issuer
@@ -117,8 +133,8 @@ func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) 
 	accExpTime := now.Add(time.Duration(accessExp) * time.Minute)
 
 	// 사용자 정보 포함한 Claims 생성
-	accessClaims := &claims.JWTClaims{
-		Username: username,
+	accessClaims := &claims.AuthJWTClaims{
+		UserHash: userHash,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accExpTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -129,8 +145,8 @@ func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) 
 	// Refresh 토큰 유효기간 설정
 	reExpTime := now.Add(time.Duration(refreshExp) * 24 * time.Hour)
 
-	refreshClaims := &claims.JWTClaims{
-		Username: username,
+	refreshClaims := &claims.AuthJWTClaims{
+		UserHash: userHash,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(reExpTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -158,7 +174,7 @@ func GenerateJWT(username string, accessExp int, refreshExp int, jwtKey []byte) 
 func (r *authUsecase) GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceToken, error) {
 
 	// 토큰 발급
-	token, err := r.GenerateJWT(body.Uuid)
+	token, err := generateDeviceTokenJWT(body.Uuid)
 
 	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, token)
 
@@ -182,7 +198,7 @@ func (r *authUsecase) GenerateDeviceToken(body svDto.SvGenerateDeviceTokenReques
 	return tokenEntity, nil
 }
 
-func (r *authUsecase) GenerateJWT(uuid string) (string, error) {
+func generateDeviceTokenJWT(uuid string) (string, error) {
 	now := time.Now()
 	// issuer
 	const issuer = "auth"
@@ -193,8 +209,8 @@ func (r *authUsecase) GenerateJWT(uuid string) (string, error) {
 	fmt.Println("jwt 토큰 생성  1 :", accExpTime)
 
 	// 사용자 정보 포함한 Claims 생성
-	uuidClaim := &claims.JWTClaims{
-		Username: uuid,
+	uuidClaim := &claims.DeviceJWTClaims{
+		Uuid: uuid,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accExpTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

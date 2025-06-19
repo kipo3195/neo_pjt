@@ -29,7 +29,7 @@ func SetupRoutes(orgHandler *handlers.OrgHandler, userHandler *handlers.UserHand
 	orgV1.HandleFunc("/user/my-info", userHandler.GetMyInfo).Methods("GET")
 
 	// 요청하는 사용자 정보 조회
-	orgV1.HandleFunc("/user/info", userHandler.GetUserInfo).Methods("POST")
+	orgV1.HandleFunc("/user/info", userHandler.GetUserInfo).Methods("GET")
 
 	//----------------------------------------------------------------------------------------------------------------------------//
 

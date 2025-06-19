@@ -1,12 +1,14 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"org/claims"
 	"org/consts"
+	"org/contextkey"
 	dto "org/dto/common"
 	"strings"
 	"time"
@@ -20,6 +22,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 	// response
 	var res dto.Response
+	var userHash string
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 토큰 추출 및 검증 로직
@@ -36,7 +39,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		_, err = verifyJWT(tokenStr)
+		userHash, err = verifyJWT(tokenStr)
+
 		if err != nil {
 			fmt.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
@@ -59,7 +63,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized) //401
 			json.NewEncoder(w).Encode(res)
 			return
+		}
 
+		if strings.HasPrefix(r.URL.Path, "/org/v1/user/my-info") {
+			ctx := context.WithValue(r.Context(), contextkey.UserHashKey, userHash)
+			r = r.WithContext(ctx)
 		}
 
 		next.ServeHTTP(w, r)
@@ -79,7 +87,7 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 	return parts[1], nil
 }
 
-func verifyJWT(tokenStr string) (bool, error) {
+func verifyJWT(tokenStr string) (string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
 
@@ -91,19 +99,19 @@ func verifyJWT(tokenStr string) (bool, error) {
 	})
 
 	if err != nil {
-		return false, fmt.Errorf("token parsing failed: %w", err)
+		return "", fmt.Errorf("token parsing failed: %w", err)
 	}
 
 	// 유효성 체크
 	parsedClaims, ok := token.Claims.(*claims.JWTClaims) // ← 여기서도 JWTClaims로
 	if !ok || !token.Valid {
-		return false, consts.ErrInvalidClaims
+		return "", consts.ErrInvalidClaims
 	}
 
 	// 만료 시간 검증
 	if parsedClaims.ExpiresAt != nil && parsedClaims.ExpiresAt.Time.Before(time.Now()) {
-		return false, consts.ErrTokenExpired
+		return "", consts.ErrTokenExpired
 	}
 
-	return true, nil
+	return parsedClaims.UserHash, nil
 }

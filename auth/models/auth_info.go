@@ -5,6 +5,7 @@ package models
 type AuthInfo struct {
 	Id       string `gorm:"column:id"`
 	Password string `gorm:"column:password"`
+	Userhash string `gorm:"column:user_hash"` // service_users의 join값.
 }
 
 func (AuthInfo) TableName() string {

@@ -1,0 +1,7 @@
+package client
+
+type GetMyInfoResponse struct {
+	UserHash     string      `json:"userHash"`
+	UserPhoneNum string      `json:"userPhoneNum"`
+	Username     UsernameDto `json:"userName"`
+}

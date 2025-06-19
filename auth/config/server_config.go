@@ -96,6 +96,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
 	db.AutoMigrate(&models.AuthInfo{})
 	db.AutoMigrate(&models.DeviceToken{})
+	db.AutoMigrate(&models.ServiceUsers{})
 
 	fmt.Println("Auth Database Connected !")
 	return db
