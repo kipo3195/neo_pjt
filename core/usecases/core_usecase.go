@@ -21,9 +21,7 @@ type coreUsecase struct {
 type CoreUsecase interface {
 	CheckValidation(header *clDto.AppValidationRequestHeader) bool
 
-	GetWorksInfo(body clDto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool)
-
-	GetConnectInfo(uuid string, worksCode string, serverDomain string) (*svDto.SvDeviceInitResponse, error)
+	GetWorksInfo(body clDto.AppValidationRequest, uuid string, device string) (*entities.WorksInfo, *dto.ErrorResponse, bool)
 
 	// 변환
 	ToValidationWhereEntity(header *clDto.AppValidationRequestHeader) entities.ValidationWhere
@@ -53,7 +51,7 @@ func (u *coreUsecase) ToValidationWhereEntity(header *clDto.AppValidationRequest
 	}
 }
 
-func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string) (*entities.WorksInfo, *dto.ErrorResponse, bool) {
+func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string, device string) (*entities.WorksInfo, *dto.ErrorResponse, bool) {
 
 	// 에러타입이 뭐냐에따라 처리..
 	result, err := u.repo.GetWorksInfo(body)
@@ -86,7 +84,7 @@ func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string)
 
 		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
 
-		deviceInitResponse, err := u.GetConnectInfo(uuid, body.WorksCode, result.ConnectInfo.ServerUrl)
+		deviceInitResponse, err := getConnectInfo(uuid, device, body.WorksCode, result.ConnectInfo.ServerUrl)
 
 		if err != nil {
 			fmt.Println("common service 호출시 에러 발생함.")
@@ -99,17 +97,22 @@ func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string)
 		worksAuth := entities.WorksAuth{AppToken: deviceInitResponse.AppToken}
 		result.WorksAuth = worksAuth
 		result.ConnectInfo.ServerUrl = deviceInitResponse.ServerUrl
+		result.TimeZone = deviceInitResponse.TimeZone
+		result.ConfigVersion = deviceInitResponse.ConfigVersion
+		result.SkinVersion = deviceInitResponse.SkinVersion
+		result.Language = deviceInitResponse.Language
 
 		return result, nil, false
 	}
 
 }
 
-func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl string) (*svDto.SvDeviceInitResponse, error) {
+func getConnectInfo(uuid string, device string, worksCode string, serverUrl string) (*svDto.SvDeviceInitResponse, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid":      uuid,
 		"worksCode": worksCode,
+		"device":    device,
 	}
 
 	// JSON 변환
@@ -155,14 +158,22 @@ func (u *coreUsecase) GetConnectInfo(uuid string, worksCode string, serverUrl st
 
 	appToken, authTokenOk := resultData["appToken"].(string)
 	connectInfo, connectInfoOk := resultData["connectInfo"].(string)
+	timeZone, timeZoneOk := resultData["timeZone"].(string)
+	language, languageOk := resultData["language"].(string)
+	skinVersion, skinVersionOk := resultData["skinVersion"].(string)
+	configVersion, configVersionOk := resultData["configVersion"].(string)
 
-	if !authTokenOk || !connectInfoOk {
+	if !authTokenOk || !connectInfoOk || !timeZoneOk || !languageOk || !skinVersionOk || !configVersionOk {
 		fmt.Println("authToken 또는 connectInfo string으로 변환하는 데 실패했습니다.")
 		return &svDto.SvDeviceInitResponse{}, errors.New("invalid token format")
 	}
 
 	return &svDto.SvDeviceInitResponse{
-		AppToken:  appToken,
-		ServerUrl: connectInfo,
+		AppToken:      appToken,
+		ServerUrl:     connectInfo,
+		TimeZone:      timeZone,
+		Language:      language,
+		SkinVersion:   skinVersion,
+		ConfigVersion: configVersion,
 	}, nil
 }

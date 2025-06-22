@@ -6,9 +6,11 @@ import (
 	dto "common/dto/common"
 	svDto "common/dto/server"
 	"common/usecases"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type CommonHandler struct {
@@ -20,6 +22,11 @@ func NewCommonHandler(uc usecases.CommonUsecase) *CommonHandler {
 }
 
 func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 	// 해당 API의 response
 	var res = svDto.SvDeviceInitResponse{}
@@ -60,7 +67,7 @@ func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("CORE 서버에서 호출, uuid : %s, worksCode : %s \n", body.Uuid, body.WorksCode)
 
 	// DB에서 해당 works의 정보조회 + AUTH에서 토큰 발급 요청
-	data, err := h.usecase.DeviceInit(body)
+	data, err := h.usecase.DeviceInit(body, ctx)
 
 	if err != nil {
 		res.Code = consts.FAIL

@@ -53,10 +53,11 @@ func toMyInfoEntity(myInfo models.MyInfo) entities.MyInfoEntity {
 
 	// 사용자 명 다국어 처리
 	userName := entities.UsernameEntity{
-		Kr: myInfo.KrLang,
-		En: myInfo.EnLang,
-		Cn: myInfo.CnLang,
-		Jp: myInfo.JpLang,
+		Def: myInfo.KrLang, // 수정 필요
+		Kr:  myInfo.KrLang,
+		En:  myInfo.EnLang,
+		Cn:  myInfo.CnLang,
+		Jp:  myInfo.JpLang,
 	}
 
 	return entities.MyInfoEntity{

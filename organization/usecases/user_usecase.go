@@ -40,15 +40,17 @@ func toGetMyInfoEntity(req userDto.GetMyInfoRequest) entities.GetMyInfoEntity {
 func toMyInfoDto(entity entities.MyInfoEntity) userDto.GetMyInfoResponse {
 
 	username := userDto.UsernameDto{
-		Kr: entity.Username.Kr,
-		En: entity.Username.En,
-		Jp: entity.Username.Jp,
-		Cn: entity.Username.Cn,
+		Def: entity.Username.Def,
+		Kr:  entity.Username.Kr,
+		En:  entity.Username.En,
+		Jp:  entity.Username.Jp,
+		Cn:  entity.Username.Cn,
 	}
 
 	return userDto.GetMyInfoResponse{
 		UserHash:     entity.UserHash,
 		UserPhoneNum: entity.UserPhoneNum,
 		Username:     username,
+		OrgCodes:     []string{"neo"}, // TODO 수정 필요 메모리 기반, ACL
 	}
 }

@@ -25,6 +25,8 @@ func SetupRoutes(orgHandler *handlers.OrgHandler, userHandler *handlers.UserHand
 	// 요청하는 부서에 대한 조회. DB 방식, 최상위 포함.
 	orgV1.HandleFunc("/departments", orgHandler.GetDept).Methods("GET")
 
+	//----------------------------------------------------------------------------------------------------------------------------//
+
 	// 내 정보 조회
 	orgV1.HandleFunc("/user/my-info", userHandler.GetMyInfo).Methods("GET")
 

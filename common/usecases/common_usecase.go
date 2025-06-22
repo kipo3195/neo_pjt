@@ -8,6 +8,7 @@ import (
 	svDto "common/dto/server"
 	"common/entities"
 	"common/repositories"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,7 +23,7 @@ type commonUsecase struct {
 
 type CommonUsecase interface {
 	GetConfig(clDto.ConfigRequest) (*entities.Config, error)
-	DeviceInit(body *svDto.SvDeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
+	DeviceInit(body *svDto.SvDeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse)
 	GenerateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (string, error)
 }
 
@@ -51,7 +52,7 @@ func (u *commonUsecase) GetConfig(req clDto.ConfigRequest) (*entities.Config, er
 	}, nil
 }
 
-func (u *commonUsecase) DeviceInit(body *svDto.SvDeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
+func (u *commonUsecase) DeviceInit(body *svDto.SvDeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse) {
 
 	// DB 조회
 	result, err := u.repo.GetConnectInfo(body.WorksCode)
@@ -62,8 +63,6 @@ func (u *commonUsecase) DeviceInit(body *svDto.SvDeviceInitRequest) (*entities.I
 		}
 	}
 
-	fmt.Println("DeviceInit DB 조회 결과 : ", result)
-
 	// AUTH에 JWT 요청
 	result.AppToken, err = u.GenerateDeviceToken(body, result.ConnectInfo)
 	if err != nil {
@@ -72,7 +71,31 @@ func (u *commonUsecase) DeviceInit(body *svDto.SvDeviceInitRequest) (*entities.I
 			Message: consts.E_500_MSG,
 		}
 	}
+
+	// 타임존, 언어, 앱 별 스킨 정보, 설정 정보
+	worksConfig, err := u.repo.GetWorksConfig(toWorksConfigEntity(body.WorksCode, body.Device), ctx)
+	if err != nil {
+		return &entities.InitResult{}, &dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
+	}
+
+	result.TimeZone = worksConfig.TimeZone
+	result.Language = worksConfig.Language
+	result.SkinVersion = worksConfig.SkinVersion
+	result.ConfigVersion = worksConfig.ConfigVersion
+
 	return result, nil
+}
+
+func toWorksConfigEntity(worksCode string, device string) entities.GetWorksConfig {
+
+	return entities.GetWorksConfig{
+		WorksCode: worksCode,
+		Device:    device,
+	}
+
 }
 
 func (u *commonUsecase) GenerateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (string, error) {
