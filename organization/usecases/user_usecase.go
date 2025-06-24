@@ -40,11 +40,13 @@ func toGetMyInfoEntity(req userDto.GetMyInfoRequest) entities.GetMyInfoEntity {
 func toMyInfoDto(entity entities.MyInfoEntity) userDto.GetMyInfoResponse {
 
 	username := userDto.UsernameDto{
-		Def: entity.Username.Def,
-		Kr:  entity.Username.Kr,
+		Def: entity.Username.Ko, // 수정 필요
+		Ko:  entity.Username.Ko,
 		En:  entity.Username.En,
 		Jp:  entity.Username.Jp,
-		Cn:  entity.Username.Cn,
+		Zh:  entity.Username.Zh,
+		Ru:  entity.Username.Ru,
+		Vi:  entity.Username.Vi,
 	}
 
 	return userDto.GetMyInfoResponse{

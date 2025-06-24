@@ -2,8 +2,10 @@ package client
 
 type UsernameDto struct {
 	Def string `json:"def"`
-	Kr  string `json:"kr"`
+	Ko  string `json:"ko"`
 	En  string `json:"en"`
-	Cn  string `json:"cn"`
+	Zh  string `json:"zh"`
 	Jp  string `json:"jp"`
+	Ru  string `json:"ru"`
+	Vi  string `json:"vi"`
 }

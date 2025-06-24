@@ -6,9 +6,14 @@ import (
 	dto "auth/dto/common"
 	svDto "auth/dto/server"
 	"auth/usecases"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type AuthHandler struct {
@@ -17,6 +22,13 @@ type AuthHandler struct {
 
 func NewAuthHandler(uc usecases.AuthUsecase) *AuthHandler {
 	return &AuthHandler{usecase: uc}
+}
+
+func newErrorResp(code, msg string) *dto.ErrorResponse {
+	return &dto.ErrorResponse{
+		Code:    code,
+		Message: msg,
+	}
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -129,8 +141,92 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 		res.Code = consts.SUCCESS
 		res.Data = result
 	}
+
 	fmt.Println("handler에서 결과 반환 res : ", res)
 
 	json.NewEncoder(w).Encode(res)
 
+}
+
+func (h *AuthHandler) AppTokenValidation(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// response
+	var res dto.Response
+
+	fmt.Println("1")
+	// request body 데이터 -> dto로 변경
+	var req = &clDto.AppTokenValidationRequest{
+		Uuid:     r.URL.Query().Get("uuid"),
+		AppToken: r.URL.Query().Get("appToken"),
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		res.Result = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	fmt.Println("2")
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		// 검증 실패 처리
+		w.WriteHeader(http.StatusBadRequest)
+		res.Result = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_108,
+			Message: consts.E_108_MSG,
+		}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	fmt.Println("3")
+	// 검증
+	data, err := h.usecase.AppTokenValidation(ctx, req)
+
+	if err != nil || !data { // 에러
+		switch {
+		case errors.Is(err, consts.ErrDbRowNotFound):
+			// 매핑된 hash 정보가 없음
+			res.Result = consts.FAIL
+			res.Data = newErrorResp(consts.AUTH_F001, consts.AUTH_F001_MSG)
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Is(err, consts.ErrTokenExpired):
+			res.Result = consts.ERROR
+			res.Data = newErrorResp(consts.E_107, consts.E_107_MSG)
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Is(err, consts.ErrTokenSignatureInvalid):
+			res.Result = consts.FAIL
+			res.Data = newErrorResp(consts.AUTH_F005, consts.AUTH_F005_MSG)
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Is(err, consts.ErrDB):
+			res.Result = consts.ERROR
+			res.Data = newErrorResp(consts.E_102, consts.E_102_MSG)
+			w.WriteHeader(http.StatusInternalServerError)
+		case errors.Is(err, consts.ErrTokenParsing):
+			res.Result = consts.ERROR
+			res.Data = newErrorResp(consts.E_105, consts.E_105_MSG)
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Is(err, consts.ErrInvalidClaims):
+			res.Result = consts.FAIL
+			res.Data = newErrorResp(consts.AUTH_F002, consts.AUTH_F002_MSG)
+			w.WriteHeader(http.StatusBadRequest)
+		default:
+			res.Result = consts.ERROR
+			res.Data = newErrorResp(consts.E_500, consts.E_500_MSG)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		res.Result = consts.SUCCESS
+		// 데이터가 있어야할까?
+	}
+	json.NewEncoder(w).Encode(res)
 }

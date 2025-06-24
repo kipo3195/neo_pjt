@@ -26,9 +26,10 @@ type DBConfig struct {
 }
 
 type JWTConfig struct {
-	Key        string
-	AccessExp  int
-	RefressExp int
+	Key         string
+	AccessExp   int
+	RefressExp  int
+	AppTokenExp int
 }
 
 func isLocal() bool {
@@ -76,7 +77,11 @@ func initJwtConfig() *JWTConfig {
 	if err != nil {
 		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
 	}
-	return &JWTConfig{Key: key, AccessExp: accessExp, RefressExp: refreshExp}
+	appTokenExp, err := strconv.Atoi(os.Getenv("APP_TOKEN_EXP_D"))
+	if err != nil {
+		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
+	}
+	return &JWTConfig{Key: key, AccessExp: accessExp, RefressExp: refreshExp, AppTokenExp: appTokenExp}
 }
 
 func (s *ServerConfig) GetJWTConfig() *JWTConfig {

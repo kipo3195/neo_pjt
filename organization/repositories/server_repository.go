@@ -82,10 +82,12 @@ func toWorksDeptsMultiLangModel(e entities.CreateDeptEntity) models.WorksDeptMul
 	return models.WorksDeptMultiLang{
 		DeptCode: e.DeptCode,
 		DeptOrg:  e.DeptOrg,
-		KrLang:   e.KrLang,
+		KoLang:   e.KoLang,
 		EnLang:   e.EnLang,
 		JpLang:   e.JpLang,
-		CnLang:   e.CnLang,
+		ZhLang:   e.ZhLang,
+		RuLang:   e.RuLang,
+		ViLang:   e.ViLang,
 	}
 }
 

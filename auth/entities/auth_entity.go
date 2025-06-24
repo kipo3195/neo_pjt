@@ -1,6 +1,6 @@
 package entities
 
-type Auth struct {
+type AuthEntity struct {
 	AccessToken  string
 	RefreshToken string
 }

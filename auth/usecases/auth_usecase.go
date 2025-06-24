@@ -9,6 +9,7 @@ import (
 	svDto "auth/dto/server"
 	"auth/entities"
 	"auth/repositories"
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -23,18 +24,19 @@ type authUsecase struct {
 }
 
 type AuthUsecase interface {
-	GetAuth(*clDto.LoginRequestHeader, *clDto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool)
-	GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceToken, error)
+	GetAuth(*clDto.LoginRequestHeader, *clDto.AuthRequest) (*entities.AuthEntity, *dto.ErrorResponse, bool)
+	GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error)
+	AppTokenValidation(ctx context.Context, body *clDto.AppTokenValidationRequest) (bool, error)
 }
 
 func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) AuthUsecase {
 	return &authUsecase{repo: repo, jwtCfg: jwtCfg}
 }
 
-func (u *authUsecase) GetAuth(header *clDto.LoginRequestHeader, body *clDto.AuthRequest) (*entities.Auth, *dto.ErrorResponse, bool) {
+func (u *authUsecase) GetAuth(header *clDto.LoginRequestHeader, body *clDto.AuthRequest) (*entities.AuthEntity, *dto.ErrorResponse, bool) {
 
 	// app hash 부터 검증
-	flag, err := u.repo.GetValidation(header)
+	flag, err := u.repo.GetValidation(toAppTokenValidationEntity(header.Uuid, header.Token))
 	if err != nil {
 		switch {
 		case errors.Is(err, gorm.ErrRecordNotFound):
@@ -109,14 +111,21 @@ func (u *authUsecase) GetAuth(header *clDto.LoginRequestHeader, body *clDto.Auth
 	// config 파일을 풀 수 있는 대칭키
 	// configKey = getConfigkey()
 
-	return &entities.Auth{
+	return &entities.AuthEntity{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil, false
 }
 
-func toGetAuthEntity(body *clDto.AuthRequest) entities.AuthInfo {
-	return entities.AuthInfo{
+func toAppTokenValidationEntity(uuid string, appToken string) entities.AppTokenValidationEntity {
+	return entities.AppTokenValidationEntity{
+		Uuid:     uuid,
+		AppToken: appToken,
+	}
+}
+
+func toGetAuthEntity(body *clDto.AuthRequest) entities.AuthInfoEntity {
+	return entities.AuthInfoEntity{
 		Id:       body.Id,
 		Password: body.Password,
 	}
@@ -171,19 +180,19 @@ func GenerateAuthJWT(userHash string, accessExp int, refreshExp int, jwtKey []by
 	return accessToken, refreshToken, nil
 }
 
-func (r *authUsecase) GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceToken, error) {
+func (r *authUsecase) GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error) {
 
 	// 토큰 발급
-	token, err := generateDeviceTokenJWT(body.Uuid)
+	token, err := generateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
 
 	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, token)
 
 	if err != nil {
-		return &entities.DeviceToken{}, err
+		return &entities.DeviceTokenEntity{}, err
 	}
 
 	// entity 생성
-	tokenEntity := &entities.DeviceToken{
+	tokenEntity := &entities.DeviceTokenEntity{
 		Uuid:  body.Uuid,
 		Token: token,
 	}
@@ -192,19 +201,19 @@ func (r *authUsecase) GenerateDeviceToken(body svDto.SvGenerateDeviceTokenReques
 	result, err := r.repo.PutDeviceToken(tokenEntity)
 
 	if !result || err != nil {
-		return &entities.DeviceToken{}, err
+		return &entities.DeviceTokenEntity{}, err
 	}
 
 	return tokenEntity, nil
 }
 
-func generateDeviceTokenJWT(uuid string) (string, error) {
+func generateDeviceTokenJWT(appTokenExp int, uuid string) (string, error) { //
 	now := time.Now()
 	// issuer
 	const issuer = "auth"
 
 	// Access 토큰 유효기간 설정
-	accExpTime := now.Add(time.Duration(3) * time.Minute)
+	accExpTime := now.Add(time.Duration(appTokenExp) * 24 * time.Hour)
 
 	fmt.Println("jwt 토큰 생성  1 :", accExpTime)
 
@@ -228,4 +237,72 @@ func generateDeviceTokenJWT(uuid string) (string, error) {
 
 	fmt.Println("jwt 토큰 생성  2 :", accessToken)
 	return accessToken, err
+}
+func (r *authUsecase) AppTokenValidation(ctx context.Context, body *clDto.AppTokenValidationRequest) (bool, error) {
+
+	flag, err := r.repo.GetValidation(toAppTokenValidationEntity(body.Uuid, body.AppToken))
+
+	if err != nil {
+		switch {
+		case errors.Is(err, consts.ErrDbRowNotFound):
+			// 매핑된 hash 정보가 없음
+			return false, err
+		default:
+			// 기타 DB 에러
+			return false, err
+		}
+	}
+	// 토큰 정보 불일치
+	if !flag {
+		return false, consts.ErrInvalidClaims
+	}
+
+	// 토큰의 만료 검증
+	err = appTokenValidationCheck(body.AppToken)
+
+	if err != nil {
+		// 만료 에러 확인
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			fmt.Println("토큰이 만료되었습니다.")
+			return false, consts.ErrTokenExpired
+		}
+		// 서명 오류
+		if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+			fmt.Println("서명이 유효하지 않습니다.")
+			return false, consts.ErrTokenSignatureInvalid
+		}
+		// 그 외 오류
+		fmt.Println("토큰 파싱 오류:", err)
+		return false, consts.ErrTokenParsing
+	}
+
+	return flag, nil
+}
+
+func appTokenValidationCheck(appToken string) error {
+	// 파싱하면서 검증 진행
+	token, err := jwt.ParseWithClaims(appToken, &claims.DeviceJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// HS256 서명 방식 검증
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte("neo-test-secret-key"), nil
+	})
+
+	// 에러 핸들링
+	// 에러 처리
+	if err != nil {
+		return err
+	}
+
+	// 유효한 토큰인 경우
+	if claims, ok := token.Claims.(*claims.DeviceJWTClaims); ok && token.Valid {
+		fmt.Println("✅ 토큰이 유효합니다.")
+		fmt.Println("UUID:", claims.Uuid)
+		fmt.Println("만료 시간:", claims.ExpiresAt.Time)
+		return nil
+	} else {
+		fmt.Println("❌ 토큰이 유효하지 않습니다.")
+		return errors.New(consts.ErrInvalidClaims.Error())
+	}
 }

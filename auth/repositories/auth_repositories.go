@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	clDto "auth/dto/client"
+	customErr "auth/consts"
 	"auth/entities"
 	"auth/models"
 	"errors"
@@ -16,11 +16,11 @@ type authRepository struct {
 }
 
 type AuthRepository interface {
-	CheckAuth(entity entities.AuthInfo) (*models.AuthInfo, error)
-	GetUserHash(entity entities.AuthInfo) (string, error)
-	PutDeviceToken(token *entities.DeviceToken) (bool, error)
-	ToDeviceTokenModel(e *entities.DeviceToken) *models.DeviceToken
-	GetValidation(header *clDto.LoginRequestHeader) (bool, error)
+	CheckAuth(entity entities.AuthInfoEntity) (*models.AuthInfo, error)
+	GetUserHash(entity entities.AuthInfoEntity) (string, error)
+	PutDeviceToken(token *entities.DeviceTokenEntity) (bool, error)
+	ToDeviceTokenModel(e *entities.DeviceTokenEntity) *models.DeviceToken
+	GetValidation(entity entities.AppTokenValidationEntity) (bool, error)
 }
 
 func NewAuthRepository(db *gorm.DB) AuthRepository {
@@ -28,7 +28,7 @@ func NewAuthRepository(db *gorm.DB) AuthRepository {
 	return &authRepository{db: db}
 }
 
-func (r *authRepository) CheckAuth(entity entities.AuthInfo) (*models.AuthInfo, error) {
+func (r *authRepository) CheckAuth(entity entities.AuthInfoEntity) (*models.AuthInfo, error) {
 
 	var auth *models.AuthInfo
 
@@ -42,7 +42,7 @@ func (r *authRepository) CheckAuth(entity entities.AuthInfo) (*models.AuthInfo, 
 	return auth, nil
 }
 
-func (r *authRepository) GetUserHash(entity entities.AuthInfo) (string, error) {
+func (r *authRepository) GetUserHash(entity entities.AuthInfoEntity) (string, error) {
 	var user struct {
 		UserHash string
 	}
@@ -63,7 +63,7 @@ func (r *authRepository) GetUserHash(entity entities.AuthInfo) (string, error) {
 	return user.UserHash, nil
 }
 
-func (r *authRepository) PutDeviceToken(token *entities.DeviceToken) (bool, error) {
+func (r *authRepository) PutDeviceToken(token *entities.DeviceTokenEntity) (bool, error) {
 
 	// entity -> model
 	models := r.ToDeviceTokenModel(token)
@@ -76,31 +76,31 @@ func (r *authRepository) PutDeviceToken(token *entities.DeviceToken) (bool, erro
 	return true, nil
 }
 
-func (r *authRepository) ToDeviceTokenModel(e *entities.DeviceToken) *models.DeviceToken {
+func (r *authRepository) ToDeviceTokenModel(e *entities.DeviceTokenEntity) *models.DeviceToken {
 	return &models.DeviceToken{
 		Uuid:  e.Uuid,
 		Token: e.Token,
 	}
 }
 
-func (r *authRepository) GetValidation(header *clDto.LoginRequestHeader) (bool, error) {
+func (r *authRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
 	var validation models.DeviceToken
 
-	fmt.Println("클라이언트가 전달한 토큰 : ", header.Token)
+	fmt.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 
-	result := r.db.Where("uuid = ?", header.Uuid).Order("seq DESC").First(&validation)
+	result := r.db.Where("uuid = ?", entity.Uuid).Order("seq DESC").First(&validation)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		log.Println("[GetValidation] - No record found")
-		return false, gorm.ErrRecordNotFound
+		return false, customErr.ErrDbRowNotFound
 	} else if result.Error != nil {
 		log.Println("[GetValidation] - DB error")
-		return false, result.Error
+		return false, customErr.ErrDB
 	} else {
 		serverToken := validation.Token
-		fmt.Printf("UUID %s 로 조회된 토큰 : %s \n", header.Uuid, serverToken)
-		if serverToken == header.Token {
+		fmt.Printf("UUID %s 로 조회된 토큰 : %s \n", entity.Uuid, serverToken)
+		if serverToken == entity.AppToken {
 			// 토큰 일치
 			return true, nil
 		} else {

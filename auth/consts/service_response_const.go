@@ -13,4 +13,7 @@ const (
 
 	AUTH_F004     = "AUTH_F004"
 	AUTH_F004_MSG = "Unregistered user."
+
+	AUTH_F005     = "AUTH_F005"
+	AUTH_F005_MSG = "Signature is invalid."
 )

@@ -10,8 +10,15 @@ func SetupRoutes(authHandler *handlers.AuthHandler) *mux.Router {
 	r := mux.NewRouter()
 
 	authV1 := r.PathPrefix("/auth/v1").Subrouter()
-	authV1.HandleFunc("/login", authHandler.Login).Methods("POST")
+
+	// 최초 인증시 토큰 발급
 	authV1.HandleFunc("/generate-device-token", authHandler.GenerateDeviceToken).Methods("POST")
+
+	// 사용자 인증
+	authV1.HandleFunc("/login", authHandler.Login).Methods("POST")
+
+	// 장시간 인증 X 상태에서 fore 왔을때 앱 토큰 검증, 마지막 발급 키(limit 1)를 기준으로 체크
+	authV1.HandleFunc("/app-token-validation", authHandler.AppTokenValidation).Methods("GET")
 
 	return r
 }

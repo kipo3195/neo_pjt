@@ -2,8 +2,10 @@ package entities
 
 type NameEntity struct {
 	Def string `json:"def"`
-	Kr  string `json:"kr"`
+	Ko  string `json:"ko"`
 	En  string `json:"en"`
 	Jp  string `json:"jp"`
-	Cn  string `json:"cn"`
+	Zh  string `json:"zh"`
+	Ru  string `json:"ru"`
+	Vi  string `json:"vi"`
 }

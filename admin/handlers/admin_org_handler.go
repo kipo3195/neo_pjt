@@ -32,7 +32,7 @@ func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 	var req = clDto.CreateDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
 			Message: consts.E_103_MSG,
@@ -47,7 +47,7 @@ func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 	if err := validate.Struct(req); err != nil {
 		// 검증 실패 처리
 		w.WriteHeader(http.StatusBadRequest)
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_108,
 			Message: consts.E_108_MSG,
@@ -62,11 +62,11 @@ func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// http status code 200
-		res.Code = consts.SUCCESS
+		res.Result = consts.SUCCESS
 		res.Data = data
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_500,
 			Message: consts.E_500_MSG,

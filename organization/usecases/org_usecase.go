@@ -87,11 +87,13 @@ func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
 	for _, org := range orgTree {
 		// 이름 다국어 처리
 		name := entities.NameEntity{
-			Def: org.KrLang, // 수정 필요.
-			Kr:  org.KrLang,
+			Def: org.KoLang, // 수정 필요.
+			Ko:  org.KoLang,
 			En:  org.EnLang,
 			Jp:  org.JpLang,
-			Cn:  org.CnLang,
+			Zh:  org.ZhLang,
+			Ru:  org.RuLang,
+			Vi:  org.ViLang,
 		}
 
 		info := entities.OrgInfo{

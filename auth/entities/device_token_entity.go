@@ -1,6 +1,6 @@
 package entities
 
-type DeviceToken struct {
+type DeviceTokenEntity struct {
 	Uuid  string `json:"uuid"`
 	Token string `json:"token"`
 }

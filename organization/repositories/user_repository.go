@@ -29,10 +29,12 @@ func (r *userRepository) GetMyInfo(ctx context.Context, entity entities.GetMyInf
 		`SELECT 
 			su.user_hash,
 			ud.user_phone_num,
-			wuml.kr_lang,
+			wuml.ko_lang,
 			wuml.en_lang,
-			wuml.cn_lang,
-			wuml.jp_lang
+			wuml.zh_lang,
+			wuml.jp_lang,
+			wuml.ru_lang,
+			wuml.vi_lang
 		FROM service_users AS su
 		JOIN user_detail AS ud 
 			ON su.user_hash = ud.user_hash
@@ -52,12 +54,14 @@ func (r *userRepository) GetMyInfo(ctx context.Context, entity entities.GetMyInf
 func toMyInfoEntity(myInfo models.MyInfo) entities.MyInfoEntity {
 
 	// 사용자 명 다국어 처리
-	userName := entities.UsernameEntity{
-		Def: myInfo.KrLang, // 수정 필요
-		Kr:  myInfo.KrLang,
+	userName := entities.NameEntity{
+		Def: myInfo.KoLang, // 수정 필요
+		Ko:  myInfo.KoLang,
 		En:  myInfo.EnLang,
-		Cn:  myInfo.CnLang,
+		Zh:  myInfo.ZhLang,
 		Jp:  myInfo.JpLang,
+		Ru:  myInfo.RuLang,
+		Vi:  myInfo.ViLang,
 	}
 
 	return entities.MyInfoEntity{

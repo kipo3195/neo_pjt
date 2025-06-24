@@ -4,8 +4,10 @@ type SvCreateDeptRequest struct {
 	DeptOrg        string `json:"deptOrg"`
 	DeptCode       string `json:"deptCode"`
 	ParentDeptCode string `json:"parentDeptCode"`
-	KrLang         string `json:"krLang"`
-	EnLang         string `json:"enLang"`
-	JpLang         string `json:"jpLang"`
-	CnLang         string `json:"cnLang"`
+	KoLang         string `json:"ko"`
+	EnLang         string `json:"en"`
+	JpLang         string `json:"jp"`
+	ZhLang         string `json:"zh"`
+	RuLang         string `json:"ru"`
+	ViLang         string `json:"vi"`
 }
