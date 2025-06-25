@@ -9,15 +9,16 @@ import (
 	"org/consts"
 	orgDto "org/dto/client/org"
 	"org/entities"
+	"org/infra/storage"
 	"org/models"
 	"org/repositories"
-	"os"
 	"strings"
 	"time"
 )
 
 type orgUsecase struct {
-	repo repositories.OrgRepository
+	repo           repositories.OrgRepository
+	orgFileStorage storage.OrgFileStorage
 }
 
 func getNow() string {
@@ -31,8 +32,11 @@ type OrgUsecase interface {
 	GetOrgData(ctx context.Context, req orgDto.GetOrgDataRequest) (string, interface{}, error)
 }
 
-func NewOrgUsecase(repo repositories.OrgRepository) OrgUsecase {
-	return &orgUsecase{repo: repo}
+func NewOrgUsecase(repo repositories.OrgRepository, orgFileStorage storage.OrgFileStorage) OrgUsecase {
+	return &orgUsecase{
+		repo:           repo,
+		orgFileStorage: orgFileStorage,
+	}
 }
 
 func (r *orgUsecase) GetOrgHash(ctx context.Context, req orgDto.GetOrgHashRequest) (map[string]any, error) {
@@ -64,13 +68,6 @@ func (r *orgUsecase) GetOrgHash(ctx context.Context, req orgDto.GetOrgHashReques
 	}
 
 	return orgMap, nil
-}
-
-// 클라이언트, 서버에서 요청하여 현재의 ORG를 가져오기 위해 각자의 타입에 맞춰 entity 생성하는 코드 (오버라이드를 지원하지 않기 때문에 사용함)
-func (r *orgUsecase) toGetOrgEntity(orgCode string) entities.GetOrgEntity {
-	return entities.GetOrgEntity{
-		OrgCode: orgCode,
-	}
 }
 
 func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
@@ -149,14 +146,16 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req orgDto.GetOrgDataReques
 			return "", nil, err
 		}
 
-		filePath := "./storage/" + req.OrgCode + "/org_files/" + version // 전달할 파일 경로
+		data, err := r.orgFileStorage.GetOrgFile(req.OrgCode)
+
+		//filePath := "./storage/" + req.OrgCode + "/org_files/" + version // 전달할 파일 경로
 		// 파일을 메모리에 가지고 있도록 수정 할 것.
-		fileBytes, err := os.ReadFile(filePath)
+		// fileBytes, err := os.ReadFile(filePath)
 		if err != nil {
-			fmt.Printf("파일을 찾을 수 없음 %s \n", filePath)
+			fmt.Printf("파일을 찾을 수 없음 %s \n", req.OrgCode)
 			return "", nil, err
 		}
-		return version, fileBytes, nil
+		return version, data, nil
 
 	} else if req.Type == consts.EVENT {
 

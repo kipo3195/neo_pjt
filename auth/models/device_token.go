@@ -1,9 +1,12 @@
 package models
 
+import "time"
+
 type DeviceToken struct {
-	Seq   int    `gorm:"column:seq;primaryKey;autoIncrement"`
-	Uuid  string `gorm:"column:uuid"`
-	Token string `gorm:"column:token"`
+	Seq      int       `gorm:"column:seq;primaryKey;autoIncrement;comment:pk"`
+	Uuid     string    `gorm:"column:uuid;type:varchar(100);comment:기기 고유값"`
+	Token    string    `gorm:"column:token;type:varchar(400);comment:발급된 토큰 정보 JWT"`
+	CreateAt time.Time `gorm:"column:create_at;autoCreateTime;comment:DB 저장시간"`
 }
 
 // column:seq → 이 필드가 DB에서 seq라는 이름의 컬럼과 매핑됨을 명시적으로 지정.

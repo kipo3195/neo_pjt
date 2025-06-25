@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"org/config"
 	"org/handlers"
+	"org/infra/storage"
 	"org/repositories"
 	"org/routes"
 	"org/usecases"
@@ -21,8 +22,10 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
+	orgFileStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
+
 	orgRepo := repositories.NewOrgRepository(db)
-	orgUsecase := usecases.NewOrgUsecase(orgRepo)
+	orgUsecase := usecases.NewOrgUsecase(orgRepo, orgFileStorage)
 	orgHandler := handlers.NewOrgHandler(sfg, orgUsecase)
 
 	userRepo := repositories.NewUserRepository(db)
@@ -30,7 +33,7 @@ func InitServer() *http.Server {
 	userHandler := handlers.NewUserHandler(sfg, userUsecase)
 
 	serverRepo := repositories.NewServerRepository(db)
-	serverUsecase := usecases.NewServerUsecase(serverRepo)
+	serverUsecase := usecases.NewServerUsecase(serverRepo, orgFileStorage)
 	serverHandler := handlers.NewServerHandler(sfg, serverUsecase)
 
 	router := routes.SetupRoutes(orgHandler, userHandler, serverHandler)

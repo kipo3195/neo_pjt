@@ -2,25 +2,28 @@ package usecases
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"org/consts"
 	svDto "org/dto/server"
 	"org/entities"
+	storage "org/infra/storage"
 	"org/repositories"
 	"os"
 )
 
 type serverUsecase struct {
-	repo    repositories.ServerRepository
-	orgRepo repositories.OrgRepository
-	// 관심사 (책임)의 분리 측면에서 봤을때 GetOrg는 OrgRepo에서 처리. 동일한 두개의 로직을 만들지 않음.
+	repo           repositories.ServerRepository
+	orgFileStorage storage.OrgFileStorage
 }
 
-func NewServerUsecase(repo repositories.ServerRepository) ServerUsecase {
+func NewServerUsecase(repo repositories.ServerRepository, orgFileStorage storage.OrgFileStorage) ServerUsecase {
 	return &serverUsecase{
-		repo: repo,
+		repo:           repo,
+		orgFileStorage: orgFileStorage,
 	}
 }
 
@@ -103,80 +106,69 @@ func (r *serverUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCre
 
 	for i := 0; i < len(req.OrgCode); i++ {
 
-		orgTree, err := r.repo.GetOrg(ctx, r.toGetOrgEntity(req.OrgCode[i]))
+		org := req.OrgCode[i]
 
+		orgTree, err := r.repo.GetOrg(ctx, r.toGetOrgEntity(org))
 		if err != nil {
-			fmt.Printf("ServerCreateOrgFile org : %s is invalid ! \n", req.OrgCode[i])
+			fmt.Printf("Invalid org: %s\n", req.OrgCode[i])
 			continue
 		}
 
-		var hash = getNow()
-
-		// 파일 명 생성.
-		fileName := hash
-		fmt.Printf("org %s file name : %s ", req.OrgCode[i], fileName)
+		// 저장시간 생성 = 파일 명
+		fileName := getNow()
+		fmt.Printf("org %s file name: %s\n", org, fileName)
 
 		orgEntity := parseOrgTree(orgTree)
-		// orgEntity를 JSON 등으로 직렬화 하고 내용을 ZIP 파일 내에 저장
-
-		// 1. OrgEntity → JSON 직렬화
-		fmt.Println("OrgEntity → JSON 직렬화")
 		orgJson, err := json.MarshalIndent(orgEntity, "", "  ")
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal OrgEntity: %w", err)
+			return nil, fmt.Errorf("marshal error: %w", err)
 		}
-		fmt.Println("OrgEntity → JSON 직렬화 ok")
 
-		// 경로에 파일명을 포함시켜야 함
-		var zipPath = "./storage/" + req.OrgCode[i] + "/org_files/" + fileName
-
-		// 1. 디렉터리 없으면 생성 (디렉터리 경로만 던져야함.) -> 실행시 마운트 필요
-		err = ensureDir("./storage/" + req.OrgCode[i] + "/org_files/")
+		// 메모리에서 ZIP 생성
+		zipData, err := buildZipInMemory(fileName, orgJson)
 		if err != nil {
-			return nil, fmt.Errorf("디렉터리 생성 실패: %w", err)
+			return nil, fmt.Errorf("zip build error: %w", err)
 		}
 
-		// 2. ZIP 파일 생성
-		fmt.Println("ZIP 파일 생성")
-		zipFile, err := os.Create(zipPath)
+		// 메모리 저장소에 저장
+		if err := r.orgFileStorage.SaveOrgFile(org, zipData); err != nil {
+			return nil, fmt.Errorf("memory save error: %w", err)
+		}
+
+		// 점검
+		data, err := r.orgFileStorage.GetOrgFile(org)
 		if err != nil {
-			fmt.Println(err.Error())
-			return nil, fmt.Errorf("failed to create zip file: %w", err)
+			log.Fatal(err)
 		}
-		defer zipFile.Close()
-		fmt.Println("ZIP 파일 생성 ok path :", zipPath)
+		fmt.Println("저장된 org 파일의 사이즈 :", len(data))
 
-		// 3. ZIP writer 생성
-		fmt.Println("ZIP writer 생성")
-		zipWriter := zip.NewWriter(zipFile)
-		defer zipWriter.Close()
-		fmt.Println("ZIP writer 생성 ok")
-
-		// 4. ZIP 내 파일 생성
-		fmt.Println("ZIP 내 파일 생성")
-		fileWriter, err := zipWriter.Create(fileName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create file in zip: %w", err)
-		}
-		fmt.Println("ZIP 내 파일 생성 ok")
-
-		// 5. write
-		fmt.Println("Write")
-		_, err = fileWriter.Write(orgJson)
-		if err != nil {
-			return nil, fmt.Errorf("failed to write data to zip: %w", err)
-		}
-		fmt.Println("Write ok")
-
-		result, err := r.repo.PutOrgEventHash(ctx, req.OrgCode[i], hash)
-		if err != nil {
-			return nil, fmt.Errorf("insert error %w", err)
-		}
-		if result {
-			fmt.Println("DB saved ok org :", req.OrgCode[i])
+		// DB 저장
+		if ok, err := r.repo.PutOrgEventHash(ctx, org, fileName); err != nil {
+			return nil, fmt.Errorf("db save error: %w", err)
+		} else if ok {
+			fmt.Println("DB saved ok org:", org)
 		}
 	}
+
 	return consts.SUCCESS, nil
+}
+
+func buildZipInMemory(fileName string, content []byte) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	zipWriter := zip.NewWriter(buf)
+
+	writer, err := zipWriter.Create(fileName)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := writer.Write(content); err != nil {
+		return nil, err
+	}
+	if err := zipWriter.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 // 경로가 없으면 생성
