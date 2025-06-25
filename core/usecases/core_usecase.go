@@ -122,7 +122,7 @@ func getConnectInfo(uuid string, device string, worksCode string, serverUrl stri
 	}
 
 	// POST 요청 보내기
-	url := "http://" + serverUrl + "/common/v1/device-init"
+	url := "http://" + serverUrl + "/common/sv1/device-init"
 
 	fmt.Println("common service 호출! url : ", url)
 

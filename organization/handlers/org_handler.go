@@ -105,7 +105,7 @@ func (h *OrgHandler) GetOrgData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(req.OrgCode) == 0 {
-		res.Code = consts.FAIL
+		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_108,
 			Message: consts.E_108_MSG,
@@ -131,13 +131,13 @@ func (h *OrgHandler) GetOrgData(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		// http status code 400
 		w.WriteHeader(http.StatusBadRequest)
-		res.Code = consts.ERROR
+		res.Result = consts.ERROR
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_500,
 			Message: consts.E_500_MSG,
 		}
 	} else {
-		res.Code = consts.SUCCESS
+		res.Result = consts.SUCCESS
 		res.Data = data
 	}
 	// response.

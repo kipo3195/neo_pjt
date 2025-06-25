@@ -22,23 +22,23 @@ func NewOrgFileStorage() OrgFileStorage {
 	}
 }
 
-func (m *orgFileStorage) SaveOrgFile(orgCode string, content []byte) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (r *orgFileStorage) SaveOrgFile(orgCode string, content []byte) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	// content 복사해서 저장 (안전하게)
 	copied := make([]byte, len(content))
 	copy(copied, content)
-	m.data[orgCode] = copied
+	r.data[orgCode] = copied
 
 	return nil
 }
 
-func (m *orgFileStorage) GetOrgFile(orgCode string) ([]byte, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+func (r *orgFileStorage) GetOrgFile(orgCode string) ([]byte, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	data, exists := m.data[orgCode]
+	data, exists := r.data[orgCode]
 	if !exists {
 		return nil, errors.New("zip file not found for org: " + orgCode)
 	}
@@ -50,14 +50,14 @@ func (m *orgFileStorage) GetOrgFile(orgCode string) ([]byte, error) {
 	return copied, nil
 }
 
-func (m *orgFileStorage) DeleteOrgFile(orgCode string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (r *orgFileStorage) DeleteOrgFile(orgCode string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	if _, exists := m.data[orgCode]; !exists {
+	if _, exists := r.data[orgCode]; !exists {
 		return errors.New("file not found")
 	}
 
-	delete(m.data, orgCode)
+	delete(r.data, orgCode)
 	return nil
 }

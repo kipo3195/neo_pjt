@@ -5,6 +5,7 @@ import (
 	clDto "common/dto/client"
 	dto "common/dto/common"
 	svDto "common/dto/server"
+	"common/entities"
 	"common/usecases"
 	"context"
 	"encoding/json"
@@ -82,27 +83,50 @@ func (h *CommonHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *CommonHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
+func (h *CommonHandler) GetConfigHash(w http.ResponseWriter, r *http.Request) {
 
-	// request 데이터 -> dto로 변경
-	var configRequest clDto.ConfigRequest
-	if err := json.NewDecoder(r.Body).Decode(&configRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	fmt.Println("클라이언트 요청 수신 : ", configRequest)
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-	// 비즈니스 로직 호출
-	config, err := h.usecase.GetConfig(configRequest)
+	// response dto 생성
+	var res = dto.Response{}
 
-	if err != nil {
-		fmt.Println("없는 파일 요청.. ")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	// 데이터 -> dto
+	var req = clDto.GetConfigHash{
+		SkinHash:   r.URL.Query().Get("skinHash"),
+		ConfigHash: r.URL.Query().Get("configHash"),
+		Device:     r.URL.Query().Get("device"),
 	}
 
-	// 파일 다운로드 응답
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+config.FileName+"\"")
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write(config.Content)
+	// 유효성 검증
+	if req.SkinHash == "" || req.ConfigHash == "" || req.Device == "" {
+		res.Result = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	// usecase 호출
+	data := h.usecase.GetConfigHash(toConfigHashEntity(req), ctx)
+
+	res.Result = consts.SUCCESS
+	res.Data = data
+
+	// response.
+	json.NewEncoder(w).Encode(res)
+
+}
+
+func toConfigHashEntity(dto clDto.GetConfigHash) entities.ConfigHashEntity {
+	return entities.ConfigHashEntity{
+		ConfigHash: dto.ConfigHash,
+		SkinHash:   dto.SkinHash,
+		Device:     dto.Device,
+	}
 }
