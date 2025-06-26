@@ -25,6 +25,7 @@ type CommonUsecase interface {
 	DeviceInit(body *svDto.SvDeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse)
 	GenerateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (string, error)
 	GetConfigHash(body entities.ConfigHashEntity, ctx context.Context) clDto.ConfigHashResult
+	InitConfigHash() error
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository, configHashStorage storage.ConfigHashStorage) CommonUsecase {
@@ -190,4 +191,31 @@ func toConfighashResultDto(entity entities.ConfigHashResultEntity) clDto.ConfigH
 		SkinExist:   entity.SkinExist,
 		SkinSame:    entity.SkinSame,
 	}
+}
+
+func (r *commonUsecase) InitConfigHash() error {
+
+	// skin 정보 init
+	skinHashs, err := r.repo.GetSkinHashs()
+	if err != nil {
+		return err
+	}
+
+	// 없어도 에러는 아님
+	for _, m := range skinHashs {
+		r.configHashStorage.SaveConfigHash(m.Device, m.SkinHash)
+	}
+
+	// config 정보 init
+	config, err := r.repo.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	// 없어도 에러는 아님
+	if config.ConfigHash != "" && config.Device != "" {
+		r.configHashStorage.SaveConfigHash(config.Device, config.ConfigHash)
+	}
+
+	return nil
 }

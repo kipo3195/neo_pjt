@@ -3,6 +3,7 @@ package main
 import (
 	"common/config"
 	"common/handlers"
+	loader "common/infra/loader"
 	"common/infra/storage"
 	"common/repositories"
 	"common/routes"
@@ -22,11 +23,21 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
+	// 메모리 저장소 생성 (빈 상태)
 	configHashStorage := storage.NewConfigHashStorage()
-
+	// DB 의존성 구성
 	commonRepo := repositories.NewCommonRepository(db)
-	commonUC := usecases.NewCommonUsecase(commonRepo, configHashStorage)
-	commonHandler := handlers.NewCommonHandler(commonUC)
+	// 의존성 주입 완료된 usecase 생성
+	commonUsecase := usecases.NewCommonUsecase(commonRepo, configHashStorage)
+	// usecase 내부 초기화 실행 (ex. DB → 캐시 로딩)
+	commonLoader := loader.NewCommonLoader(commonUsecase)
+	if err := commonLoader.RunAll(); err != nil {
+		log.Fatalf("common loader 초기화 실패: %v", err)
+		// 서버 종료됨.
+	}
+	log.Println("common service memory loading success !")
+	// 초기화 완료된 usecase를 주입해 안전한 handler 구성
+	commonHandler := handlers.NewCommonHandler(commonUsecase)
 
 	router := routes.SetupRoutes(commonHandler)
 
