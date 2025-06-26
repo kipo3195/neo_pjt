@@ -2,8 +2,11 @@ package usecases
 
 import (
 	"bytes"
+	"common/consts"
 	clDto "common/dto/client"
 	svDto "common/dto/server"
+	"common/entities"
+	"common/infra/storage"
 	"common/repositories"
 	"context"
 	"encoding/json"
@@ -13,14 +16,15 @@ import (
 )
 
 type commonPubUsecase struct {
-	repo repositories.CommonPubRepository
+	repo              repositories.CommonPubRepository
+	configHashStorage storage.ConfigHashStorage
 }
 
 type CommonPubUsecase interface {
 	AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error)
 }
 
-func NewCommonPubUsecase(repo repositories.CommonPubRepository) CommonPubUsecase {
+func NewCommonPubUsecase(repo repositories.CommonPubRepository, configHashStorage storage.ConfigHashStorage) CommonPubUsecase {
 	return &commonPubUsecase{
 		repo: repo,
 	}
@@ -28,16 +32,42 @@ func NewCommonPubUsecase(repo repositories.CommonPubRepository) CommonPubUsecase
 
 func (r *commonPubUsecase) AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error) {
 
-	//data, err := getAppTokenValidationInAuth(toAppTokenValidationRequest(body.AppToken, body.Uuid))
+	data, err := getAppTokenValidationInAuth(toAppTokenValidationRequest(body.AppToken, body.Uuid))
 
-	// if err != nil {
-	// 	// 에러 정의 후 response
-	// }
-	// if !data {
-	// 	// 인증 실패, 에러 정의 후 response.
-	// }
+	if err != nil {
+		// 에러 정의 후 response
+		return false, consts.ErrServerError
+	}
 
-	// return flag, nil
+	if data.Result != "success" {
+		// 인증 실패, 에러 정의 후 response.
+		return false, consts.ErrInvalidClaims
+	}
+
+	// skin 검증
+	skinHash, err := r.configHashStorage.GetConfigHash(body.Device)
+	if err != nil {
+		fmt.Println("서버에 skin hash정보가 없음.")
+		return false, consts.ErrSkinHashInvalid
+	}
+
+	if skinHash != body.SkinHash {
+		fmt.Println("서버의 skin hash 정보와 다름 server skin hash : ", skinHash)
+		return false, consts.ErrSkinHashInvalid
+	}
+
+	// config 검증
+	configHash, err := r.configHashStorage.GetConfigHash("config")
+	if err != nil {
+		fmt.Println("서버에 config hash정보가 없음.")
+		return false, consts.ErrConfigHashInvalid
+	}
+
+	if configHash != body.ConfigHash {
+		fmt.Println("서버의 config hash 정보와 다름 server config hash : ", configHash)
+		return false, consts.ErrConfigHashInvalid
+	}
+
 	return true, nil
 }
 
@@ -49,12 +79,12 @@ func toAppTokenValidationRequest(appToken string, uuid string) svDto.AppTokenVal
 
 }
 
-func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (*svDto.AppTokenValidationResponse, error) {
+func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (entities.AppTokenValitaionResponseEntity, error) {
 
 	// JSON 변환
 	jsonData, err := json.Marshal(dto)
 	if err != nil {
-		return &svDto.AppTokenValidationResponse{}, err
+		return entities.AppTokenValitaionResponseEntity{}, err
 	}
 
 	// POST 요청 보내기
@@ -64,7 +94,7 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (*svDto.Ap
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return &svDto.AppTokenValidationResponse{}, err
+		return entities.AppTokenValitaionResponseEntity{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -73,7 +103,7 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (*svDto.Ap
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return &svDto.AppTokenValidationResponse{}, err
+		return entities.AppTokenValitaionResponseEntity{}, err
 	}
 
 	defer resp.Body.Close()
@@ -81,8 +111,15 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (*svDto.Ap
 	var responseBody *svDto.AppTokenValidationResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
-		return &svDto.AppTokenValidationResponse{}, err
+		return entities.AppTokenValitaionResponseEntity{}, err
 	}
 
-	return responseBody, nil
+	return toAppTokenValidationResponseEntity(responseBody), nil
+}
+
+func toAppTokenValidationResponseEntity(dto *svDto.AppTokenValidationResponse) entities.AppTokenValitaionResponseEntity {
+	return entities.AppTokenValitaionResponseEntity{
+		Result: dto.Result,
+		Data:   dto.Data,
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"common/usecases"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -35,7 +36,7 @@ func (h *CommonPubHandler) AppValidation(w http.ResponseWriter, r *http.Request)
 
 	fmt.Println("1")
 	// request body 데이터 -> dto로 변경
-	var req = &clDto.AppValidationRequest{
+	var req = clDto.AppValidationRequest{
 		Uuid:       r.URL.Query().Get("uuid"),
 		AppToken:   r.URL.Query().Get("appToken"),
 		Device:     r.URL.Query().Get("device"),
@@ -54,6 +55,7 @@ func (h *CommonPubHandler) AppValidation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	fmt.Println("2")
+	// 유효성 검증 로직
 	validate := validator.New()
 	if err := validate.Struct(req); err != nil {
 		// 검증 실패 처리
@@ -68,43 +70,44 @@ func (h *CommonPubHandler) AppValidation(w http.ResponseWriter, r *http.Request)
 	}
 	fmt.Println("3")
 	// 검증
-	//data, err := h.usecase.AppValidation(ctx, req)
+	data, err := h.usecase.AppValidation(ctx, req)
 
-	// if err != nil || !data { // 에러
-	// 	switch {
-	// 	case errors.Is(err, consts.ErrDbRowNotFound):
-	// 		// 매핑된 hash 정보가 없음
-	// 		res.Result = consts.FAIL
-	// 		res.Data = newErrorResp(consts.AUTH_F001, consts.AUTH_F001_MSG)
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 	case errors.Is(err, consts.ErrTokenExpired):
-	// 		res.Result = consts.ERROR
-	// 		res.Data = newErrorResp(consts.E_107, consts.E_107_MSG)
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 	case errors.Is(err, consts.ErrTokenSignatureInvalid):
-	// 		res.Result = consts.FAIL
-	// 		res.Data = newErrorResp(consts.AUTH_F005, consts.AUTH_F005_MSG)
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 	case errors.Is(err, consts.ErrDB):
-	// 		res.Result = consts.ERROR
-	// 		res.Data = newErrorResp(consts.E_102, consts.E_102_MSG)
-	// 		w.WriteHeader(http.StatusInternalServerError)
-	// 	case errors.Is(err, consts.ErrTokenParsing):
-	// 		res.Result = consts.ERROR
-	// 		res.Data = newErrorResp(consts.E_105, consts.E_105_MSG)
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 	case errors.Is(err, consts.ErrInvalidClaims):
-	// 		res.Result = consts.FAIL
-	// 		res.Data = newErrorResp(consts.AUTH_F002, consts.AUTH_F002_MSG)
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 	default:
-	// 		res.Result = consts.ERROR
-	// 		res.Data = newErrorResp(consts.E_500, consts.E_500_MSG)
-	// 		w.WriteHeader(http.StatusInternalServerError)
-	// 	}
-	// } else {
-	// 	res.Result = consts.SUCCESS
-	// 	// 데이터가 있어야할까?
-	// }
+	if err != nil || !data {
+		switch {
+		case errors.Is(err, consts.ErrInvalidClaims):
+			w.WriteHeader(http.StatusUnauthorized)
+			res.Result = consts.ERROR
+			res.Data = dto.ErrorResponse{
+				Code:    consts.E_106,
+				Message: consts.E_106_MSG,
+			}
+		case errors.Is(err, consts.ErrSkinHashInvalid):
+			w.WriteHeader(http.StatusBadRequest)
+			res.Result = consts.ERROR
+			res.Data = dto.ErrorResponse{
+				Code:    consts.COMMON_F001,
+				Message: consts.COMMON_F001_MSG,
+			}
+		case errors.Is(err, consts.ErrConfigHashInvalid):
+			w.WriteHeader(http.StatusBadRequest)
+			res.Result = consts.ERROR
+			res.Data = dto.ErrorResponse{
+				Code:    consts.COMMON_F002,
+				Message: consts.COMMON_F002_MSG,
+			}
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			res.Result = consts.ERROR
+			res.Data = dto.ErrorResponse{
+				Code:    consts.E_500,
+				Message: consts.E_500_MSG,
+			}
+		}
+
+	} else if data {
+		res.Result = consts.SUCCESS
+		res.Data = dto.ErrorResponse{}
+	}
+
 	json.NewEncoder(w).Encode(res)
 }

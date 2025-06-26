@@ -1,5 +1,6 @@
 package dto
 
 type AppTokenValidationResponse struct {
-	Result bool `json:"result"`
+	Result string `json:"result"`
+	Data   any    `json:"data"` // 응답 데이터 (map, struct 등 자유롭게 가능)
 }

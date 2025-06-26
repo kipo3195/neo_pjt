@@ -12,3 +12,5 @@ var ErrTokenExpired = errors.New("token has expired")
 var ErrDbRowNotFound = errors.New("db row not found")
 
 var ErrTokenSignatureInvalid = errors.New("token signature invalid")
+
+var ErrTokenMismatch = errors.New("token mismatch")

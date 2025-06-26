@@ -8,3 +8,8 @@ var ErrDB = errors.New("DB error")
 var ErrTokenParsing = errors.New("token parsing failed")
 var ErrInvalidClaims = errors.New("invalid token or claims")
 var ErrTokenExpired = errors.New("token has expired")
+
+var ErrServerError = errors.New("server error")
+
+var ErrSkinHashInvalid = errors.New("skin hash invalid")
+var ErrConfigHashInvalid = errors.New("config hash invalid")

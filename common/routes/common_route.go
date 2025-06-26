@@ -9,7 +9,7 @@ import (
 func SetupRoutes(commonHandler *handlers.CommonHandler, serverHandler *handlers.ServerHandler, commonPubHandler *handlers.CommonPubHandler) *mux.Router {
 	r := mux.NewRouter()
 
-	// middleware가 필요없는 요청을 처리함.
+	// 토큰을 검증하지 않는 로직
 	commonPub := r.PathPrefix("/common/pub").Subrouter()
 	commonPub.HandleFunc("/app-validation", commonPubHandler.AppValidation).Methods("GET")
 

@@ -27,7 +27,7 @@ func InitServer() *http.Server {
 	configHashStorage := storage.NewConfigHashStorage()
 
 	commonPubRepo := repositories.NewCommonPubRepository(db)
-	commonPubUsecase := usecases.NewCommonPubUsecase(commonPubRepo)
+	commonPubUsecase := usecases.NewCommonPubUsecase(commonPubRepo, configHashStorage)
 	commonPubHandler := handlers.NewCommonPubHandler(commonPubUsecase)
 
 	serverRepo := repositories.NewServerRepository(db)

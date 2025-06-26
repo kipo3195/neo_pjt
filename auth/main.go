@@ -22,10 +22,14 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	authRepo := repositories.NewAuthRepository(db)
-	authUC := usecases.NewAuthUsecase(authRepo, sfg.GetJWTConfig())
-	authHandler := handlers.NewAuthHandler(authUC)
+	authUsecase := usecases.NewAuthUsecase(authRepo, sfg.GetJWTConfig())
+	authHandler := handlers.NewAuthHandler(authUsecase)
 
-	router := routes.SetupRoutes(authHandler)
+	serverRepo := repositories.NewServerRepository(db)
+	serverUsecase := usecases.NewServerUsecase(serverRepo, authRepo)
+	serverHandler := handlers.NewServerHandler(serverUsecase)
+
+	router := routes.SetupRoutes(authHandler, serverHandler)
 
 	return &http.Server{
 		Addr:    ":8087",
