@@ -44,16 +44,16 @@ func (h *CommonPubHandler) AppValidation(w http.ResponseWriter, r *http.Request)
 		ConfigHash: r.URL.Query().Get("configHash"),
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-		return
-	}
+	// if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	// 	res.Result = consts.ERROR
+	// 	res.Data = dto.ErrorResponse{
+	// 		Code:    consts.E_103,
+	// 		Message: consts.E_103_MSG,
+	// 	}
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	json.NewEncoder(w).Encode(res)
+	// 	return
+	// }
 	fmt.Println("2")
 	// 유효성 검증 로직
 	validate := validator.New()
@@ -83,14 +83,14 @@ func (h *CommonPubHandler) AppValidation(w http.ResponseWriter, r *http.Request)
 			}
 		case errors.Is(err, consts.ErrSkinHashInvalid):
 			w.WriteHeader(http.StatusBadRequest)
-			res.Result = consts.ERROR
+			res.Result = consts.FAIL
 			res.Data = dto.ErrorResponse{
 				Code:    consts.COMMON_F001,
 				Message: consts.COMMON_F001_MSG,
 			}
 		case errors.Is(err, consts.ErrConfigHashInvalid):
 			w.WriteHeader(http.StatusBadRequest)
-			res.Result = consts.ERROR
+			res.Result = consts.FAIL
 			res.Data = dto.ErrorResponse{
 				Code:    consts.COMMON_F002,
 				Message: consts.COMMON_F002_MSG,

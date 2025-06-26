@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -26,14 +27,13 @@ func (h *ServerHandler) AppTokenValidation(w http.ResponseWriter, r *http.Reques
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	fmt.Println("1")
 	// response
 	var res dto.Response
 
-	var req = svDto.SvAppTokenValidationRequest{
-		Uuid:     r.URL.Query().Get("uuid"),
-		AppToken: r.URL.Query().Get("appToken"),
-	}
+	var req svDto.SvAppTokenValidationRequest
 
+	fmt.Println("2")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.ERROR
 		res.Data = dto.ErrorResponse{
@@ -46,9 +46,10 @@ func (h *ServerHandler) AppTokenValidation(w http.ResponseWriter, r *http.Reques
 	}
 
 	data, err := h.usecase.AppTokenValidation(req, ctx)
-
+	fmt.Println(data, err)
 	// 이거 나중에 모듈화 꼭 할 것
 	if err != nil || !data { // 에러
+		fmt.Println(err)
 		switch {
 		case errors.Is(err, consts.ErrDbRowNotFound):
 			// 매핑된 hash 정보가 없음

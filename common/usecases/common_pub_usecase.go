@@ -26,7 +26,8 @@ type CommonPubUsecase interface {
 
 func NewCommonPubUsecase(repo repositories.CommonPubRepository, configHashStorage storage.ConfigHashStorage) CommonPubUsecase {
 	return &commonPubUsecase{
-		repo: repo,
+		repo:              repo,
+		configHashStorage: configHashStorage,
 	}
 }
 
@@ -88,7 +89,7 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (entities.
 	}
 
 	// POST 요청 보내기
-	url := "http://" + "" + "/common/sv1/device-init"
+	url := "http://172.16.10.114/auth/sv1/app-token-validation"
 
 	log.Println("auth service 호출! url : ", url)
 
@@ -108,7 +109,7 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (entities.
 
 	defer resp.Body.Close()
 
-	var responseBody *svDto.AppTokenValidationResponse
+	var responseBody svDto.AppTokenValidationResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
 		return entities.AppTokenValitaionResponseEntity{}, err
@@ -117,7 +118,7 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (entities.
 	return toAppTokenValidationResponseEntity(responseBody), nil
 }
 
-func toAppTokenValidationResponseEntity(dto *svDto.AppTokenValidationResponse) entities.AppTokenValitaionResponseEntity {
+func toAppTokenValidationResponseEntity(dto svDto.AppTokenValidationResponse) entities.AppTokenValitaionResponseEntity {
 	return entities.AppTokenValitaionResponseEntity{
 		Result: dto.Result,
 		Data:   dto.Data,
