@@ -46,6 +46,7 @@ func (h *UserHandler) GetMyInfo(w http.ResponseWriter, r *http.Request) {
 			Code:    consts.ORG_F101,
 			Message: consts.ORG_F101_MSG,
 		}
+		return
 	}
 
 	fmt.Println("내 정보 요청시 myHash : ", myHash)
@@ -76,5 +77,10 @@ func (h *UserHandler) GetMyInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 }
