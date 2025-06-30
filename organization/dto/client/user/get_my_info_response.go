@@ -5,4 +5,6 @@ type GetMyInfoResponse struct {
 	UserPhoneNum string      `json:"userPhoneNum"`
 	Username     UsernameDto `json:"userName"`
 	OrgCodes     []string    `json:"orgCodes"`
+	ProfileUrl   string      `json:"profileUrl"`
+	ProfileMsg   string      `json:"profileMsg"`
 }

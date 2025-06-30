@@ -24,17 +24,11 @@ func NewUserUsecase(repo repositories.UserRepository) UserUsecase {
 
 func (r *userUsecase) GetMyInfo(ctx context.Context, req userDto.GetMyInfoRequest) (userDto.GetMyInfoResponse, error) {
 
-	MyInfoEntity, err := r.repo.GetMyInfo(ctx, toGetMyInfoEntity(req))
+	MyInfoEntity, err := r.repo.GetMyInfo(ctx, req.MyHash)
 	if err != nil {
 		return userDto.GetMyInfoResponse{}, err
 	}
 	return toMyInfoDto(MyInfoEntity), nil
-}
-
-func toGetMyInfoEntity(req userDto.GetMyInfoRequest) entities.GetMyInfoEntity {
-	return entities.GetMyInfoEntity{
-		MyHash: req.MyHash,
-	}
 }
 
 func toMyInfoDto(entity entities.MyInfoEntity) userDto.GetMyInfoResponse {
@@ -54,5 +48,7 @@ func toMyInfoDto(entity entities.MyInfoEntity) userDto.GetMyInfoResponse {
 		UserPhoneNum: entity.UserPhoneNum,
 		Username:     username,
 		OrgCodes:     []string{"neo"}, // TODO 수정 필요 메모리 기반, ACL
+		ProfileUrl:   entity.ProfileUrl,
+		ProfileMsg:   entity.ProfileMsg,
 	}
 }

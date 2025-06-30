@@ -13,7 +13,7 @@ type userRepository struct {
 }
 
 type UserRepository interface {
-	GetMyInfo(ctx context.Context, entity entities.GetMyInfoEntity) (entities.MyInfoEntity, error)
+	GetMyInfo(ctx context.Context, myHash string) (entities.MyInfoEntity, error)
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -22,7 +22,7 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	}
 }
 
-func (r *userRepository) GetMyInfo(ctx context.Context, entity entities.GetMyInfoEntity) (entities.MyInfoEntity, error) {
+func (r *userRepository) GetMyInfo(ctx context.Context, myHash string) (entities.MyInfoEntity, error) {
 	var myInfo models.MyInfo
 
 	err := r.db.Raw(
@@ -34,15 +34,19 @@ func (r *userRepository) GetMyInfo(ctx context.Context, entity entities.GetMyInf
 			wuml.zh_lang,
 			wuml.jp_lang,
 			wuml.ru_lang,
-			wuml.vi_lang
+			wuml.vi_lang,
+			up.profile_url,
+			up.profile_msg
 		FROM service_users AS su
 		JOIN user_detail AS ud 
 			ON su.user_hash = ud.user_hash
 		JOIN works_user_multi_lang AS wuml 
 			ON su.user_hash = wuml.user_hash
+		LEFT JOIN user_profile AS up
+			ON su.user_hash = up.user_hash	
 		WHERE su.user_hash = ? AND su.use_yn ='Y'`,
 
-		entity.MyHash).Scan(&myInfo).Error
+		myHash).Scan(&myInfo).Error
 
 	if err != nil {
 		return entities.MyInfoEntity{}, err
@@ -68,5 +72,7 @@ func toMyInfoEntity(myInfo models.MyInfo) entities.MyInfoEntity {
 		UserHash:     myInfo.UserHash,
 		UserPhoneNum: myInfo.UserPhoneNum,
 		Username:     userName,
+		ProfileUrl:   myInfo.ProfileUrl,
+		ProfileMsg:   myInfo.ProfileMsg,
 	}
 }
