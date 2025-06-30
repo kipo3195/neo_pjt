@@ -5,9 +5,11 @@ import (
 	clDto "admin/dto/client"
 	dto "admin/dto/common"
 	"admin/usecases"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -24,6 +26,8 @@ func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
 	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 	// response dto 생성
 	var res = clDto.CreateDeptResponse{}

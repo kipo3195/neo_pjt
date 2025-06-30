@@ -99,6 +99,7 @@ func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
 			Name:           name,
 			Kind:           org.Kind,
 			Id:             org.Id,
+			Header:         org.Header,
 		}
 
 		if org.ParentDeptCode == "root" {
@@ -131,6 +132,7 @@ func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.Org
 				SubDept:        sub,
 				Kind:           org.Kind,
 				Id:             org.Id,
+				Header:         org.Header,
 			})
 		}
 	}

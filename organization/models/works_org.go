@@ -14,4 +14,5 @@ type WorksOrg struct {
 	UpdateHash     string `gorm:"column:update_hash" json:"update_hash"`
 	Kind           string `gorm:"column:kind" json:"kind"` // 추가
 	Id             string `gorm:"column:id" json:"id"`
+	Header         string `gorm:"column:header" json:"header"`
 }

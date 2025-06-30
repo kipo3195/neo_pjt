@@ -23,7 +23,7 @@ type ServerRepository interface {
 
 	PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error)
 
-	GetOrg(ctx context.Context, entity entities.GetOrgEntity) ([]models.WorksOrg, error)
+	GetOrg(ctx context.Context, orgCode string) ([]models.WorksOrg, error)
 }
 
 func NewServerRepository(db *gorm.DB) ServerRepository {
@@ -39,6 +39,7 @@ func (r *serverRepository) PutDept(ctx context.Context, entity entities.CreateDe
 		return false, tx.Error
 	}
 
+	// 부서 추가
 	worksDept := toWorksDeptsModel(entity)
 	if err := tx.Create(&worksDept).Error; err != nil {
 		log.Println("[PutDept] - DB error")
@@ -46,6 +47,7 @@ func (r *serverRepository) PutDept(ctx context.Context, entity entities.CreateDe
 		return false, err
 	}
 
+	// 부서의 다국어 추가
 	worksDeptMultiLang := toWorksDeptsMultiLangModel(entity)
 	if err := tx.Create(&worksDeptMultiLang).Error; err != nil {
 		log.Println("[PutDept Multi lang] - DB error")
@@ -75,6 +77,7 @@ func toWorksDeptsModel(e entities.CreateDeptEntity) models.WorksDept {
 		DeptCode:        e.DeptCode,
 		DeptOrg:         e.DeptOrg,
 		ParentsDeptCode: e.ParentDeptCode,
+		Header:          e.Header,
 	}
 }
 
@@ -210,11 +213,11 @@ func toOrgEventHashModel(org string, hash string) models.OrgEventHash {
 	}
 }
 
-func (r *serverRepository) GetOrg(ctx context.Context, entity entities.GetOrgEntity) ([]models.WorksOrg, error) {
+func (r *serverRepository) GetOrg(ctx context.Context, orgCode string) ([]models.WorksOrg, error) {
 
 	var orgTree []models.WorksOrg
 	viewSql := `SELECT * FROM org.vw_dept_and_user_tree where org = ?`
-	err := r.db.Raw(viewSql, entity.OrgCode).Scan(&orgTree).Error
+	err := r.db.Raw(viewSql, orgCode).Scan(&orgTree).Error
 
 	if err != nil {
 		log.Println("[GetOrg] - No record found or DB error")

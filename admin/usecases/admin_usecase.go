@@ -52,6 +52,7 @@ func toCreateDepartmentEntity(req clDto.CreateDeptRequest) entities.CreateDepart
 		JpLang:         req.JpLang,
 		ZhLang:         req.ZhLang,
 		ViLang:         req.ViLang,
+		Header:         req.Header,
 	}
 }
 
@@ -69,7 +70,7 @@ func createDepartmentInOrg(ctx context.Context, entity entities.CreateDepartment
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer serverToken")
+	req.Header.Set("Authorization", "Bearer serverToken") // 서버 to 서버 인증 처리 필요
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

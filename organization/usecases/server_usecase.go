@@ -12,7 +12,6 @@ import (
 	"org/entities"
 	storage "org/infra/storage"
 	"org/repositories"
-	"os"
 )
 
 type serverUsecase struct {
@@ -38,10 +37,10 @@ type ServerUsecase interface {
 }
 
 func (r *serverUsecase) ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error) {
-	return r.repo.PutDept(ctx, toCreateDepartmentDto(req))
+	return r.repo.PutDept(ctx, toCreateDepartmentEntity(req))
 }
 
-func toCreateDepartmentDto(req svDto.SvCreateDeptRequest) entities.CreateDeptEntity {
+func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDeptEntity {
 
 	return entities.CreateDeptEntity{
 		DeptCode:       req.DeptCode,
@@ -53,6 +52,7 @@ func toCreateDepartmentDto(req svDto.SvCreateDeptRequest) entities.CreateDeptEnt
 		ZhLang:         req.ZhLang,
 		RuLang:         req.RuLang,
 		ViLang:         req.ViLang,
+		Header:         req.Header,
 	}
 }
 
@@ -108,7 +108,7 @@ func (r *serverUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCre
 
 		org := req.OrgCode[i]
 
-		orgTree, err := r.repo.GetOrg(ctx, r.toGetOrgEntity(org))
+		orgTree, err := r.repo.GetOrg(ctx, org)
 		if err != nil {
 			fmt.Printf("Invalid org: %s\n", req.OrgCode[i])
 			continue
@@ -169,16 +169,4 @@ func buildZipInMemory(fileName string, content []byte) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
-}
-
-// 경로가 없으면 생성
-func ensureDir(dirPath string) error {
-	return os.MkdirAll(dirPath, os.ModePerm)
-}
-
-// 클라이언트, 서버에서 요청하여 현재의 ORG를 가져오기 위해 각자의 타입에 맞춰 entity 생성하는 코드 (오버라이드를 지원하지 않기 때문에 사용함)
-func (r *serverUsecase) toGetOrgEntity(orgCode string) entities.GetOrgEntity {
-	return entities.GetOrgEntity{
-		OrgCode: orgCode,
-	}
 }

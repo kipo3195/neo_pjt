@@ -10,4 +10,5 @@ type CreateDeptEntity struct {
 	ZhLang         string `json:"zh"`
 	RuLang         string `json:"ru"`
 	ViLang         string `json:"vi"`
+	Header         string `json:"header"`
 }
