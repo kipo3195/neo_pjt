@@ -1,6 +1,6 @@
 package models
 
-type MyInfo struct {
+type MyDetailInfo struct {
 	UserHash     string `gorm:"column:user_hash"`
 	UserPhoneNum string `gorm:"column:user_phone_num"`
 	DefLang      string `gorm:"column:def_lang"`

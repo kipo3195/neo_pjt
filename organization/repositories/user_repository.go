@@ -23,9 +23,17 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r *userRepository) GetMyInfo(ctx context.Context, myHash string) (entities.MyInfoEntity, error) {
-	var myInfo models.MyInfo
+	var myDetailInfo models.MyDetailInfo
+	var myDeptInfo []models.DeptInfo
 
-	err := r.db.Raw(
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return entities.MyInfoEntity{}, tx.Error
+	}
+
+	// 첫 번째 쿼리: 사용자 상세 정보
+	err := tx.Raw(
 		`SELECT 
 			su.user_hash,
 			ud.user_phone_num,
@@ -44,35 +52,94 @@ func (r *userRepository) GetMyInfo(ctx context.Context, myHash string) (entities
 			ON su.user_hash = wuml.user_hash
 		LEFT JOIN user_profile AS up
 			ON su.user_hash = up.user_hash	
-		WHERE su.user_hash = ? AND su.use_yn ='Y'`,
-
-		myHash).Scan(&myInfo).Error
-
+		WHERE su.user_hash = ? AND su.use_yn = 'Y'`,
+		myHash).Scan(&myDetailInfo).Error
 	if err != nil {
+		tx.Rollback()
 		return entities.MyInfoEntity{}, err
 	}
 
-	return toMyInfoEntity(myInfo), nil
+	// 두 번째 쿼리: 부서 정보
+	err = tx.Raw(
+		`SELECT 
+			wdml.dept_org,
+			wdml.dept_code,
+			wdml.def_lang,
+			wdml.ko_lang,
+			wdml.en_lang,
+			wdml.jp_lang,
+			wdml.zh_lang,
+			wdml.ru_lang,
+			wdml.vi_lang,
+			wd.header
+		FROM works_dept AS wd 
+		JOIN works_dept_multi_lang AS wdml 
+			ON wd.dept_code = wdml.dept_code 
+		JOIN (
+			SELECT wdu.dept_code FROM service_users AS su 
+			JOIN works_dept_user AS wdu 
+				ON su.user_hash = wdu.user_hash 
+			WHERE su.use_yn = 'Y' AND su.user_hash = ?) AS a 
+			ON wdml.dept_code = a.dept_code`,
+		myHash).Scan(&myDeptInfo).Error
+	if err != nil {
+		tx.Rollback()
+		return entities.MyInfoEntity{}, err
+	}
+
+	// 트랜잭션 커밋
+	if err := tx.Commit().Error; err != nil {
+		return entities.MyInfoEntity{}, err
+	}
+
+	// 매핑 및 반환
+	return toMyInfoEntity(myDetailInfo, myDeptInfo), nil
 }
 
-func toMyInfoEntity(myInfo models.MyInfo) entities.MyInfoEntity {
+func toMyInfoEntity(myDetailInfo models.MyDetailInfo, myDeptInfo []models.DeptInfo) entities.MyInfoEntity {
 
 	// 사용자 명 다국어 처리
 	userName := entities.NameEntity{
-		Def: myInfo.KoLang, // 수정 필요
-		Ko:  myInfo.KoLang,
-		En:  myInfo.EnLang,
-		Zh:  myInfo.ZhLang,
-		Jp:  myInfo.JpLang,
-		Ru:  myInfo.RuLang,
-		Vi:  myInfo.ViLang,
+		Def: myDetailInfo.KoLang, // 수정 필요
+		Ko:  myDetailInfo.KoLang,
+		En:  myDetailInfo.EnLang,
+		Zh:  myDetailInfo.ZhLang,
+		Jp:  myDetailInfo.JpLang,
+		Ru:  myDetailInfo.RuLang,
+		Vi:  myDetailInfo.ViLang,
 	}
 
+	// 부서 정보 파싱
+	deptInfoEntity := toDeptInfoEntity(myDeptInfo)
+
+	// 내 정보
 	return entities.MyInfoEntity{
-		UserHash:     myInfo.UserHash,
-		UserPhoneNum: myInfo.UserPhoneNum,
+		UserHash:     myDetailInfo.UserHash,
+		UserPhoneNum: myDetailInfo.UserPhoneNum,
 		Username:     userName,
-		ProfileUrl:   myInfo.ProfileUrl,
-		ProfileMsg:   myInfo.ProfileMsg,
+		ProfileUrl:   myDetailInfo.ProfileUrl,
+		ProfileMsg:   myDetailInfo.ProfileMsg,
+		DeptInfo:     deptInfoEntity,
 	}
+}
+
+func toDeptInfoEntity(myDeptInfo []models.DeptInfo) []entities.DeptEntity {
+
+	var deptEntity []entities.DeptEntity
+
+	for _, dept := range myDeptInfo {
+		deptEntity = append(deptEntity, entities.DeptEntity{
+			DeptOrg:  dept.DeptOrg,
+			DeptCode: dept.DeptOrg,
+			DefLang:  dept.DefLang,
+			KoLang:   dept.KoLang,
+			EnLang:   dept.EnLang,
+			JpLang:   dept.JpLang,
+			ZhLang:   dept.ZhLang,
+			ViLang:   dept.ViLang,
+			RuLang:   dept.RuLang,
+			Header:   dept.Header,
+		})
+	}
+	return deptEntity
 }
