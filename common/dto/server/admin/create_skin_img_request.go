@@ -1,4 +1,4 @@
-package common
+package admin
 
 import "mime/multipart"
 

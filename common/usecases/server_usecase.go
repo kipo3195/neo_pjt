@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"common/consts"
 	dto "common/dto/common"
+	adminDto "common/dto/server/admin"
 	commonDto "common/dto/server/common"
 	"common/entities"
 	"common/infra/storage"
@@ -12,7 +13,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"strings"
 )
 
 type serverUsecase struct {
@@ -21,7 +25,8 @@ type serverUsecase struct {
 }
 
 type ServerUsecase interface {
-	DeviceInit(body *commonDto.DeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse)
+	DeviceInit(ctx context.Context, body *commonDto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse)
+	CreateSkinImg(ctx context.Context, body adminDto.CreateSkinImgRequest) (interface{}, error)
 }
 
 func NewServerUsecase(repo repositories.ServerRepository, configHashStorage storage.ConfigHashStorage) ServerUsecase {
@@ -31,7 +36,7 @@ func NewServerUsecase(repo repositories.ServerRepository, configHashStorage stor
 	}
 }
 
-func (u *serverUsecase) DeviceInit(body *commonDto.DeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse) {
+func (u *serverUsecase) DeviceInit(ctx context.Context, body *commonDto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
 
 	// DB 조회
 	result, err := u.repo.GetConnectInfo(body.WorksCode)
@@ -126,4 +131,49 @@ func generateDeviceToken(body *commonDto.DeviceInitRequest, serverUrl string) (s
 	}
 	fmt.Println("auth service 호출 후 발급 받은 토큰 : ", token)
 	return token, nil
+}
+
+func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSkinImgRequest) (interface{}, error) {
+
+	// 파일의 사이즈 검증
+	fileSize := dto.FileInfo.Size
+	sizeCheck := checkSkinImgSize(fileSize)
+	if !sizeCheck {
+		return nil, consts.ErrFileSizeExceeded
+	}
+
+	// 파일의 확장자 검증 (이미지인지 판단.)
+	detectedType, err := detectContentType(dto.File)
+	if err != nil {
+		return nil, consts.ErrFileExtentionDetect
+	}
+
+	if !strings.HasPrefix(detectedType, "image/") {
+		return nil, consts.ErrFileExtentionInvalid
+	}
+
+	// 여기서 부터
+	// 파일 명 생성, 파일 저장
+	// 파일 명 저장, hash 변경
+	// response
+
+	return nil, nil
+}
+
+func checkSkinImgSize(size int64) bool {
+	return true
+}
+
+func detectContentType(file multipart.File) (string, error) {
+	// 처음 몇 바이트를 읽어 content-type 추론
+	buffer := make([]byte, 512)
+	_, err := file.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+
+	// 원위치로 되돌리기 (seek back to beginning)
+	file.Seek(0, io.SeekStart)
+
+	return http.DetectContentType(buffer), nil
 }

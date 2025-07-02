@@ -1,4 +1,4 @@
-package common
+package admin
 
 type CreateSkinImgResponse struct {
 	Result string `json:"result"` // 상태 코드

@@ -22,7 +22,12 @@ func SetupRoutes(handlers *handlers.CommonHandlers) *mux.Router {
 
 	// TODO 서버 middleware
 	commonSV1 := r.PathPrefix("/common/sv1").Subrouter()
+
+	// core
 	commonSV1.HandleFunc("/device-init", handlers.Server.DeviceInit).Methods("POST")
+
+	// admin 스킨 파일 업로드
+	commonSV1.HandleFunc("/skin-imh", handlers.Server.PutSkinImg).Methods("POST")
 
 	return r
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	consts "common/consts"
 	dto "common/dto/common"
+	adminDto "common/dto/server/admin"
 	commonDto "common/dto/server/common"
 	"common/usecases"
 	"context"
@@ -30,25 +31,7 @@ func (h *ServerHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 	// 해당 API의 response
 	var res = commonDto.DeviceInitResponse{}
 
-	// request의 header 데이터 -> dto로 변경
-	header := &commonDto.DeviceInitRequestHeader{
-		Token: r.Header.Get("Authorization"), // const로 TODO
-	}
-
-	fmt.Println("CORE 서버에서 호출, 토큰 정보 : ", header.Token)
-
-	if header.Token == "" {
-		res.Code = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_104,
-			Message: consts.E_104_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-		return
-	}
-
-	// core서비스에서 온 토큰 검증 필요 todo
+	// core 서비스에서 온 토큰 검증은 미들 웨어에서
 
 	// request body 데이터 -> dto로 변경
 	var body *commonDto.DeviceInitRequest
@@ -66,7 +49,7 @@ func (h *ServerHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("CORE 서버에서 호출, uuid : %s, worksCode : %s \n", body.Uuid, body.WorksCode)
 
 	// DB에서 해당 works의 정보조회 + AUTH에서 토큰 발급 요청
-	data, err := h.usecase.DeviceInit(body, ctx)
+	data, err := h.usecase.DeviceInit(ctx, body)
 
 	if err != nil {
 		res.Code = consts.FAIL
@@ -78,5 +61,54 @@ func (h *ServerHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(res)
+
+}
+
+func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
+
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// server 토큰 검증은 미들웨어에서
+
+	var res = adminDto.CreateSkinImgResponse{}
+
+	// 파일 데이터 추출
+	file, fileInfo, err := r.FormFile("file")
+
+	if err == nil {
+		res.Result = consts.FAIL
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_103,
+			Message: consts.E_103_MSG,
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	var req = adminDto.CreateSkinImgRequest{
+		File:     file,
+		FileInfo: fileInfo,
+	}
+
+	data, err := h.usecase.CreateSkinImg(ctx, req)
+
+	fmt.Println(data)
+
+	if err == nil {
+		// http status code 200
+		res.Result = consts.SUCCESS
+		res.Data = data
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		res.Result = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_500,
+			Message: consts.E_500_MSG,
+		}
+	}
 
 }
