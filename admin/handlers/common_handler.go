@@ -69,5 +69,6 @@ func (h *CommonHandler) CreateSkinImg(w http.ResponseWriter, r *http.Request) {
 			Message: consts.E_500_MSG,
 		}
 	}
-
+	// response.
+	json.NewEncoder(w).Encode(res)
 }
