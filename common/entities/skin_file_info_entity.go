@@ -5,4 +5,5 @@ type SkinFileInfoEntity struct {
 	FileName string `json:"fileName"`
 	SkinType string `json:"skinType"`
 	Device   string `json:"device"`
+	FilePath string `json:"filePath"`
 }

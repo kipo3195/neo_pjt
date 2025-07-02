@@ -127,6 +127,7 @@ func (r *serverRepository) PutSkinFileInfo(ctx context.Context, entity *entities
 		SkinType: entity.SkinType,
 		Device:   entity.Device,
 		FileName: entity.FileName,
+		FilePath: entity.FilePath,
 		FileHash: entity.FileHash,
 	}).Error; err != nil {
 		tx.Rollback()

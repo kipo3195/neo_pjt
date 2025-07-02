@@ -144,7 +144,8 @@ func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSk
 	fmt.Println("333")
 	entity, err := skinFileSaved(ctx, dto)
 	if err != nil {
-		fmt.Println("ddd")
+		fmt.Println("skinFileSaved error : ", err)
+		return nil, err
 	} else {
 		fmt.Println("eee")
 		// DB 저장
@@ -157,7 +158,6 @@ func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSk
 			return nil, nil
 		}
 	}
-	return nil, err
 }
 
 func checkSkinImgSize(size int64) bool {
@@ -211,19 +211,20 @@ func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*ent
 	// 3. 저장할 파일 이름 생성
 	ext := strings.ToLower(filepath.Ext(dto.FileInfo.Filename))
 	fileHash := getNow()
-	fileName := fmt.Sprintf("%s_%s%s", dto.SkinType, fileHash, ext)
-	localPath := filepath.Join("./skins", fileName) // 저장 경로
+	skinType := dto.SkinType
+	fileName := fmt.Sprintf("%s%s", fileHash, ext)
+	filePath := filepath.Join("./skins/"+skinType, fileName) // 저장 경로
 	fmt.Println("ext : ", ext)
 	fmt.Println("fileHash : ", fileHash)
 	fmt.Println("fileName : ", fileName)
-	fmt.Println("localPath : ", localPath)
+	fmt.Println("filePath : ", filePath)
 
-	if err := os.MkdirAll("./skins", 0755); err != nil {
+	if err := os.MkdirAll("./skins/"+skinType, 0755); err != nil {
 		return nil, fmt.Errorf("디렉토리 생성 실패: %w", err)
 	}
 	fmt.Println("000")
 	// 5. 로컬 저장
-	outFile, err := os.Create(localPath)
+	outFile, err := os.Create(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("파일 생성 실패: %w", err)
 	}
@@ -245,12 +246,32 @@ func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*ent
 	if err != nil {
 		return nil, fmt.Errorf("이미지 저장 실패: %w", err)
 	}
+
+	// 별도 함수로 뺄것(update시에도 사용.)
+	// 1. 저장된 경로 기준 디렉토리 경로 구성
+	dirPath := filepath.Join("./skins", dto.SkinType)
+	// 2. 파일 목록 읽기
+	files, err := os.ReadDir(dirPath)
+	if err == nil {
+		for _, file := range files {
+			// 3. 현재 저장한 파일은 제외하고 삭제
+			if !file.IsDir() && file.Name() != fileName {
+				oldFilePath := filepath.Join(dirPath, file.Name())
+				if err := os.Remove(oldFilePath); err != nil {
+					fmt.Printf("기존 파일 삭제 실패: %s\n", oldFilePath)
+				} else {
+					fmt.Printf("기존 파일 삭제 성공: %s\n", oldFilePath)
+				}
+			}
+		}
+	}
 	fmt.Println("ccc")
 	return &entities.SkinFileInfoEntity{
 		FileHash: fileHash,
 		FileName: fileName,
 		SkinType: dto.SkinType,
 		Device:   dto.Device,
+		FilePath: filePath,
 	}, nil
 }
 
