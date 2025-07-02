@@ -1,7 +1,7 @@
 package handlers
 
 type AdminHandlers struct {
-	AdminOrgHandler *AdminOrgHandler
+	Org *OrgHandler
 }
 
 // 관리자 기본기능 handler

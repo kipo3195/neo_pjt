@@ -16,15 +16,15 @@ import (
 	"github.com/go-playground/validator"
 )
 
-type CommonPubHandler struct {
-	usecase usecases.CommonPubUsecase
+type PublicHandler struct {
+	usecase usecases.PublicUsecase
 }
 
-func NewCommonPubHandler(uc usecases.CommonPubUsecase) *CommonPubHandler {
-	return &CommonPubHandler{usecase: uc}
+func NewPublicHandler(uc usecases.PublicUsecase) *PublicHandler {
+	return &PublicHandler{usecase: uc}
 }
 
-func (h *CommonPubHandler) AppValidation(w http.ResponseWriter, r *http.Request) {
+func (h *PublicHandler) AppValidation(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
 	ctx := r.Context()

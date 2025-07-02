@@ -15,23 +15,23 @@ import (
 	"net/http"
 )
 
-type commonPubUsecase struct {
-	repo              repositories.CommonPubRepository
+type publicUsecase struct {
+	repo              repositories.PublicRepository
 	configHashStorage storage.ConfigHashStorage
 }
 
-type CommonPubUsecase interface {
+type PublicUsecase interface {
 	AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error)
 }
 
-func NewCommonPubUsecase(repo repositories.CommonPubRepository, configHashStorage storage.ConfigHashStorage) CommonPubUsecase {
-	return &commonPubUsecase{
+func NewPublicUsecase(repo repositories.PublicRepository, configHashStorage storage.ConfigHashStorage) PublicUsecase {
+	return &publicUsecase{
 		repo:              repo,
 		configHashStorage: configHashStorage,
 	}
 }
 
-func (r *commonPubUsecase) AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error) {
+func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error) {
 
 	data, err := getAppTokenValidationInAuth(toAppTokenValidationRequest(body.AppToken, body.Uuid))
 

@@ -25,7 +25,11 @@ func InitServer() *http.Server {
 	coreUC := usecases.NewCoreUsecase(coreRepo)
 	coreHandler := handlers.NewCoreHandler(sfg, coreUC)
 
-	router := routes.SetupRoutes(coreHandler)
+	handlers := &handlers.CoreHandlers{
+		Core: coreHandler,
+	}
+
+	router := routes.SetupRoutes(handlers)
 
 	return &http.Server{
 		Addr:    ":8085",

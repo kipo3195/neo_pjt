@@ -91,8 +91,3 @@ func (h *CoreHandler) GetAppValidation(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 
 }
-
-// /config
-func (h *CoreHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
-
-}

@@ -26,9 +26,9 @@ func InitServer() *http.Server {
 	// 메모리 저장소 생성 (빈 상태)
 	configHashStorage := storage.NewConfigHashStorage()
 
-	commonPubRepo := repositories.NewCommonPubRepository(db)
-	commonPubUsecase := usecases.NewCommonPubUsecase(commonPubRepo, configHashStorage)
-	commonPubHandler := handlers.NewCommonPubHandler(commonPubUsecase)
+	publicRepo := repositories.NewPublicRepository(db)
+	publicUsecase := usecases.NewPublicUsecase(publicRepo, configHashStorage)
+	pubHandler := handlers.NewPublicHandler(publicUsecase)
 
 	serverRepo := repositories.NewServerRepository(db)
 	serverUsecase := usecases.NewServerUsecase(serverRepo, configHashStorage)
@@ -48,7 +48,13 @@ func InitServer() *http.Server {
 	// 초기화 완료된 usecase를 주입해 안전한 handler 구성
 	commonHandler := handlers.NewCommonHandler(commonUsecase)
 
-	router := routes.SetupRoutes(commonHandler, serverHandler, commonPubHandler)
+	handlers := &handlers.CommonHandlers{
+		Common: commonHandler,
+		Server: serverHandler,
+		Public: pubHandler,
+	}
+
+	router := routes.SetupRoutes(handlers)
 
 	return &http.Server{
 		Addr:    ":8086",

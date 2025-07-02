@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func SetupRoutes(orgHandler *handlers.OrgHandler, userHandler *handlers.UserHandler, serverHandler *handlers.ServerHandler) *mux.Router {
+func SetupRoutes(handlers *handlers.OrgHandlers) *mux.Router {
 	// 메인 /org + 서브 라우터 활용
 	r := mux.NewRouter()
 	/* 클라이언트가 호출하는 API */
@@ -17,21 +17,21 @@ func SetupRoutes(orgHandler *handlers.OrgHandler, userHandler *handlers.UserHand
 	orgV1.Use(AuthMiddleware)
 
 	// org_hash의 배열 형태로 서버에 요청, 현재 서버의 hash와 비교해서 file, event response
-	orgV1.HandleFunc("/orgs/hash", orgHandler.GetOrgHash).Methods("GET")
+	orgV1.HandleFunc("/orgs/hash", handlers.Org.GetOrgHash).Methods("GET")
 
 	// 요청하는 타입(이벤트, 파일)에 따라 조직도 response
-	orgV1.HandleFunc("/orgs/data", orgHandler.GetOrgData).Methods("GET")
+	orgV1.HandleFunc("/orgs/data", handlers.Org.GetOrgData).Methods("GET")
 
 	// 요청하는 부서에 대한 조회. DB 방식, 최상위 포함.
-	orgV1.HandleFunc("/departments", orgHandler.GetDept).Methods("GET")
+	orgV1.HandleFunc("/departments", handlers.Org.GetDept).Methods("GET")
 
 	//----------------------------------------------------------------------------------------------------------------------------//
 
 	// 내 정보 조회
-	orgV1.HandleFunc("/user/my-info", userHandler.GetMyInfo).Methods("GET")
+	orgV1.HandleFunc("/user/my-info", handlers.User.GetMyInfo).Methods("GET")
 
 	// 요청하는 사용자 정보 조회
-	orgV1.HandleFunc("/user/info", userHandler.GetUserInfo).Methods("GET")
+	orgV1.HandleFunc("/user/info", handlers.User.GetUserInfo).Methods("GET")
 
 	//----------------------------------------------------------------------------------------------------------------------------//
 
@@ -42,17 +42,17 @@ func SetupRoutes(orgHandler *handlers.OrgHandler, userHandler *handlers.UserHand
 	// orgSV1.Use(ServerAuthMiddleware)
 
 	// 부서 생성
-	orgSV1.HandleFunc("/departments", serverHandler.ServerCreateDept).Methods("POST")
+	orgSV1.HandleFunc("/departments", handlers.Server.CreateDept).Methods("POST")
 	// 삭제
-	orgSV1.HandleFunc("/departments", serverHandler.ServerDeleteDept).Methods("DELETE")
+	orgSV1.HandleFunc("/departments", handlers.Server.DeleteDept).Methods("DELETE")
 
 	// 부서에 사용자 추가
-	orgSV1.HandleFunc("/departments/user", serverHandler.ServerCreateDeptUser).Methods("POST")
+	orgSV1.HandleFunc("/departments/user", handlers.Server.CreateDeptUser).Methods("POST")
 	// 삭제
-	orgSV1.HandleFunc("/departments/user", serverHandler.ServerDeleteDeptUser).Methods("DELETE")
+	orgSV1.HandleFunc("/departments/user", handlers.Server.DeleteDeptUser).Methods("DELETE")
 
 	// 현재 기준으로 org 파일 및 DB 저장
-	orgSV1.HandleFunc("/org/file", serverHandler.ServerCreateOrgFile).Methods("POST")
+	orgSV1.HandleFunc("/org/file", handlers.Server.CreateOrgFile).Methods("POST")
 
 	return r
 }

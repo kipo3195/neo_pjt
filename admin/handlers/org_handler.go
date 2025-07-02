@@ -14,15 +14,15 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type AdminOrgHandler struct {
+type OrgHandler struct {
 	usecase usecases.AdminOrgUsecase
 }
 
-func NewAdminHandler(r usecases.AdminOrgUsecase) *AdminOrgHandler {
-	return &AdminOrgHandler{usecase: r}
+func NewAdminHandler(r usecases.AdminOrgUsecase) *OrgHandler {
+	return &OrgHandler{usecase: r}
 }
 
-func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
 	ctx := r.Context()
@@ -82,15 +82,15 @@ func (h *AdminOrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AdminOrgHandler) GetDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetDept(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AdminOrgHandler) UpdateDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) UpdateDept(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AdminOrgHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
 	ctx := r.Context()
@@ -141,7 +141,7 @@ func (h *AdminOrgHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AdminOrgHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
 	ctx := r.Context()
@@ -191,7 +191,7 @@ func (h *AdminOrgHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) 
 
 }
 
-func (h *AdminOrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
 	//ctx := r.Context()
@@ -214,7 +214,7 @@ func (h *AdminOrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *AdminOrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
 	ctx := r.Context()
 
@@ -264,7 +264,7 @@ func (h *AdminOrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AdminOrgHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
 	ctx := r.Context()
 
@@ -314,10 +314,10 @@ func (h *AdminOrgHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AdminOrgHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AdminOrgHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 }

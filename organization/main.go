@@ -36,7 +36,13 @@ func InitServer() *http.Server {
 	serverUsecase := usecases.NewServerUsecase(serverRepo, orgFileStorage)
 	serverHandler := handlers.NewServerHandler(sfg, serverUsecase)
 
-	router := routes.SetupRoutes(orgHandler, userHandler, serverHandler)
+	handlers := &handlers.OrgHandlers{
+		Org:    orgHandler,
+		User:   userHandler,
+		Server: serverHandler,
+	}
+
+	router := routes.SetupRoutes(handlers)
 
 	return &http.Server{
 		Addr:    ":8088",

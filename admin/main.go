@@ -23,12 +23,12 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	// org - 조직도 관리
-	adminOrgRepo := repositories.NewAdminOrgRepository(db)
-	adminOrgUC := usecases.NewAdminOrgUsecase(adminOrgRepo)
-	adminOrgHandler := handlers.NewAdminHandler(adminOrgUC)
+	orgRepo := repositories.NewAdminOrgRepository(db)
+	orgUC := usecases.NewAdminOrgUsecase(orgRepo)
+	orgHandler := handlers.NewAdminHandler(orgUC)
 
 	handlers := &handlers.AdminHandlers{
-		AdminOrgHandler: adminOrgHandler,
+		Org: orgHandler,
 	}
 
 	router := routes.SetupRoutes(handlers)

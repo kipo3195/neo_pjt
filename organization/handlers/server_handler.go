@@ -21,7 +21,7 @@ func NewServerHandler(sfg *config.ServerConfig, uc usecases.ServerUsecase) *Serv
 	return &ServerHandler{usecase: uc, sfg: sfg}
 }
 
-func (h *ServerHandler) ServerCreateDept(w http.ResponseWriter, r *http.Request) {
+func (h *ServerHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 	// context 생성
 	ctx := r.Context()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -65,7 +65,7 @@ func (h *ServerHandler) ServerCreateDept(w http.ResponseWriter, r *http.Request)
 
 }
 
-func (h *ServerHandler) ServerDeleteDept(w http.ResponseWriter, r *http.Request) {
+func (h *ServerHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
 	// context 생성
 	ctx := r.Context()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -109,7 +109,7 @@ func (h *ServerHandler) ServerDeleteDept(w http.ResponseWriter, r *http.Request)
 
 }
 
-func (h *ServerHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Request) {
+func (h *ServerHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
 	ctx := r.Context()
@@ -155,7 +155,7 @@ func (h *ServerHandler) ServerCreateOrgFile(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (h *ServerHandler) ServerCreateDeptUser(w http.ResponseWriter, r *http.Request) {
+func (h *ServerHandler) CreateDeptUser(w http.ResponseWriter, r *http.Request) {
 
 	// context 생성
 	ctx := r.Context()
@@ -197,7 +197,7 @@ func (h *ServerHandler) ServerCreateDeptUser(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(res)
 }
 
-func (h *ServerHandler) ServerDeleteDeptUser(w http.ResponseWriter, r *http.Request) {
+func (h *ServerHandler) DeleteDeptUser(w http.ResponseWriter, r *http.Request) {
 	// context 생성
 	ctx := r.Context()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
