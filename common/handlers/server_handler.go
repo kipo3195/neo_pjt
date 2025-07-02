@@ -75,10 +75,14 @@ func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
 
 	var res = adminDto.CreateSkinImgResponse{}
 
-	// 파일 데이터 추출
-	file, fileInfo, err := r.FormFile("file")
+	fmt.Println("111")
 
-	if err == nil {
+	// 파일 데이터 추출
+	file, fileInfo, err := r.FormFile("File")
+	skinType := r.Header.Get("NEO-Skin-Type")
+	device := r.Header.Get("NEO-Device")
+
+	if err != nil || skinType == "" || device == "" {
 		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
@@ -92,6 +96,8 @@ func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
 	var req = adminDto.CreateSkinImgRequest{
 		File:     file,
 		FileInfo: fileInfo,
+		Device:   device,
+		SkinType: skinType,
 	}
 
 	data, err := h.usecase.CreateSkinImg(ctx, req)
@@ -103,6 +109,7 @@ func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
 		res.Result = consts.SUCCESS
 		res.Data = data
 	} else {
+		// TODO 모든 에러 세분화 할 것.
 		w.WriteHeader(http.StatusInternalServerError)
 		res.Result = consts.ERROR
 		res.Data = dto.ErrorResponse{

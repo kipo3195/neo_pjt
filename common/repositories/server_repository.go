@@ -15,7 +15,8 @@ type serverRepository struct {
 
 type ServerRepository interface {
 	GetConnectInfo(worksCode string) (*entities.InitResult, error)
-	GetWorksConfig(GetWorksConfig entities.GetWorksConfig, ctx context.Context) (*entities.WorksConfig, error)
+	GetWorksConfig(entity entities.GetWorksConfig, ctx context.Context) (*entities.WorksConfig, error)
+	PutSkinFileInfo(ctx context.Context, entity *entities.SkinFileInfoEntity) (bool, error)
 }
 
 func NewServerRepository(db *gorm.DB) ServerRepository {
@@ -102,4 +103,41 @@ func toWorksConfigEntity(appSkinConfig models.AppSkinConfig, worksInfo []models.
 		ConfigVersion: configVersion,
 		SkinVersion:   appSkinConfig.Version,
 	}
+}
+
+func (r *serverRepository) PutSkinFileInfo(ctx context.Context, entity *entities.SkinFileInfoEntity) (bool, error) {
+
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return false, tx.Error
+	}
+
+	// 스킨 해시 update
+	if err := tx.Model(&models.AppSkinConfig{}).
+		Where("1 = 1").
+		Update("version", entity.FileHash).Error; err != nil {
+		tx.Rollback()
+		return false, err
+	}
+
+	// 스킨 정보 저장
+	// insert 처리
+	if err := tx.Create(&models.AppSkinFileInfo{
+		SkinType: entity.SkinType,
+		Device:   entity.Device,
+		FileName: entity.FileName,
+		FileHash: entity.FileHash,
+	}).Error; err != nil {
+		tx.Rollback()
+		return false, err
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[PutSkinFileInfo] - Commit failed")
+		return false, err
+	}
+
+	return false, nil
 }

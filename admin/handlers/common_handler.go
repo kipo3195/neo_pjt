@@ -31,9 +31,11 @@ func (h *CommonHandler) CreateSkinImg(w http.ResponseWriter, r *http.Request) {
 	var res = commonDto.CreateSkinImgResponse{}
 
 	// 파일 데이터 추출
-	file, fileInfo, err := r.FormFile("file")
+	file, fileInfo, err := r.FormFile("File")
+	device := r.Header.Get("Device")
+	skinType := r.Header.Get("Skin-Type")
 
-	if err == nil {
+	if err != nil || device == "" || skinType == "" {
 		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
@@ -47,11 +49,13 @@ func (h *CommonHandler) CreateSkinImg(w http.ResponseWriter, r *http.Request) {
 	var req = commonDto.CreateSkinImgRequest{
 		File:     file,
 		FileInfo: fileInfo,
+		SkinType: skinType,
+		Device:   device,
 	}
 
 	data, err := h.usecase.CreateSkinImg(ctx, req)
 
-	fmt.Println(data)
+	fmt.Println("admin 서비스 스킨 이미지 업로드에 대한 response : ", data)
 
 	if err == nil {
 		// http status code 200

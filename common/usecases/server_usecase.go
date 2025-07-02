@@ -13,10 +13,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/disintegration/imaging"
 )
 
 type serverUsecase struct {
@@ -135,29 +141,23 @@ func generateDeviceToken(body *commonDto.DeviceInitRequest, serverUrl string) (s
 
 func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSkinImgRequest) (interface{}, error) {
 
-	// 파일의 사이즈 검증
-	fileSize := dto.FileInfo.Size
-	sizeCheck := checkSkinImgSize(fileSize)
-	if !sizeCheck {
-		return nil, consts.ErrFileSizeExceeded
-	}
-
-	// 파일의 확장자 검증 (이미지인지 판단.)
-	detectedType, err := detectContentType(dto.File)
+	fmt.Println("333")
+	entity, err := skinFileSaved(ctx, dto)
 	if err != nil {
-		return nil, consts.ErrFileExtentionDetect
+		fmt.Println("ddd")
+	} else {
+		fmt.Println("eee")
+		// DB 저장
+		_, err := r.repo.PutSkinFileInfo(ctx, entity)
+		if err != nil {
+			return nil, err
+		} else {
+			// 메모리 갱신
+			r.configHashStorage.SkinRefresh(entity.FileHash)
+			return nil, nil
+		}
 	}
-
-	if !strings.HasPrefix(detectedType, "image/") {
-		return nil, consts.ErrFileExtentionInvalid
-	}
-
-	// 여기서 부터
-	// 파일 명 생성, 파일 저장
-	// 파일 명 저장, hash 변경
-	// response
-
-	return nil, nil
+	return nil, err
 }
 
 func checkSkinImgSize(size int64) bool {
@@ -176,4 +176,86 @@ func detectContentType(file multipart.File) (string, error) {
 	file.Seek(0, io.SeekStart)
 
 	return http.DetectContentType(buffer), nil
+}
+
+func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*entities.SkinFileInfoEntity, error) {
+	defer dto.File.Close()
+	fmt.Println("444")
+	// 파일의 사이즈 검증
+	fileSize := dto.FileInfo.Size
+	sizeCheck := checkSkinImgSize(fileSize)
+	if !sizeCheck {
+		return nil, consts.ErrFileSizeExceeded
+	}
+	fmt.Println("555")
+	// 파일의 확장자 검증 (이미지인지 판단.)
+	detectedType, err := detectContentType(dto.File)
+	if err != nil {
+		return nil, consts.ErrFileExtentionDetect
+	}
+	fmt.Println("666")
+	if !strings.HasPrefix(detectedType, "image/") {
+		return nil, consts.ErrFileExtentionInvalid
+	}
+	fmt.Println("777")
+	// 1. 이미지 디코딩
+	srcImage, format, err := image.Decode(dto.File)
+	if err != nil {
+		return nil, fmt.Errorf("이미지 디코딩 실패: %w", err)
+	}
+	fmt.Println("888")
+	// 2. 리사이징 (너비 300, 비율 유지) 추후 서버 설정으로 뺄 것
+	dstImage := imaging.Resize(srcImage, 300, 0, imaging.Lanczos)
+
+	fmt.Println("999")
+	// 3. 저장할 파일 이름 생성
+	ext := strings.ToLower(filepath.Ext(dto.FileInfo.Filename))
+	fileHash := getNow()
+	fileName := fmt.Sprintf("%s_%s%s", dto.SkinType, fileHash, ext)
+	localPath := filepath.Join("./skins", fileName) // 저장 경로
+	fmt.Println("ext : ", ext)
+	fmt.Println("fileHash : ", fileHash)
+	fmt.Println("fileName : ", fileName)
+	fmt.Println("localPath : ", localPath)
+
+	if err := os.MkdirAll("./skins", 0755); err != nil {
+		return nil, fmt.Errorf("디렉토리 생성 실패: %w", err)
+	}
+	fmt.Println("000")
+	// 5. 로컬 저장
+	outFile, err := os.Create(localPath)
+	if err != nil {
+		return nil, fmt.Errorf("파일 생성 실패: %w", err)
+	}
+	fmt.Println("000 format : ", format)
+	defer outFile.Close()
+
+	switch format {
+	case "jpeg":
+		err = imaging.Encode(outFile, dstImage, imaging.JPEG, imaging.JPEGQuality(100))
+	case "png":
+		err = imaging.Encode(outFile, dstImage, imaging.PNG)
+	case "gif":
+		err = imaging.Encode(outFile, dstImage, imaging.GIF)
+	default:
+		return nil, fmt.Errorf("지원하지 않는 포맷: %s", format)
+	}
+	fmt.Println("bbb")
+
+	if err != nil {
+		return nil, fmt.Errorf("이미지 저장 실패: %w", err)
+	}
+	fmt.Println("ccc")
+	return &entities.SkinFileInfoEntity{
+		FileHash: fileHash,
+		FileName: fileName,
+		SkinType: dto.SkinType,
+		Device:   dto.Device,
+	}, nil
+}
+
+func getNow() string {
+	now := time.Now()
+	formatted := now.Format(consts.YYYYMMDDHHMSS)
+	return formatted
 }

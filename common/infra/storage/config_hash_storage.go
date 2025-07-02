@@ -7,6 +7,7 @@ import (
 )
 
 type ConfigHashStorage interface {
+	SkinRefresh(hash string) error
 	SaveConfigHash(kind string, hash string) error
 	GetConfigHash(kind string) (string, error)
 	DeleteConfigHash(kind string) error
@@ -21,6 +22,21 @@ func NewConfigHashStorage() ConfigHashStorage {
 	return &configHashStorage{
 		data: make(map[string]string),
 	}
+}
+func (r *configHashStorage) SkinRefresh(hash string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for key := range r.data {
+		if key != "config" {
+			r.data[key] = hash
+			fmt.Printf("kind : %s hash : %s save success. \n", key, hash)
+		}
+	}
+	fmt.Println("이하 메모리 출력")
+	for key := range r.data {
+		fmt.Printf("kind : %s hash : %s save success. \n", key, r.data[key])
+	}
+	return nil
 }
 
 func (r *configHashStorage) SaveConfigHash(kind string, hash string) error {

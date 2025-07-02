@@ -67,6 +67,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	db.AutoMigrate(&models.ConnectInfo{})
 	db.AutoMigrate(&models.AppSkinConfig{})
 	db.AutoMigrate(&models.WorksInfo{})
+	db.AutoMigrate(&models.AppSkinFileInfo{})
 
 	fmt.Println("Common Database Connected !")
 	return db

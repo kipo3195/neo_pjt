@@ -27,7 +27,7 @@ func SetupRoutes(handlers *handlers.CommonHandlers) *mux.Router {
 	commonSV1.HandleFunc("/device-init", handlers.Server.DeviceInit).Methods("POST")
 
 	// admin 스킨 파일 업로드
-	commonSV1.HandleFunc("/skin-imh", handlers.Server.PutSkinImg).Methods("POST")
+	commonSV1.HandleFunc("/skin-img", handlers.Server.PutSkinImg).Methods("POST")
 
 	return r
 }

@@ -33,7 +33,7 @@ func SetupRoutes(handlers *handlers.AdminHandlers) *mux.Router {
 	adminV1.HandleFunc("/org/file", handlers.Org.CreateOrgFile).Methods("POST") // 생성
 	adminV1.HandleFunc("/org/file", handlers.Org.GetOrgFile).Methods("GET")     // 조회
 
-	adminV1.HandleFunc("/common/SkinImg", handlers.Common.CreateSkinImg).Methods("POST") // 앱 스킨 데이터(이미지)
+	adminV1.HandleFunc("/common/skin-img", handlers.Common.CreateSkinImg).Methods("POST") // 앱 스킨 데이터(이미지)
 
 	return r
 }
