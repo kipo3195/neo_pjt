@@ -5,7 +5,7 @@ import (
 	consts "core/consts"
 	clDto "core/dto/client"
 	dto "core/dto/common"
-	svDto "core/dto/server"
+	commonDto "core/dto/server/common"
 	"core/entities"
 	"core/repositories"
 	"encoding/json"
@@ -84,7 +84,7 @@ func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string,
 
 		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
 
-		deviceInitResponse, err := getConnectInfo(uuid, device, body.WorksCode, result.ConnectInfo.ServerUrl)
+		deviceInitResponse, err := getConnectInfoInCommon(uuid, device, body.WorksCode, result.ConnectInfo.ServerUrl)
 
 		if err != nil {
 			fmt.Println("common service 호출시 에러 발생함.")
@@ -107,7 +107,7 @@ func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string,
 
 }
 
-func getConnectInfo(uuid string, device string, worksCode string, serverUrl string) (*svDto.SvDeviceInitResponse, error) {
+func getConnectInfoInCommon(uuid string, device string, worksCode string, serverUrl string) (*commonDto.DeviceInitResponse, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid":      uuid,
@@ -118,7 +118,7 @@ func getConnectInfo(uuid string, device string, worksCode string, serverUrl stri
 	// JSON 변환
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return &svDto.SvDeviceInitResponse{}, err
+		return &commonDto.DeviceInitResponse{}, err
 	}
 
 	// POST 요청 보내기
@@ -128,7 +128,7 @@ func getConnectInfo(uuid string, device string, worksCode string, serverUrl stri
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return &svDto.SvDeviceInitResponse{}, err
+		return &commonDto.DeviceInitResponse{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -137,7 +137,7 @@ func getConnectInfo(uuid string, device string, worksCode string, serverUrl stri
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return &svDto.SvDeviceInitResponse{}, err
+		return &commonDto.DeviceInitResponse{}, err
 	}
 
 	defer resp.Body.Close()
@@ -147,13 +147,13 @@ func getConnectInfo(uuid string, device string, worksCode string, serverUrl stri
 	var result dto.Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
-		return &svDto.SvDeviceInitResponse{}, err
+		return &commonDto.DeviceInitResponse{}, err
 	}
 
 	resultData, ok := result.Data.(map[string]interface{})
 	if !ok {
 		fmt.Println("Data 필드를 map으로 변환하는 데 실패했습니다.")
-		return &svDto.SvDeviceInitResponse{}, errors.New("invalid data format")
+		return &commonDto.DeviceInitResponse{}, errors.New("invalid data format")
 	}
 
 	appToken, authTokenOk := resultData["appToken"].(string)
@@ -165,10 +165,10 @@ func getConnectInfo(uuid string, device string, worksCode string, serverUrl stri
 
 	if !authTokenOk || !connectInfoOk || !timeZoneOk || !languageOk || !skinVersionOk || !configVersionOk {
 		fmt.Println("authToken 또는 connectInfo string으로 변환하는 데 실패했습니다.")
-		return &svDto.SvDeviceInitResponse{}, errors.New("invalid token format")
+		return &commonDto.DeviceInitResponse{}, errors.New("invalid token format")
 	}
 
-	return &svDto.SvDeviceInitResponse{
+	return &commonDto.DeviceInitResponse{
 		AppToken:      appToken,
 		ServerUrl:     connectInfo,
 		TimeZone:      timeZone,

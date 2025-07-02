@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"admin/consts"
-	clDto "admin/dto/client"
+	orgDto "admin/dto/client/org"
 	dto "admin/dto/common"
 	"admin/usecases"
 	"context"
@@ -14,11 +14,12 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// 관리자 - org 서비스 연계 handler
 type OrgHandler struct {
-	usecase usecases.AdminOrgUsecase
+	usecase usecases.OrgUsecase
 }
 
-func NewAdminHandler(r usecases.AdminOrgUsecase) *OrgHandler {
+func NewOrgHandler(r usecases.OrgUsecase) *OrgHandler {
 	return &OrgHandler{usecase: r}
 }
 
@@ -30,10 +31,10 @@ func (h *OrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = clDto.CreateDeptResponse{}
+	var res = orgDto.CreateDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.CreateDeptRequest{}
+	var req = orgDto.CreateDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -96,10 +97,10 @@ func (h *OrgHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// response dto 생성
-	var res = clDto.DeleteDeptResponse{}
+	var res = orgDto.DeleteDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.DeleteDeptRequest{}
+	var req = orgDto.DeleteDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Code = consts.FAIL
@@ -147,10 +148,10 @@ func (h *OrgHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// response dto 생성
-	var res = clDto.CreateOrgFileResponse{}
+	var res = orgDto.CreateOrgFileResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.CreateOrgFileRequest{}
+	var req = orgDto.CreateOrgFileRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -197,10 +198,10 @@ func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
 	//ctx := r.Context()
 
 	// response dto 생성
-	var res = clDto.CreateOrgFileResponse{}
+	var res = orgDto.CreateOrgFileResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.CreateOrgFileRequest{}
+	var req = orgDto.CreateOrgFileRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -219,10 +220,10 @@ func (h *OrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// response dto 생성
-	var res = clDto.CreateDeptUserResponse{}
+	var res = orgDto.CreateDeptUserResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.CreateDeptUserRequest{}
+	var req = orgDto.CreateDeptUserRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -272,7 +273,7 @@ func (h *OrgHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var res = dto.Response{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = clDto.DeleteDeptUserRequest{}
+	var req = orgDto.DeleteDeptUserRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL

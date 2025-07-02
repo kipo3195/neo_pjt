@@ -7,7 +7,7 @@ import (
 	"org/config"
 	"org/consts"
 	dto "org/dto/common"
-	svDto "org/dto/server"
+	adminDto "org/dto/server/admin"
 	"org/usecases"
 	"time"
 )
@@ -28,10 +28,10 @@ func (h *ServerHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = svDto.SvCreateDeptResponse{}
+	var res = adminDto.CreateDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = svDto.SvCreateDeptRequest{}
+	var req = adminDto.CreateDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -72,10 +72,10 @@ func (h *ServerHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// response dto 생성
-	var res = svDto.SvDeleteDeptResponse{}
+	var res = adminDto.DeleteDeptResponse{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = svDto.SvDeleteDeptRequest{}
+	var req = adminDto.DeleteDeptRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -120,7 +120,7 @@ func (h *ServerHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) {
 	var res = dto.Response{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = svDto.SvCreateOrgFileRequest{}
+	var req = adminDto.CreateOrgFileRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -166,7 +166,7 @@ func (h *ServerHandler) CreateDeptUser(w http.ResponseWriter, r *http.Request) {
 	var res = dto.Response{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = svDto.SvCreateDeptUserRequest{}
+	var req = adminDto.CreateDeptUserRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL
@@ -207,7 +207,7 @@ func (h *ServerHandler) DeleteDeptUser(w http.ResponseWriter, r *http.Request) {
 	var res = dto.Response{}
 
 	// request 데이터 파싱 header, body -> dto
-	var req = svDto.SvDeleteDeptUserRequest{}
+	var req = adminDto.DeleteDeptUserRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		res.Result = consts.FAIL

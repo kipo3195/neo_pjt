@@ -3,7 +3,7 @@ package handlers
 import (
 	consts "common/consts"
 	dto "common/dto/common"
-	svDto "common/dto/server"
+	commonDto "common/dto/server/common"
 	"common/usecases"
 	"context"
 	"encoding/json"
@@ -28,10 +28,10 @@ func (h *ServerHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// 해당 API의 response
-	var res = svDto.SvDeviceInitResponse{}
+	var res = commonDto.DeviceInitResponse{}
 
 	// request의 header 데이터 -> dto로 변경
-	header := &svDto.SvDeviceInitRequestHeader{
+	header := &commonDto.DeviceInitRequestHeader{
 		Token: r.Header.Get("Authorization"), // const로 TODO
 	}
 
@@ -51,7 +51,7 @@ func (h *ServerHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 	// core서비스에서 온 토큰 검증 필요 todo
 
 	// request body 데이터 -> dto로 변경
-	var body *svDto.SvDeviceInitRequest
+	var body *commonDto.DeviceInitRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.FAIL
 		res.Data = dto.ErrorResponse{

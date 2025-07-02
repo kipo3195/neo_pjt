@@ -3,7 +3,7 @@ package usecases
 import (
 	"auth/claims"
 	consts "auth/consts"
-	svDto "auth/dto/server"
+	commonDto "auth/dto/server/common"
 	"auth/entities"
 	"auth/repositories"
 	"context"
@@ -19,7 +19,7 @@ type serverUsecase struct {
 }
 
 type ServerUsecase interface {
-	AppTokenValidation(req svDto.SvAppTokenValidationRequest, ctx context.Context) (bool, error)
+	AppTokenValidation(req commonDto.AppTokenValidationRequest, ctx context.Context) (bool, error)
 }
 
 func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.AuthRepository) ServerUsecase {
@@ -29,7 +29,7 @@ func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.
 	}
 }
 
-func (r *serverUsecase) AppTokenValidation(req svDto.SvAppTokenValidationRequest, ctx context.Context) (bool, error) {
+func (r *serverUsecase) AppTokenValidation(req commonDto.AppTokenValidationRequest, ctx context.Context) (bool, error) {
 
 	// authUsecase를 주입받아 사용.
 	flag, err := r.authRepo.GetValidation(toAppTokenValidationEntity(req.Uuid, req.AppToken))

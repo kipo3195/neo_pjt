@@ -4,7 +4,7 @@ import (
 	consts "auth/consts"
 	clDto "auth/dto/client"
 	dto "auth/dto/common"
-	svDto "auth/dto/server"
+	commonDto "auth/dto/server/common"
 	"auth/usecases"
 	"encoding/json"
 	"fmt"
@@ -86,10 +86,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request) {
 	// response
-	var res svDto.SvGenerateDeviceTokenResponse
+	var res commonDto.GenerateDeviceTokenResponse
 
 	// request의 header 데이터 -> dto로 변경
-	header := &svDto.SvGenerateDeviceTokenRequestHeader{
+	header := &commonDto.GenerateDeviceTokenRequestHeader{
 		Token: r.Header.Get("Authorization"),
 	}
 
@@ -108,7 +108,7 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 	// 서버의 토큰 검증 필요
 
 	// request body 데이터 -> dto로 변경
-	var body svDto.SvGenerateDeviceTokenRequest
+	var body commonDto.GenerateDeviceTokenRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.FAIL

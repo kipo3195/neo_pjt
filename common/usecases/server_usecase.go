@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"common/consts"
 	dto "common/dto/common"
-	svDto "common/dto/server"
+	commonDto "common/dto/server/common"
 	"common/entities"
 	"common/infra/storage"
 	"common/repositories"
@@ -21,7 +21,7 @@ type serverUsecase struct {
 }
 
 type ServerUsecase interface {
-	DeviceInit(body *svDto.SvDeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse)
+	DeviceInit(body *commonDto.DeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse)
 }
 
 func NewServerUsecase(repo repositories.ServerRepository, configHashStorage storage.ConfigHashStorage) ServerUsecase {
@@ -31,7 +31,7 @@ func NewServerUsecase(repo repositories.ServerRepository, configHashStorage stor
 	}
 }
 
-func (u *serverUsecase) DeviceInit(body *svDto.SvDeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse) {
+func (u *serverUsecase) DeviceInit(body *commonDto.DeviceInitRequest, ctx context.Context) (*entities.InitResult, *dto.ErrorResponse) {
 
 	// DB 조회
 	result, err := u.repo.GetConnectInfo(body.WorksCode)
@@ -68,7 +68,7 @@ func (u *serverUsecase) DeviceInit(body *svDto.SvDeviceInitRequest, ctx context.
 	return result, nil
 }
 
-func generateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (string, error) {
+func generateDeviceToken(body *commonDto.DeviceInitRequest, serverUrl string) (string, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid": body.Uuid,
@@ -82,7 +82,7 @@ func generateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (str
 
 	fmt.Println("auth service 호출! 1")
 
-	url := "http://" + serverUrl + "/auth/v1/generate-device-token"
+	url := "http://" + serverUrl + "/auth/sv1/generate-device-token"
 	//url := domain + "/auth/v1/generate-device-token"
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
@@ -106,7 +106,7 @@ func generateDeviceToken(body *svDto.SvDeviceInitRequest, serverUrl string) (str
 	// 서버간 통신에서 var result dto.ServerResponsed 이 구조를 사용할 것인지 고민
 
 	// 응답 출력
-	var result dto.Response
+	var result dto.Response // common/dto/server/auth/에 ~~~ResponseDto 생성할 것
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
 		return "", err

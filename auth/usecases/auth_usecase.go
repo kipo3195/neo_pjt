@@ -6,7 +6,7 @@ import (
 	consts "auth/consts"
 	clDto "auth/dto/client"
 	dto "auth/dto/common"
-	svDto "auth/dto/server"
+	commonDto "auth/dto/server/common"
 	"auth/entities"
 	"auth/repositories"
 	"errors"
@@ -24,7 +24,7 @@ type authUsecase struct {
 
 type AuthUsecase interface {
 	GetAuth(*clDto.LoginRequestHeader, *clDto.AuthRequest) (*entities.AuthEntity, *dto.ErrorResponse, bool)
-	GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error)
+	GenerateDeviceToken(body commonDto.GenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error)
 }
 
 func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) AuthUsecase {
@@ -178,7 +178,7 @@ func GenerateAuthJWT(userHash string, accessExp int, refreshExp int, jwtKey []by
 	return accessToken, refreshToken, nil
 }
 
-func (r *authUsecase) GenerateDeviceToken(body svDto.SvGenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error) {
+func (r *authUsecase) GenerateDeviceToken(body commonDto.GenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error) {
 
 	// 토큰 발급
 	token, err := generateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)

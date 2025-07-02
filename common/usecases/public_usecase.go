@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"common/consts"
 	clDto "common/dto/client"
-	svDto "common/dto/server"
+	authDto "common/dto/server/auth"
 	"common/entities"
 	"common/infra/storage"
 	"common/repositories"
@@ -72,15 +72,15 @@ func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidat
 	return true, nil
 }
 
-func toAppTokenValidationRequest(appToken string, uuid string) svDto.AppTokenValidationRequest {
-	return svDto.AppTokenValidationRequest{
+func toAppTokenValidationRequest(appToken string, uuid string) authDto.AppTokenValidationRequest {
+	return authDto.AppTokenValidationRequest{
 		AppToken: appToken,
 		Uuid:     uuid,
 	}
 
 }
 
-func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (entities.AppTokenValitaionResponseEntity, error) {
+func getAppTokenValidationInAuth(dto authDto.AppTokenValidationRequest) (entities.AppTokenValitaionResponseEntity, error) {
 
 	// JSON 변환
 	jsonData, err := json.Marshal(dto)
@@ -109,7 +109,7 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (entities.
 
 	defer resp.Body.Close()
 
-	var responseBody svDto.AppTokenValidationResponse
+	var responseBody authDto.AppTokenValidationResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
 		return entities.AppTokenValitaionResponseEntity{}, err
@@ -118,7 +118,7 @@ func getAppTokenValidationInAuth(dto svDto.AppTokenValidationRequest) (entities.
 	return toAppTokenValidationResponseEntity(responseBody), nil
 }
 
-func toAppTokenValidationResponseEntity(dto svDto.AppTokenValidationResponse) entities.AppTokenValitaionResponseEntity {
+func toAppTokenValidationResponseEntity(dto authDto.AppTokenValidationResponse) entities.AppTokenValitaionResponseEntity {
 	return entities.AppTokenValitaionResponseEntity{
 		Result: dto.Result,
 		Data:   dto.Data,

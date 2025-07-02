@@ -3,7 +3,7 @@ package handlers
 import (
 	consts "auth/consts"
 	dto "auth/dto/common"
-	svDto "auth/dto/server"
+	commonDto "auth/dto/server/common"
 	"auth/usecases"
 	"context"
 	"encoding/json"
@@ -31,7 +31,7 @@ func (h *ServerHandler) AppTokenValidation(w http.ResponseWriter, r *http.Reques
 	// response
 	var res dto.Response
 
-	var req svDto.SvAppTokenValidationRequest
+	var req commonDto.AppTokenValidationRequest
 
 	fmt.Println("2")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

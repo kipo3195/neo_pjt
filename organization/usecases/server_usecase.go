@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"org/consts"
-	svDto "org/dto/server"
+	adminDto "org/dto/server/admin"
 	"org/entities"
 	storage "org/infra/storage"
 	"org/repositories"
@@ -27,20 +27,20 @@ func NewServerUsecase(repo repositories.ServerRepository, orgFileStorage storage
 }
 
 type ServerUsecase interface {
-	ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error)
-	ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error)
+	ServerCreateDept(ctx context.Context, req adminDto.CreateDeptRequest) (interface{}, error)
+	ServerDeleteDept(ctx context.Context, req adminDto.DeleteDeptRequest) (interface{}, error)
 
-	ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error)
-	ServerDeleteDeptUser(ctx context.Context, req svDto.SvDeleteDeptUserRequest) (interface{}, error)
+	ServerCreateDeptUser(ctx context.Context, req adminDto.CreateDeptUserRequest) (interface{}, error)
+	ServerDeleteDeptUser(ctx context.Context, req adminDto.DeleteDeptUserRequest) (interface{}, error)
 
-	ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error)
+	ServerCreateOrgFile(ctx context.Context, req adminDto.CreateOrgFileRequest) (interface{}, error)
 }
 
-func (r *serverUsecase) ServerCreateDept(ctx context.Context, req svDto.SvCreateDeptRequest) (interface{}, error) {
+func (r *serverUsecase) ServerCreateDept(ctx context.Context, req adminDto.CreateDeptRequest) (interface{}, error) {
 	return r.repo.PutDept(ctx, toCreateDepartmentEntity(req))
 }
 
-func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDeptEntity {
+func toCreateDepartmentEntity(req adminDto.CreateDeptRequest) entities.CreateDeptEntity {
 
 	return entities.CreateDeptEntity{
 		DeptCode:       req.DeptCode,
@@ -56,11 +56,11 @@ func toCreateDepartmentEntity(req svDto.SvCreateDeptRequest) entities.CreateDept
 	}
 }
 
-func (r *serverUsecase) ServerDeleteDeptUser(ctx context.Context, req svDto.SvDeleteDeptUserRequest) (interface{}, error) {
+func (r *serverUsecase) ServerDeleteDeptUser(ctx context.Context, req adminDto.DeleteDeptUserRequest) (interface{}, error) {
 	return r.repo.DeleteDeptUser(ctx, toDeleteDeptUserEntity(req))
 }
 
-func toDeleteDeptUserEntity(req svDto.SvDeleteDeptUserRequest) entities.DeleteDeptUserEntity {
+func toDeleteDeptUserEntity(req adminDto.DeleteDeptUserRequest) entities.DeleteDeptUserEntity {
 
 	return entities.DeleteDeptUserEntity{
 		UserHash: req.UserHash,
@@ -69,7 +69,7 @@ func toDeleteDeptUserEntity(req svDto.SvDeleteDeptUserRequest) entities.DeleteDe
 	}
 }
 
-func (r *serverUsecase) ServerCreateDeptUser(ctx context.Context, req svDto.SvCreateDeptUserRequest) (interface{}, error) {
+func (r *serverUsecase) ServerCreateDeptUser(ctx context.Context, req adminDto.CreateDeptUserRequest) (interface{}, error) {
 
 	updateHash := makeUpdateHash()
 	fmt.Println("사용자 추가시 update Hash 생성 : ", updateHash)
@@ -77,7 +77,7 @@ func (r *serverUsecase) ServerCreateDeptUser(ctx context.Context, req svDto.SvCr
 	return r.repo.PutDeptUser(ctx, toCreateDeptUserEntity(req, updateHash))
 }
 
-func toCreateDeptUserEntity(req svDto.SvCreateDeptUserRequest, updateHash string) entities.CreateDeptUserEntity {
+func toCreateDeptUserEntity(req adminDto.CreateDeptUserRequest, updateHash string) entities.CreateDeptUserEntity {
 
 	return entities.CreateDeptUserEntity{
 		UserHash:             req.UserHash,
@@ -90,11 +90,11 @@ func toCreateDeptUserEntity(req svDto.SvCreateDeptUserRequest, updateHash string
 	}
 }
 
-func (r *serverUsecase) ServerDeleteDept(ctx context.Context, req svDto.SvDeleteDeptRequest) (interface{}, error) {
+func (r *serverUsecase) ServerDeleteDept(ctx context.Context, req adminDto.DeleteDeptRequest) (interface{}, error) {
 	return r.repo.DeleteDept(ctx, toDeleteDepartmentEntity(req))
 }
 
-func toDeleteDepartmentEntity(req svDto.SvDeleteDeptRequest) entities.DeleteDeptEntity {
+func toDeleteDepartmentEntity(req adminDto.DeleteDeptRequest) entities.DeleteDeptEntity {
 
 	return entities.DeleteDeptEntity{
 		DeptCode: req.DeptCode,
@@ -102,7 +102,7 @@ func toDeleteDepartmentEntity(req svDto.SvDeleteDeptRequest) entities.DeleteDept
 	}
 }
 
-func (r *serverUsecase) ServerCreateOrgFile(ctx context.Context, req svDto.SvCreateOrgFileRequest) (interface{}, error) {
+func (r *serverUsecase) ServerCreateOrgFile(ctx context.Context, req adminDto.CreateOrgFileRequest) (interface{}, error) {
 
 	for i := 0; i < len(req.OrgCode); i++ {
 

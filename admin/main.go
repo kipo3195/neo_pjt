@@ -23,12 +23,18 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	// org - 조직도 관리
-	orgRepo := repositories.NewAdminOrgRepository(db)
-	orgUC := usecases.NewAdminOrgUsecase(orgRepo)
-	orgHandler := handlers.NewAdminHandler(orgUC)
+	orgRepo := repositories.NewOrgRepository(db)
+	orgUC := usecases.NewOrgUsecase(orgRepo)
+	orgHandler := handlers.NewOrgHandler(orgUC)
+
+	// common - 스킨, 앱 설정 관리
+	commonRepo := repositories.NewCommonRepository(db)
+	commonUC := usecases.NewCommonUsecase(commonRepo)
+	commonHandler := handlers.NewCommonHandler(commonUC)
 
 	handlers := &handlers.AdminHandlers{
-		Org: orgHandler,
+		Org:    orgHandler,
+		Common: commonHandler,
 	}
 
 	router := routes.SetupRoutes(handlers)
