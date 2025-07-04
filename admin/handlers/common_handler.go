@@ -31,11 +31,14 @@ func (h *CommonHandler) CreateSkinImg(w http.ResponseWriter, r *http.Request) {
 	var res = commonDto.CreateSkinImgResponse{}
 
 	// 파일 데이터 추출
-	file, fileInfo, err := r.FormFile("File")
-	device := r.Header.Get("Device")
-	skinType := r.Header.Get("Skin-Type")
+	file, fileInfo, err := r.FormFile(consts.FILE)
+	skinType := r.Header.Get(consts.SKIN_TYPE)
 
-	if err != nil || device == "" || skinType == "" {
+	fmt.Println("file", file)
+	fmt.Println("err", err)
+	fmt.Println("skinType", skinType)
+
+	if err != nil || file == nil || fileInfo.Size == 0 || skinType == "" {
 		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
@@ -46,11 +49,11 @@ func (h *CommonHandler) CreateSkinImg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// dto 생성
 	var req = commonDto.CreateSkinImgRequest{
 		File:     file,
 		FileInfo: fileInfo,
 		SkinType: skinType,
-		Device:   device,
 	}
 
 	data, err := h.usecase.CreateSkinImg(ctx, req)

@@ -1,3 +1,7 @@
 package consts
 
-const ()
+const (
+	FILE = "file"
+
+	SKIN_TYPE = "Skin-Type"
+)

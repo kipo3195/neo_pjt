@@ -1,28 +1,31 @@
 package usecases
 
 import (
+	"common/consts"
 	clDto "common/dto/client"
 	"common/entities"
 	"common/infra/storage"
 	"common/repositories"
 	"context"
 	"fmt"
+	"os"
 )
 
 type commonUsecase struct {
-	repo              repositories.CommonRepository
-	configHashStorage storage.ConfigHashStorage
+	repo          repositories.CommonRepository
+	configStorage storage.ConfigStorage
 }
 
 type CommonUsecase interface {
 	InitConfigHash() error
 	GetConfigHash(body entities.ConfigHashEntity, ctx context.Context) clDto.ConfigHashResult
+	GetSkinImg(ctx context.Context, dto clDto.GetSkinImgRequest) (*os.File, error)
 }
 
-func NewCommonUsecase(repo repositories.CommonRepository, configHashStorage storage.ConfigHashStorage) CommonUsecase {
+func NewCommonUsecase(repo repositories.CommonRepository, configHashStorage storage.ConfigStorage) CommonUsecase {
 	return &commonUsecase{
-		repo:              repo,
-		configHashStorage: configHashStorage,
+		repo:          repo,
+		configStorage: configHashStorage,
 	}
 }
 
@@ -38,25 +41,35 @@ func toWorksConfigEntity(worksCode string, device string) entities.GetWorksConfi
 func (r *commonUsecase) InitConfigHash() error {
 
 	// skin 정보 init
-	skinHashs, err := r.repo.GetSkinHashs()
+	skinHash, err := r.repo.GetSkinHash()
 	if err != nil {
 		return err
 	}
 
 	// 없어도 에러는 아님
-	for _, m := range skinHashs {
-		r.configHashStorage.SaveConfigHash(m.Device, m.SkinHash)
+	if skinHash != "" {
+		r.configStorage.SaveConfigHash(consts.SKIN, skinHash)
+	}
+
+	skinInfos, err := r.repo.GetSkinInfo()
+	if err != nil {
+		return err
+	}
+
+	if skinInfos != nil {
+		for _, info := range skinInfos {
+			r.configStorage.SaveSkinFileUrl(info.SkinType, info.FileUrl)
+		}
 	}
 
 	// config 정보 init
-	config, err := r.repo.GetConfig()
+	configHash, err := r.repo.GetConfigHash()
 	if err != nil {
 		return err
 	}
-
-	// 없어도 에러는 아님
-	if config.ConfigHash != "" && config.Device != "" {
-		r.configHashStorage.SaveConfigHash(config.Device, config.ConfigHash)
+	if configHash != "" {
+		// 없어도 에러는 아님
+		r.configStorage.SaveConfigHash(consts.CONFIG, configHash)
 	}
 
 	return nil
@@ -73,7 +86,7 @@ func (r *commonUsecase) GetConfigHash(body entities.ConfigHashEntity, ctx contex
 	clientSkin := body.SkinHash
 	device := body.Device
 
-	serverConfig, err := r.configHashStorage.GetConfigHash("config")
+	serverConfig, err := r.configStorage.GetHash(consts.CONFIG)
 	if err != nil {
 		fmt.Println("config 에 대한 hash 정보를 찾을 수 없음.")
 		configExist = false
@@ -84,7 +97,7 @@ func (r *commonUsecase) GetConfigHash(body entities.ConfigHashEntity, ctx contex
 		configSame = true
 	}
 
-	serverSkin, err := r.configHashStorage.GetConfigHash(device)
+	serverSkin, err := r.configStorage.GetHash(consts.SKIN)
 	if err != nil {
 		fmt.Printf("%s 에 대한 hash 정보를 찾을 수 없음. \n", device)
 		skinExist = false
@@ -112,4 +125,34 @@ func toConfighashResultDto(entity entities.ConfigHashResultEntity) clDto.ConfigH
 		SkinExist:   entity.SkinExist,
 		SkinSame:    entity.SkinSame,
 	}
+}
+
+func (r *commonUsecase) GetSkinImg(ctx context.Context, dto clDto.GetSkinImgRequest) (*os.File, error) {
+
+	// skin hash 검증
+	serverSkinHash, err := r.configStorage.GetHash(consts.SKIN)
+	if err != nil {
+		return nil, err
+	}
+
+	// 현재 서버 기준의 최신 skinHash와 클라이언트가 전달한 값이 다르면 처리하지 않음.
+	if serverSkinHash != dto.SkinHash {
+		return nil, consts.ErrSkinHashInvalid
+	}
+
+	// skin hash에 매핑된 파일 찾기
+	filePath, err := r.configStorage.GetSkinFilePath(dto.SkinType)
+
+	// 파일 존재 확인 정도는 usecase에서 할 수도 있음
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("file not found: %s", filePath)
+	}
+
+	// 파일 열기
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open file: %w", err)
+	}
+
+	return file, nil
 }

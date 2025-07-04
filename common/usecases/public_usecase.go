@@ -16,18 +16,18 @@ import (
 )
 
 type publicUsecase struct {
-	repo              repositories.PublicRepository
-	configHashStorage storage.ConfigHashStorage
+	repo          repositories.PublicRepository
+	configStorage storage.ConfigStorage
 }
 
 type PublicUsecase interface {
 	AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error)
 }
 
-func NewPublicUsecase(repo repositories.PublicRepository, configHashStorage storage.ConfigHashStorage) PublicUsecase {
+func NewPublicUsecase(repo repositories.PublicRepository, configStorage storage.ConfigStorage) PublicUsecase {
 	return &publicUsecase{
-		repo:              repo,
-		configHashStorage: configHashStorage,
+		repo:          repo,
+		configStorage: configStorage,
 	}
 }
 
@@ -46,7 +46,7 @@ func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidat
 	}
 
 	// skin 검증
-	skinHash, err := r.configHashStorage.GetConfigHash(body.Device)
+	skinHash, err := r.configStorage.GetHash(consts.SKIN)
 	if err != nil {
 		fmt.Println("서버에 skin hash정보가 없음.")
 		return false, consts.ErrSkinHashInvalid
@@ -58,7 +58,7 @@ func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidat
 	}
 
 	// config 검증
-	configHash, err := r.configHashStorage.GetConfigHash("config")
+	configHash, err := r.configStorage.GetHash(consts.CONFIG)
 	if err != nil {
 		fmt.Println("서버에 config hash정보가 없음.")
 		return false, consts.ErrConfigHashInvalid

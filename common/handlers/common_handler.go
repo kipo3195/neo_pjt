@@ -8,8 +8,12 @@ import (
 	"common/usecases"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
+
+	"github.com/go-playground/validator"
 )
 
 type CommonHandler struct {
@@ -66,4 +70,54 @@ func toConfigHashEntity(dto clDto.GetConfigHash) entities.ConfigHashEntity {
 		SkinHash:   dto.SkinHash,
 		Device:     dto.Device,
 	}
+}
+
+func (h *CommonHandler) GetSkinImage(w http.ResponseWriter, r *http.Request) {
+	// context 생성
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// response dto 생성
+	var res = dto.Response{}
+
+	// 데이터 -> dto
+	var req = clDto.GetSkinImgRequest{
+		SkinHash: r.URL.Query().Get("skinHash"),
+		SkinType: r.URL.Query().Get("skinType"),
+	}
+
+	fmt.Println("2")
+	// 유효성 검증 로직
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		// 검증 실패 처리
+		w.WriteHeader(http.StatusBadRequest)
+		res.Result = consts.ERROR
+		res.Data = dto.ErrorResponse{
+			Code:    consts.E_108,
+			Message: consts.E_108_MSG,
+		}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	fmt.Println("3")
+	// 검증
+	file, err := h.usecase.GetSkinImg(ctx, req)
+	defer file.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	fmt.Println("4")
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "inline")
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "failed to send file", http.StatusInternalServerError)
+	}
+	fmt.Println("5")
+
 }

@@ -4,7 +4,7 @@ package models
 
 type ConnectInfo struct {
 	ServerUrl  string `gorm:"column:server_url"`
-	WorksCode  string `gorm:"column:works_code"`
+	WorksCode  string `gorm:"column:works_code;primaryKey"`
 	ApiVersion string `gorm:"column:api_version"`
 	UdtDate    string `gorm:"column:udt_date"`
 }

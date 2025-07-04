@@ -21,7 +21,7 @@ type coreUsecase struct {
 type CoreUsecase interface {
 	CheckValidation(header *clDto.AppValidationRequestHeader) bool
 
-	GetWorksInfo(body clDto.AppValidationRequest, uuid string, device string) (*entities.WorksInfo, *dto.ErrorResponse, bool)
+	GetWorksInfos(body clDto.AppValidationRequest, uuid string, device string) (*clDto.WorksInfos, *dto.ErrorResponse, bool)
 
 	// 변환
 	ToValidationWhereEntity(header *clDto.AppValidationRequestHeader) entities.ValidationWhere
@@ -51,12 +51,11 @@ func (u *coreUsecase) ToValidationWhereEntity(header *clDto.AppValidationRequest
 	}
 }
 
-func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string, device string) (*entities.WorksInfo, *dto.ErrorResponse, bool) {
+func (u *coreUsecase) GetWorksInfos(body clDto.AppValidationRequest, uuid string, device string) (*clDto.WorksInfos, *dto.ErrorResponse, bool) {
 
 	// 에러타입이 뭐냐에따라 처리..
-	result, err := u.repo.GetWorksInfo(body)
-
-	fmt.Println("클라이언트가 전달한 도메인, 코드로 전달했을때 조회된 서버 정보 : ", result)
+	worksCommonInfo, err := u.repo.GetWorksCommonInfo(body)
+	fmt.Println("[GetWorksCommonInfo] worksCommonInfo : ", worksCommonInfo)
 
 	if err != nil {
 		switch {
@@ -83,31 +82,27 @@ func (u *coreUsecase) GetWorksInfo(body clDto.AppValidationRequest, uuid string,
 	} else {
 
 		// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
+		worksInfo, err := getWorksInfo(uuid, device, body.WorksCode, worksCommonInfo.ServerUrl)
 
-		deviceInitResponse, err := getConnectInfoInCommon(uuid, device, body.WorksCode, result.ConnectInfo.ServerUrl)
+		fmt.Println("worksInfo", worksInfo)
 
 		if err != nil {
 			fmt.Println("common service 호출시 에러 발생함.")
-			return &entities.WorksInfo{}, &dto.ErrorResponse{
+			return nil, &dto.ErrorResponse{
 				Code:    consts.E_500,
 				Message: consts.E_500_MSG,
 			}, false
 		}
 
-		worksAuth := entities.WorksAuth{AppToken: deviceInitResponse.AppToken}
-		result.WorksAuth = worksAuth
-		result.ConnectInfo.ServerUrl = deviceInitResponse.ServerUrl
-		result.TimeZone = deviceInitResponse.TimeZone
-		result.ConfigVersion = deviceInitResponse.ConfigVersion
-		result.SkinVersion = deviceInitResponse.SkinVersion
-		result.Language = deviceInitResponse.Language
-
-		return result, nil, false
+		return &clDto.WorksInfos{
+			WorksCommonInfo: worksCommonInfo,
+			WorksInfo:       worksInfo,
+		}, nil, false
 	}
 
 }
 
-func getConnectInfoInCommon(uuid string, device string, worksCode string, serverUrl string) (*commonDto.DeviceInitResponse, error) {
+func getWorksInfo(uuid string, device string, worksCode string, serverUrl string) (*commonDto.DeviceInitResponse, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid":      uuid,
@@ -118,7 +113,7 @@ func getConnectInfoInCommon(uuid string, device string, worksCode string, server
 	// JSON 변환
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return &commonDto.DeviceInitResponse{}, err
+		return nil, err
 	}
 
 	// POST 요청 보내기
@@ -128,7 +123,7 @@ func getConnectInfoInCommon(uuid string, device string, worksCode string, server
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return &commonDto.DeviceInitResponse{}, err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -137,43 +132,21 @@ func getConnectInfoInCommon(uuid string, device string, worksCode string, server
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return &commonDto.DeviceInitResponse{}, err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 
-	// serverResponse로 전달받기
+	// serverResponse로 전달받기 -> dto 뽑아내기 제네릭
+	var result dto.ServerResponse[*commonDto.DeviceInitResponse]
 
-	var result dto.Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
-		return &commonDto.DeviceInitResponse{}, err
+		return nil, err
 	}
 
-	resultData, ok := result.Data.(map[string]interface{})
-	if !ok {
-		fmt.Println("Data 필드를 map으로 변환하는 데 실패했습니다.")
-		return &commonDto.DeviceInitResponse{}, errors.New("invalid data format")
-	}
+	res := result.Data
 
-	appToken, authTokenOk := resultData["appToken"].(string)
-	connectInfo, connectInfoOk := resultData["connectInfo"].(string)
-	timeZone, timeZoneOk := resultData["timeZone"].(string)
-	language, languageOk := resultData["language"].(string)
-	skinVersion, skinVersionOk := resultData["skinVersion"].(string)
-	configVersion, configVersionOk := resultData["configVersion"].(string)
-
-	if !authTokenOk || !connectInfoOk || !timeZoneOk || !languageOk || !skinVersionOk || !configVersionOk {
-		fmt.Println("authToken 또는 connectInfo string으로 변환하는 데 실패했습니다.")
-		return &commonDto.DeviceInitResponse{}, errors.New("invalid token format")
-	}
-
-	return &commonDto.DeviceInitResponse{
-		AppToken:      appToken,
-		ServerUrl:     connectInfo,
-		TimeZone:      timeZone,
-		Language:      language,
-		SkinVersion:   skinVersion,
-		ConfigVersion: configVersion,
-	}, nil
+	fmt.Println("common service 호출 end !")
+	return res, nil
 }

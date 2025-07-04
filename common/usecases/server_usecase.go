@@ -26,8 +26,8 @@ import (
 )
 
 type serverUsecase struct {
-	repo              repositories.ServerRepository
-	configHashStorage storage.ConfigHashStorage
+	repo          repositories.ServerRepository
+	configStorage storage.ConfigStorage
 }
 
 type ServerUsecase interface {
@@ -35,51 +35,54 @@ type ServerUsecase interface {
 	CreateSkinImg(ctx context.Context, body adminDto.CreateSkinImgRequest) (interface{}, error)
 }
 
-func NewServerUsecase(repo repositories.ServerRepository, configHashStorage storage.ConfigHashStorage) ServerUsecase {
+func NewServerUsecase(repo repositories.ServerRepository, configStorage storage.ConfigStorage) ServerUsecase {
 	return &serverUsecase{
-		repo:              repo,
-		configHashStorage: configHashStorage,
+		repo:          repo,
+		configStorage: configStorage,
 	}
 }
 
 func (u *serverUsecase) DeviceInit(ctx context.Context, body *commonDto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
 
 	// DB 조회
-	result, err := u.repo.GetConnectInfo(body.WorksCode)
+	connectInfo, err := u.repo.GetConnectInfo(body.WorksCode)
 	if err != nil {
-		return &entities.InitResult{}, &dto.ErrorResponse{
+		return nil, &dto.ErrorResponse{
 			Code:    consts.E_102,
 			Message: consts.E_102_MSG,
 		}
 	}
 
 	// AUTH에 JWT 요청
-	result.AppToken, err = generateDeviceToken(body, result.ConnectInfo)
+	appToken, err := generateAppToken(body, connectInfo.ServerUrl)
 	if err != nil {
-		return &entities.InitResult{}, &dto.ErrorResponse{
+		return nil, &dto.ErrorResponse{
 			Code:    consts.E_500,
 			Message: consts.E_500_MSG,
 		}
 	}
 
-	// 타임존, 언어, 앱 별 스킨 정보, 설정 정보
+	// 타임존, 언어, 앱 별 스킨 정보, 설정 정보 - GetConnectInfo와 합쳐서 트랜잭션 처리
 	worksConfig, err := u.repo.GetWorksConfig(toWorksConfigEntity(body.WorksCode, body.Device), ctx)
 	if err != nil {
-		return &entities.InitResult{}, &dto.ErrorResponse{
+		return nil, &dto.ErrorResponse{
 			Code:    consts.E_500,
 			Message: consts.E_500_MSG,
 		}
 	}
 
-	result.TimeZone = worksConfig.TimeZone
-	result.Language = worksConfig.Language
-	result.SkinVersion = worksConfig.SkinVersion
-	result.ConfigVersion = worksConfig.ConfigVersion
+	fmt.Println("connectInfo:", connectInfo)
+	fmt.Println("appToken:", appToken)
+	fmt.Println("worksConfig ", worksConfig)
 
-	return result, nil
+	return &entities.InitResult{
+		ConnectInfo: connectInfo,
+		AppToken:    appToken,
+		WorksConfig: worksConfig,
+	}, nil
 }
 
-func generateDeviceToken(body *commonDto.DeviceInitRequest, serverUrl string) (string, error) {
+func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (string, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid": body.Uuid,
@@ -142,6 +145,7 @@ func generateDeviceToken(body *commonDto.DeviceInitRequest, serverUrl string) (s
 func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSkinImgRequest) (interface{}, error) {
 
 	fmt.Println("333")
+	// 파일 저장
 	entity, err := skinFileSaved(ctx, dto)
 	if err != nil {
 		fmt.Println("skinFileSaved error : ", err)
@@ -154,7 +158,10 @@ func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSk
 			return nil, err
 		} else {
 			// 메모리 갱신
-			r.configHashStorage.SkinRefresh(entity.FileHash)
+			fmt.Println("entity.FileUrl :", entity.FileUrl)
+			r.configStorage.SaveConfigHash(consts.SKIN, entity.FileHash)       // skin : 파일의 hash
+			r.configStorage.SaveSkinFilePath(entity.SkinType, entity.FilePath) // skinType : 파일 Path
+			r.configStorage.SaveSkinFileUrl(entity.SkinType, entity.FileUrl)   // skinType : 파일 다운로드 URL
 			return nil, nil
 		}
 	}
@@ -213,7 +220,7 @@ func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*ent
 	fileHash := getNow()
 	skinType := dto.SkinType
 	fileName := fmt.Sprintf("%s%s", fileHash, ext)
-	filePath := filepath.Join("./skins/"+skinType, fileName) // 저장 경로
+	filePath := filepath.Join("./skins/"+skinType, fileName) // 저장 경로 skins/skinType
 	fmt.Println("ext : ", ext)
 	fmt.Println("fileHash : ", fileHash)
 	fmt.Println("fileName : ", fileName)
@@ -266,12 +273,14 @@ func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*ent
 		}
 	}
 	fmt.Println("ccc")
+	// 서버 설정화 필요
+	var fileUrl = "http://172.16.10.114/common/v1/skin-img?fileHash=" + fileHash + "&skinType=" + skinType
 	return &entities.SkinFileInfoEntity{
 		FileHash: fileHash,
 		FileName: fileName,
 		SkinType: dto.SkinType,
-		Device:   dto.Device,
 		FilePath: filePath,
+		FileUrl:  fileUrl,
 	}, nil
 }
 

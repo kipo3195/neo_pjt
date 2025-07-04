@@ -1,6 +1,6 @@
-package entities
+package common
 
-type SkinFileInfoEntity struct {
+type SkinFileInfo struct {
 	FileHash string `json:"fileHash"`
 	FileName string `json:"fileName"`
 	SkinType string `json:"skinType"`

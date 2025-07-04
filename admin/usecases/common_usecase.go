@@ -111,8 +111,7 @@ func skinImgforwardToCommon(ctx context.Context, dto commonDto.CreateSkinImgRequ
 	fmt.Println("99")
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer serverToken") // 서버 to 서버 인증 처리 필요
-	req.Header.Set("NEO-Device", dto.Device)
-	req.Header.Set("NEO-Skin-Type", dto.SkinType)
+	req.Header.Set("Skin-Type", dto.SkinType)
 
 	// 4. 요청 전송
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -122,6 +121,7 @@ func skinImgforwardToCommon(ctx context.Context, dto commonDto.CreateSkinImgRequ
 	}
 	defer resp.Body.Close()
 	fmt.Println("00 resp.StatusCode : ", resp.StatusCode)
+
 	// 5. 응답 상태 확인
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)

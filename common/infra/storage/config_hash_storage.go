@@ -6,51 +6,45 @@ import (
 	"sync"
 )
 
-type ConfigHashStorage interface {
-	SkinRefresh(hash string) error
+type ConfigStorage interface {
 	SaveConfigHash(kind string, hash string) error
-	GetConfigHash(kind string) (string, error)
+	GetHash(kind string) (string, error)
 	DeleteConfigHash(kind string) error
+	GetSkinFilePath(skinType string) (string, error)
+	SaveSkinFilePath(skinType string, filePath string) error
+	SaveSkinFileUrl(skinType string, fileUrl string) error
 }
 
-type configHashStorage struct {
-	mu   sync.RWMutex
-	data map[string]string
+type configStorage struct {
+	mu           sync.RWMutex
+	hashInfo     map[string]string // 해시 정보 저장용
+	skinFilePath map[string]string // 서버에서 접근할때 사용
+	skinFileUrl  map[string]string // 최신의 스킨 정보 다운로드 API 저장
 }
 
-func NewConfigHashStorage() ConfigHashStorage {
-	return &configHashStorage{
-		data: make(map[string]string),
+func NewConfigHashStorage() ConfigStorage {
+	return &configStorage{
+		hashInfo:     make(map[string]string),
+		skinFilePath: make(map[string]string),
+		skinFileUrl:  make(map[string]string),
 	}
-}
-func (r *configHashStorage) SkinRefresh(hash string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for key := range r.data {
-		if key != "config" {
-			r.data[key] = hash
-			fmt.Printf("kind : %s hash : %s save success. \n", key, hash)
-		}
-	}
-	fmt.Println("이하 메모리 출력")
-	for key := range r.data {
-		fmt.Printf("kind : %s hash : %s save success. \n", key, r.data[key])
-	}
-	return nil
 }
 
-func (r *configHashStorage) SaveConfigHash(kind string, hash string) error {
+func (r *configStorage) SaveConfigHash(kind string, hash string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.data[kind] = hash
+	r.hashInfo[kind] = hash
 	fmt.Printf("kind : %s hash : %s save success. \n", kind, hash)
 	return nil
 }
 
-func (r *configHashStorage) GetConfigHash(kind string) (string, error) {
+func (r *configStorage) GetHash(kind string) (string, error) {
 
-	hash, exists := r.data[kind]
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	hash, exists := r.hashInfo[kind]
 	if !exists {
 		return "", errors.New(kind + " is not exists")
 	}
@@ -58,15 +52,53 @@ func (r *configHashStorage) GetConfigHash(kind string) (string, error) {
 	return hash, nil
 }
 
-func (r *configHashStorage) DeleteConfigHash(kind string) error {
+func (r *configStorage) DeleteConfigHash(kind string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, exists := r.data[kind]; !exists {
+	if _, exists := r.hashInfo[kind]; !exists {
 		return errors.New(kind + "is not exists")
 	}
 
-	delete(r.data, kind)
+	delete(r.hashInfo, kind)
 	fmt.Printf("kind : %s delete success. \n", kind)
 	return nil
+}
+
+func (r *configStorage) GetSkinFilePath(skinType string) (string, error) {
+
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	filePath, exists := r.skinFilePath[skinType]
+
+	if !exists {
+		return "", errors.New(skinType + "is not exists")
+	}
+	return filePath, nil
+
+}
+
+func (r *configStorage) SaveSkinFilePath(skinType string, filePath string) error {
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	fmt.Printf("기존 skinType에 대한 파일 path skinType : %s, filePath : %s \n", skinType, r.skinFilePath[skinType])
+	r.skinFilePath[skinType] = filePath
+	fmt.Printf("변경된 skinType에 대한 파일 path skinType : %s, filePath : %s \n", skinType, r.skinFilePath[skinType])
+	return nil
+
+}
+
+func (r *configStorage) SaveSkinFileUrl(skinType string, fileUrl string) error {
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	fmt.Printf("기존 skinType에 대한 파일 api url skinType : %s, filePath : %s \n", skinType, r.skinFileUrl[skinType])
+	r.skinFileUrl[skinType] = fileUrl
+	fmt.Printf("변경된 skinType에 대한 파일 api url skinType : %s, filePath : %s \n", skinType, r.skinFileUrl[skinType])
+	return nil
+
 }

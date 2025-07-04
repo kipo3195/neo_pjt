@@ -24,7 +24,7 @@ type coreRepository struct {
 
 type CoreRepository interface {
 	GetValidation(where entities.ValidationWhere) (bool, error)
-	GetWorksInfo(body clDto.AppValidationRequest) (*entities.WorksInfo, error)
+	GetWorksCommonInfo(body clDto.AppValidationRequest) (*entities.WorksCommonInfo, error)
 }
 
 func NewCoreRepository(db *gorm.DB) CoreRepository {
@@ -54,7 +54,7 @@ func (r *coreRepository) GetValidation(where entities.ValidationWhere) (bool, er
 
 }
 
-func (r *coreRepository) GetWorksInfo(data dto.AppValidationRequest) (*entities.WorksInfo, error) {
+func (r *coreRepository) GetWorksCommonInfo(data dto.AppValidationRequest) (*entities.WorksCommonInfo, error) {
 
 	// model
 	var worksList models.WorksList
@@ -66,27 +66,25 @@ func (r *coreRepository) GetWorksInfo(data dto.AppValidationRequest) (*entities.
 	// 조회 결과가 없을때
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		log.Println("[GetWorksInfo] - No record found")
-		return &entities.WorksInfo{}, coreerrors.ErrInvalidMappingServer
+		return nil, coreerrors.ErrInvalidMappingServer
 	}
 
 	// 에러 처리
 	if result.Error != nil {
 		log.Println("[GetWorksInfo] - DB error")
-		return &entities.WorksInfo{}, result.Error
+		return nil, result.Error
 	}
 
 	if result.RowsAffected > 0 {
-		return &entities.WorksInfo{
-			ConnectInfo: entities.ConnectInfo{
-				ServerUrl: worksList.ServerUrl,
-			},
+		return &entities.WorksCommonInfo{
+			ServerUrl: worksList.ServerUrl,
 			WorksCode: worksList.Code,
 			WorksName: worksList.Name,
 			UseYn:     worksList.UseYn,
 		}, nil
 	} else {
 		log.Println("[GetWorksInfo] - DB select X")
-		return &entities.WorksInfo{}, nil
+		return nil, nil
 	}
 
 }

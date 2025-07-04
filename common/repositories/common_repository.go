@@ -3,6 +3,7 @@ package repositories
 import (
 	"common/entities"
 	"common/models"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -12,8 +13,9 @@ type commonRepository struct {
 }
 
 type CommonRepository interface {
-	GetSkinHashs() ([]entities.ConfigHashEntity, error)
-	GetConfig() (entities.ConfigHashEntity, error)
+	GetSkinHash() (string, error)
+	GetConfigHash() (string, error)
+	GetSkinInfo() ([]entities.SkinFileInfoEntity, error)
 }
 
 func NewCommonRepository(db *gorm.DB) CommonRepository {
@@ -21,54 +23,60 @@ func NewCommonRepository(db *gorm.DB) CommonRepository {
 	return &commonRepository{db: db}
 }
 
-func (r *commonRepository) GetSkinHashs() ([]entities.ConfigHashEntity, error) {
+func (r *commonRepository) GetSkinHash() (string, error) {
 
-	var appSkinConfig []models.AppSkinConfig
-	result := r.db.Model(&models.AppSkinConfig{}).Scan(&appSkinConfig)
-
+	var config models.AppSkinConfig
+	result := r.db.Model(&models.AppSkinConfig{}).First(&config)
 	if result.Error != nil {
-		return nil, result.Error // 진짜 DB 오류
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return "", nil // 조회 결과 없음은 에러 아님
+		}
+		return "", result.Error // 진짜 DB 오류
 	}
 
-	if result.RowsAffected == 0 {
-		return nil, nil // 조회 결과 없음은 에러 아님
-	}
-
-	return toSkinHashEntity(appSkinConfig), nil
+	return config.SkinHash, nil
 }
 
-func toSkinHashEntity(models []models.AppSkinConfig) []entities.ConfigHashEntity {
-	result := make([]entities.ConfigHashEntity, 0, len(models))
+func (r *commonRepository) GetConfigHash() (string, error) {
 
+	var configHash string
+	result := r.db.Model(&models.WorksInfo{}).
+		Where("kind = ?", "config").
+		Select("value").
+		First(&configHash)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return "", nil // 조회 결과 없음
+		}
+		return "", result.Error // 다른 DB 오류
+	}
+
+	return configHash, nil
+}
+
+func (r *commonRepository) GetSkinInfo() ([]entities.SkinFileInfoEntity, error) {
+
+	var appSkinFileInfo []models.AppSkinFileInfo
+
+	if err := r.db.Find(&appSkinFileInfo).Error; err != nil {
+		return nil, err
+	}
+
+	entityList := toSkinFileInfoEntityList(appSkinFileInfo)
+	return entityList, nil
+}
+
+func toSkinFileInfoEntityList(models []models.AppSkinFileInfo) []entities.SkinFileInfoEntity {
+	result := make([]entities.SkinFileInfoEntity, 0, len(models))
 	for _, m := range models {
-		result = append(result, entities.ConfigHashEntity{
-			Device:   m.Device,
-			SkinHash: m.Version,
+		result = append(result, entities.SkinFileInfoEntity{
+			FileHash: m.FileHash,
+			FileName: m.FileName,
+			SkinType: m.SkinType,
+			FilePath: m.FilePath,
+			FileUrl:  m.FileUrl,
 		})
 	}
-
 	return result
-}
-
-func (r *commonRepository) GetConfig() (entities.ConfigHashEntity, error) {
-
-	var config models.WorksInfo
-	result := r.db.Where("kind = ?", "config").Model(&models.WorksInfo{}).Scan(&config)
-
-	if result.Error != nil {
-		return entities.ConfigHashEntity{}, result.Error // 진짜 DB 오류
-	}
-
-	if result.RowsAffected == 0 {
-		return entities.ConfigHashEntity{}, nil // 조회 결과 없음은 에러 아님
-	}
-
-	return toConfigHashEntity(config), nil
-}
-
-func toConfigHashEntity(m models.WorksInfo) entities.ConfigHashEntity {
-	return entities.ConfigHashEntity{
-		Device:     m.Kind,
-		ConfigHash: m.Value,
-	}
 }

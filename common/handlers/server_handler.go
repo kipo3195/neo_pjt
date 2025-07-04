@@ -60,6 +60,10 @@ func (h *ServerHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 		res.Data = data
 	}
 
+	fmt.Printf("👉 res.Data 타입: %T\n", res.Data)
+	jsonBytes, _ := json.Marshal(res)
+	fmt.Println("👉 최종 JSON 응답:", string(jsonBytes))
+
 	json.NewEncoder(w).Encode(res)
 
 }
@@ -79,10 +83,9 @@ func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
 
 	// 파일 데이터 추출
 	file, fileInfo, err := r.FormFile("File")
-	skinType := r.Header.Get("NEO-Skin-Type")
-	device := r.Header.Get("NEO-Device")
+	skinType := r.Header.Get("Skin-Type")
 
-	if err != nil || skinType == "" || device == "" {
+	if err != nil || file == nil || fileInfo.Size == 0 || skinType == "" {
 		res.Result = consts.FAIL
 		res.Data = dto.ErrorResponse{
 			Code:    consts.E_103,
@@ -96,7 +99,6 @@ func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
 	var req = adminDto.CreateSkinImgRequest{
 		File:     file,
 		FileInfo: fileInfo,
-		Device:   device,
 		SkinType: skinType,
 	}
 
