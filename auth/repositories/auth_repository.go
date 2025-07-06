@@ -18,8 +18,7 @@ type authRepository struct {
 type AuthRepository interface {
 	CheckAuth(entity entities.AuthInfoEntity) (*models.AuthInfo, error)
 	GetUserHash(entity entities.AuthInfoEntity) (string, error)
-	PutDeviceToken(token *entities.DeviceTokenEntity) (bool, error)
-	ToDeviceTokenModel(e *entities.DeviceTokenEntity) *models.DeviceToken
+	PutIssuedAppToken(token *entities.AppTokenEntity) (bool, error)
 	GetValidation(entity entities.AppTokenValidationEntity) (bool, error)
 }
 
@@ -63,29 +62,31 @@ func (r *authRepository) GetUserHash(entity entities.AuthInfoEntity) (string, er
 	return user.UserHash, nil
 }
 
-func (r *authRepository) PutDeviceToken(token *entities.DeviceTokenEntity) (bool, error) {
+func (r *authRepository) PutIssuedAppToken(token *entities.AppTokenEntity) (bool, error) {
 
 	// entity -> model
-	models := r.ToDeviceTokenModel(token)
+	models := toAppTokenModel(token)
 
 	// Insert 실행
 	if err := r.db.Create(&models).Error; err != nil {
-		log.Println("[PutDeviceToken] - DB error")
+		log.Println("[PutAppToken] - DB error")
 		return false, err
 	}
+
 	return true, nil
 }
 
-func (r *authRepository) ToDeviceTokenModel(e *entities.DeviceTokenEntity) *models.DeviceToken {
-	return &models.DeviceToken{
-		Uuid:  e.Uuid,
-		Token: e.Token,
+func toAppTokenModel(e *entities.AppTokenEntity) *models.IssuedAppToken {
+	return &models.IssuedAppToken{
+		Uuid:         e.Uuid,
+		AppToken:     e.AppToken,
+		RefreshToken: e.RefreshToken,
 	}
 }
 
 func (r *authRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
-	var validation models.DeviceToken
+	var validation models.IssuedAppToken
 
 	fmt.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 
@@ -98,7 +99,7 @@ func (r *authRepository) GetValidation(entity entities.AppTokenValidationEntity)
 		log.Println("[GetValidation] - DB error")
 		return false, customErr.ErrDB
 	} else {
-		serverToken := validation.Token
+		serverToken := validation.AppToken
 		fmt.Printf("UUID %s 로 조회된 토큰 : %s \n", entity.Uuid, serverToken)
 		if serverToken == entity.AppToken {
 			// 토큰 일치

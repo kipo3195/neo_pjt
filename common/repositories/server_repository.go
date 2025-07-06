@@ -126,10 +126,7 @@ func ConvertToSkinFileInfoEntities(models []models.AppSkinFileInfo) []entities.S
 	for i, m := range models {
 		result[i] = entities.SkinFileInfoEntity{
 			FileHash: m.FileHash,
-			FileName: m.FileName,
 			SkinType: m.SkinType,
-			FilePath: m.FilePath,
-			FileUrl:  m.FileUrl,
 		}
 	}
 	return result
@@ -155,9 +152,9 @@ func (r *serverRepository) PutSkinFileInfo(ctx context.Context, entity *entities
 	// insert 처리
 	if err := tx.Create(&models.AppSkinFileInfo{
 		SkinType: entity.SkinType,
-		FileUrl:  entity.FileUrl,
-		FileName: entity.FileName,
-		FilePath: entity.FilePath,
+		//FileUrl:  entity.FileUrl,
+		//FileName: entity.FileName,
+		//FilePath: entity.FilePath,
 		FileHash: entity.FileHash,
 	}).Error; err != nil {
 		tx.Rollback()

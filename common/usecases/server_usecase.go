@@ -5,13 +5,13 @@ import (
 	"common/consts"
 	dto "common/dto/common"
 	adminDto "common/dto/server/admin"
+	authDto "common/dto/server/auth"
 	commonDto "common/dto/server/common"
 	"common/entities"
 	"common/infra/storage"
 	"common/repositories"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"image"
 	"io"
@@ -44,7 +44,7 @@ func NewServerUsecase(repo repositories.ServerRepository, configStorage storage.
 
 func (u *serverUsecase) DeviceInit(ctx context.Context, body *commonDto.DeviceInitRequest) (*entities.InitResult, *dto.ErrorResponse) {
 
-	// DB 조회
+	// DB 조회 connectInfo(접속 url)은 관리해야할 필요있음. 최초 이후에 클라이언트가 정보가 필요할때를 대비해서.
 	connectInfo, err := u.repo.GetConnectInfo(body.WorksCode)
 	if err != nil {
 		return nil, &dto.ErrorResponse{
@@ -54,7 +54,7 @@ func (u *serverUsecase) DeviceInit(ctx context.Context, body *commonDto.DeviceIn
 	}
 
 	// AUTH에 JWT 요청
-	appToken, err := generateAppToken(body, connectInfo.ServerUrl)
+	issuedAppToken, err := generateAppToken(body, connectInfo.ServerUrl) //  serverUrl은 이후에 .env 또는 k8s의 secrets에서 읽기
 	if err != nil {
 		return nil, &dto.ErrorResponse{
 			Code:    consts.E_500,
@@ -72,17 +72,17 @@ func (u *serverUsecase) DeviceInit(ctx context.Context, body *commonDto.DeviceIn
 	}
 
 	fmt.Println("connectInfo:", connectInfo)
-	fmt.Println("appToken:", appToken)
+	fmt.Println("issuedAppToken:", issuedAppToken)
 	fmt.Println("worksConfig ", worksConfig)
 
 	return &entities.InitResult{
-		ConnectInfo: connectInfo,
-		AppToken:    appToken,
-		WorksConfig: worksConfig,
+		ConnectInfo:    connectInfo,
+		IssuedAppToken: issuedAppToken,
+		WorksConfig:    worksConfig,
 	}, nil
 }
 
-func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (string, error) {
+func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (*entities.IssuedAppToken, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
 		"uuid": body.Uuid,
@@ -91,17 +91,17 @@ func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (stri
 	// JSON 변환
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	fmt.Println("auth service 호출! 1")
 
-	url := "http://" + serverUrl + "/auth/sv1/generate-device-token"
+	url := "http://" + serverUrl + "/auth/sv1/generate-app-token"
 	//url := domain + "/auth/v1/generate-device-token"
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -112,34 +112,27 @@ func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (stri
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("auth service 호출 에러 1")
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	// 구조체로 반환해야 하는거아닌가?
-	// 서버간 통신에서 var result dto.ServerResponsed 이 구조를 사용할 것인지 고민
-
 	// 응답 출력
-	var result dto.Response // common/dto/server/auth/에 ~~~ResponseDto 생성할 것
+	var result dto.ServerResponse[*authDto.DeviceInitAuthResponse]
+
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")
-		return "", err
+		return nil, err
 	}
 
-	resultData, ok := result.Data.(map[string]interface{})
-	if !ok {
-		fmt.Println("Data 필드를 map으로 변환하는 데 실패했습니다.")
-		return "", errors.New("invalid data format")
-	}
+	return toIssuedAppTokenEntity(result.Data), nil
+}
 
-	token, tokenOk := resultData["token"].(string)
+func toIssuedAppTokenEntity(dto *authDto.DeviceInitAuthResponse) *entities.IssuedAppToken {
 
-	if !tokenOk {
-		fmt.Println("token 또는 uuid를 string으로 변환하는 데 실패했습니다.")
-		return "", errors.New("invalid token format")
+	return &entities.IssuedAppToken{
+		AppToken:     dto.AppToken,
+		RefreshToken: dto.RefreshToken,
 	}
-	fmt.Println("auth service 호출 후 발급 받은 토큰 : ", token)
-	return token, nil
 }
 
 func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSkinImgRequest) (interface{}, error) {
@@ -158,10 +151,8 @@ func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSk
 			return nil, err
 		} else {
 			// 메모리 갱신
-			fmt.Println("entity.FileUrl :", entity.FileUrl)
 			r.configStorage.SaveConfigHash(consts.SKIN, entity.FileHash)       // skin : 파일의 hash
 			r.configStorage.SaveSkinFilePath(entity.SkinType, entity.FilePath) // skinType : 파일 Path
-			r.configStorage.SaveSkinFileUrl(entity.SkinType, entity.FileUrl)   // skinType : 파일 다운로드 URL
 			return nil, nil
 		}
 	}
@@ -274,13 +265,9 @@ func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*ent
 	}
 	fmt.Println("ccc")
 	// 서버 설정화 필요
-	var fileUrl = "http://172.16.10.114/common/v1/skin-img?fileHash=" + fileHash + "&skinType=" + skinType
 	return &entities.SkinFileInfoEntity{
 		FileHash: fileHash,
-		FileName: fileName,
 		SkinType: dto.SkinType,
-		FilePath: filePath,
-		FileUrl:  fileUrl,
 	}, nil
 }
 

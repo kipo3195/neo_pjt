@@ -51,17 +51,6 @@ func (r *commonUsecase) InitConfigHash() error {
 		r.configStorage.SaveConfigHash(consts.SKIN, skinHash)
 	}
 
-	skinInfos, err := r.repo.GetSkinInfo()
-	if err != nil {
-		return err
-	}
-
-	if skinInfos != nil {
-		for _, info := range skinInfos {
-			r.configStorage.SaveSkinFileUrl(info.SkinType, info.FileUrl)
-		}
-	}
-
 	// config 정보 init
 	configHash, err := r.repo.GetConfigHash()
 	if err != nil {

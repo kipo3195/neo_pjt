@@ -24,7 +24,7 @@ type authUsecase struct {
 
 type AuthUsecase interface {
 	GetAuth(*clDto.LoginRequestHeader, *clDto.AuthRequest) (*entities.AuthEntity, *dto.ErrorResponse, bool)
-	GenerateDeviceToken(body commonDto.GenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error)
+	GenerateAppToken(body commonDto.GenerateAppTokenRequest) (*entities.AppTokenEntity, error)
 }
 
 func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) AuthUsecase {
@@ -178,28 +178,34 @@ func GenerateAuthJWT(userHash string, accessExp int, refreshExp int, jwtKey []by
 	return accessToken, refreshToken, nil
 }
 
-func (r *authUsecase) GenerateDeviceToken(body commonDto.GenerateDeviceTokenRequest) (*entities.DeviceTokenEntity, error) {
+func (r *authUsecase) GenerateAppToken(body commonDto.GenerateAppTokenRequest) (*entities.AppTokenEntity, error) {
 
 	// 토큰 발급
-	token, err := generateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
+	appToken, err := generateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
 
-	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, token)
+	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, appToken)
 
 	if err != nil {
-		return &entities.DeviceTokenEntity{}, err
+		return nil, err
+	}
+
+	refreshToken, err := generateDeviceTokenJWT(r.jwtCfg.AppRefreshTokenExp, body.Uuid)
+	if err != nil {
+		return nil, err
 	}
 
 	// entity 생성
-	tokenEntity := &entities.DeviceTokenEntity{
-		Uuid:  body.Uuid,
-		Token: token,
+	tokenEntity := &entities.AppTokenEntity{
+		Uuid:         body.Uuid,
+		AppToken:     appToken,
+		RefreshToken: refreshToken,
 	}
 
 	// DB 저장 실패시
-	result, err := r.repo.PutDeviceToken(tokenEntity)
+	result, err := r.repo.PutIssuedAppToken(tokenEntity)
 
 	if !result || err != nil {
-		return &entities.DeviceTokenEntity{}, err
+		return nil, err
 	}
 
 	return tokenEntity, nil

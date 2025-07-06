@@ -15,7 +15,6 @@ type commonRepository struct {
 type CommonRepository interface {
 	GetSkinHash() (string, error)
 	GetConfigHash() (string, error)
-	GetSkinInfo() ([]entities.SkinFileInfoEntity, error)
 }
 
 func NewCommonRepository(db *gorm.DB) CommonRepository {
@@ -72,10 +71,8 @@ func toSkinFileInfoEntityList(models []models.AppSkinFileInfo) []entities.SkinFi
 	for _, m := range models {
 		result = append(result, entities.SkinFileInfoEntity{
 			FileHash: m.FileHash,
-			FileName: m.FileName,
 			SkinType: m.SkinType,
 			FilePath: m.FilePath,
-			FileUrl:  m.FileUrl,
 		})
 	}
 	return result

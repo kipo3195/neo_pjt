@@ -26,10 +26,11 @@ type DBConfig struct {
 }
 
 type JWTConfig struct {
-	Key         string
-	AccessExp   int
-	RefressExp  int
-	AppTokenExp int
+	Key                string
+	AccessExp          int
+	RefressExp         int
+	AppTokenExp        int
+	AppRefreshTokenExp int
 }
 
 func isLocal() bool {
@@ -81,7 +82,11 @@ func initJwtConfig() *JWTConfig {
 	if err != nil {
 		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
 	}
-	return &JWTConfig{Key: key, AccessExp: accessExp, RefressExp: refreshExp, AppTokenExp: appTokenExp}
+	appRefreshTokenExp, err := strconv.Atoi(os.Getenv("APP_REFRESH_TOKEN_EXP_D"))
+	if err != nil {
+		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
+	}
+	return &JWTConfig{Key: key, AccessExp: accessExp, RefressExp: refreshExp, AppTokenExp: appTokenExp, AppRefreshTokenExp: appRefreshTokenExp}
 }
 
 func (s *ServerConfig) GetJWTConfig() *JWTConfig {
@@ -100,7 +105,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	}
 
 	db.AutoMigrate(&models.AuthInfo{})
-	db.AutoMigrate(&models.DeviceToken{})
+	db.AutoMigrate(&models.IssuedAppToken{})
 	db.AutoMigrate(&models.ServiceUsers{})
 
 	fmt.Println("Auth Database Connected !")

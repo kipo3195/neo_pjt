@@ -84,12 +84,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) GenerateAppToken(w http.ResponseWriter, r *http.Request) {
 	// response
-	var res commonDto.GenerateDeviceTokenResponse
+	var res commonDto.GenerateAppTokenResponse
 
 	// request의 header 데이터 -> dto로 변경
-	header := &commonDto.GenerateDeviceTokenRequestHeader{
+	header := &commonDto.GenerateAppTokenRequestHeader{
 		Token: r.Header.Get("Authorization"),
 	}
 
@@ -108,7 +108,7 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 	// 서버의 토큰 검증 필요
 
 	// request body 데이터 -> dto로 변경
-	var body commonDto.GenerateDeviceTokenRequest
+	var body commonDto.GenerateAppTokenRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		res.Code = consts.FAIL
@@ -122,7 +122,7 @@ func (h *AuthHandler) GenerateDeviceToken(w http.ResponseWriter, r *http.Request
 	}
 
 	// 토큰 발급, DB 저장.
-	result, err := h.usecase.GenerateDeviceToken(body)
+	result, err := h.usecase.GenerateAppToken(body)
 	fmt.Println("handler에서 토큰 구조체 반환 result : ", result)
 
 	if err != nil {

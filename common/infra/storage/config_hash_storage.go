@@ -12,21 +12,18 @@ type ConfigStorage interface {
 	DeleteConfigHash(kind string) error
 	GetSkinFilePath(skinType string) (string, error)
 	SaveSkinFilePath(skinType string, filePath string) error
-	SaveSkinFileUrl(skinType string, fileUrl string) error
 }
 
 type configStorage struct {
 	mu           sync.RWMutex
 	hashInfo     map[string]string // 해시 정보 저장용
 	skinFilePath map[string]string // 서버에서 접근할때 사용
-	skinFileUrl  map[string]string // 최신의 스킨 정보 다운로드 API 저장
 }
 
 func NewConfigHashStorage() ConfigStorage {
 	return &configStorage{
 		hashInfo:     make(map[string]string),
 		skinFilePath: make(map[string]string),
-		skinFileUrl:  make(map[string]string),
 	}
 }
 
@@ -87,18 +84,6 @@ func (r *configStorage) SaveSkinFilePath(skinType string, filePath string) error
 	fmt.Printf("기존 skinType에 대한 파일 path skinType : %s, filePath : %s \n", skinType, r.skinFilePath[skinType])
 	r.skinFilePath[skinType] = filePath
 	fmt.Printf("변경된 skinType에 대한 파일 path skinType : %s, filePath : %s \n", skinType, r.skinFilePath[skinType])
-	return nil
-
-}
-
-func (r *configStorage) SaveSkinFileUrl(skinType string, fileUrl string) error {
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	fmt.Printf("기존 skinType에 대한 파일 api url skinType : %s, filePath : %s \n", skinType, r.skinFileUrl[skinType])
-	r.skinFileUrl[skinType] = fileUrl
-	fmt.Printf("변경된 skinType에 대한 파일 api url skinType : %s, filePath : %s \n", skinType, r.skinFileUrl[skinType])
 	return nil
 
 }
