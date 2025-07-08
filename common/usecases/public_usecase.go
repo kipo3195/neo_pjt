@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"common/consts"
 	clDto "common/dto/client"
+	dto "common/dto/common"
 	authDto "common/dto/server/auth"
 	"common/entities"
 	"common/infra/storage"
@@ -11,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 )
@@ -22,6 +24,7 @@ type publicUsecase struct {
 
 type PublicUsecase interface {
 	AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error)
+	AppTokenReIssue(ctx context.Context, body clDto.AppTokenRefreshRequest) (*authDto.AppTokenRefreshResponse, error)
 }
 
 func NewPublicUsecase(repo repositories.PublicRepository, configStorage storage.ConfigStorage) PublicUsecase {
@@ -80,10 +83,10 @@ func toAppTokenValidationRequest(appToken string, uuid string) authDto.AppTokenV
 
 }
 
-func getAppTokenValidationInAuth(dto authDto.AppTokenValidationRequest) (entities.AppTokenValitaionResponseEntity, error) {
+func getAppTokenValidationInAuth(body authDto.AppTokenValidationRequest) (entities.AppTokenValitaionResponseEntity, error) {
 
 	// JSON 변환
-	jsonData, err := json.Marshal(dto)
+	serverRequestBody, err := json.Marshal(body)
 	if err != nil {
 		return entities.AppTokenValitaionResponseEntity{}, err
 	}
@@ -93,7 +96,7 @@ func getAppTokenValidationInAuth(dto authDto.AppTokenValidationRequest) (entitie
 
 	log.Println("auth service 호출! url : ", url)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(serverRequestBody))
 	if err != nil {
 		return entities.AppTokenValitaionResponseEntity{}, err
 	}
@@ -122,5 +125,63 @@ func toAppTokenValidationResponseEntity(dto authDto.AppTokenValidationResponse) 
 	return entities.AppTokenValitaionResponseEntity{
 		Result: dto.Result,
 		Data:   dto.Data,
+	}
+}
+
+func (r *publicUsecase) AppTokenReIssue(ctx context.Context, body clDto.AppTokenRefreshRequest) (*authDto.AppTokenRefreshResponse, error) {
+
+	// marshal
+	requestBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("marshal failed: %w", consts.ErrServerError)
+	}
+
+	url := "http://auth-service/auth/sv1/app-token-refresh"
+	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", consts.ErrServerError)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer serverToken")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("auth call failed: %w", consts.ErrServerError)
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read body failed: %w", consts.ErrServerError)
+	}
+
+	// 응답 코드에 따라 분기
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var result dto.ServerResponse[*authDto.AppTokenRefreshResponse]
+		if err := json.Unmarshal(bodyBytes, &result); err != nil {
+			return nil, fmt.Errorf("unmarshal failed: %w", consts.ErrServerError)
+		}
+		return result.Data, nil
+
+	case http.StatusBadRequest:
+		var errResp dto.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &errResp); err != nil {
+			return nil, fmt.Errorf("unmarshal error body failed: %w", consts.ErrServerError)
+		}
+
+		switch errResp.Code {
+		case "AUTH_F001":
+			return nil, consts.ErrRefreshTokenAuthInvalid
+		case "AUTH_F002":
+			return nil, consts.ErrRefreshTokenAuthExpired
+		default:
+			return nil, fmt.Errorf("unknown auth error: %w", consts.ErrServerError)
+		}
+
+	default:
+		return nil, consts.ErrServerError
 	}
 }

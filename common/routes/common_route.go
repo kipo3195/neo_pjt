@@ -14,6 +14,8 @@ func SetupRoutes(handlers *handlers.CommonHandlers) *mux.Router {
 
 	commonPub.HandleFunc("/app-validation", handlers.Public.AppValidation).Methods("GET")
 
+	commonPub.HandleFunc("/app-token-refresh", handlers.Public.AppTokenRefresh).Methods("POST")
+
 	commonV1 := r.PathPrefix("/common/v1").Subrouter()
 
 	// TODO 클라이언트 middleware

@@ -17,3 +17,9 @@ var ErrConfigHashInvalid = errors.New("config hash invalid")
 var ErrFileSizeExceeded = errors.New("file size exceeded")
 var ErrFileExtentionDetect = errors.New("file extension detect failed")
 var ErrFileExtentionInvalid = errors.New("file extension invalid")
+
+// 앱 토큰 재발급 API에서 refreshToken이 검증되지 않았을때 (일치하지 않을때)
+var ErrRefreshTokenAuthInvalid = errors.New("refresh token auth invalid")
+
+// 앱 토큰 재발급 API에서 refreshToken이 만료되었을때
+var ErrRefreshTokenAuthExpired = errors.New("refresh token expired")
