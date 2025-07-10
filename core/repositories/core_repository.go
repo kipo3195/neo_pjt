@@ -1,9 +1,7 @@
 package repositories
 
 import (
-	coreerrors "core/consts"
-	clDto "core/dto/client"
-	dto "core/dto/client"
+	clReqDto "core/dto/client/request"
 	"core/entities"
 	"core/models"
 	"errors"
@@ -23,8 +21,8 @@ type coreRepository struct {
 }
 
 type CoreRepository interface {
-	GetValidation(where entities.ValidationWhere) (bool, error)
-	GetWorksCommonInfo(body clDto.AppValidationRequest) (*entities.WorksCommonInfo, error)
+	GetValidation(where entities.ValidationEntity) (bool, error)
+	GetWorksCommonInfo(data clReqDto.AppValidationRequestBody) (*entities.WorksCommonInfo, error)
 }
 
 func NewCoreRepository(db *gorm.DB) CoreRepository {
@@ -32,29 +30,25 @@ func NewCoreRepository(db *gorm.DB) CoreRepository {
 	return &coreRepository{db: db}
 }
 
-func (r *coreRepository) GetValidation(where entities.ValidationWhere) (bool, error) {
+func (r *coreRepository) GetValidation(where entities.ValidationEntity) (bool, error) {
 	var validation models.AppValidation
 
 	result := r.db.Where("app_hash = ?", where.Hash).Where("device_kind = ?", where.Device).First(&validation)
 
-	// 에러 처리
-	if result.Error != nil {
-		log.Println("[GetValidation] - No record found or DB error")
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		// 조회 결과가 없을 때
+		fmt.Print("[GetValidation] result record = 0")
+		return false, result.Error
+	} else if result.Error != nil {
+		// 기타 에러 발생 (DB 오류 등)
+		fmt.Print("[GetValidation] DB error")
 		return false, result.Error
 	}
-	fmt.Println("appvalidation 조회 수  ", result.RowsAffected)
 
-	if result.RowsAffected > 0 {
-		// 1개이상 조회시만 true
-		return true, nil
-	} else {
-		log.Println("[GetValidation] - DB select X")
-		return false, nil
-	}
-
+	return true, nil
 }
 
-func (r *coreRepository) GetWorksCommonInfo(data dto.AppValidationRequest) (*entities.WorksCommonInfo, error) {
+func (r *coreRepository) GetWorksCommonInfo(data clReqDto.AppValidationRequestBody) (*entities.WorksCommonInfo, error) {
 
 	// model
 	var worksList models.WorksList
@@ -65,26 +59,18 @@ func (r *coreRepository) GetWorksCommonInfo(data dto.AppValidationRequest) (*ent
 
 	// 조회 결과가 없을때
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		log.Println("[GetWorksInfo] - No record found")
-		return nil, coreerrors.ErrInvalidMappingServer
-	}
-
-	// 에러 처리
-	if result.Error != nil {
-		log.Println("[GetWorksInfo] - DB error")
+		log.Println("[GetWorksCommonInfo] - No record found")
+		return nil, result.Error
+	} else if result.Error != nil {
+		log.Println("[GetWorksCommonInfo] - DB error")
 		return nil, result.Error
 	}
 
-	if result.RowsAffected > 0 {
-		return &entities.WorksCommonInfo{
-			ServerUrl: worksList.ServerUrl,
-			WorksCode: worksList.Code,
-			WorksName: worksList.Name,
-			UseYn:     worksList.UseYn,
-		}, nil
-	} else {
-		log.Println("[GetWorksInfo] - DB select X")
-		return nil, nil
-	}
+	return &entities.WorksCommonInfo{
+		ServerUrl: worksList.ServerUrl,
+		WorksCode: worksList.Code,
+		WorksName: worksList.Name,
+		UseYn:     worksList.UseYn,
+	}, nil
 
 }

@@ -1,6 +1,6 @@
 package common
 
-type IssuedAppToken struct {
+type IssuedAppTokenDTO struct {
 	AppToken     string `json:"appToken"`
 	RefreshToken string `json:"refreshToken"`
 }

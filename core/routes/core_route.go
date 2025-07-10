@@ -3,19 +3,24 @@ package routes
 import (
 	"core/handlers"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(handlers *handlers.CoreHandlers) *mux.Router {
-	r := mux.NewRouter()
-	// 메인 /core + 서브 라우터 활용
-	// v2 생성시 coreV2 := r.PathPrefix("/core/v2").Subrouter()..
-	coreV1 := r.PathPrefix("/core/v1").Subrouter()
+func SetupRoutes(handlers *handlers.CoreHandlers) *gin.Engine {
 
-	// TODO client 미들웨어
-	coreV1.HandleFunc("/app-validation", handlers.Core.GetAppValidation).Methods("POST")
+	r := gin.Default()
 
-	//----------------------------------------------------------------------------------------------------------------------------//
+	core := r.Group("/core")
+	{
+		// 	/core/v1
+		v1 := core.Group("/v1")
+		{
+			v1.POST("/app-validation", handlers.Core.GetAppValidation)
+		}
+
+		// 하위에 추가정의
+
+	}
 
 	return r
 }

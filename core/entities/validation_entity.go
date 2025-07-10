@@ -1,6 +1,6 @@
 package entities
 
-type ValidationWhere struct {
+type ValidationEntity struct {
 	Hash   string
 	Device string
 }
