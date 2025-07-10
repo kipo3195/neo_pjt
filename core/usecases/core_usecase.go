@@ -8,6 +8,7 @@ import (
 	commonSvReqDto "core/dto/server/common/request"
 	commonSvResDto "core/dto/server/common/response"
 	"core/entities"
+	storage "core/infra/storage"
 	"core/repositories"
 	"encoding/json"
 	"fmt"
@@ -15,7 +16,8 @@ import (
 )
 
 type coreUsecase struct {
-	repo repositories.CoreRepository
+	repo              repositories.CoreRepository
+	serverInfoStorage storage.ServerInfoStorage
 }
 
 type CoreUsecase interface {
@@ -23,8 +25,11 @@ type CoreUsecase interface {
 	GetWorksInfos(reqDto clReqDto.AppValidationRequestDTO) (*clResDto.AppValidationResponseDTO, error)
 }
 
-func NewCoreUsecase(repo repositories.CoreRepository) CoreUsecase {
-	return &coreUsecase{repo: repo}
+func NewCoreUsecase(repo repositories.CoreRepository, serverInfoStorage storage.ServerInfoStorage) CoreUsecase {
+	return &coreUsecase{
+		repo:              repo,
+		serverInfoStorage: serverInfoStorage,
+	}
 }
 
 func (u *coreUsecase) CheckValidation(header clReqDto.AppValidationRequestHeader) (bool, error) {
@@ -41,12 +46,23 @@ func toValidationEntity(header clReqDto.AppValidationRequestHeader) entities.Val
 
 func (u *coreUsecase) GetWorksInfos(reqDto clReqDto.AppValidationRequestDTO) (*clResDto.AppValidationResponseDTO, error) {
 
-	// DB 조회를 통한 works 서버 정보 조회
-	worksCommonInfo, err := u.repo.GetWorksCommonInfo(reqDto.Body)
-	fmt.Println("[GetWorksCommonInfo] worksCommonInfo : ", worksCommonInfo)
+	var worksCommonInfo *entities.WorksCommonInfo
+	worksCode := reqDto.Body.WorksCode
 
-	if err != nil {
-		return nil, err
+	// 메모리를 통한 조회
+	worksCommonInfo = u.serverInfoStorage.GetWorksCommonInfo(worksCode)
+
+	if worksCommonInfo == nil {
+		fmt.Printf("[GetWorksCommonInfo] %s's worksCommonInfo is empty... check DB  \n", worksCode)
+		// DB 조회를 통한 works 서버 정보 조회
+		info, err := u.repo.GetWorksCommonInfo(worksCode)
+
+		if err != nil {
+			fmt.Printf("[GetWorksCommonInfo] worksCode %s's worksCommonInfo is DB empty... process end. \n", worksCode)
+			return nil, err
+		}
+		u.serverInfoStorage.SaveWorksCommonInfo(worksCode, info)
+		worksCommonInfo = info
 	}
 
 	// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.

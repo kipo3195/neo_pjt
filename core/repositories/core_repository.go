@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	clReqDto "core/dto/client/request"
 	"core/entities"
 	"core/models"
 	"errors"
@@ -22,7 +21,7 @@ type coreRepository struct {
 
 type CoreRepository interface {
 	GetValidation(where entities.ValidationEntity) (bool, error)
-	GetWorksCommonInfo(data clReqDto.AppValidationRequestBody) (*entities.WorksCommonInfo, error)
+	GetWorksCommonInfo(worksCode string) (*entities.WorksCommonInfo, error)
 }
 
 func NewCoreRepository(db *gorm.DB) CoreRepository {
@@ -48,12 +47,12 @@ func (r *coreRepository) GetValidation(where entities.ValidationEntity) (bool, e
 	return true, nil
 }
 
-func (r *coreRepository) GetWorksCommonInfo(data clReqDto.AppValidationRequestBody) (*entities.WorksCommonInfo, error) {
+func (r *coreRepository) GetWorksCommonInfo(worksCode string) (*entities.WorksCommonInfo, error) {
 
 	// model
 	var worksList models.WorksList
 
-	result := r.db.Where("works_code = ? and use_yn = ?", data.WorksCode, "Y").First(&worksList)
+	result := r.db.Where("works_code = ? and use_yn = ?", worksCode, "Y").First(&worksList)
 
 	fmt.Println("도메인이나 코드를 전달 받아서 등록된 테넌트 인지 조회 결과 : ", result)
 
