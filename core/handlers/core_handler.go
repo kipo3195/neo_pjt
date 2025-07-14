@@ -33,6 +33,7 @@ func (h *CoreHandler) GetAppValidation(c *gin.Context) {
 		Uuid:   c.GetHeader(headerPrefix + "Uuid"),
 	}
 
+	// header 검증
 	if header.Hash == "" || header.Device == "" || header.Uuid == "" {
 		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
 		return
@@ -45,13 +46,13 @@ func (h *CoreHandler) GetAppValidation(c *gin.Context) {
 		return
 	}
 
-	dto := clReqDto.AppValidationRequestDTO{
+	requestDTO := clReqDto.AppValidationRequestDTO{
 		Header: header,
 		Body:   body,
 	}
 
 	// 배포 앱 hash 검증
-	_, err := h.usecase.CheckValidation(dto.Header)
+	_, err := h.usecase.CheckValidation(requestDTO.Header)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -64,7 +65,7 @@ func (h *CoreHandler) GetAppValidation(c *gin.Context) {
 	}
 
 	// 클라이언트가 넘겨준 Domain : 테넌트 정보로 검증
-	resDto, err := h.usecase.GetWorksInfos(dto)
+	resDto, err := h.usecase.GetWorksInfos(requestDTO)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

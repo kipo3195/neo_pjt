@@ -2,8 +2,10 @@ package usecases
 
 import (
 	"auth/claims"
+	"auth/config"
 	consts "auth/consts"
-	commonDto "auth/dto/server/common"
+	commonSvReqDto "auth/dto/server/common/request"
+	commonSvResDto "auth/dto/server/common/response"
 	"auth/entities"
 	"auth/repositories"
 	"context"
@@ -14,34 +16,30 @@ import (
 )
 
 type serverUsecase struct {
-	repo     repositories.ServerRepository
-	authRepo repositories.AuthRepository
+	repo   repositories.ServerRepository
+	jwtCfg *config.JWTConfig
 }
 
 type ServerUsecase interface {
-	AppTokenValidation(req commonDto.AppTokenValidationRequest, ctx context.Context) (bool, error)
+	AppTokenValidation(req commonSvReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error)
+	GenerateAppToken(body commonSvReqDto.GenerateAppTokenRequestBody) (*commonSvResDto.GenerateAppTokenResponseDTO, error)
 }
 
-func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.AuthRepository) ServerUsecase {
+func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.AuthRepository, jwtCfg *config.JWTConfig) ServerUsecase {
 	return &serverUsecase{
-		repo:     repo,
-		authRepo: authRepo,
+		repo:   repo,
+		jwtCfg: jwtCfg,
 	}
 }
 
-func (r *serverUsecase) AppTokenValidation(req commonDto.AppTokenValidationRequest, ctx context.Context) (bool, error) {
+func (r *serverUsecase) AppTokenValidation(requestDTO commonSvReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error) {
 
 	// authUsecase를 주입받아 사용.
-	flag, err := r.authRepo.GetValidation(toAppTokenValidationEntity(req.Uuid, req.AppToken))
+	flag, err := r.repo.GetValidation(toAppTokenValidationEntity(requestDTO.Body.Uuid, requestDTO.Body.AppToken))
+
 	if err != nil {
-		switch {
-		case errors.Is(err, consts.ErrDbRowNotFound):
-			// 매핑된 hash 정보가 없음
-			return false, err
-		default:
-			// 기타 DB 에러
-			return false, err
-		}
+		// DB error, 조회 X
+		return false, err
 	}
 
 	// 토큰 정보 불일치
@@ -49,7 +47,7 @@ func (r *serverUsecase) AppTokenValidation(req commonDto.AppTokenValidationReque
 		return false, consts.ErrInvalidClaims
 	}
 
-	err = appTokenValidationCheck(req.AppToken)
+	err = appTokenValidationCheck(requestDTO.Body.AppToken)
 
 	if err != nil {
 		// 만료 에러 확인
@@ -103,4 +101,43 @@ func appTokenValidationCheck(appToken string) error {
 		fmt.Println("토큰이 유효하지 않습니다.")
 		return errors.New(consts.ErrInvalidClaims.Error())
 	}
+}
+
+func (r *serverUsecase) GenerateAppToken(body commonSvReqDto.GenerateAppTokenRequestBody) (*commonSvResDto.GenerateAppTokenResponseDTO, error) {
+
+	// 토큰 발급
+	appToken, err := generateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
+
+	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, appToken)
+
+	if err != nil {
+		return nil, consts.ErrServerError
+	}
+
+	refreshToken, err := generateDeviceTokenJWT(r.jwtCfg.AppRefreshTokenExp, body.Uuid)
+	if err != nil {
+		return nil, consts.ErrServerError
+	}
+
+	// entity 생성
+	tokenEntity := &entities.AppTokenEntity{
+		Uuid:         body.Uuid,
+		AppToken:     appToken,
+		RefreshToken: refreshToken,
+	}
+
+	// DB 저장 실패시
+	result, err := r.repo.PutIssuedAppToken(tokenEntity)
+
+	if !result || err != nil {
+		return nil, err
+	}
+
+	return &commonSvResDto.GenerateAppTokenResponseDTO{
+		Body: commonSvResDto.GenerateAppTokenResponseBody{
+			Uuid:         tokenEntity.Uuid,
+			AppToken:     tokenEntity.AppToken,
+			RefreshToken: tokenEntity.RefreshToken,
+		},
+	}, nil
 }

@@ -2,13 +2,11 @@ package handlers
 
 import (
 	consts "auth/consts"
-	clDto "auth/dto/client"
-	dto "auth/dto/common"
-	commonDto "auth/dto/server/common"
+	clReqDto "auth/dto/client/request"
 	"auth/usecases"
 	"encoding/json"
-	"fmt"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
@@ -19,126 +17,55 @@ func NewAuthHandler(uc usecases.AuthUsecase) *AuthHandler {
 	return &AuthHandler{usecase: uc}
 }
 
-func newErrorResp(code, msg string) *dto.ErrorResponse {
-	return &dto.ErrorResponse{
-		Code:    code,
-		Message: msg,
-	}
-}
-
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-
-	// response
-	var res dto.Response
+func (h *AuthHandler) Login(c *gin.Context) {
 
 	// request의 header 데이터 -> dto로 변경
-	header := &clDto.LoginRequestHeader{
-		Token: r.Header.Get("X-NEO-AuthToken"),
-		Uuid:  r.Header.Get("X-NEO-Uuid"),
+	header := clReqDto.AuthRequestHeader{
+		Token: c.GetHeader(consts.LOGIN_HEADER_AUTH_TOKEN),
+		Uuid:  c.GetHeader(consts.LOGIN_HEADER_UUID),
 	}
+
 	// header 검증
-	if header.Token == "" {
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_104,
-			Message: consts.E_104_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if header.Token == "" || header.Uuid == "" {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
 		return
 	}
 
 	// request body 데이터 -> dto로 변경
-	var body *clDto.AuthRequest
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	var body clReqDto.AuthRequestBody
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
+	}
+
+	requestDTO := clReqDto.AuthRequestDTO{
+		Header: header,
+		Body:   body,
 	}
 
 	// 비즈니스 로직 호출
-	Auth, err, failFlag := h.usecase.GetAuth(header, body)
-
-	if failFlag { // 인증 실패
-		res.Result = consts.FAIL
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
-	} else if err != nil { // 에러
-		res.Result = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		// Entity -> dto로 변환은 handler에서 처리함.
-		res.Result = consts.SUCCESS
-		res.Data = clDto.AuthResponse{
-			AccessToken:  Auth.AccessToken,
-			RefreshToken: Auth.RefreshToken,
-		}
-	}
-	json.NewEncoder(w).Encode(res)
-
-}
-
-func (h *AuthHandler) GenerateAppToken(w http.ResponseWriter, r *http.Request) {
-	// response
-	var res commonDto.GenerateAppTokenResponse
-
-	// request의 header 데이터 -> dto로 변경
-	header := &commonDto.GenerateAppTokenRequestHeader{
-		Token: r.Header.Get("Authorization"),
-	}
-
-	fmt.Println("common service에서 호출시 던진 토큰 ", header.Token)
-
-	if header.Token == "" {
-		res.Code = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_104,
-			Message: consts.E_104_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-		return
-	}
-	// 서버의 토큰 검증 필요
-
-	// request body 데이터 -> dto로 변경
-	var body commonDto.GenerateAppTokenRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		res.Code = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-		return
-	}
-
-	// 토큰 발급, DB 저장.
-	result, err := h.usecase.GenerateAppToken(body)
-	fmt.Println("handler에서 토큰 구조체 반환 result : ", result)
+	resDto, err := h.usecase.GetAuth(requestDTO)
 
 	if err != nil {
-		res.Code = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_500,
-			Message: consts.E_500_MSG,
+
+		if err == consts.ErrUnregisteredUuid {
+			// 등록된 UUID가 아님
+			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F001, consts.AUTH_F001_MSG)
+		} else if err == consts.ErrTokenMismatch {
+			// 토큰 정보 불일치, 재발급 필요.
+			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F002, consts.AUTH_F002_MSG)
+		} else if err == consts.ErrAuthenticationFailed {
+			// 등록된 사용자가 없음.
+			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
+		} else if err == consts.ErrUnregisteredUser {
+			// 등록된 사용자가 아님.
+			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F004, consts.AUTH_F004_MSG)
+		} else {
+			// server error : db, jwt make
+			sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 		}
-		w.WriteHeader(http.StatusInternalServerError)
+
 	} else {
-		res.Code = consts.SUCCESS
-		res.Data = result
+		sendSuccessResponse(c, resDto.Body)
 	}
-
-	fmt.Println("handler에서 결과 반환 res : ", res)
-
-	json.NewEncoder(w).Encode(res)
-
 }

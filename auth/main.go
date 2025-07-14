@@ -26,7 +26,7 @@ func InitServer() *http.Server {
 	authHandler := handlers.NewAuthHandler(authUsecase)
 
 	serverRepo := repositories.NewServerRepository(db)
-	serverUsecase := usecases.NewServerUsecase(serverRepo, authRepo)
+	serverUsecase := usecases.NewServerUsecase(serverRepo, authRepo, sfg.GetJWTConfig())
 	serverHandler := handlers.NewServerHandler(serverUsecase)
 
 	router := routes.SetupRoutes(authHandler, serverHandler)

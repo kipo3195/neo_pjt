@@ -3,14 +3,14 @@ package handlers
 import (
 	consts "auth/consts"
 	dto "auth/dto/common"
-	commonDto "auth/dto/server/common"
+	commonSvReqDto "auth/dto/server/common/request"
 	"auth/usecases"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ServerHandler struct {
@@ -21,70 +21,93 @@ func NewServerHandler(uc usecases.ServerUsecase) *ServerHandler {
 	return &ServerHandler{usecase: uc}
 }
 
-func (h *ServerHandler) AppTokenValidation(w http.ResponseWriter, r *http.Request) {
-	// context 생성
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+func (h *ServerHandler) GenerateAppToken(c *gin.Context) {
 
-	fmt.Println("1")
-	// response
-	var res dto.Response
+	// request의 header 데이터 -> dto로 변경
+	header := commonSvReqDto.GenerateAppTokenRequestHeader{
+		Token: c.GetHeader(consts.AUTHORIZATION),
+	}
 
-	var req commonDto.AppTokenValidationRequest
+	fmt.Println("common service에서 호출시 던진 토큰 ", header.Token)
 
-	fmt.Println("2")
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if header.Token == "" {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
 		return
 	}
 
-	data, err := h.usecase.AppTokenValidation(req, ctx)
-	fmt.Println(data, err)
-	// 이거 나중에 모듈화 꼭 할 것
-	if err != nil || !data { // 에러
-		fmt.Println(err)
-		switch {
-		case errors.Is(err, consts.ErrDbRowNotFound):
-			// 매핑된 hash 정보가 없음
-			res.Result = consts.FAIL
-			res.Data = newErrorResp(consts.AUTH_F001, consts.AUTH_F001_MSG)
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Is(err, consts.ErrTokenExpired):
-			res.Result = consts.ERROR
-			res.Data = newErrorResp(consts.E_107, consts.E_107_MSG)
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Is(err, consts.ErrTokenSignatureInvalid):
-			res.Result = consts.FAIL
-			res.Data = newErrorResp(consts.AUTH_F005, consts.AUTH_F005_MSG)
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Is(err, consts.ErrDB):
-			res.Result = consts.ERROR
-			res.Data = newErrorResp(consts.E_102, consts.E_102_MSG)
-			w.WriteHeader(http.StatusInternalServerError)
-		case errors.Is(err, consts.ErrTokenParsing):
-			res.Result = consts.ERROR
-			res.Data = newErrorResp(consts.E_105, consts.E_105_MSG)
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Is(err, consts.ErrInvalidClaims):
-			res.Result = consts.FAIL
-			res.Data = newErrorResp(consts.AUTH_F002, consts.AUTH_F002_MSG)
-			w.WriteHeader(http.StatusBadRequest)
-		default:
-			res.Result = consts.ERROR
-			res.Data = newErrorResp(consts.E_500, consts.E_500_MSG)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	} else {
-		res.Result = consts.SUCCESS
-		// 데이터가 있어야할까?
+	// request body 데이터 -> dto로 변경
+	var body commonSvReqDto.GenerateAppTokenRequestBody
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
+		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	requestDTO := commonSvReqDto.GenerateAppTokenRequestDTO{
+		// Header: header,
+		Body: body,
+	}
+
+	// 토큰 발급, DB 저장.
+	resDto, err := h.usecase.GenerateAppToken(requestDTO.Body)
+
+	fmt.Println("handler에서 토큰 구조체 반환 resDto : ", resDto)
+
+	if err != nil {
+		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+	} else {
+		sendSuccessResponse(c, resDto.Body)
+	}
+
+	fmt.Println("handler에서 결과 반환 res : ", resDto.Body)
+
+}
+
+func sendErrorResponse(c *gin.Context, status int, result string, code string, msg string) {
+
+	res := dto.ResponseDTO[dto.ErrorDataDTO]{ // 제네릭 타입 명시 - ResponseDTO의 DATA 'T'에 들어갈 타입을 말함.
+		Result: result, // error, fail
+		Data: dto.ErrorDataDTO{
+			Code:    code,
+			Message: msg,
+		},
+	}
+	c.AbortWithStatusJSON(status, res)
+}
+
+func sendSuccessResponse[T any](c *gin.Context, t T) {
+	res := dto.ResponseDTO[T]{ // 제네릭 타입 명시 - success는 어떤 DTO라도 들어갈 수 있으므로 any
+		Result: consts.SUCCESS,
+		Data:   t,
+	}
+	c.AbortWithStatusJSON(200, res) // 200 고정
+}
+
+func (h *ServerHandler) AppTokenValidation(c *gin.Context) {
+
+	var body commonSvReqDto.AppTokenValidationRequestBody
+
+	ctx := c.Request.Context()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
+		return
+	}
+
+	requestDTO := commonSvReqDto.AppTokenValidationRequestDTO{
+		Body: body,
+	}
+
+	resDto, err := h.usecase.AppTokenValidation(requestDTO, ctx)
+
+	// 이거 나중에 모듈화 꼭 할 것
+	if err != nil || !resDto { // 에러
+		fmt.Println(err)
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
+	} else {
+		sendSuccessResponse(c, "")
+	}
+
 }

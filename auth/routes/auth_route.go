@@ -3,27 +3,28 @@ package routes
 import (
 	"auth/handlers"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(authHandler *handlers.AuthHandler, serverHandler *handlers.ServerHandler) *mux.Router {
-	r := mux.NewRouter()
+func SetupRoutes(authHandler *handlers.AuthHandler, serverHandler *handlers.ServerHandler) *gin.Engine {
 
-	authV1 := r.PathPrefix("/auth/v1").Subrouter()
+	r := gin.Default()
 
-	// 사용자 인증
-	authV1.HandleFunc("/login", authHandler.Login).Methods("POST")
+	auth := r.Group("/auth")
+	{
 
-	//----------------------------------------------------------------------------------------------------------------------------//
+		v1 := auth.Group("/v1")
+		{
+			v1.POST("/login", authHandler.Login)
+		}
 
-	// server to server
-	authSV1 := r.PathPrefix("/auth/sv1").Subrouter()
+		sv1 := auth.Group("/sv1")
+		{
+			sv1.POST("/generate-app-token", serverHandler.GenerateAppToken)
+			sv1.POST("/app-token-validation", serverHandler.AppTokenValidation)
+		}
 
-	// 최초 인증시 토큰 발급 common 서버로 부터 호출 받음.
-	authSV1.HandleFunc("/generate-app-token", authHandler.GenerateAppToken).Methods("POST")
-
-	// 장시간 인증 X 상태에서 fore 왔을때 앱 토큰 검증 common서버로 부터 호출 받음. 마지막 발급 키(limit 1)를 기준으로 체크
-	authSV1.HandleFunc("/app-token-validation", serverHandler.AppTokenValidation).Methods("POST")
+	}
 
 	return r
 }

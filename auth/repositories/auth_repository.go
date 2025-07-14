@@ -1,10 +1,8 @@
 package repositories
 
 import (
-	customErr "auth/consts"
 	"auth/entities"
 	"auth/models"
-	"errors"
 	"fmt"
 	"log"
 
@@ -18,7 +16,6 @@ type authRepository struct {
 type AuthRepository interface {
 	CheckAuth(entity entities.AuthInfoEntity) (*models.AuthInfo, error)
 	GetUserHash(entity entities.AuthInfoEntity) (string, error)
-	PutIssuedAppToken(token *entities.AppTokenEntity) (bool, error)
 	GetValidation(entity entities.AppTokenValidationEntity) (bool, error)
 }
 
@@ -33,24 +30,27 @@ func (r *authRepository) CheckAuth(entity entities.AuthInfoEntity) (*models.Auth
 
 	err := r.db.Where("id = ?", entity.Id).Where("password = ?", entity.Password).First(&auth).Error
 
-	if err == gorm.ErrRecordNotFound {
-		// SQL 실행 중 에러가 발생한 경우
-		log.Println("[GetAuth] - No record found or DB error")
-		return nil, gorm.ErrRecordNotFound
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// SQL 실행 중 에러가 발생한 경우
+			log.Println("[GetAuth] - No record found or DB error")
+			return nil, gorm.ErrRecordNotFound
+		} else {
+			return nil, err
+		}
 	}
 	return auth, nil
 }
 
 func (r *authRepository) GetUserHash(entity entities.AuthInfoEntity) (string, error) {
-	var user struct {
-		UserHash string
-	}
+
+	var userHash string
 
 	result := r.db.Raw(`
 		SELECT su.user_hash 
 		FROM service_users su
 		JOIN auth_info ai ON su.user_id = ai.id
-		WHERE su.use_yn = 'Y' AND ai.id = ?`, entity.Id).Scan(&user)
+		WHERE su.use_yn = 'Y' AND ai.id = ?`, entity.Id).Scan(&userHash)
 
 	if result.Error != nil {
 		return "", result.Error
@@ -59,21 +59,7 @@ func (r *authRepository) GetUserHash(entity entities.AuthInfoEntity) (string, er
 		return "", gorm.ErrRecordNotFound
 	}
 
-	return user.UserHash, nil
-}
-
-func (r *authRepository) PutIssuedAppToken(token *entities.AppTokenEntity) (bool, error) {
-
-	// entity -> model
-	models := toAppTokenModel(token)
-
-	// Insert 실행
-	if err := r.db.Create(&models).Error; err != nil {
-		log.Println("[PutAppToken] - DB error")
-		return false, err
-	}
-
-	return true, nil
+	return userHash, nil
 }
 
 func toAppTokenModel(e *entities.AppTokenEntity) *models.IssuedAppToken {
@@ -92,15 +78,10 @@ func (r *authRepository) GetValidation(entity entities.AppTokenValidationEntity)
 
 	result := r.db.Where("uuid = ?", entity.Uuid).Order("seq DESC").First(&validation)
 
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		log.Println("[GetValidation] - No record found")
-		return false, customErr.ErrDbRowNotFound
-	} else if result.Error != nil {
-		log.Println("[GetValidation] - DB error")
-		return false, customErr.ErrDB
+	if result.Error != nil {
+		return false, result.Error
 	} else {
 		serverToken := validation.AppToken
-		fmt.Printf("UUID %s 로 조회된 토큰 : %s \n", entity.Uuid, serverToken)
 		if serverToken == entity.AppToken {
 			// 토큰 일치
 			return true, nil
@@ -110,4 +91,23 @@ func (r *authRepository) GetValidation(entity entities.AppTokenValidationEntity)
 			return false, nil
 		}
 	}
+
+	// if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	// 	log.Println("[GetValidation] - No record found")
+	// 	return false, result.Error
+	// } else if result.Error != nil {
+	// 	log.Println("[GetValidation] - DB error")
+	// 	return false, result.Error
+	// } else {
+	// 	serverToken := validation.AppToken
+	// 	fmt.Printf("UUID %s 로 조회된 토큰 : %s \n", entity.Uuid, serverToken)
+	// 	if serverToken == entity.AppToken {
+	// 		// 토큰 일치
+	// 		return true, nil
+	// 	} else {
+	// 		// 토큰 불일치
+	// 		log.Println("[GetValidation] - token mismatch")
+	// 		return false, nil
+	// 	}
+	// }
 }
