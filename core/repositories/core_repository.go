@@ -10,11 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	DOMAIN = "domain"
-	CODE   = "code"
-)
-
 type coreRepository struct {
 	db *gorm.DB
 }

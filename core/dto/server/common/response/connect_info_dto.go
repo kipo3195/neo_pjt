@@ -1,5 +1,5 @@
 package common
 
-type ConnectInfo struct {
+type ConnectInfoDTO struct {
 	ServerUrl string `json:"serverUrl"`
 }
