@@ -5,12 +5,11 @@ import (
 	orgDto "admin/dto/client/org"
 	dto "admin/dto/common"
 	"admin/usecases"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -23,12 +22,11 @@ func NewOrgHandler(r usecases.OrgUsecase) *OrgHandler {
 	return &OrgHandler{usecase: r}
 }
 
-func (h *OrgHandler) CreateDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) CreateDept(c *gin.Context) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+	// 이미 timeout이 걸려있는 ctx이므로 그대로 사용만 하면됨.
+	ctx := c.Request.Context()
 
 	// response dto 생성
 	var res = orgDto.CreateDeptResponse{}

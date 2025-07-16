@@ -4,25 +4,36 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
-func TimeoutMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 이 코드는 5초후에 채널이 ctx.Done()채널이 닫히면서 취소신호를 보냄.
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		// 그러므로 5초이상이 걸릴법한 비즈니스 로직에서 아래 주석과 같은 로직을 작성하여 처리 할 수 있음.
+func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
 
-		// select {
-		// case <-ctx.Done():
-		// 	// 요청 취소 또는 타임아웃 발생
-		// 	return ctx.Err()
-		// default:
-		// 계속 작업
-		//}
-
+	return func(c *gin.Context) {
+		// context.WithTimeout으로 타임아웃 설정 (context.WithTimeout에서 발생하는 "신호"는 명시적 호출 없이 자동으로 발생합니다.)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
 		defer cancel()
+		// defer 없이 cancel() // 수동으로 취소
 
-		// r.WithContext(ctx)로 새 컨텍스트 넣기
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+		// 새 context로 request 갱신
+		c.Request = c.Request.WithContext(ctx)
+
+		// 채널을 이용해 완료 여부 체크
+		finished := make(chan struct{})
+		go func() {
+			c.Next() // 다음 미들웨어/핸들러 실행
+			close(finished)
+		}()
+
+		select {
+		case <-ctx.Done():
+			// 타임아웃 발생
+			c.AbortWithStatusJSON(http.StatusGatewayTimeout, gin.H{
+				"error": "request timed out",
+			})
+		case <-finished:
+			// 정상 완료
+		}
+	}
 }

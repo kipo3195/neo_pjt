@@ -3,13 +3,17 @@ package usecases
 import (
 	"admin/consts"
 	commonDto "admin/dto/client/common"
+	commonReqDto "admin/dto/client/common/request"
 	"admin/repositories"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -19,7 +23,7 @@ type commonUsecase struct {
 }
 
 type CommonUsecase interface {
-	CreateSkinImg(ctx context.Context, dto commonDto.CreateSkinImgRequest) (interface{}, error)
+	CreateSkinImg(ctx context.Context, body commonReqDto.CreateSkinImgRequestBody) (interface{}, error)
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
@@ -28,20 +32,19 @@ func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
 	}
 }
 
-func (r *commonUsecase) CreateSkinImg(ctx context.Context, dto commonDto.CreateSkinImgRequest) (interface{}, error) {
-	defer dto.File.Close()
+func (r *commonUsecase) CreateSkinImg(ctx context.Context, body commonReqDto.CreateSkinImgRequestBody) (interface{}, error) {
 
 	fmt.Println("11")
+
 	// 파일의 사이즈 검증
-	fileSize := dto.FileInfo.Size
-	sizeCheck := checkSkinImgSize(fileSize)
+	sizeCheck := checkSkinImgSize(body.FileSize)
 	if !sizeCheck {
 		return nil, consts.ErrFileSizeExceeded
 	}
 
 	fmt.Println("22")
 	// 파일의 확장자 검증 (이미지인지 판단.)
-	detectedType, err := detectContentType(dto.File)
+	detectedType, err := ValidateImageFile(body.FileName, body.File)
 	if err != nil {
 		return nil, consts.ErrFileExtentionDetect
 	}
@@ -64,18 +67,38 @@ func checkSkinImgSize(size int64) bool {
 	return true
 }
 
-func detectContentType(file multipart.File) (string, error) {
-	// 처음 몇 바이트를 읽어 content-type 추론
-	buffer := make([]byte, 512)
-	_, err := file.Read(buffer)
-	if err != nil {
-		return "", err
+var (
+	// 허용 가능한 확장자 및 MIME 타입 목록 -> 서버 설정 또는 메모리 로딩 필요
+	allowedExtensions = map[string]string{
+		".jpg":  "image/jpeg",
+		".jpeg": "image/jpeg",
+		".png":  "image/png",
+		".webp": "image/webp",
+	}
+)
+
+func ValidateImageFile(fileName string, fileBytes []byte) error {
+	// 확장자 소문자로 정리
+	ext := strings.ToLower(filepath.Ext(fileName))
+
+	// 1. 확장자 허용 여부 확인
+	expectedMime, ok := allowedExtensions[ext]
+	if !ok {
+		return errors.New("허용되지 않은 파일 확장자입니다")
 	}
 
-	// 원위치로 되돌리기 (seek back to beginning)
-	file.Seek(0, io.SeekStart)
+	// 2. MIME 타입 확인 (내용 기반)
+	detectedMime := http.DetectContentType(fileBytes[:min(512, len(fileBytes))])
+	if detectedMime != expectedMime {
+		return errors.New("파일 내용이 확장자와 일치하지 않습니다 (위조 가능성)")
+	}
 
-	return http.DetectContentType(buffer), nil
+	// 3. (선택) 파일 이름이 이상하거나 잘못된 확장자를 포함하는 경우도 막을 수 있음
+	if _, _, err := mime.ParseMediaType(detectedMime); err != nil {
+		return errors.New("올바르지 않은 MIME 타입입니다")
+	}
+
+	return nil
 }
 
 func skinImgforwardToCommon(ctx context.Context, dto commonDto.CreateSkinImgRequest) error {
