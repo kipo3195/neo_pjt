@@ -5,10 +5,8 @@ import (
 	commonReqDto "admin/dto/client/common/request"
 	dto "admin/dto/common"
 	"admin/usecases"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -90,22 +88,20 @@ func (h *CommonHandler) CreateSkinImg(c *gin.Context) {
 		Body: body,
 	}
 
-	data, err := h.usecase.CreateSkinImg(ctx, requestDTO.Body)
+	err = h.usecase.CreateSkinImg(ctx, requestDTO.Body)
 
-	fmt.Println("admin 서비스 스킨 이미지 업로드에 대한 response : ", data)
+	fmt.Println("admin 서비스 스킨 이미지 업로드에 대한 response : ", err)
 
-	if err == nil {
-		// http status code 200
-		res.Result = consts.SUCCESS
-		res.Data = data
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_500,
-			Message: consts.E_500_MSG,
+	if err != nil {
+
+		if err == consts.ErrFileSizeExceeded {
+			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F002, consts.ADMIN_F002_MSG)
+		} else if err == consts.ErrFileExtentionDetect {
+			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F003, consts.ADMIN_F003_MSG)
+		} else {
+			sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 		}
+	} else {
+		sendSuccessResponse(c, "")
 	}
-	// response.
-	json.NewEncoder(w).Encode(res)
 }

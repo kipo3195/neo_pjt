@@ -8,4 +8,5 @@ var ErrTokenExpired = errors.New("token has expired")
 
 var ErrFileSizeExceeded = errors.New("file size exceeded")
 var ErrFileExtentionDetect = errors.New("file extension detect failed")
-var ErrFileExtentionInvalid = errors.New("file extension invalid")
+
+var ErrServerApiCallError = errors.New("server api call error")
