@@ -5,8 +5,8 @@ import (
 	clReqDto "core/dto/client/request"
 	clResDto "core/dto/client/response"
 	dto "core/dto/common"
-	commonSvReqDto "core/dto/server/common/request"
-	commonSvResDto "core/dto/server/common/response"
+	svCommonReqDto "core/dto/server/common/request"
+	svCommonResDto "core/dto/server/common/response"
 	"core/entities"
 	storage "core/infra/storage"
 	"core/repositories"
@@ -84,23 +84,23 @@ func (u *coreUsecase) GetWorksInfos(reqDto clReqDto.AppValidationRequestDTO) (*c
 
 }
 
-func toWorksInfoRequestDtoBody(uuid string, device string, worksCode string) commonSvReqDto.DeviceInitRequestBody {
+func toWorksInfoRequestDtoBody(uuid string, device string, worksCode string) svCommonReqDto.DeviceInitRequestBody {
 
-	return commonSvReqDto.DeviceInitRequestBody{
+	return svCommonReqDto.DeviceInitRequestBody{
 		Uuid:      uuid,
 		WorksCode: worksCode,
 		Device:    device,
 	}
 }
 
-func getWorksInfoInCommon(body commonSvReqDto.DeviceInitRequestBody, serverUrl string) (*commonSvResDto.DeviceInitResponseBody, error) {
+func getWorksInfoInCommon(body svCommonReqDto.DeviceInitRequestBody, serverUrl string) (*svCommonResDto.DeviceInitResponseBody, error) {
 
 	// server to server DTO 정의
-	header := commonSvReqDto.DeviceInitRequestHeader{
+	header := svCommonReqDto.DeviceInitRequestHeader{
 		ServerToken: "",
 	}
 
-	reqDto := commonSvReqDto.DeviceInitRequestDTO{
+	reqDto := svCommonReqDto.DeviceInitRequestDTO{
 		Header: header,
 		Body:   body,
 	}
@@ -133,7 +133,7 @@ func getWorksInfoInCommon(body commonSvReqDto.DeviceInitRequestBody, serverUrl s
 	defer resp.Body.Close()
 
 	// serverResponse로 전달받기 -> dto 뽑아내기 제네릭
-	var result dto.ServerResponseDTO[*commonSvResDto.DeviceInitResponseBody]
+	var result dto.ServerResponseDTO[*svCommonResDto.DeviceInitResponseBody]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Println("serverReponse 파싱시 에러")

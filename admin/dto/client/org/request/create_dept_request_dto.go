@@ -1,6 +1,11 @@
 package org
 
-type CreateDeptRequest struct {
+type CreateDeptRequestDTO struct {
+	Header CreateDeptRequestHeader
+	Body   CreateDeptRequestBody
+}
+
+type CreateDeptRequestBody struct {
 	DeptCode       string `json:"deptCode" validate:"required"`
 	DeptOrg        string `json:"deptOrg" validate:"required"`
 	ParentDeptCode string `json:"parentDeptCode" validate:"required"`
@@ -11,4 +16,8 @@ type CreateDeptRequest struct {
 	RuLang         string `json:"ru"`
 	ViLang         string `json:"vi"`
 	Header         string `json:"header"` // 부서장
+
+}
+
+type CreateDeptRequestHeader struct {
 }

@@ -4,8 +4,8 @@ import (
 	"auth/claims"
 	"auth/config"
 	consts "auth/consts"
-	commonSvReqDto "auth/dto/server/common/request"
-	commonSvResDto "auth/dto/server/common/response"
+	svCommonReqDto "auth/dto/server/common/request"
+	svCommonResDto "auth/dto/server/common/response"
 	"auth/entities"
 	"auth/repositories"
 	"context"
@@ -21,8 +21,8 @@ type serverUsecase struct {
 }
 
 type ServerUsecase interface {
-	AppTokenValidation(req commonSvReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error)
-	GenerateAppToken(body commonSvReqDto.GenerateAppTokenRequestBody) (*commonSvResDto.GenerateAppTokenResponseDTO, error)
+	AppTokenValidation(req svCommonReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error)
+	GenerateAppToken(body svCommonReqDto.GenerateAppTokenRequestBody) (*svCommonResDto.GenerateAppTokenResponseDTO, error)
 }
 
 func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.AuthRepository, jwtCfg *config.JWTConfig) ServerUsecase {
@@ -32,7 +32,7 @@ func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.
 	}
 }
 
-func (r *serverUsecase) AppTokenValidation(requestDTO commonSvReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error) {
+func (r *serverUsecase) AppTokenValidation(requestDTO svCommonReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error) {
 
 	// authUsecase를 주입받아 사용.
 	flag, err := r.repo.GetValidation(toAppTokenValidationEntity(requestDTO.Body.Uuid, requestDTO.Body.AppToken))
@@ -103,7 +103,7 @@ func appTokenValidationCheck(appToken string) error {
 	}
 }
 
-func (r *serverUsecase) GenerateAppToken(body commonSvReqDto.GenerateAppTokenRequestBody) (*commonSvResDto.GenerateAppTokenResponseDTO, error) {
+func (r *serverUsecase) GenerateAppToken(body svCommonReqDto.GenerateAppTokenRequestBody) (*svCommonResDto.GenerateAppTokenResponseDTO, error) {
 
 	// 토큰 발급
 	appToken, err := generateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
@@ -133,8 +133,8 @@ func (r *serverUsecase) GenerateAppToken(body commonSvReqDto.GenerateAppTokenReq
 		return nil, err
 	}
 
-	return &commonSvResDto.GenerateAppTokenResponseDTO{
-		Body: commonSvResDto.GenerateAppTokenResponseBody{
+	return &svCommonResDto.GenerateAppTokenResponseDTO{
+		Body: svCommonResDto.GenerateAppTokenResponseBody{
 			Uuid:         tokenEntity.Uuid,
 			AppToken:     tokenEntity.AppToken,
 			RefreshToken: tokenEntity.RefreshToken,

@@ -3,7 +3,7 @@ package handlers
 import (
 	consts "auth/consts"
 	dto "auth/dto/common"
-	commonSvReqDto "auth/dto/server/common/request"
+	svCommonReqDto "auth/dto/server/common/request"
 	"auth/usecases"
 	"context"
 	"encoding/json"
@@ -24,7 +24,7 @@ func NewServerHandler(uc usecases.ServerUsecase) *ServerHandler {
 func (h *ServerHandler) GenerateAppToken(c *gin.Context) {
 
 	// request의 header 데이터 -> dto로 변경
-	header := commonSvReqDto.GenerateAppTokenRequestHeader{
+	header := svCommonReqDto.GenerateAppTokenRequestHeader{
 		Token: c.GetHeader(consts.AUTHORIZATION),
 	}
 
@@ -36,14 +36,14 @@ func (h *ServerHandler) GenerateAppToken(c *gin.Context) {
 	}
 
 	// request body 데이터 -> dto로 변경
-	var body commonSvReqDto.GenerateAppTokenRequestBody
+	var body svCommonReqDto.GenerateAppTokenRequestBody
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
 		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
 		return
 	}
 
-	requestDTO := commonSvReqDto.GenerateAppTokenRequestDTO{
+	requestDTO := svCommonReqDto.GenerateAppTokenRequestDTO{
 		// Header: header,
 		Body: body,
 	}
@@ -85,7 +85,7 @@ func sendSuccessResponse[T any](c *gin.Context, t T) {
 
 func (h *ServerHandler) AppTokenValidation(c *gin.Context) {
 
-	var body commonSvReqDto.AppTokenValidationRequestBody
+	var body svCommonReqDto.AppTokenValidationRequestBody
 
 	ctx := c.Request.Context()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -96,7 +96,7 @@ func (h *ServerHandler) AppTokenValidation(c *gin.Context) {
 		return
 	}
 
-	requestDTO := commonSvReqDto.AppTokenValidationRequestDTO{
+	requestDTO := svCommonReqDto.AppTokenValidationRequestDTO{
 		Body: body,
 	}
 

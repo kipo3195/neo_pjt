@@ -2,7 +2,9 @@ package usecases
 
 import (
 	orgDto "admin/dto/client/org"
+	clOrgReqDto "admin/dto/client/org/request"
 	"admin/entities"
+	orgEntity "admin/entities/org"
 	"admin/repositories"
 	"bytes"
 	"context"
@@ -16,7 +18,7 @@ type orgUsecase struct {
 }
 
 type OrgUsecase interface {
-	CreateDepartment(ctx context.Context, req orgDto.CreateDeptRequest) (interface{}, error)
+	CreateDepartment(ctx context.Context, requestDTO clOrgReqDto.CreateDeptRequestDTO) error
 	DeleteDepartment(ctx context.Context, req orgDto.DeleteDeptRequest) (interface{}, error)
 	CreateOrgFile(ctx context.Context, req orgDto.CreateOrgFileRequest) (interface{}, error)
 
@@ -28,35 +30,35 @@ func NewOrgUsecase(repo repositories.OrgRepository) OrgUsecase {
 	return &orgUsecase{repo: repo}
 }
 
-func (r *orgUsecase) CreateDepartment(ctx context.Context, req orgDto.CreateDeptRequest) (interface{}, error) {
-	entity := toCreateDepartmentEntity(req)
+func (r *orgUsecase) CreateDepartment(ctx context.Context, requestDTO clOrgReqDto.CreateDeptRequestDTO) error {
+	entity := toCreateDepartmentEntity(requestDTO.Body)
 	// org 서비스 호출
 
 	// 이 함수 내부에서 호출
 	err := createDepartmentInOrg(ctx, entity)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return nil, nil
+	return nil
 }
 
-func toCreateDepartmentEntity(req orgDto.CreateDeptRequest) entities.CreateDepartmentEntity {
+func toCreateDepartmentEntity(body clOrgReqDto.CreateDeptRequestBody) orgEntity.CreateDepartmentEntity {
 
-	return entities.CreateDepartmentEntity{
-		DeptCode:       req.DeptCode,
-		DeptOrg:        req.DeptOrg,
-		ParentDeptCode: req.ParentDeptCode,
-		KoLang:         req.KoLang,
-		EnLang:         req.EnLang,
-		JpLang:         req.JpLang,
-		ZhLang:         req.ZhLang,
-		ViLang:         req.ViLang,
-		Header:         req.Header,
+	return orgEntity.CreateDepartmentEntity{
+		DeptCode:       body.DeptCode,
+		DeptOrg:        body.DeptOrg,
+		ParentDeptCode: body.ParentDeptCode,
+		KoLang:         body.KoLang,
+		EnLang:         body.EnLang,
+		JpLang:         body.JpLang,
+		ZhLang:         body.ZhLang,
+		ViLang:         body.ViLang,
+		Header:         body.Header,
 	}
 }
 
-func createDepartmentInOrg(ctx context.Context, entity entities.CreateDepartmentEntity) error {
+func createDepartmentInOrg(ctx context.Context, entity orgEntity.CreateDepartmentEntity) error {
 
 	payload, _ := json.Marshal(entity)
 
