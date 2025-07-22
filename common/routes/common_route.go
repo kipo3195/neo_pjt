@@ -3,40 +3,68 @@ package routes
 import (
 	"common/handlers"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(handlers *handlers.CommonHandlers) *mux.Router {
-	r := mux.NewRouter()
+func SetupRoutes(handlers *handlers.CommonHandlers) *gin.Engine {
 
-	// 토큰을 검증하지 않는 로직
-	commonPub := r.PathPrefix("/common/pub").Subrouter()
+	r := gin.Default()
 
-	commonPub.HandleFunc("/app-validation", handlers.Public.AppValidation).Methods("GET")
+	common := r.Group("/common")
+	{
 
-	commonPub.HandleFunc("/app-token-refresh", handlers.Public.AppTokenRefresh).Methods("POST")
+		// 토큰을 검증하지 않는 로직
+		public := common.Group("/public")
+		{
+			public.GET("", handlers.Public.AppValidation)
+			public.POST("", handlers.Public.AppTokenRefresh)
+		}
 
-	commonV1 := r.PathPrefix("/common/v1").Subrouter()
+		// 일부 API에 middleware 적용
+		v1 := common.Group("/v1")
+		v1.Use(AuthMiddleware)
 
-	// TODO 클라이언트 middleware
-	commonV1.Use(AuthMiddleware)
+		{
+			v1.GET("/config-hash", handlers.Common.GetConfigHash)
+			v1.GET("/skin-img", handlers.Common.GetSkinImage)
 
-	// configHash 검증
-	commonV1.HandleFunc("/config-hash", handlers.Common.GetConfigHash).Methods("GET")
+		}
 
-	// 스킨 이미지 요청
-	commonV1.HandleFunc("/skin-img", handlers.Common.GetSkinImage).Methods("GET")
+		sv1 := common.Group("/sv1")
+		{
+			sv1.POST("/device-init", handlers.Server.DeviceInit)
+			sv1.POST("/skin-img", handlers.Server.PutSkinImg)
+		}
+	}
 
-	//----------------------------------------------------------------------------------------------------------------------------//
+	// // 토큰을 검증하지 않는 로직
+	// commonPub := r.PathPrefix("/common/pub").Subrouter()
 
-	// TODO 서버 middleware
-	commonSV1 := r.PathPrefix("/common/sv1").Subrouter()
+	// commonPub.HandleFunc("/app-validation", handlers.Public.AppValidation).Methods("GET")
 
-	// core
-	commonSV1.HandleFunc("/device-init", handlers.Server.DeviceInit).Methods("POST")
+	// commonPub.HandleFunc("/app-token-refresh", handlers.Public.AppTokenRefresh).Methods("POST")
 
-	// admin 스킨 파일 업로드
-	commonSV1.HandleFunc("/skin-img", handlers.Server.PutSkinImg).Methods("POST")
+	// commonV1 := r.PathPrefix("/common/v1").Subrouter()
+
+	// // TODO 클라이언트 middleware
+	// commonV1.Use(AuthMiddleware)
+
+	// // configHash 검증
+	// commonV1.HandleFunc("/config-hash", handlers.Common.GetConfigHash).Methods("GET")
+
+	// // 스킨 이미지 요청
+	// commonV1.HandleFunc("/skin-img", handlers.Common.GetSkinImage).Methods("GET")
+
+	// //----------------------------------------------------------------------------------------------------------------------------//
+
+	// // TODO 서버 middleware
+	// commonSV1 := r.PathPrefix("/common/sv1").Subrouter()
+
+	// // core
+	// commonSV1.HandleFunc("/device-init", handlers.Server.DeviceInit).Methods("POST")
+
+	// // admin 스킨 파일 업로드
+	// commonSV1.HandleFunc("/skin-img", handlers.Server.PutSkinImg).Methods("POST")
 
 	return r
 }

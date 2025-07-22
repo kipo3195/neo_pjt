@@ -3,8 +3,7 @@ package routes
 import (
 	"common/claims"
 	"common/consts"
-	dto "common/dto/common"
-	"encoding/json"
+	"common/utils"
 	"errors"
 	"fmt"
 	"log"
@@ -12,59 +11,42 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtSecretKey = []byte("neo-test-secret-key")
 
-func AuthMiddleware(next http.Handler) http.Handler {
+func AuthMiddleware(next http.Handler) gin.HandlerFunc {
 
-	// response
-	var res dto.Response
+	return func(c *gin.Context) {
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 토큰 추출 및 검증 로직
-		tokenStr, err := extractTokenFromHeader(r.Header)
+		// 토큰 추출
+		tokenStr, err := extractTokenFromHeader(c.Request.Header)
 		if err != nil {
-			log.Println("토큰 전달 형식이 맞지 않음. header check.")
-			res.Result = consts.ERROR
-			res.Data = dto.ErrorResponse{
-				Code:    consts.E_105,
-				Message: consts.E_105_MSG,
-			}
-			w.WriteHeader(http.StatusUnauthorized) //401
-			json.NewEncoder(w).Encode(res)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_105, consts.E_105_MSG)
+			c.Abort() // 다음 핸들러 중단
 			return
 		}
 
+		// 토큰 검증
 		_, err = verifyJWT(tokenStr)
-
 		if err != nil {
 			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
 				log.Println("토큰 만료")
-				res.Result = consts.ERROR
-				res.Data = dto.ErrorResponse{
-					Code:    consts.E_107,
-					Message: consts.E_107_MSG,
-				}
-
+				utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_107, consts.E_107_MSG)
 			} else {
 				log.Println("토큰 검증 실패")
-				res.Result = consts.ERROR
-				res.Data = dto.ErrorResponse{
-					Code:    consts.E_106,
-					Message: consts.E_106_MSG,
-				}
+				utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_106, consts.E_106_MSG)
+				c.Abort() // 다음 핸들러 중단
 			}
-
-			w.WriteHeader(http.StatusUnauthorized) //401
-			json.NewEncoder(w).Encode(res)
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
+		// 정상 처리 = 검증 성공 → 다음 핸들러 호출
+		c.Next()
+	}
 }
 
 // Authorization 헤더에서 "Bearer <token>" 형태로 된 토큰 추출

@@ -4,6 +4,7 @@ import (
 	consts "auth/consts"
 	clReqDto "auth/dto/client/request"
 	"auth/usecases"
+	"auth/utils"
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
@@ -27,14 +28,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	// header 검증
 	if header.Token == "" || header.Uuid == "" {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
 		return
 	}
 
 	// request body 데이터 -> dto로 변경
 	var body clReqDto.AuthRequestBody
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
@@ -50,22 +51,22 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 		if err == consts.ErrUnregisteredUuid {
 			// 등록된 UUID가 아님
-			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F001, consts.AUTH_F001_MSG)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F001, consts.AUTH_F001_MSG)
 		} else if err == consts.ErrTokenMismatch {
 			// 토큰 정보 불일치, 재발급 필요.
-			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F002, consts.AUTH_F002_MSG)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F002, consts.AUTH_F002_MSG)
 		} else if err == consts.ErrAuthenticationFailed {
 			// 등록된 사용자가 없음.
-			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
 		} else if err == consts.ErrUnregisteredUser {
 			// 등록된 사용자가 아님.
-			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F004, consts.AUTH_F004_MSG)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F004, consts.AUTH_F004_MSG)
 		} else {
 			// server error : db, jwt make
-			sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+			utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 		}
 
 	} else {
-		sendSuccessResponse(c, resDto.Body)
+		utils.SendSuccessResponse(c, resDto.Body)
 	}
 }

@@ -5,6 +5,9 @@ const (
 	FAIL    = "fail"
 	ERROR   = "error"
 
+	BAD_REQUEST  = 400
+	SERVER_ERROR = 500
+
 	// ERROR
 	E_101     = "E101"
 	E_101_MSG = "type invalid."

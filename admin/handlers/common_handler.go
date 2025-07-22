@@ -4,6 +4,7 @@ import (
 	"admin/consts"
 	commonReqDto "admin/dto/client/common/request"
 	"admin/usecases"
+	utils "admin/utils"
 	"io"
 	"log"
 
@@ -34,13 +35,13 @@ func (h *CommonHandler) CreateSkinImg(c *gin.Context) {
 	fileInfo, err := c.FormFile(consts.FILE)
 	if err != nil {
 		// 파일
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F001, consts.ADMIN_F001_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F001, consts.ADMIN_F001_MSG)
 	}
 
 	skinType := c.GetHeader(consts.SKIN_TYPE)
 
 	if skinType == "" {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
 		return
 	}
 
@@ -48,12 +49,12 @@ func (h *CommonHandler) CreateSkinImg(c *gin.Context) {
 	file, err := fileInfo.Open()
 	defer file.Close()
 	if err != nil {
-		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	}
 
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	}
 
 	body := commonReqDto.CreateSkinImgRequestBody{
@@ -74,13 +75,13 @@ func (h *CommonHandler) CreateSkinImg(c *gin.Context) {
 	if err != nil {
 
 		if err == consts.ErrFileSizeExceeded {
-			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F002, consts.ADMIN_F002_MSG)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F002, consts.ADMIN_F002_MSG)
 		} else if err == consts.ErrFileExtentionDetect {
-			sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F003, consts.ADMIN_F003_MSG)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.ADMIN_F003, consts.ADMIN_F003_MSG)
 		} else {
-			sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+			utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 		}
 	} else {
-		sendSuccessResponse(c, "")
+		utils.SendSuccessResponse(c, "")
 	}
 }

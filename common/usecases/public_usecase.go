@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"common/consts"
 	clDto "common/dto/client"
+	clCommonReqDto "common/dto/client/request"
 	dto "common/dto/common"
 	authDto "common/dto/server/auth"
 	"common/entities"
@@ -23,7 +24,7 @@ type publicUsecase struct {
 }
 
 type PublicUsecase interface {
-	AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error)
+	AppValidation(ctx context.Context, requestDTO clCommonReqDto.AppValidationRequestDTO) (bool, error)
 	AppTokenReIssue(ctx context.Context, body clDto.AppTokenRefreshRequest) (*authDto.AppTokenRefreshResponse, error)
 }
 
@@ -34,9 +35,9 @@ func NewPublicUsecase(repo repositories.PublicRepository, configStorage storage.
 	}
 }
 
-func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidationRequest) (bool, error) {
+func (r *publicUsecase) AppValidation(ctx context.Context, requestDTO clCommonReqDto.AppValidationRequestDTO) (bool, error) {
 
-	data, err := getAppTokenValidationInAuth(toAppTokenValidationRequest(body.AppToken, body.Uuid))
+	data, err := getAppTokenValidationInAuth(toAppTokenValidationRequest(requestDTO.Body))
 
 	if err != nil {
 		// 에러 정의 후 response
@@ -55,7 +56,7 @@ func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidat
 		return false, consts.ErrSkinHashInvalid
 	}
 
-	if skinHash != body.SkinHash {
+	if skinHash != requestDTO.Body.SkinHash {
 		log.Println("서버의 skin hash 정보와 다름 server skin hash : ", skinHash)
 		return false, consts.ErrSkinHashInvalid
 	}
@@ -67,7 +68,7 @@ func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidat
 		return false, consts.ErrConfigHashInvalid
 	}
 
-	if configHash != body.ConfigHash {
+	if configHash != requestDTO.Body.ConfigHash {
 		log.Println("서버의 config hash 정보와 다름 server config hash : ", configHash)
 		return false, consts.ErrConfigHashInvalid
 	}
@@ -75,10 +76,10 @@ func (r *publicUsecase) AppValidation(ctx context.Context, body clDto.AppValidat
 	return true, nil
 }
 
-func toAppTokenValidationRequest(appToken string, uuid string) authDto.AppTokenValidationRequest {
+func toAppTokenValidationRequest(body clCommonReqDto.AppValidationRequestBody) authDto.AppTokenValidationRequest {
 	return authDto.AppTokenValidationRequest{
-		AppToken: appToken,
-		Uuid:     uuid,
+		AppToken: body.AppToken,
+		Uuid:     body.Uuid,
 	}
 
 }

@@ -4,6 +4,7 @@ import (
 	"admin/consts"
 	clOrgReqDto "admin/dto/client/org/request"
 	"admin/usecases"
+	utils "admin/utils"
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
@@ -27,14 +28,14 @@ func (h *OrgHandler) CreateDept(c *gin.Context) {
 
 	var body clOrgReqDto.CreateDeptRequestBody
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
 	if err := validate.Struct(body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
@@ -46,9 +47,9 @@ func (h *OrgHandler) CreateDept(c *gin.Context) {
 	_, err := h.usecase.CreateDepartment(ctx, requestDTO)
 
 	if err != nil {
-		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	} else {
-		sendSuccessResponse(c, "")
+		utils.SendSuccessResponse(c, "")
 	}
 }
 
@@ -69,14 +70,14 @@ func (h *OrgHandler) DeleteDept(c *gin.Context) {
 	var body clOrgReqDto.DeleteDeptRequestBody
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
 	if err := validate.Struct(body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
@@ -89,9 +90,9 @@ func (h *OrgHandler) DeleteDept(c *gin.Context) {
 
 	// 필요시 result 값 response status로 분기 처리
 	if err != nil {
-		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	} else {
-		sendSuccessResponse(c, "")
+		utils.SendSuccessResponse(c, "")
 	}
 
 }
@@ -105,14 +106,14 @@ func (h *OrgHandler) CreateOrgFile(c *gin.Context) {
 	var body clOrgReqDto.CreateOrgFileRequestBody
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
 	if err := validate.Struct(body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
@@ -125,9 +126,9 @@ func (h *OrgHandler) CreateOrgFile(c *gin.Context) {
 
 	// 필요시 result 값 response status로 분기 처리
 	if err != nil {
-		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	} else {
-		sendSuccessResponse(c, "")
+		utils.SendSuccessResponse(c, "")
 	}
 }
 
@@ -143,14 +144,14 @@ func (h *OrgHandler) CreateUser(c *gin.Context) {
 	var body clOrgReqDto.CreateDeptUserRequestBody
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
 	if err := validate.Struct(body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
@@ -163,9 +164,9 @@ func (h *OrgHandler) CreateUser(c *gin.Context) {
 
 	// 필요시 result 값 response status로 분기 처리
 	if err != nil {
-		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	} else {
-		sendSuccessResponse(c, "")
+		utils.SendSuccessResponse(c, "")
 	}
 
 }
@@ -178,14 +179,14 @@ func (h *OrgHandler) DeleteUser(c *gin.Context) {
 	var body clOrgReqDto.DeleteDeptUserRequestBody
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
 	if err := validate.Struct(body); err != nil {
-		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
@@ -198,9 +199,9 @@ func (h *OrgHandler) DeleteUser(c *gin.Context) {
 
 	// 필요시 result 값 response status로 분기 처리
 	if err != nil {
-		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	} else {
-		sendSuccessResponse(c, "")
+		utils.SendSuccessResponse(c, "")
 	}
 
 }

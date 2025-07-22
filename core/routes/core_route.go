@@ -18,8 +18,6 @@ func SetupRoutes(handlers *handlers.CoreHandlers) *gin.Engine {
 			v1.POST("/app-validation", handlers.Core.GetAppValidation)
 		}
 
-		// 하위에 추가정의
-
 	}
 
 	return r

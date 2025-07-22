@@ -2,18 +2,20 @@ package handlers
 
 import (
 	clDto "common/dto/client"
+	clCommonReqDto "common/dto/client/request"
 	dto "common/dto/common"
 	"common/usecases"
+	"common/utils"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	consts "common/consts"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
 
@@ -25,53 +27,32 @@ func NewPublicHandler(uc usecases.PublicUsecase) *PublicHandler {
 	return &PublicHandler{usecase: uc}
 }
 
-func (h *PublicHandler) AppValidation(w http.ResponseWriter, r *http.Request) {
+func (h *PublicHandler) AppValidation(c *gin.Context) {
 
-	// context 생성
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-	defer r.Body.Close()
+	ctx := c.Request.Context()
 
-	// response
-	var res dto.Response
-
-	log.Println("1")
 	// request body 데이터 -> dto로 변경
-	var req = clDto.AppValidationRequest{
-		Uuid:       r.URL.Query().Get("uuid"),
-		AppToken:   r.URL.Query().Get("appToken"),
-		Device:     r.URL.Query().Get("device"),
-		SkinHash:   r.URL.Query().Get("skinHash"),
-		ConfigHash: r.URL.Query().Get("configHash"),
+	body := clCommonReqDto.AppValidationRequestBody{
+		Uuid:       c.Query("uuid"),
+		AppToken:   c.Query("appToken"),
+		Device:     c.Query("device"),
+		SkinHash:   c.Query("skinHash"),
+		ConfigHash: c.Query("configHash"),
 	}
 
-	// if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-	// 	res.Result = consts.ERROR
-	// 	res.Data = dto.ErrorResponse{
-	// 		Code:    consts.E_103,
-	// 		Message: consts.E_103_MSG,
-	// 	}
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	json.NewEncoder(w).Encode(res)
-	// 	return
-	// }
-	log.Println("2")
-	// 유효성 검증 로직
+	// 필수 데이터 검증
 	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
-		// 검증 실패 처리
-		w.WriteHeader(http.StatusBadRequest)
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_108,
-			Message: consts.E_108_MSG,
-		}
-		json.NewEncoder(w).Encode(res)
+	if err := validate.Struct(body); err != nil {
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
-	log.Println("3")
+
+	requestDTO := clCommonReqDto.AppValidationRequestDTO{
+		Body: body,
+	}
+
 	// 검증
-	data, err := h.usecase.AppValidation(ctx, req)
+	data, err := h.usecase.AppValidation(ctx, requestDTO)
 
 	if err != nil || !data {
 		switch {

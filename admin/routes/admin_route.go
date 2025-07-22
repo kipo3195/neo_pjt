@@ -10,6 +10,7 @@ import (
 func SetupRoutes(handlers *handlers.AdminHandlers) *gin.Engine {
 	r := gin.Default()
 
+	// 모든 API에 middleware 적용
 	r.Use(TimeoutMiddleware(5 * time.Second))
 
 	admin := r.Group("/admin")
