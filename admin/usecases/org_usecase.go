@@ -1,7 +1,6 @@
 package usecases
 
 import (
-	orgDto "admin/dto/client/org"
 	clOrgReqDto "admin/dto/client/org/request"
 	"admin/entities"
 	orgEntity "admin/entities/org"
@@ -18,29 +17,29 @@ type orgUsecase struct {
 }
 
 type OrgUsecase interface {
-	CreateDepartment(ctx context.Context, requestDTO clOrgReqDto.CreateDeptRequestDTO) error
-	DeleteDepartment(ctx context.Context, req orgDto.DeleteDeptRequest) (interface{}, error)
-	CreateOrgFile(ctx context.Context, req orgDto.CreateOrgFileRequest) (interface{}, error)
+	CreateDepartment(ctx context.Context, requestDTO clOrgReqDto.CreateDeptRequestDTO) (int, error)
+	DeleteDepartment(ctx context.Context, requestDTO clOrgReqDto.DeleteDeptRequestDTO) (int, error)
+	CreateOrgFile(ctx context.Context, requestDTO clOrgReqDto.CreateOrgFileRequestDTO) (int, error)
 
-	CreateDeptUser(ctx context.Context, req orgDto.CreateDeptUserRequest) (interface{}, error)
-	DeleteDeptUser(ctx context.Context, req orgDto.DeleteDeptUserRequest) (interface{}, error)
+	CreateDeptUser(ctx context.Context, requestDTO clOrgReqDto.CreateDeptUserRequestDTO) (int, error)
+	DeleteDeptUser(ctx context.Context, requestDTO clOrgReqDto.DeleteDeptUserRequestDTO) (int, error)
 }
 
 func NewOrgUsecase(repo repositories.OrgRepository) OrgUsecase {
 	return &orgUsecase{repo: repo}
 }
 
-func (r *orgUsecase) CreateDepartment(ctx context.Context, requestDTO clOrgReqDto.CreateDeptRequestDTO) error {
+func (r *orgUsecase) CreateDepartment(ctx context.Context, requestDTO clOrgReqDto.CreateDeptRequestDTO) (int, error) {
 	entity := toCreateDepartmentEntity(requestDTO.Body)
 	// org 서비스 호출
 
 	// 이 함수 내부에서 호출
-	err := createDepartmentInOrg(ctx, entity)
+	result, err := createDepartmentInOrg(ctx, entity)
 	if err != nil {
-		return err
+		return result, err
 	}
 
-	return nil
+	return result, nil
 }
 
 func toCreateDepartmentEntity(body clOrgReqDto.CreateDeptRequestBody) orgEntity.CreateDepartmentEntity {
@@ -58,7 +57,7 @@ func toCreateDepartmentEntity(body clOrgReqDto.CreateDeptRequestBody) orgEntity.
 	}
 }
 
-func createDepartmentInOrg(ctx context.Context, entity orgEntity.CreateDepartmentEntity) error {
+func createDepartmentInOrg(ctx context.Context, entity orgEntity.CreateDepartmentEntity) (int, error) {
 
 	payload, _ := json.Marshal(entity)
 
@@ -68,7 +67,7 @@ func createDepartmentInOrg(ctx context.Context, entity orgEntity.CreateDepartmen
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -80,44 +79,43 @@ func createDepartmentInOrg(ctx context.Context, entity orgEntity.CreateDepartmen
 		fmt.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
 		default:
-			return fmt.Errorf("request failed: %w", err)
+			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
 		}
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("org service returned status %d", resp.StatusCode)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, fmt.Errorf("org service returned status %d", resp.StatusCode)
 	}
 
-	return nil
+	return http.StatusOK, nil
 }
 
-func (r *orgUsecase) DeleteDepartment(ctx context.Context, req orgDto.DeleteDeptRequest) (interface{}, error) {
-	entity := toDeleteDepartmentEntity(req)
+func (r *orgUsecase) DeleteDepartment(ctx context.Context, req clOrgReqDto.DeleteDeptRequestDTO) (int, error) {
+	entity := toDeleteDepartmentEntity(req.Body)
 	// org 서비스 호출
 
 	// 이 함수 내부에서 호출
-	err := deleteDepartmentInOrg(ctx, entity)
+	result, err := deleteDepartmentInOrg(ctx, entity)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
-	// 여기 수정해야할듯.
-	return nil, nil
+	return result, nil
 }
 
-func toDeleteDepartmentEntity(req orgDto.DeleteDeptRequest) entities.DeleteDepartmentEntity {
+func toDeleteDepartmentEntity(body clOrgReqDto.DeleteDeptRequestBody) entities.DeleteDepartmentEntity {
 
 	return entities.DeleteDepartmentEntity{
-		DeptCode: req.DeptCode,
-		DeptOrg:  req.DeptOrg,
+		DeptCode: body.DeptCode,
+		DeptOrg:  body.DeptOrg,
 	}
 }
 
-func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartmentEntity) error {
+func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartmentEntity) (int, error) {
 
 	payload, _ := json.Marshal(entity)
 
@@ -127,7 +125,7 @@ func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartment
 
 	req, err := http.NewRequest("DELETE", url, bytes.NewBuffer(payload))
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -139,42 +137,42 @@ func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartment
 		fmt.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
 		default:
-			return fmt.Errorf("request failed: %w", err)
+			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
 		}
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("org service returned status %d", resp.StatusCode)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, fmt.Errorf("org service returned status %d", resp.StatusCode)
 	}
 
-	return nil
+	return http.StatusOK, nil
 }
 
-func (r *orgUsecase) CreateOrgFile(ctx context.Context, req orgDto.CreateOrgFileRequest) (interface{}, error) {
+func (r *orgUsecase) CreateOrgFile(ctx context.Context, requestDTO clOrgReqDto.CreateOrgFileRequestDTO) (int, error) {
 
-	entity := toCreateOrgFileEntity(req)
+	entity := toCreateOrgFileEntity(requestDTO.Body)
 	// org 서비스 호출
 
 	// 이 함수 내부에서 호출
-	result, err := CreateOrgFileInOrg(ctx, entity)
+	result, err := createOrgFileInOrg(ctx, entity)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	return result, nil
 }
 
-func toCreateOrgFileEntity(req orgDto.CreateOrgFileRequest) entities.CreateOrgFileEntity {
+func toCreateOrgFileEntity(body clOrgReqDto.CreateOrgFileRequestBody) entities.CreateOrgFileEntity {
 	return entities.CreateOrgFileEntity{
-		OrgCode: req.OrgCode,
+		OrgCode: body.OrgCode,
 	}
 }
 
-func CreateOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity) (interface{}, error) {
+func createOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity) (int, error) {
 
 	payload, _ := json.Marshal(entity)
 
@@ -184,7 +182,7 @@ func CreateOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, err
+		return http.StatusInternalServerError, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -197,46 +195,47 @@ func CreateOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity
 		fmt.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
-			return nil, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
 		default:
-			return nil, fmt.Errorf("request failed: %w", err)
+			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
 		}
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("org service returned status %d", resp.StatusCode)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, fmt.Errorf("org service returned status %d", resp.StatusCode)
 	}
 
 	return http.StatusOK, nil
 }
 
-func (r *orgUsecase) CreateDeptUser(ctx context.Context, req orgDto.CreateDeptUserRequest) (interface{}, error) {
+func (r *orgUsecase) CreateDeptUser(ctx context.Context, requestDTO clOrgReqDto.CreateDeptUserRequestDTO) (int, error) {
 
-	entity := toCreateDeptUserEntity(req)
+	entity := toCreateDeptUserEntity(requestDTO.Body)
 	// org 서비스 호출
 
 	// 이 함수 내부에서 호출
-	result, err := CreateDeptUserInOrg(ctx, entity)
+	result, err := createDeptUserInOrg(ctx, entity)
+
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	return result, nil
 }
 
-func toCreateDeptUserEntity(req orgDto.CreateDeptUserRequest) entities.CreateDeptUserEntity {
+func toCreateDeptUserEntity(body clOrgReqDto.CreateDeptUserRequestBody) entities.CreateDeptUserEntity {
 	return entities.CreateDeptUserEntity{
-		UserHash:             req.UserHash,
-		DeptCode:             req.DeptCode,
-		PositionCode:         req.PositionCode,
-		RoleCode:             req.RoleCode,
-		IsConcurrentPosition: req.IsConcurrentPosition,
+		UserHash:             body.UserHash,
+		DeptCode:             body.DeptCode,
+		PositionCode:         body.PositionCode,
+		RoleCode:             body.RoleCode,
+		IsConcurrentPosition: body.IsConcurrentPosition,
 	}
 }
 
-func CreateDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error) {
+func createDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEntity) (int, error) {
 
 	payload, _ := json.Marshal(entity)
 
@@ -246,7 +245,7 @@ func CreateDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEnti
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, err
+		return http.StatusInternalServerError, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -259,45 +258,46 @@ func CreateDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEnti
 		fmt.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
-			return nil, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
 		default:
-			return nil, fmt.Errorf("request failed: %w", err)
+			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
 		}
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("org service returned status %d", resp.StatusCode)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, fmt.Errorf("org service returned status %d", resp.StatusCode)
 	}
 
 	return http.StatusOK, nil
 }
 
-func (r *orgUsecase) DeleteDeptUser(ctx context.Context, req orgDto.DeleteDeptUserRequest) (interface{}, error) {
-	entity := toDeleteDeptUserEntity(req)
+func (r *orgUsecase) DeleteDeptUser(ctx context.Context, requestDTO clOrgReqDto.DeleteDeptUserRequestDTO) (int, error) {
+	entity := toDeleteDeptUserEntity(requestDTO.Body)
 	// org 서비스 호출
 
 	// 이 함수 내부에서 호출
-	result, err := DeptUserInOrg(ctx, entity)
+	result, err := deleteDeptUserInOrg(ctx, entity)
+
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	return result, nil
 }
 
-func toDeleteDeptUserEntity(req orgDto.DeleteDeptUserRequest) entities.DeleteDeptUserEntity {
+func toDeleteDeptUserEntity(body clOrgReqDto.DeleteDeptUserRequestBody) entities.DeleteDeptUserEntity {
 
 	return entities.DeleteDeptUserEntity{
-		UserHash: req.UserHash,
-		DeptCode: req.DeptCode,
-		DeptOrg:  req.DeptOrg,
+		UserHash: body.UserHash,
+		DeptCode: body.DeptCode,
+		DeptOrg:  body.DeptOrg,
 	}
 
 }
 
-func DeptUserInOrg(ctx context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error) {
+func deleteDeptUserInOrg(ctx context.Context, entity entities.DeleteDeptUserEntity) (int, error) {
 
 	payload, _ := json.Marshal(entity)
 
@@ -307,7 +307,7 @@ func DeptUserInOrg(ctx context.Context, entity entities.DeleteDeptUserEntity) (i
 
 	req, err := http.NewRequest("DELETE", url, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, err
+		return http.StatusInternalServerError, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -320,16 +320,16 @@ func DeptUserInOrg(ctx context.Context, entity entities.DeleteDeptUserEntity) (i
 		fmt.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
-			return nil, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
 		default:
-			return nil, fmt.Errorf("request failed: %w", err)
+			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
 		}
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("org service returned status %d", resp.StatusCode)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, fmt.Errorf("org service returned status %d", resp.StatusCode)
 	}
 
 	return http.StatusOK, nil

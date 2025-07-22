@@ -2,13 +2,9 @@ package handlers
 
 import (
 	"admin/consts"
-	orgDto "admin/dto/client/org"
 	clOrgReqDto "admin/dto/client/org/request"
-	dto "admin/dto/common"
 	"admin/usecases"
 	"encoding/json"
-	"fmt"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -46,8 +42,8 @@ func (h *OrgHandler) CreateDept(c *gin.Context) {
 		Body: body,
 	}
 
-	// usecase 호출
-	err := h.usecase.CreateDepartment(ctx, requestDTO)
+	// 필요시 result 값 response status로 분기 처리
+	_, err := h.usecase.CreateDepartment(ctx, requestDTO)
 
 	if err != nil {
 		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
@@ -56,242 +52,163 @@ func (h *OrgHandler) CreateDept(c *gin.Context) {
 	}
 }
 
-func (h *OrgHandler) GetDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetDept(c *gin.Context) {
 
 }
 
-func (h *OrgHandler) UpdateDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) UpdateDept(c *gin.Context) {
 
 }
 
-func (h *OrgHandler) DeleteDept(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) DeleteDept(c *gin.Context) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
-	ctx := r.Context()
-
-	// response dto 생성
-	var res = orgDto.DeleteDeptResponse{}
+	ctx := c.Request.Context()
 
 	// request 데이터 파싱 header, body -> dto
-	var req = orgDto.DeleteDeptRequest{}
+	var body clOrgReqDto.DeleteDeptRequestBody
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Code = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
-		// 검증 실패 처리
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := validate.Struct(body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
-	// usecase 호출
-	data, err := h.usecase.DeleteDepartment(ctx, req)
-
-	fmt.Println(data)
-
-	if err == nil {
-		// http status code 200
-		res.Code = consts.SUCCESS
-		res.Data = data
-	} else {
-		// http status code 400
-		res.Code = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+	requestDTO := clOrgReqDto.DeleteDeptRequestDTO{
+		Body: body,
 	}
 
-	// response.
-	json.NewEncoder(w).Encode(res)
+	// usecase 호출
+	_, err := h.usecase.DeleteDepartment(ctx, requestDTO)
+
+	// 필요시 result 값 response status로 분기 처리
+	if err != nil {
+		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+	} else {
+		sendSuccessResponse(c, "")
+	}
 
 }
 
-func (h *OrgHandler) CreateOrgFile(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) CreateOrgFile(c *gin.Context) {
 
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
-	ctx := r.Context()
-
-	// response dto 생성
-	var res = orgDto.CreateOrgFileResponse{}
+	ctx := c.Request.Context()
 
 	// request 데이터 파싱 header, body -> dto
-	var req = orgDto.CreateOrgFileRequest{}
+	var body clOrgReqDto.CreateOrgFileRequestBody
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Result = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
-		// 검증 실패 처리
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := validate.Struct(body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
+
+	requestDTO := clOrgReqDto.CreateOrgFileRequestDTO{
+		Body: body,
+	}
+
 	// usecase 호출
-	data, err := h.usecase.CreateOrgFile(ctx, req)
+	_, err := h.usecase.CreateOrgFile(ctx, requestDTO)
 
-	fmt.Println(data)
-
-	if err == nil {
-		// http status code 200
-		res.Result = consts.SUCCESS
-		res.Data = data
+	// 필요시 result 값 response status로 분기 처리
+	if err != nil {
+		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 	} else {
-		// 서버 - 서버 통신이 실패했다는 의미.
-		res.Result = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	// response.
-	json.NewEncoder(w).Encode(res)
-
-}
-
-func (h *OrgHandler) GetOrgFile(w http.ResponseWriter, r *http.Request) {
-
-	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
-	//ctx := r.Context()
-
-	// response dto 생성
-	var res = orgDto.CreateOrgFileResponse{}
-
-	// request 데이터 파싱 header, body -> dto
-	var req = orgDto.CreateOrgFileRequest{}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Result = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-		return
+		sendSuccessResponse(c, "")
 	}
 }
 
-func (h *OrgHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
-	ctx := r.Context()
+func (h *OrgHandler) GetOrgFile(c *gin.Context) {
 
-	// response dto 생성
-	var res = orgDto.CreateDeptUserResponse{}
+}
+
+func (h *OrgHandler) CreateUser(c *gin.Context) {
+	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
+	ctx := c.Request.Context()
 
 	// request 데이터 파싱 header, body -> dto
-	var req = orgDto.CreateDeptUserRequest{}
+	var body clOrgReqDto.CreateDeptUserRequestBody
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Result = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
-		// 검증 실패 처리
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := validate.Struct(body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
-	// usecase 호출
-	data, err := h.usecase.CreateDeptUser(ctx, req)
-
-	fmt.Println(data)
-
-	if err == nil {
-		// http status code 200
-		res.Result = consts.SUCCESS
-		res.Data = data
-	} else {
-		// http status code 400
-		res.Result = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+	requestDTO := clOrgReqDto.CreateDeptUserRequestDTO{
+		Body: body,
 	}
 
-	// response.
-	json.NewEncoder(w).Encode(res)
+	// usecase 호출
+	_, err := h.usecase.CreateDeptUser(ctx, requestDTO)
+
+	// 필요시 result 값 response status로 분기 처리
+	if err != nil {
+		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+	} else {
+		sendSuccessResponse(c, "")
+	}
 
 }
 
-func (h *OrgHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) DeleteUser(c *gin.Context) {
 	// context 생성 - admin_route에 정의된 middleware에서 context에 관여함.
-	ctx := r.Context()
-
-	// response dto 생성
-	var res = dto.Response{}
+	ctx := c.Request.Context()
 
 	// request 데이터 파싱 header, body -> dto
-	var req = orgDto.DeleteDeptUserRequest{}
+	var body clOrgReqDto.DeleteDeptUserRequestBody
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Result = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
 	// 필수 데이터 검증
 	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
-		// 검증 실패 처리
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := validate.Struct(body); err != nil {
+		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
 		return
 	}
 
-	// usecase 호출
-	data, err := h.usecase.DeleteDeptUser(ctx, req)
-
-	fmt.Println(data)
-
-	if err == nil {
-		// http status code 200
-		res.Result = consts.SUCCESS
-		res.Data = data
-	} else {
-		// http status code 400
-		res.Result = consts.ERROR
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+	requestDTO := clOrgReqDto.DeleteDeptUserRequestDTO{
+		Body: body,
 	}
 
-	// response.
-	json.NewEncoder(w).Encode(res)
+	// usecase 호출
+	_, err := h.usecase.DeleteDeptUser(ctx, requestDTO)
+
+	// 필요시 result 값 response status로 분기 처리
+	if err != nil {
+		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+	} else {
+		sendSuccessResponse(c, "")
+	}
 
 }
 
-func (h *OrgHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) GetUser(c *gin.Context) {
 
 }
 
-func (h *OrgHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *OrgHandler) UpdateUser(c *gin.Context) {
 
 }
