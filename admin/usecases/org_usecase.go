@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -63,7 +64,7 @@ func createDepartmentInOrg(ctx context.Context, entity orgEntity.CreateDepartmen
 
 	url := "http://172.16.10.114/org/sv1/departments"
 
-	fmt.Println("org department create api 호출! url : ", url)
+	log.Println("org department create api 호출! url : ", url)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
@@ -76,7 +77,7 @@ func createDepartmentInOrg(ctx context.Context, entity orgEntity.CreateDepartmen
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("org error : ", err)
+		log.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
 			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
@@ -121,7 +122,7 @@ func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartment
 
 	url := "http://172.16.10.114/org/sv1/departments"
 
-	fmt.Println("org department delete api 호출! url : ", url)
+	log.Println("org department delete api 호출! url : ", url)
 
 	req, err := http.NewRequest("DELETE", url, bytes.NewBuffer(payload))
 	if err != nil {
@@ -134,7 +135,7 @@ func deleteDepartmentInOrg(ctx context.Context, entity entities.DeleteDepartment
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("org error : ", err)
+		log.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
 			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
@@ -178,7 +179,7 @@ func createOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity
 
 	url := "http://172.16.10.114/org/sv1/org/file"
 
-	fmt.Println("create org file api 호출! url : ", url)
+	log.Println("create org file api 호출! url : ", url)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
@@ -192,7 +193,7 @@ func createOrgFileInOrg(ctx context.Context, entity entities.CreateOrgFileEntity
 	resp, err := client.Do(req)
 
 	if err != nil {
-		fmt.Println("org error : ", err)
+		log.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
 			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
@@ -241,7 +242,7 @@ func createDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEnti
 
 	url := "http://172.16.10.114/org/sv1/departments/user"
 
-	fmt.Println("create org file api 호출! url : ", url)
+	log.Println("create org file api 호출! url : ", url)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
@@ -255,7 +256,7 @@ func createDeptUserInOrg(ctx context.Context, entity entities.CreateDeptUserEnti
 	resp, err := client.Do(req)
 
 	if err != nil {
-		fmt.Println("org error : ", err)
+		log.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
 			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
@@ -303,7 +304,7 @@ func deleteDeptUserInOrg(ctx context.Context, entity entities.DeleteDeptUserEnti
 
 	url := "http://172.16.10.114/org/sv1/departments/user"
 
-	fmt.Println("create org file api 호출! url : ", url)
+	log.Println("create org file api 호출! url : ", url)
 
 	req, err := http.NewRequest("DELETE", url, bytes.NewBuffer(payload))
 	if err != nil {
@@ -317,7 +318,7 @@ func deleteDeptUserInOrg(ctx context.Context, entity entities.DeleteDeptUserEnti
 	resp, err := client.Do(req)
 
 	if err != nil {
-		fmt.Println("org error : ", err)
+		log.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
 			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())

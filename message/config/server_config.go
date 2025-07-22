@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"message/broker"
 	"message/models"
@@ -82,7 +81,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
 	db.AutoMigrate(&models.ChatMessage{})
 
-	fmt.Println("Message Database Connected !")
+	log.Println("Message Database Connected !")
 	return db
 }
 

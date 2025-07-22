@@ -7,7 +7,7 @@ import (
 	"auth/usecases"
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +28,7 @@ func (h *ServerHandler) GenerateAppToken(c *gin.Context) {
 		Token: c.GetHeader(consts.AUTHORIZATION),
 	}
 
-	fmt.Println("common service에서 호출시 던진 토큰 ", header.Token)
+	log.Println("common service에서 호출시 던진 토큰 ", header.Token)
 
 	if header.Token == "" {
 		sendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_104, consts.E_104_MSG)
@@ -51,7 +51,7 @@ func (h *ServerHandler) GenerateAppToken(c *gin.Context) {
 	// 토큰 발급, DB 저장.
 	resDto, err := h.usecase.GenerateAppToken(requestDTO.Body)
 
-	fmt.Println("handler에서 토큰 구조체 반환 resDto : ", resDto)
+	log.Println("handler에서 토큰 구조체 반환 resDto : ", resDto)
 
 	if err != nil {
 		sendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
@@ -59,7 +59,7 @@ func (h *ServerHandler) GenerateAppToken(c *gin.Context) {
 		sendSuccessResponse(c, resDto.Body)
 	}
 
-	fmt.Println("handler에서 결과 반환 res : ", resDto.Body)
+	log.Println("handler에서 결과 반환 res : ", resDto.Body)
 
 }
 
@@ -104,7 +104,7 @@ func (h *ServerHandler) AppTokenValidation(c *gin.Context) {
 
 	// 이거 나중에 모듈화 꼭 할 것
 	if err != nil || !resDto { // 에러
-		fmt.Println(err)
+		log.Println(err)
 		sendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
 	} else {
 		sendSuccessResponse(c, "")

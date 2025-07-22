@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"message/broker"
 	consts "message/consts"
@@ -69,7 +68,7 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 		/* 페이로드 파싱 예는 entity여야 하나? cmd, data 형식으로, cmd에 따라 data를 어떤 entity로 파싱할지 처리?*/
 		var data map[string]interface{}
 		json.Unmarshal(msg, &data)
-		fmt.Println("웹소켓 메시지 수신시 최초 로깅 : ", data)
+		log.Println("웹소켓 메시지 수신시 최초 로깅 : ", data)
 		msgType, ok := data[consts.TYPE].(string)
 		if !ok {
 			res.Result = consts.ERROR
@@ -97,7 +96,7 @@ func (h *MessageHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 				} else {
 					// 성공시에는 성공했다고 필요할까? - 클라이언트 논의
 					// conn.WriteMessage(websocket.TextMessage, []byte(`{"success":"auth_ok"}`))
-					fmt.Println("연결 성공 !")
+					log.Println("연결 성공 !")
 					authenticated = true
 					continue
 				}

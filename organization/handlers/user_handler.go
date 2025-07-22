@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"org/config"
 	"org/consts"
@@ -40,7 +40,7 @@ func (h *UserHandler) GetMyInfo(w http.ResponseWriter, r *http.Request) {
 	val := r.Context().Value(contextkey.UserHashKey)
 	myHash, ok := val.(string)
 	if !ok {
-		fmt.Println("인증 토큰의 userHash 데이터 에러 ")
+		log.Println("인증 토큰의 userHash 데이터 에러 ")
 		res.Result = consts.ERROR
 		res.Data = dto.ErrorResponse{
 			Code:    consts.ORG_F101,
@@ -49,7 +49,7 @@ func (h *UserHandler) GetMyInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("내 정보 요청시 myHash : ", myHash)
+	log.Println("내 정보 요청시 myHash : ", myHash)
 	// dto 생성
 	var req = userDto.GetMyInfoRequest{
 		MyHash: myHash,

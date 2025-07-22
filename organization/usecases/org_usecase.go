@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"org/consts"
 	orgDto "org/dto/client/org"
 	"org/entities"
@@ -73,7 +74,7 @@ func (r *orgUsecase) GetOrgHash(ctx context.Context, req orgDto.GetOrgHashReques
 func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
 
 	if orgTree == nil {
-		fmt.Println("조회된 조직도 정보가 없음. ")
+		log.Println("조회된 조직도 정보가 없음. ")
 		return nil
 	}
 

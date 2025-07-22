@@ -72,7 +72,7 @@ func toDeleteDeptUserEntity(req adminDto.DeleteDeptUserRequest) entities.DeleteD
 func (r *serverUsecase) ServerCreateDeptUser(ctx context.Context, req adminDto.CreateDeptUserRequest) (interface{}, error) {
 
 	updateHash := makeUpdateHash()
-	fmt.Println("사용자 추가시 update Hash 생성 : ", updateHash)
+	log.Println("사용자 추가시 update Hash 생성 : ", updateHash)
 
 	return r.repo.PutDeptUser(ctx, toCreateDeptUserEntity(req, updateHash))
 }
@@ -140,13 +140,13 @@ func (r *serverUsecase) ServerCreateOrgFile(ctx context.Context, req adminDto.Cr
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("저장된 org 파일의 사이즈 :", len(data))
+		log.Println("저장된 org 파일의 사이즈 :", len(data))
 
 		// DB 저장
 		if ok, err := r.repo.PutOrgEventHash(ctx, org, fileName); err != nil {
 			return nil, fmt.Errorf("db save error: %w", err)
 		} else if ok {
-			fmt.Println("DB saved ok org:", org)
+			log.Println("DB saved ok org:", org)
 		}
 	}
 

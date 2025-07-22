@@ -3,7 +3,6 @@ package repositories
 import (
 	"auth/entities"
 	"auth/models"
-	"fmt"
 	"log"
 
 	"gorm.io/gorm"
@@ -74,7 +73,7 @@ func (r *authRepository) GetValidation(entity entities.AppTokenValidationEntity)
 
 	var validation models.IssuedAppToken
 
-	fmt.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
+	log.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 
 	result := r.db.Where("uuid = ?", entity.Uuid).Order("seq DESC").First(&validation)
 

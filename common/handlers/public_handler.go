@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -34,7 +35,7 @@ func (h *PublicHandler) AppValidation(w http.ResponseWriter, r *http.Request) {
 	// response
 	var res dto.Response
 
-	fmt.Println("1")
+	log.Println("1")
 	// request body 데이터 -> dto로 변경
 	var req = clDto.AppValidationRequest{
 		Uuid:       r.URL.Query().Get("uuid"),
@@ -54,7 +55,7 @@ func (h *PublicHandler) AppValidation(w http.ResponseWriter, r *http.Request) {
 	// 	json.NewEncoder(w).Encode(res)
 	// 	return
 	// }
-	fmt.Println("2")
+	log.Println("2")
 	// 유효성 검증 로직
 	validate := validator.New()
 	if err := validate.Struct(req); err != nil {
@@ -68,7 +69,7 @@ func (h *PublicHandler) AppValidation(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(res)
 		return
 	}
-	fmt.Println("3")
+	log.Println("3")
 	// 검증
 	data, err := h.usecase.AppValidation(ctx, req)
 

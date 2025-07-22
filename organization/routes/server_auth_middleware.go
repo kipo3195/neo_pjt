@@ -3,6 +3,7 @@ package routes
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -18,15 +19,15 @@ func ServerAuthMiddleware(next http.Handler) http.Handler {
 		// 토큰 추출 및 검증 로직
 		tokenStr, err := serverExtractTokenFromHeader(r.Header)
 		if err != nil {
-			fmt.Println("토큰 전달 형식이 맞지 않음. header check.")
+			log.Println("토큰 전달 형식이 맞지 않음. header check.")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		_, err = serverVerifyJWT(tokenStr)
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		if err != nil {
-			fmt.Println("인증된 토큰이 아님. ")
+			log.Println("인증된 토큰이 아님. ")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}

@@ -8,6 +8,7 @@ import (
 	"common/repositories"
 	"context"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -77,7 +78,7 @@ func (r *commonUsecase) GetConfigHash(body entities.ConfigHashEntity, ctx contex
 
 	serverConfig, err := r.configStorage.GetHash(consts.CONFIG)
 	if err != nil {
-		fmt.Println("config 에 대한 hash 정보를 찾을 수 없음.")
+		log.Println("config 에 대한 hash 정보를 찾을 수 없음.")
 		configExist = false
 	}
 

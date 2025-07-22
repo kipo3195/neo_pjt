@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"org/claims"
 	"org/consts"
@@ -28,7 +29,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// 토큰 추출 및 검증 로직
 		tokenStr, err := extractTokenFromHeader(r.Header)
 		if err != nil {
-			fmt.Println("토큰 전달 형식이 맞지 않음. header check.")
+			log.Println("토큰 전달 형식이 맞지 않음. header check.")
 			res.Result = consts.ERROR
 			res.Data = dto.ErrorResponse{
 				Code:    consts.E_105,
@@ -42,9 +43,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		userHash, err = verifyJWT(tokenStr)
 
 		if err != nil {
-			fmt.Println(err, err.Error())
+			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
-				fmt.Println("토큰 만료")
+				log.Println("토큰 만료")
 				res.Result = consts.ERROR
 				res.Data = dto.ErrorResponse{
 					Code:    consts.E_107,
@@ -52,7 +53,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				}
 
 			} else {
-				fmt.Println("토큰 검증 실패")
+				log.Println("토큰 검증 실패")
 				res.Result = consts.ERROR
 				res.Data = dto.ErrorResponse{
 					Code:    consts.E_106,

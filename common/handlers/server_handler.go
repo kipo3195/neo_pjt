@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -60,9 +61,9 @@ func (h *ServerHandler) DeviceInit(w http.ResponseWriter, r *http.Request) {
 		res.Data = data
 	}
 
-	fmt.Printf("👉 res.Data 타입: %T\n", res.Data)
+	fmt.Printf("res.Data 타입: %T\n", res.Data)
 	jsonBytes, _ := json.Marshal(res)
-	fmt.Println("👉 최종 JSON 응답:", string(jsonBytes))
+	log.Println("최종 JSON 응답:", string(jsonBytes))
 
 	json.NewEncoder(w).Encode(res)
 
@@ -79,7 +80,7 @@ func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
 
 	var res = adminDto.CreateSkinImgResponse{}
 
-	fmt.Println("111")
+	log.Println("111")
 
 	// 파일 데이터 추출
 	file, fileInfo, err := r.FormFile("File")
@@ -104,7 +105,7 @@ func (h *ServerHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.usecase.CreateSkinImg(ctx, req)
 
-	fmt.Println(data)
+	log.Println(data)
 
 	if err == nil {
 		// http status code 200

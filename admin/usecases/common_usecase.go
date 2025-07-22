@@ -6,7 +6,7 @@ import (
 	"admin/repositories"
 	"bytes"
 	"context"
-	"fmt"
+	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -31,7 +31,7 @@ func NewCommonUsecase(repo repositories.CommonRepository) CommonUsecase {
 
 func (r *commonUsecase) CreateSkinImg(ctx context.Context, body commonReqDto.CreateSkinImgRequestBody) error {
 
-	fmt.Println("CreateSkinImg 11")
+	log.Println("CreateSkinImg 11")
 
 	// 파일의 사이즈 검증
 	sizeCheck := checkSkinImgSize(body.FileSize)
@@ -39,14 +39,14 @@ func (r *commonUsecase) CreateSkinImg(ctx context.Context, body commonReqDto.Cre
 		return consts.ErrFileSizeExceeded
 	}
 
-	fmt.Println("CreateSkinImg 22")
+	log.Println("CreateSkinImg 22")
 	// 파일의 확장자 검증 (이미지인지 판단.)
 	extentionCheck := ValidateImageFile(body.FileName, body.File)
 	if !extentionCheck {
 		return consts.ErrFileExtentionDetect
 	}
 
-	fmt.Println("CreateSkinImg 33")
+	log.Println("CreateSkinImg 33")
 	// 파일을 common 서비스로 전송
 	serverSending := skinImgforwardToCommon(ctx, body)
 	if !serverSending {
@@ -77,19 +77,19 @@ func ValidateImageFile(fileName string, fileBytes []byte) bool {
 	// 1. 확장자 허용 여부 확인
 	expectedMime, ok := allowedExtensions[ext]
 	if !ok {
-		fmt.Println("허용되지 않은 파일 확장자 입니다.")
+		log.Println("허용되지 않은 파일 확장자 입니다.")
 		return false
 	}
 	// 2. MIME 타입 확인 (내용 기반)
 	detectedMime := http.DetectContentType(fileBytes[:min(512, len(fileBytes))])
 	if detectedMime != expectedMime {
-		fmt.Println("파일 내용이 확장자와 일치하지 않습니다.")
+		log.Println("파일 내용이 확장자와 일치하지 않습니다.")
 		return false
 	}
 
 	// 3. (선택) 파일 이름이 이상하거나 잘못된 확장자를 포함하는 경우도 막을 수 있음
 	if _, _, err := mime.ParseMediaType(detectedMime); err != nil {
-		fmt.Println("올바르지 않은 MIME 타입입니다.")
+		log.Println("올바르지 않은 MIME 타입입니다.")
 		return false
 	}
 
@@ -97,7 +97,7 @@ func ValidateImageFile(fileName string, fileBytes []byte) bool {
 }
 
 func skinImgforwardToCommon(ctx context.Context, body commonReqDto.CreateSkinImgRequestBody) bool {
-	fmt.Println("44")
+	log.Println("44")
 
 	// 1. multipart/form-data 본문 구성
 	var requestBody bytes.Buffer
@@ -105,25 +105,25 @@ func skinImgforwardToCommon(ctx context.Context, body commonReqDto.CreateSkinImg
 
 	part, err := writer.CreateFormFile("File", body.FileName) // common에서 수신받는 form-data key값
 	if err != nil {
-		fmt.Println("create form file error.")
+		log.Println("create form file error.")
 		return false
 	}
-	fmt.Println("55")
+	log.Println("55")
 	_, err = part.Write(body.File)
 	if err != nil {
-		fmt.Println("file data write error.")
+		log.Println("file data write error.")
 		return false
 	}
-	fmt.Println("66")
+	log.Println("66")
 	writer.Close()
 
 	// 3. HTTP 요청 생성
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://172.16.10.114/common/sv1/skin-img", &requestBody)
 	if err != nil {
-		fmt.Println("request make error.")
+		log.Println("request make error.")
 		return false
 	}
-	fmt.Println("77")
+	log.Println("77")
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer serverToken") // 서버 to 서버 인증 처리 필요
 	req.Header.Set("Skin-Type", body.SkinType)
@@ -132,18 +132,18 @@ func skinImgforwardToCommon(ctx context.Context, body commonReqDto.CreateSkinImg
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("api call error.")
+		log.Println("api call error.")
 		return false
 	}
-	fmt.Println("88")
+	log.Println("88")
 	defer resp.Body.Close()
-	fmt.Println("99 resp.StatusCode : ", resp.StatusCode)
+	log.Println("99 resp.StatusCode : ", resp.StatusCode)
 
 	// 5. 응답 상태 확인 200이 아니면.
 	if resp.StatusCode != http.StatusOK {
 		return false
 	}
 
-	fmt.Println("success.")
+	log.Println("success.")
 	return true
 }

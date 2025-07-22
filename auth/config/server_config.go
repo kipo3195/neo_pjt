@@ -2,7 +2,6 @@ package config
 
 import (
 	"auth/models"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -72,19 +71,19 @@ func initJwtConfig() *JWTConfig {
 	key := os.Getenv("JWT_SECRET_KEY")
 	accessExp, err := strconv.Atoi(os.Getenv("ACCESS_TOKEN_EXP_M"))
 	if err != nil {
-		fmt.Println("ACCESS_TOKEN_EXP_M is invalid. :", err)
+		log.Println("ACCESS_TOKEN_EXP_M is invalid. :", err)
 	}
 	refreshExp, err := strconv.Atoi(os.Getenv("REFRESH_TOKEN_EXP_D"))
 	if err != nil {
-		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
+		log.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
 	}
 	appTokenExp, err := strconv.Atoi(os.Getenv("APP_TOKEN_EXP_D"))
 	if err != nil {
-		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
+		log.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
 	}
 	appRefreshTokenExp, err := strconv.Atoi(os.Getenv("APP_REFRESH_TOKEN_EXP_D"))
 	if err != nil {
-		fmt.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
+		log.Println("REFRESH_TOKEN_EXP_D is invalid. :", err)
 	}
 	return &JWTConfig{Key: key, AccessExp: accessExp, RefressExp: refreshExp, AppTokenExp: appTokenExp, AppRefreshTokenExp: appRefreshTokenExp}
 }
@@ -95,7 +94,7 @@ func (s *ServerConfig) GetJWTConfig() *JWTConfig {
 
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
-	//fmt.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
+	//log.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
 	dsn := sfg.dbConfig.Id + ":" + sfg.dbConfig.Pw + "@tcp(" + sfg.dbConfig.Host + ":" + sfg.dbConfig.Port + ")/" + sfg.dbConfig.Database + "?charset=utf8mb4&parseTime=True&loc=Local"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{}) // MYSQL
@@ -108,6 +107,6 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	db.AutoMigrate(&models.IssuedAppToken{})
 	db.AutoMigrate(&models.ServiceUsers{})
 
-	fmt.Println("Auth Database Connected !")
+	log.Println("Auth Database Connected !")
 	return db
 }

@@ -2,7 +2,6 @@ package config
 
 import (
 	"core/models"
-	"fmt"
 	"log"
 	"os"
 
@@ -72,7 +71,7 @@ func initDBConfig() *DBConfig {
 
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
-	//fmt.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
+	//log.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
 	dsn := sfg.dbConfig.Id + ":" + sfg.dbConfig.Pw + "@tcp(" + sfg.dbConfig.Host + ":" + sfg.dbConfig.Port + ")/" + sfg.dbConfig.Database + "?charset=utf8mb4&parseTime=True&loc=Local"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{}) // MYSQL
@@ -85,7 +84,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	db.AutoMigrate(&models.AppValidation{})
 	db.AutoMigrate(&models.WorksList{})
 
-	fmt.Println("Core Database Connected !")
+	log.Println("Core Database Connected !")
 	return db
 }
 

@@ -49,7 +49,7 @@ func (r *coreRepository) GetWorksCommonInfo(worksCode string) (*entities.WorksCo
 
 	result := r.db.Where("works_code = ? and use_yn = ?", worksCode, "Y").First(&worksList)
 
-	fmt.Println("도메인이나 코드를 전달 받아서 등록된 테넌트 인지 조회 결과 : ", result)
+	log.Println("도메인이나 코드를 전달 받아서 등록된 테넌트 인지 조회 결과 : ", result)
 
 	// 조회 결과가 없을때
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {

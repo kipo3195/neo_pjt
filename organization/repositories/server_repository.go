@@ -68,7 +68,7 @@ func (r *serverRepository) PutDept(ctx context.Context, entity entities.CreateDe
 		return false, err
 	}
 	// DB 저장 성공
-	fmt.Println("[PutDept] success !")
+	log.Println("[PutDept] success !")
 	return true, nil
 }
 
@@ -141,7 +141,7 @@ func (r *serverRepository) DeleteDept(ctx context.Context, entity entities.Delet
 	tx.Commit()
 
 	// DB 저장 성공
-	fmt.Println("[DeleteDepartment] success !")
+	log.Println("[DeleteDepartment] success !")
 	return true, nil
 }
 
@@ -174,7 +174,7 @@ func (r *serverRepository) PutDeptUser(ctx context.Context, entity entities.Crea
 	// 	return false, err
 	// }
 	// DB 저장 성공
-	fmt.Println("[PutDeptUser] success !")
+	log.Println("[PutDeptUser] success !")
 	return true, nil
 }
 

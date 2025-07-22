@@ -4,8 +4,8 @@ import (
 	"admin/consts"
 	commonReqDto "admin/dto/client/common/request"
 	"admin/usecases"
-	"fmt"
 	"io"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -69,7 +69,7 @@ func (h *CommonHandler) CreateSkinImg(c *gin.Context) {
 
 	err = h.usecase.CreateSkinImg(ctx, requestDTO.Body)
 
-	fmt.Println("admin 서비스 스킨 이미지 업로드에 대한 response : ", err)
+	log.Println("admin 서비스 스킨 이미지 업로드에 대한 response : ", err)
 
 	if err != nil {
 

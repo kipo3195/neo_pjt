@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -52,16 +53,16 @@ func (r *serverUsecase) AppTokenValidation(requestDTO svCommonReqDto.AppTokenVal
 	if err != nil {
 		// 만료 에러 확인
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			fmt.Println("토큰이 만료되었습니다.")
+			log.Println("토큰이 만료되었습니다.")
 			return false, consts.ErrTokenExpired
 		}
 		// 서명 오류
 		if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
-			fmt.Println("서명이 유효하지 않습니다.")
+			log.Println("서명이 유효하지 않습니다.")
 			return false, consts.ErrTokenSignatureInvalid
 		}
 		// 그 외 오류
-		fmt.Println("토큰 파싱 오류:", err)
+		log.Println("토큰 파싱 오류:", err)
 		return false, consts.ErrTokenParsing
 	}
 
@@ -93,12 +94,12 @@ func appTokenValidationCheck(appToken string) error {
 
 	// 유효한 토큰인 경우
 	if claims, ok := token.Claims.(*claims.DeviceJWTClaims); ok && token.Valid {
-		fmt.Println("토큰이 유효합니다.")
-		fmt.Println("UUID:", claims.Uuid)
-		fmt.Println("만료 시간:", claims.ExpiresAt.Time)
+		log.Println("토큰이 유효합니다.")
+		log.Println("UUID:", claims.Uuid)
+		log.Println("만료 시간:", claims.ExpiresAt.Time)
 		return nil
 	} else {
-		fmt.Println("토큰이 유효하지 않습니다.")
+		log.Println("토큰이 유효하지 않습니다.")
 		return errors.New(consts.ErrInvalidClaims.Error())
 	}
 }

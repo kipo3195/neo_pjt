@@ -5,7 +5,6 @@ import (
 	"common/models"
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"gorm.io/gorm"
@@ -78,14 +77,14 @@ func (r *serverRepository) GetWorksConfig(entity entities.GetWorksConfig, ctx co
 	}
 
 	// 언어, 타임존, 서버 설정, 컬러 조회
-	fmt.Println("entity.WorksCode ", entity.WorksCode)
+	log.Println("entity.WorksCode ", entity.WorksCode)
 	var worksInfo []models.WorksInfo
 	if err := tx.Where("works_code = ?", entity.WorksCode).Find(&worksInfo).Error; err != nil {
 		tx.Rollback()
 		return nil, err // ← 실제 DB 에러일 때만 종료
 	}
 
-	fmt.Println("worksInfo : ", worksInfo)
+	log.Println("worksInfo : ", worksInfo)
 
 	if err := tx.Commit().Error; err != nil {
 		log.Println("[GetWorksConfig] - Commit failed")
@@ -110,7 +109,7 @@ func toWorksWorksConfigEntity(appSkinConfig models.AppSkinConfig, worksInfo []mo
 		}
 	}
 
-	fmt.Println("toWorksConfigEntity")
+	log.Println("toWorksConfigEntity")
 	skinFileInfo := ConvertToSkinFileInfoEntities(appSkinFileInfo)
 	return &entities.WorksConfig{
 		TimeZone:   timeZone,

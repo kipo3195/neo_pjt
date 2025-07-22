@@ -12,6 +12,7 @@ import (
 	"core/repositories"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -68,10 +69,10 @@ func (u *coreUsecase) GetWorksInfos(reqDto clReqDto.AppValidationRequestDTO) (*c
 	// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
 	worksInfo, err := getWorksInfoInCommon(toWorksInfoRequestDtoBody(reqDto.Header.Uuid, reqDto.Header.Device, reqDto.Body.WorksCode), worksCommonInfo.ServerUrl)
 
-	fmt.Println("worksInfo", worksInfo)
+	log.Println("worksInfo", worksInfo)
 
 	if err != nil {
-		fmt.Println("common service 호출시 에러 발생함.")
+		log.Println("common service 호출시 에러 발생함.")
 		return nil, err
 	}
 
@@ -107,7 +108,7 @@ func getWorksInfoInCommon(body svCommonReqDto.DeviceInitRequestBody, serverUrl s
 
 	// url 정의
 	url := "http://" + serverUrl + "/common/sv1/device-init"
-	fmt.Println("common service 호출! url : ", url)
+	log.Println("common service 호출! url : ", url)
 
 	// 직렬화
 	bodyByte, err := json.Marshal(reqDto.Body)
@@ -136,12 +137,12 @@ func getWorksInfoInCommon(body svCommonReqDto.DeviceInitRequestBody, serverUrl s
 	var result dto.ServerResponseDTO[*svCommonResDto.DeviceInitResponseBody]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		fmt.Println("serverReponse 파싱시 에러")
+		log.Println("serverReponse 파싱시 에러")
 		return nil, err
 	}
 
 	res := result.Data
 
-	fmt.Println("common service 호출 end !")
+	log.Println("common service 호출 end !")
 	return res, nil
 }

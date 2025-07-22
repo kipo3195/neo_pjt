@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -71,9 +72,9 @@ func (u *serverUsecase) DeviceInit(ctx context.Context, body *commonDto.DeviceIn
 		}
 	}
 
-	fmt.Println("connectInfo:", connectInfo)
-	fmt.Println("issuedAppToken:", issuedAppToken)
-	fmt.Println("worksConfig ", worksConfig)
+	log.Println("connectInfo:", connectInfo)
+	log.Println("issuedAppToken:", issuedAppToken)
+	log.Println("worksConfig ", worksConfig)
 
 	return &entities.InitResult{
 		ConnectInfo:    connectInfo,
@@ -94,7 +95,7 @@ func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (*ent
 		return nil, err
 	}
 
-	fmt.Println("auth service 호출! 1")
+	log.Println("auth service 호출! 1")
 
 	url := "http://" + serverUrl + "/auth/sv1/generate-app-token"
 	//url := domain + "/auth/v1/generate-device-token"
@@ -111,7 +112,7 @@ func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (*ent
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("auth service 호출 에러 1")
+		log.Println("auth service 호출 에러 1")
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -120,7 +121,7 @@ func generateAppToken(body *commonDto.DeviceInitRequest, serverUrl string) (*ent
 	var result dto.ServerResponse[*authDto.DeviceInitAuthResponse]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		fmt.Println("serverReponse 파싱시 에러")
+		log.Println("serverReponse 파싱시 에러")
 		return nil, err
 	}
 
@@ -137,14 +138,14 @@ func toIssuedAppTokenEntity(dto *authDto.DeviceInitAuthResponse) *entities.Issue
 
 func (r *serverUsecase) CreateSkinImg(ctx context.Context, dto adminDto.CreateSkinImgRequest) (interface{}, error) {
 
-	fmt.Println("333")
+	log.Println("333")
 	// 파일 저장
 	entity, err := skinFileSaved(ctx, dto)
 	if err != nil {
-		fmt.Println("skinFileSaved error : ", err)
+		log.Println("skinFileSaved error : ", err)
 		return nil, err
 	} else {
-		fmt.Println("eee")
+		log.Println("eee")
 		// DB 저장
 		_, err := r.repo.PutSkinFileInfo(ctx, entity)
 		if err != nil {
@@ -178,55 +179,55 @@ func detectContentType(file multipart.File) (string, error) {
 
 func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*entities.SkinFileInfoEntity, error) {
 	defer dto.File.Close()
-	fmt.Println("444")
+	log.Println("444")
 	// 파일의 사이즈 검증
 	fileSize := dto.FileInfo.Size
 	sizeCheck := checkSkinImgSize(fileSize)
 	if !sizeCheck {
 		return nil, consts.ErrFileSizeExceeded
 	}
-	fmt.Println("555")
+	log.Println("555")
 	// 파일의 확장자 검증 (이미지인지 판단.)
 	detectedType, err := detectContentType(dto.File)
 	if err != nil {
 		return nil, consts.ErrFileExtentionDetect
 	}
-	fmt.Println("666")
+	log.Println("666")
 	if !strings.HasPrefix(detectedType, "image/") {
 		return nil, consts.ErrFileExtentionInvalid
 	}
-	fmt.Println("777")
+	log.Println("777")
 	// 1. 이미지 디코딩
 	srcImage, format, err := image.Decode(dto.File)
 	if err != nil {
 		return nil, fmt.Errorf("이미지 디코딩 실패: %w", err)
 	}
-	fmt.Println("888")
+	log.Println("888")
 	// 2. 리사이징 (너비 300, 비율 유지) 추후 서버 설정으로 뺄 것
 	dstImage := imaging.Resize(srcImage, 300, 0, imaging.Lanczos)
 
-	fmt.Println("999")
+	log.Println("999")
 	// 3. 저장할 파일 이름 생성
 	ext := strings.ToLower(filepath.Ext(dto.FileInfo.Filename))
 	fileHash := getNow()
 	skinType := dto.SkinType
 	fileName := fmt.Sprintf("%s%s", fileHash, ext)
 	filePath := filepath.Join("./skins/"+skinType, fileName) // 저장 경로 skins/skinType
-	fmt.Println("ext : ", ext)
-	fmt.Println("fileHash : ", fileHash)
-	fmt.Println("fileName : ", fileName)
-	fmt.Println("filePath : ", filePath)
+	log.Println("ext : ", ext)
+	log.Println("fileHash : ", fileHash)
+	log.Println("fileName : ", fileName)
+	log.Println("filePath : ", filePath)
 
 	if err := os.MkdirAll("./skins/"+skinType, 0755); err != nil {
 		return nil, fmt.Errorf("디렉토리 생성 실패: %w", err)
 	}
-	fmt.Println("000")
+	log.Println("000")
 	// 5. 로컬 저장
 	outFile, err := os.Create(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("파일 생성 실패: %w", err)
 	}
-	fmt.Println("000 format : ", format)
+	log.Println("000 format : ", format)
 	defer outFile.Close()
 
 	switch format {
@@ -239,7 +240,7 @@ func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*ent
 	default:
 		return nil, fmt.Errorf("지원하지 않는 포맷: %s", format)
 	}
-	fmt.Println("bbb")
+	log.Println("bbb")
 
 	if err != nil {
 		return nil, fmt.Errorf("이미지 저장 실패: %w", err)
@@ -263,7 +264,7 @@ func skinFileSaved(ctx context.Context, dto adminDto.CreateSkinImgRequest) (*ent
 			}
 		}
 	}
-	fmt.Println("ccc")
+	log.Println("ccc")
 	// 서버 설정화 필요
 	return &entities.SkinFileInfoEntity{
 		FileHash: fileHash,
