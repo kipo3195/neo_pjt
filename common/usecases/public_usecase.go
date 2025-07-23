@@ -6,8 +6,7 @@ import (
 	clDto "common/dto/client"
 	clCommonReqDto "common/dto/client/request"
 	dto "common/dto/common"
-	authDto "common/dto/server/auth"
-	"common/entities"
+	svAuthReqDto "common/dto/server/auth/request"
 	"common/infra/storage"
 	"common/repositories"
 	"context"
@@ -37,16 +36,12 @@ func NewPublicUsecase(repo repositories.PublicRepository, configStorage storage.
 
 func (r *publicUsecase) AppValidation(ctx context.Context, requestDTO clCommonReqDto.AppValidationRequestDTO) (bool, error) {
 
-	data, err := getAppTokenValidationInAuth(toAppTokenValidationRequest(requestDTO.Body))
+	//http statuscode를 리턴함.
+	_, err := getAppTokenValidationInAuth(ctx, toAppTokenValidationRequest(requestDTO.Body))
 
 	if err != nil {
 		// 에러 정의 후 response
 		return false, consts.ErrServerError
-	}
-
-	if data.Result != "success" {
-		// 인증 실패, 에러 정의 후 response.
-		return false, consts.ErrInvalidClaims
 	}
 
 	// skin 검증
@@ -76,57 +71,66 @@ func (r *publicUsecase) AppValidation(ctx context.Context, requestDTO clCommonRe
 	return true, nil
 }
 
-func toAppTokenValidationRequest(body clCommonReqDto.AppValidationRequestBody) authDto.AppTokenValidationRequest {
-	return authDto.AppTokenValidationRequest{
+func toAppTokenValidationRequest(body clCommonReqDto.AppValidationRequestBody) svAuthReqDto.AppTokenValidationRequestBody {
+	return svAuthReqDto.AppTokenValidationRequestBody{
 		AppToken: body.AppToken,
 		Uuid:     body.Uuid,
 	}
 
 }
 
-func getAppTokenValidationInAuth(body authDto.AppTokenValidationRequest) (entities.AppTokenValitaionResponseEntity, error) {
+func getAppTokenValidationInAuth(ctx context.Context, body svAuthReqDto.AppTokenValidationRequestBody) (int, error) {
 
-	// JSON 변환
-	serverRequestBody, err := json.Marshal(body)
-	if err != nil {
-		return entities.AppTokenValitaionResponseEntity{}, err
+	header := svAuthReqDto.AppTokenValidationRequestHeader{
+		ServerToken: "",
+	}
+
+	reqDto := svAuthReqDto.AppTokenValidationRequestDTO{
+		Header: header,
+		Body:   body,
 	}
 
 	// POST 요청 보내기
 	url := "http://172.16.10.114/auth/sv1/app-token-validation"
-
 	log.Println("auth service 호출! url : ", url)
+
+	// JSON 변환
+	serverRequestBody, err := json.Marshal(reqDto.Body)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(serverRequestBody))
 	if err != nil {
-		return entities.AppTokenValitaionResponseEntity{}, err
+		return http.StatusInternalServerError, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer serverToken") // works 서버 호출시 필요한 키 작성하기 TODO
+	req.Header.Set("Authorization", reqDto.Header.ServerToken) // works 서버 호출시 필요한 키 작성하기 TODO
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return entities.AppTokenValitaionResponseEntity{}, err
+		return http.StatusInternalServerError, err
 	}
 
 	defer resp.Body.Close()
 
-	var responseBody authDto.AppTokenValidationResponse
-	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		log.Println("serverReponse 파싱시 에러")
-		return entities.AppTokenValitaionResponseEntity{}, err
+	if err != nil {
+		log.Println("org error : ", err)
+		select {
+		case <-ctx.Done():
+			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+		default:
+			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
+		}
 	}
 
-	return toAppTokenValidationResponseEntity(responseBody), nil
-}
-
-func toAppTokenValidationResponseEntity(dto authDto.AppTokenValidationResponse) entities.AppTokenValitaionResponseEntity {
-	return entities.AppTokenValitaionResponseEntity{
-		Result: dto.Result,
-		Data:   dto.Data,
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, fmt.Errorf("auth service returned status %d", resp.StatusCode)
 	}
+
+	return http.StatusOK, nil
 }
 
 func (r *publicUsecase) AppTokenReIssue(ctx context.Context, body clDto.AppTokenRefreshRequest) (*authDto.AppTokenRefreshResponse, error) {

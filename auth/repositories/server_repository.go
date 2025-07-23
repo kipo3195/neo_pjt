@@ -3,6 +3,7 @@ package repositories
 import (
 	"auth/entities"
 	"auth/models"
+	"errors"
 	"log"
 
 	"gorm.io/gorm"
@@ -45,7 +46,11 @@ func (r *serverRepository) GetValidation(entity entities.AppTokenValidationEntit
 
 	result := r.db.Where("uuid = ?", entity.Uuid).Order("seq DESC").First(&validation)
 
-	if result.Error != nil {
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		log.Println("[GetValidation] result record = 0")
+		return false, result.Error
+	} else if result.Error != nil {
+		log.Println("[GetValidation] DB error")
 		return false, result.Error
 	} else {
 		serverToken := validation.AppToken

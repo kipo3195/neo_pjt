@@ -35,9 +35,8 @@ func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.
 
 func (r *serverUsecase) AppTokenValidation(requestDTO svCommonReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error) {
 
-	// authUsecase를 주입받아 사용.
+	// authUsecase를 주입받아 사용, uuid에 해당하는 토큰이 일치하는지 점검
 	flag, err := r.repo.GetValidation(toAppTokenValidationEntity(requestDTO.Body.Uuid, requestDTO.Body.AppToken))
-
 	if err != nil {
 		// DB error, 조회 X
 		return false, err
@@ -48,6 +47,7 @@ func (r *serverUsecase) AppTokenValidation(requestDTO svCommonReqDto.AppTokenVal
 		return false, consts.ErrInvalidClaims
 	}
 
+	// 토큰 만료 점검
 	err = appTokenValidationCheck(requestDTO.Body.AppToken)
 
 	if err != nil {

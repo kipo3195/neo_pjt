@@ -3,13 +3,11 @@ package handlers
 import (
 	clDto "common/dto/client"
 	clCommonReqDto "common/dto/client/request"
-	dto "common/dto/common"
 	"common/usecases"
 	"common/utils"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -57,45 +55,18 @@ func (h *PublicHandler) AppValidation(c *gin.Context) {
 	if err != nil || !data {
 		switch {
 		case errors.Is(err, consts.ErrInvalidClaims):
-			w.WriteHeader(http.StatusUnauthorized)
-			res.Result = consts.ERROR
-			res.Data = dto.ErrorResponse{
-				Code:    consts.E_106,
-				Message: consts.E_106_MSG,
-			}
-			writeJSON(w, http.StatusOK, res)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_106, consts.E_106_MSG)
 		case errors.Is(err, consts.ErrSkinHashInvalid):
-			w.WriteHeader(http.StatusBadRequest)
-			res.Result = consts.FAIL
-			res.Data = dto.ErrorResponse{
-				Code:    consts.COMMON_F001,
-				Message: consts.COMMON_F001_MSG,
-			}
-			writeJSON(w, http.StatusOK, res)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.COMMON_F001, consts.COMMON_F001_MSG)
 		case errors.Is(err, consts.ErrConfigHashInvalid):
-			w.WriteHeader(http.StatusBadRequest)
-			res.Result = consts.FAIL
-			res.Data = dto.ErrorResponse{
-				Code:    consts.COMMON_F002,
-				Message: consts.COMMON_F002_MSG,
-			}
-			writeJSON(w, http.StatusOK, res)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.COMMON_F002, consts.COMMON_F002_MSG)
 		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			res.Result = consts.ERROR
-			res.Data = dto.ErrorResponse{
-				Code:    consts.E_500,
-				Message: consts.E_500_MSG,
-			}
-			writeJSON(w, http.StatusOK, res)
+			utils.SendErrorResponse(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
 		}
 		return
 	} else if data {
-		res.Result = consts.SUCCESS
-		res.Data = dto.ErrorResponse{}
+		utils.SendSuccessResponse(c, "")
 	}
-
-	json.NewEncoder(w).Encode(res)
 }
 
 func (h *PublicHandler) AppTokenRefresh(w http.ResponseWriter, r *http.Request) {
@@ -139,20 +110,4 @@ func (h *PublicHandler) AppTokenRefresh(w http.ResponseWriter, r *http.Request) 
 	res.Result = consts.SUCCESS
 	res.Data = data
 	writeJSON(w, http.StatusOK, res)
-}
-
-func newErrorResp(code, msg string) *dto.ErrorResponse {
-	return &dto.ErrorResponse{
-		Code:    code,
-		Message: msg,
-	}
-}
-
-func writeJSON(w http.ResponseWriter, statusCode int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		// 로깅 권장
-		fmt.Printf("json encoding failed: %v\n", err)
-	}
 }
