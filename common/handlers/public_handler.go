@@ -1,15 +1,12 @@
 package handlers
 
 import (
-	clDto "common/dto/client"
 	clCommonReqDto "common/dto/client/request"
 	"common/usecases"
 	"common/utils"
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	consts "common/consts"
 
@@ -69,22 +66,30 @@ func (h *PublicHandler) AppValidation(c *gin.Context) {
 	}
 }
 
-func (h *PublicHandler) AppTokenRefresh(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-	defer r.Body.Close()
+func (h *PublicHandler) AppTokenRefresh(c *gin.Context) {
 
-	var res clDto.AppTokenRefreshResponse
-	var body clDto.AppTokenRefreshRequest
+	ctx := c.Request.Context()
 
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		res.Result = consts.FAIL
-		res.Data = newErrorResp(consts.E_103, consts.E_103_MSG)
-		writeJSON(w, http.StatusBadRequest, res)
+	// request body 데이터 -> dto로 변경
+	var body clCommonReqDto.AppTokenRefreshRequestBody
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_103, consts.E_103_MSG)
 		return
 	}
 
-	data, err := h.usecase.AppTokenReIssue(ctx, body)
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(body); err != nil {
+		utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_108, consts.E_108_MSG)
+		return
+	}
+
+	requestDTO := clCommonReqDto.AppTokenRefreshRequestDTO{
+		Body: body,
+	}
+
+	data, err := h.usecase.AppTokenReIssue(ctx, requestDTO)
 
 	if err != nil {
 		switch {

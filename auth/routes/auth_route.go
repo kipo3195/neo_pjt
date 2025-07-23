@@ -22,6 +22,7 @@ func SetupRoutes(authHandler *handlers.AuthHandler, serverHandler *handlers.Serv
 		{
 			sv1.POST("/generate-app-token", serverHandler.GenerateAppToken)
 			sv1.POST("/app-token-validation", serverHandler.AppTokenValidation)
+			sv1.POST("/app-token-refresh", serverHandler.AppTokenRefresh)
 		}
 
 	}

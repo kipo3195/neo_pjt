@@ -91,3 +91,7 @@ func (h *ServerHandler) AppTokenValidation(c *gin.Context) {
 	}
 
 }
+
+func (h *ServerHandler) AppTokenRefresh(c *gin.Context) {
+
+}

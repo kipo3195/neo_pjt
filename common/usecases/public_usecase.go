@@ -3,9 +3,7 @@ package usecases
 import (
 	"bytes"
 	"common/consts"
-	clDto "common/dto/client"
 	clCommonReqDto "common/dto/client/request"
-	dto "common/dto/common"
 	svAuthReqDto "common/dto/server/auth/request"
 	"common/infra/storage"
 	"common/repositories"
@@ -24,7 +22,7 @@ type publicUsecase struct {
 
 type PublicUsecase interface {
 	AppValidation(ctx context.Context, requestDTO clCommonReqDto.AppValidationRequestDTO) (bool, error)
-	AppTokenReIssue(ctx context.Context, body clDto.AppTokenRefreshRequest) (*authDto.AppTokenRefreshResponse, error)
+	AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*authDto.AppTokenRefreshResponse, error)
 }
 
 func NewPublicUsecase(repo repositories.PublicRepository, configStorage storage.ConfigStorage) PublicUsecase {
@@ -71,31 +69,23 @@ func (r *publicUsecase) AppValidation(ctx context.Context, requestDTO clCommonRe
 	return true, nil
 }
 
-func toAppTokenValidationRequest(body clCommonReqDto.AppValidationRequestBody) svAuthReqDto.AppTokenValidationRequestBody {
-	return svAuthReqDto.AppTokenValidationRequestBody{
-		AppToken: body.AppToken,
-		Uuid:     body.Uuid,
+func toAppTokenValidationRequest(body clCommonReqDto.AppValidationRequestBody) svAuthReqDto.AppTokenValidationRequestDTO {
+	return svAuthReqDto.AppTokenValidationRequestDTO{
+		Body: svAuthReqDto.AppTokenValidationRequestBody{
+			AppToken: body.AppToken,
+			Uuid:     body.Uuid,
+		},
 	}
-
 }
 
-func getAppTokenValidationInAuth(ctx context.Context, body svAuthReqDto.AppTokenValidationRequestBody) (int, error) {
-
-	header := svAuthReqDto.AppTokenValidationRequestHeader{
-		ServerToken: "",
-	}
-
-	reqDto := svAuthReqDto.AppTokenValidationRequestDTO{
-		Header: header,
-		Body:   body,
-	}
+func getAppTokenValidationInAuth(ctx context.Context, requestDTO svAuthReqDto.AppTokenValidationRequestDTO) (int, error) {
 
 	// POST 요청 보내기
 	url := "http://172.16.10.114/auth/sv1/app-token-validation"
 	log.Println("auth service 호출! url : ", url)
 
 	// JSON 변환
-	serverRequestBody, err := json.Marshal(reqDto.Body)
+	serverRequestBody, err := json.Marshal(requestDTO.Body)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -106,7 +96,7 @@ func getAppTokenValidationInAuth(ctx context.Context, body svAuthReqDto.AppToken
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", reqDto.Header.ServerToken) // works 서버 호출시 필요한 키 작성하기 TODO
+	req.Header.Set("Authorization", "Bearer serverToken") // works 서버 호출시 필요한 키 작성하기 TODO
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -133,60 +123,54 @@ func getAppTokenValidationInAuth(ctx context.Context, body svAuthReqDto.AppToken
 	return http.StatusOK, nil
 }
 
-func (r *publicUsecase) AppTokenReIssue(ctx context.Context, body clDto.AppTokenRefreshRequest) (*authDto.AppTokenRefreshResponse, error) {
+// 여기서부터 할것
+func (r *publicUsecase) AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*authDto.AppTokenRefreshResponse, error) {
 
 	// marshal
-	requestBody, err := json.Marshal(body)
+	requestBody, err := json.Marshal(requestDTO.Body)
 	if err != nil {
 		return nil, fmt.Errorf("marshal failed: %w", consts.ErrServerError)
 	}
 
 	url := "http://auth-service/auth/sv1/app-token-refresh"
-	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", consts.ErrServerError)
 	}
 
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer serverToken")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer serverToken")
 
 	client := &http.Client{}
-	resp, err := client.Do(httpReq)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("auth call failed: %w", consts.ErrServerError)
 	}
+
 	defer resp.Body.Close()
+
+	if err != nil {
+		log.Println("org error : ", err)
+		select {
+		case <-ctx.Done():
+			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+		default:
+			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
+		}
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp.StatusCode, fmt.Errorf("auth service returned status %d", resp.StatusCode)
+	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read body failed: %w", consts.ErrServerError)
 	}
 
-	// 응답 코드에 따라 분기
-	switch resp.StatusCode {
-	case http.StatusOK:
-		var result dto.ServerResponse[*authDto.AppTokenRefreshResponse]
-		if err := json.Unmarshal(bodyBytes, &result); err != nil {
-			return nil, fmt.Errorf("unmarshal failed: %w", consts.ErrServerError)
-		}
-		return result.Data, nil
-
-	case http.StatusBadRequest:
-		var errResp dto.ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &errResp); err != nil {
-			return nil, fmt.Errorf("unmarshal error body failed: %w", consts.ErrServerError)
-		}
-
-		switch errResp.Code {
-		case "AUTH_F001":
-			return nil, consts.ErrRefreshTokenAuthInvalid
-		case "AUTH_F002":
-			return nil, consts.ErrRefreshTokenAuthExpired
-		default:
-			return nil, fmt.Errorf("unknown auth error: %w", consts.ErrServerError)
-		}
-
-	default:
-		return nil, consts.ErrServerError
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return nil, fmt.Errorf("unmarshal failed: %w", consts.ErrServerError)
 	}
+	return result.Body, nil
+
 }
