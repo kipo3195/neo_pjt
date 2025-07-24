@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"common/consts"
 	clCommonReqDto "common/dto/client/request"
+	dto "common/dto/common"
 	svAuthReqDto "common/dto/server/auth/request"
+	svAuthResDto "common/dto/server/auth/response"
 	"common/infra/storage"
 	"common/repositories"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 )
@@ -22,7 +23,7 @@ type publicUsecase struct {
 
 type PublicUsecase interface {
 	AppValidation(ctx context.Context, requestDTO clCommonReqDto.AppValidationRequestDTO) (bool, error)
-	AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*authDto.AppTokenRefreshResponse, error)
+	AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*svAuthResDto.AppTokenRefreshResponseBody, error)
 }
 
 func NewPublicUsecase(repo repositories.PublicRepository, configStorage storage.ConfigStorage) PublicUsecase {
@@ -123,8 +124,7 @@ func getAppTokenValidationInAuth(ctx context.Context, requestDTO svAuthReqDto.Ap
 	return http.StatusOK, nil
 }
 
-// 여기서부터 할것
-func (r *publicUsecase) AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*authDto.AppTokenRefreshResponse, error) {
+func (r *publicUsecase) AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*svAuthResDto.AppTokenRefreshResponseBody, error) {
 
 	// marshal
 	requestBody, err := json.Marshal(requestDTO.Body)
@@ -153,24 +153,26 @@ func (r *publicUsecase) AppTokenReIssue(ctx context.Context, requestDTO clCommon
 		log.Println("org error : ", err)
 		select {
 		case <-ctx.Done():
-			return http.StatusInternalServerError, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
+			return nil, fmt.Errorf("request cancelled or timed out: %w", ctx.Err())
 		default:
-			return http.StatusInternalServerError, fmt.Errorf("request failed: %w", err)
+			return nil, fmt.Errorf("request failed: %w", err)
 		}
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return resp.StatusCode, fmt.Errorf("auth service returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("auth service returned status %d", resp.StatusCode)
 	}
 
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read body failed: %w", consts.ErrServerError)
+	var result dto.ServerResponseDTO[*svAuthResDto.AppTokenRefreshResponseDTO]
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Println("serverReponse 파싱시 에러")
+		return nil, err
 	}
 
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
-		return nil, fmt.Errorf("unmarshal failed: %w", consts.ErrServerError)
-	}
-	return result.Body, nil
+	responseDTO := result.Data
+
+	log.Println("auth service 호출 end !")
+	return &responseDTO.Body, nil
 
 }

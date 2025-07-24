@@ -134,15 +134,15 @@ func getWorksInfoInCommon(body svCommonReqDto.DeviceInitRequestBody, serverUrl s
 	defer resp.Body.Close()
 
 	// serverResponse로 전달받기 -> dto 뽑아내기 제네릭
-	var result dto.ServerResponseDTO[*svCommonResDto.DeviceInitResponseBody]
+	var result dto.ServerResponseDTO[*svCommonResDto.DeviceInitResponseDTO]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Println("serverReponse 파싱시 에러")
 		return nil, err
 	}
 
-	res := result.Data
+	responseDTO := result.Data
 
 	log.Println("common service 호출 end !")
-	return res, nil
+	return responseDTO.Body, nil
 }

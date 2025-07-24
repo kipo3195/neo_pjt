@@ -6,7 +6,6 @@ import (
 	"common/utils"
 	"encoding/json"
 	"errors"
-	"net/http"
 
 	consts "common/consts"
 
@@ -95,24 +94,16 @@ func (h *PublicHandler) AppTokenRefresh(c *gin.Context) {
 		switch {
 		case errors.Is(err, consts.ErrRefreshTokenAuthInvalid):
 			// 토큰 검증 실패
-			res.Result = consts.FAIL
-			res.Data = newErrorResp(consts.COMMON_F003, consts.COMMON_F003_MSG)
-			writeJSON(w, http.StatusBadRequest, res)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.COMMON_F003, consts.COMMON_F003_MSG)
 		case errors.Is(err, consts.ErrRefreshTokenAuthExpired):
 			// 토큰 만료
-			res.Result = consts.FAIL
-			res.Data = newErrorResp(consts.COMMON_F004, consts.COMMON_F004_MSG)
-			writeJSON(w, http.StatusBadRequest, res)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.FAIL, consts.COMMON_F004, consts.COMMON_F004_MSG)
 		default:
 			// 서버 에러
-			res.Result = consts.ERROR
-			res.Data = newErrorResp(consts.E_500, consts.E_500_MSG)
-			writeJSON(w, http.StatusInternalServerError, res)
+			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_500, consts.E_500_MSG)
 		}
 		return
+	} else {
+		utils.SendSuccessResponse(c, data)
 	}
-
-	res.Result = consts.SUCCESS
-	res.Data = data
-	writeJSON(w, http.StatusOK, res)
 }

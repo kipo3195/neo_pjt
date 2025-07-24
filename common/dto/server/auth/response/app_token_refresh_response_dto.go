@@ -9,5 +9,5 @@ type AppTokenRefreshResponseHeader struct {
 }
 
 type AppTokenRefreshResponseBody struct {
-	AppToken string `json:"AppToken"`
+	AppToken string `json:"appToken"`
 }
