@@ -12,17 +12,22 @@ func SetupRoutes(authHandler *handlers.AuthHandler, serverHandler *handlers.Serv
 
 	auth := r.Group("/auth")
 	{
-
 		v1 := auth.Group("/v1")
 		{
-			v1.POST("/login", authHandler.Login)
+			certification := v1.Group("/certification") // 도메인을 기준으로.
+			{
+				certification.POST("/login", authHandler.Login)
+			}
 		}
 
 		sv1 := auth.Group("/sv1")
 		{
-			sv1.POST("/generate-app-token", serverHandler.GenerateAppToken)
-			sv1.POST("/app-token-validation", serverHandler.AppTokenValidation)
-			sv1.POST("/app-token-refresh", serverHandler.AppTokenRefresh)
+			token := sv1.Group("/token") // 도메인을 기준으로
+			{
+				token.POST("/generate-app-token", serverHandler.GenerateAppToken)
+				token.POST("/app-token-validation", serverHandler.AppTokenValidation)
+				token.POST("/app-token-refresh", serverHandler.AppTokenRefresh)
+			}
 		}
 
 	}

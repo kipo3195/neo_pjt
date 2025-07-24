@@ -4,6 +4,7 @@ import (
 	consts "common/consts"
 	clDto "common/dto/client"
 	dto "common/dto/common"
+	cl
 	"common/entities"
 	"common/usecases"
 	"context"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
 
@@ -24,21 +26,16 @@ func NewCommonHandler(uc usecases.CommonUsecase) *CommonHandler {
 	return &CommonHandler{usecase: uc}
 }
 
-func (h *CommonHandler) GetConfigHash(w http.ResponseWriter, r *http.Request) {
+func (h *CommonHandler) GetConfigHash(c *gin.Context) {
 
 	// context 생성
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	// response dto 생성
-	var res = dto.Response{}
+	ctx := c.Request.Context()
 
 	// 데이터 -> dto
 	var req = clDto.GetConfigHash{
-		SkinHash:   r.URL.Query().Get("skinHash"),
-		ConfigHash: r.URL.Query().Get("configHash"),
-		Device:     r.URL.Query().Get("device"),
+		SkinHash:   c.Query("skinHash"),
+		ConfigHash: c.Query("configHash"),
+		Device:     c.Query("device"),
 	}
 
 	// 유효성 검증
