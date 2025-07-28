@@ -1,6 +1,8 @@
 package routes
 
 import (
+	certificationClientHandler "auth/internal/domains/certification/handlers/client"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,35 +11,11 @@ func SetDefaultRoutes(serviceName string) *gin.RouterGroup {
 	return r.Group("/" + serviceName)
 }
 
-func SetClientCertificationRoute(parent *gin.RouterGroup) *gin.Engine {
+func SetLoginRoute(parent *gin.RouterGroup, handler *certificationClientHandler.CertificationHandler) {
 
 	group := parent.Group("/client/v1/certification")
-	group.POST("/login", clientCertificationHandler.Login)
+	group.POST("/login", handler.Login)
 
-	// 서버랑 클라이언트 분리할 수 있는 방안. 버전관리도 가져 갈 수 있게 하려면
-	r := gin.Default()
-	{
-		v1 := r.Group("/v1")
-		{
-			certification := v1.Group("/certification") // 도메인을 기준으로.
-			{
-				certification.POST("/login", authHandler.Login)
-			}
-		}
-
-		sv1 := auth.Group("/sv1")
-		{
-			token := sv1.Group("/token") // 도메인을 기준으로
-			{
-				token.POST("/generate-app-token", serverHandler.GenerateAppToken)
-				token.POST("/app-token-validation", serverHandler.AppTokenValidation)
-				token.POST("/app-token-refresh", serverHandler.AppTokenRefresh)
-			}
-		}
-
-	}
-
-	return r
 }
 
 func SetupServerTokenRoute(parent *gin.RouterGroup) *gin.Engine {

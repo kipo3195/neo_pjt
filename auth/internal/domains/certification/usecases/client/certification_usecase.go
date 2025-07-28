@@ -1,13 +1,13 @@
 package usecases
 
 import (
-	"auth/claims"
-	"auth/config"
-	consts "auth/consts"
-	clReqDto "auth/dto/client/request"
-	clResDto "auth/dto/client/response"
-	"auth/entities"
-	"auth/repositories"
+	"auth/internal/claims"
+	"auth/internal/consts"
+	clReqDto "auth/internal/domains/certification/dto/client/request"
+	clResDto "auth/internal/domains/certification/dto/client/response"
+	clRepo "auth/internal/domains/certification/repositories/client"
+	"auth/internal/entities"
+	"auth/pkg/config"
 	"errors"
 	"log"
 	"time"
@@ -16,20 +16,20 @@ import (
 	"gorm.io/gorm"
 )
 
-type authUsecase struct {
-	repo   repositories.AuthRepository
+type certificationUsecase struct {
+	repo   clRepo.CerificationRepository
 	jwtCfg *config.JWTConfig
 }
 
-type AuthUsecase interface {
+type CertificationUsecase interface {
 	GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.AuthResponseDTO, error)
 }
 
-func NewAuthUsecase(repo repositories.AuthRepository, jwtCfg *config.JWTConfig) AuthUsecase {
-	return &authUsecase{repo: repo, jwtCfg: jwtCfg}
+func NewCertificationUsecase(repo clRepo.CerificationRepository, jwtCfg *config.JWTConfig) CertificationUsecase {
+	return &certificationUsecase{repo: repo, jwtCfg: jwtCfg}
 }
 
-func (u *authUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.AuthResponseDTO, error) {
+func (u *certificationUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.AuthResponseDTO, error) {
 
 	// app hash 부터 검증
 	flag, err := u.repo.GetValidation(toAppTokenValidationEntity(requestDTO.Header.Uuid, requestDTO.Header.Token))
@@ -93,12 +93,12 @@ func (u *authUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.Aut
 	}, nil
 }
 
-// func toAppTokenValidationEntity(uuid string, appToken string) entities.AppTokenValidationEntity {
-// 	return entities.AppTokenValidationEntity{
-// 		Uuid:     uuid,
-// 		AppToken: appToken,
-// 	}
-// }
+func toAppTokenValidationEntity(uuid string, appToken string) entities.AppTokenValidationEntity {
+	return entities.AppTokenValidationEntity{
+		Uuid:     uuid,
+		AppToken: appToken,
+	}
+}
 
 func toGetAuthEntity(body clReqDto.AuthRequestBody) entities.AuthInfoEntity {
 	return entities.AuthInfoEntity{

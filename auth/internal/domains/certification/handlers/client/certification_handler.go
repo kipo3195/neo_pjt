@@ -1,24 +1,24 @@
 package handlers
 
 import (
-	consts "auth/consts"
-	clReqDto "auth/dto/client/request"
-	"auth/usecases"
-	"auth/utils"
+	"auth/internal/consts"
+	clReqDto "auth/internal/domains/certification/dto/client/request"
+	clientUsecases "auth/internal/domains/certification/usecases/client"
+	usecases "auth/internal/domains/certification/usecases/client"
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 )
 
-type AuthHandler struct {
-	usecase usecases.AuthUsecase
+type CertificationHandler struct {
+	usecase clientUsecases.CertificationUsecase
 }
 
-func NewAuthHandler(uc usecases.AuthUsecase) *AuthHandler {
-	return &AuthHandler{usecase: uc}
+func NewCertificationHandler(uc usecases.CertificationUsecase) *CertificationHandler {
+	return &CertificationHandler{usecase: uc}
 }
 
-func (h *AuthHandler) Login(c *gin.Context) {
+func (h *CertificationHandler) Login(c *gin.Context) {
 
 	// request의 header 데이터 -> dto로 변경
 	header := clReqDto.AuthRequestHeader{

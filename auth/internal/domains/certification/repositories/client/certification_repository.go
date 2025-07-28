@@ -1,29 +1,28 @@
 package repositories
 
 import (
-	"auth/entities"
-	"auth/models"
+	"auth/internal/entities"
+	"auth/internal/models"
 	"log"
 
 	"gorm.io/gorm"
 )
 
-type authRepository struct {
+type cerificationRepository struct {
 	db *gorm.DB
 }
 
-type AuthRepository interface {
+type CerificationRepository interface {
 	CheckAuth(entity entities.AuthInfoEntity) (*models.AuthInfo, error)
 	GetUserHash(entity entities.AuthInfoEntity) (string, error)
 	GetValidation(entity entities.AppTokenValidationEntity) (bool, error)
 }
 
-func NewAuthRepository(db *gorm.DB) AuthRepository {
-
-	return &authRepository{db: db}
+func NewCertificationRepository(db *gorm.DB) CerificationRepository {
+	return &cerificationRepository{db: db}
 }
 
-func (r *authRepository) CheckAuth(entity entities.AuthInfoEntity) (*models.AuthInfo, error) {
+func (r *cerificationRepository) CheckAuth(entity entities.AuthInfoEntity) (*models.AuthInfo, error) {
 
 	var auth *models.AuthInfo
 
@@ -41,7 +40,7 @@ func (r *authRepository) CheckAuth(entity entities.AuthInfoEntity) (*models.Auth
 	return auth, nil
 }
 
-func (r *authRepository) GetUserHash(entity entities.AuthInfoEntity) (string, error) {
+func (r *cerificationRepository) GetUserHash(entity entities.AuthInfoEntity) (string, error) {
 
 	var userHash string
 
@@ -69,7 +68,7 @@ func toAppTokenModel(e *entities.AppTokenEntity) *models.IssuedAppToken {
 	}
 }
 
-func (r *authRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
+func (r *cerificationRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
 	var validation models.IssuedAppToken
 
