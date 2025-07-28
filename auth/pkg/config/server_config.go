@@ -1,7 +1,7 @@
 package config
 
 import (
-	"auth/models"
+	"auth/internal/models"
 	"log"
 	"os"
 	"strconv"

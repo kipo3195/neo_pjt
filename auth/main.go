@@ -1,11 +1,11 @@
 package main
 
 import (
-	"auth/config"
-	"auth/handlers"
-	"auth/repositories"
-	"auth/routes"
-	"auth/usecases"
+	"auth/internal/handlers"
+	"auth/internal/repositories"
+	"auth/internal/routes"
+	"auth/internal/usecases"
+	"auth/pkg/config"
 	"log"
 	"net/http"
 )
@@ -20,6 +20,12 @@ func InitServer() *http.Server {
 
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
+
+	baseGroup := routes.SetDefaultRoutes("auth")
+
+	// 이런 구조로 변경할것. https://chatgpt.com/c/688325b2-b234-8005-856c-8ea21fde3fb3
+	routes.SetClientCertificationRoute(baseGroup)
+	routes.SetupServerTokenRoute(baseGroup)
 
 	authRepo := repositories.NewAuthRepository(db)
 	authUsecase := usecases.NewAuthUsecase(authRepo, sfg.GetJWTConfig())
