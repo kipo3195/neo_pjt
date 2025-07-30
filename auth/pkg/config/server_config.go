@@ -1,10 +1,12 @@
 package config
 
 import (
-	"auth/internal/models"
 	"log"
 	"os"
 	"strconv"
+
+	cerificationModels "auth/internal/domains/certification/models"
+	pkgModels "auth/pkg/models"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -103,9 +105,11 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 		log.Fatal("Failed to connect to database!")
 	}
 
-	db.AutoMigrate(&models.AuthInfo{})
-	db.AutoMigrate(&models.IssuedAppToken{})
-	db.AutoMigrate(&models.ServiceUsers{})
+	// 도메인 마다 정의
+	db.AutoMigrate(&cerificationModels.AuthInfo{})
+
+	db.AutoMigrate(&pkgModels.IssuedAppToken{})
+	db.AutoMigrate(&pkgModels.ServiceUsers{})
 
 	log.Println("Auth Database Connected !")
 	return db

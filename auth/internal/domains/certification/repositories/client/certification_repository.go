@@ -1,8 +1,11 @@
 package repositories
 
 import (
-	"auth/internal/entities"
-	"auth/internal/models"
+	entities "auth/internal/domains/certification/entities"
+	models "auth/internal/domains/certification/models"
+	pkgEntities "auth/pkg/entities"
+	pkgModels "auth/pkg/models"
+
 	"log"
 
 	"gorm.io/gorm"
@@ -60,8 +63,8 @@ func (r *cerificationRepository) GetUserHash(entity entities.AuthInfoEntity) (st
 	return userHash, nil
 }
 
-func toAppTokenModel(e *entities.AppTokenEntity) *models.IssuedAppToken {
-	return &models.IssuedAppToken{
+func toAppTokenModel(e *pkgEntities.AppTokenEntity) *pkgModels.IssuedAppToken {
+	return &pkgModels.IssuedAppToken{
 		Uuid:         e.Uuid,
 		AppToken:     e.AppToken,
 		RefreshToken: e.RefreshToken,
@@ -70,7 +73,7 @@ func toAppTokenModel(e *entities.AppTokenEntity) *models.IssuedAppToken {
 
 func (r *cerificationRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
-	var validation models.IssuedAppToken
+	var validation pkgModels.IssuedAppToken
 
 	log.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 

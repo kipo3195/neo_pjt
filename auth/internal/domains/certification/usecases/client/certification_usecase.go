@@ -5,11 +5,11 @@ import (
 	"auth/internal/consts"
 	clReqDto "auth/internal/domains/certification/dto/client/request"
 	clResDto "auth/internal/domains/certification/dto/client/response"
+	"auth/internal/domains/certification/entities"
 	clRepo "auth/internal/domains/certification/repositories/client"
-	"auth/internal/entities"
+	"auth/internal/utils"
 	"auth/pkg/config"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,16 +17,20 @@ import (
 )
 
 type certificationUsecase struct {
-	repo   clRepo.CerificationRepository
-	jwtCfg *config.JWTConfig
+	repo      clRepo.CerificationRepository
+	jwtCfg    *config.JWTConfig
+	authUtile *utils.AuthUtil
 }
 
 type CertificationUsecase interface {
 	GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.AuthResponseDTO, error)
 }
 
-func NewCertificationUsecase(repo clRepo.CerificationRepository, jwtCfg *config.JWTConfig) CertificationUsecase {
-	return &certificationUsecase{repo: repo, jwtCfg: jwtCfg}
+func NewCertificationUsecase(repo clRepo.CerificationRepository, jwtCfg *config.JWTConfig, authUtile *utils.AuthUtil) CertificationUsecase {
+	return &certificationUsecase{
+		repo:      repo,
+		jwtCfg:    jwtCfg,
+		authUtile: authUtile}
 }
 
 func (u *certificationUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.AuthResponseDTO, error) {
@@ -154,36 +158,4 @@ func GenerateAuthJWT(userHash string, accessExp int, refreshExp int, jwtKey []by
 	}
 
 	return accessToken, refreshToken, nil
-}
-
-func generateDeviceTokenJWT(appTokenExp int, uuid string) (string, error) { //
-	now := time.Now()
-	// issuer
-	const issuer = "auth"
-
-	// Access 토큰 유효기간 설정
-	accExpTime := now.Add(time.Duration(appTokenExp) * 24 * time.Hour)
-
-	log.Println("jwt 토큰 생성  1 :", accExpTime)
-
-	// 사용자 정보 포함한 Claims 생성
-	uuidClaim := &claims.DeviceJWTClaims{
-		Uuid: uuid,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(accExpTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    issuer,
-		},
-	}
-
-	// 토큰 생성 (HS256 사용)
-	accToken := jwt.NewWithClaims(jwt.SigningMethodHS256, uuidClaim)
-
-	secret := []byte("neo-test-secret-key")
-
-	// 서명 및 문자열 반환
-	accessToken, err := accToken.SignedString(secret)
-
-	log.Println("jwt 토큰 생성  2 :", accessToken)
-	return accessToken, err
 }

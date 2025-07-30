@@ -1,30 +1,31 @@
 package repositories
 
 import (
-	"auth/entities"
-	"auth/models"
+	"auth/internal/domains/token/entities"
+	pkgEntities "auth/pkg/entities"
+	"auth/pkg/models"
 	"errors"
 	"log"
 
 	"gorm.io/gorm"
 )
 
-type serverRepository struct {
+type tokenRepository struct {
 	db *gorm.DB
 }
 
-type ServerRepository interface {
-	PutIssuedAppToken(token *entities.AppTokenEntity) (bool, error)
+type TokenRepository interface {
+	PutIssuedAppToken(token *pkgEntities.AppTokenEntity) (bool, error)
 	GetValidation(entity entities.AppTokenValidationEntity) (bool, error)
 }
 
-func NewServerRepository(db *gorm.DB) ServerRepository {
-	return &serverRepository{
+func NewTokenRepository(db *gorm.DB) TokenRepository {
+	return &tokenRepository{
 		db: db,
 	}
 }
 
-func (r *serverRepository) PutIssuedAppToken(token *entities.AppTokenEntity) (bool, error) {
+func (r *tokenRepository) PutIssuedAppToken(token *pkgEntities.AppTokenEntity) (bool, error) {
 
 	// entity -> model
 	models := toAppTokenModel(token)
@@ -38,7 +39,7 @@ func (r *serverRepository) PutIssuedAppToken(token *entities.AppTokenEntity) (bo
 	return true, nil
 }
 
-func (r *serverRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
+func (r *tokenRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
 	var validation models.IssuedAppToken
 
@@ -64,4 +65,12 @@ func (r *serverRepository) GetValidation(entity entities.AppTokenValidationEntit
 		}
 	}
 
+}
+
+func toAppTokenModel(e *pkgEntities.AppTokenEntity) *models.IssuedAppToken {
+	return &models.IssuedAppToken{
+		Uuid:         e.Uuid,
+		AppToken:     e.AppToken,
+		RefreshToken: e.RefreshToken,
+	}
 }

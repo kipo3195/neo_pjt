@@ -1,13 +1,16 @@
 package usecases
 
 import (
-	"auth/claims"
-	"auth/config"
-	consts "auth/consts"
-	svCommonReqDto "auth/dto/server/common/request"
-	svCommonResDto "auth/dto/server/common/response"
-	"auth/entities"
-	"auth/repositories"
+	"auth/internal/claims"
+	"auth/internal/consts"
+	requestDTO "auth/internal/domains/token/dto/server/request"
+	responseDTO "auth/internal/domains/token/dto/server/response"
+	entities "auth/internal/domains/token/entities"
+	repositories "auth/internal/domains/token/repositories/server"
+	"auth/internal/utils"
+	pkgEntities "auth/pkg/entities"
+
+	"auth/pkg/config"
 	"context"
 	"errors"
 	"fmt"
@@ -16,24 +19,26 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type serverUsecase struct {
-	repo   repositories.ServerRepository
+type tokenUsecase struct {
+	repo   repositories.TokenRepository
 	jwtCfg *config.JWTConfig
+	util   *utils.AuthUtil
 }
 
-type ServerUsecase interface {
-	AppTokenValidation(req svCommonReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error)
-	GenerateAppToken(body svCommonReqDto.GenerateAppTokenRequestBody) (*svCommonResDto.GenerateAppTokenResponseDTO, error)
+type TokenUsecase interface {
+	AppTokenValidation(req requestDTO.AppTokenValidationRequestDTO, ctx context.Context) (bool, error)
+	GenerateAppToken(body requestDTO.GenerateAppTokenRequestBody) (*responseDTO.GenerateAppTokenResponseDTO, error)
 }
 
-func NewServerUsecase(repo repositories.ServerRepository, authRepo repositories.AuthRepository, jwtCfg *config.JWTConfig) ServerUsecase {
-	return &serverUsecase{
+func NewTokenUsecase(repo repositories.TokenRepository, jwtCfg *config.JWTConfig, util *utils.AuthUtil) TokenUsecase {
+	return &tokenUsecase{
 		repo:   repo,
 		jwtCfg: jwtCfg,
+		util:   util,
 	}
 }
 
-func (r *serverUsecase) AppTokenValidation(requestDTO svCommonReqDto.AppTokenValidationRequestDTO, ctx context.Context) (bool, error) {
+func (r *tokenUsecase) AppTokenValidation(requestDTO requestDTO.AppTokenValidationRequestDTO, ctx context.Context) (bool, error) {
 
 	// authUsecase를 주입받아 사용, uuid에 해당하는 토큰이 일치하는지 점검
 	flag, err := r.repo.GetValidation(toAppTokenValidationEntity(requestDTO.Body.Uuid, requestDTO.Body.AppToken))
@@ -104,10 +109,10 @@ func appTokenValidationCheck(appToken string) error {
 	}
 }
 
-func (r *serverUsecase) GenerateAppToken(body svCommonReqDto.GenerateAppTokenRequestBody) (*svCommonResDto.GenerateAppTokenResponseDTO, error) {
+func (r *tokenUsecase) GenerateAppToken(body requestDTO.GenerateAppTokenRequestBody) (*responseDTO.GenerateAppTokenResponseDTO, error) {
 
 	// 토큰 발급
-	appToken, err := generateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
+	appToken, err := r.util.GenerateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
 
 	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, appToken)
 
@@ -115,13 +120,13 @@ func (r *serverUsecase) GenerateAppToken(body svCommonReqDto.GenerateAppTokenReq
 		return nil, consts.ErrServerError
 	}
 
-	refreshToken, err := generateDeviceTokenJWT(r.jwtCfg.AppRefreshTokenExp, body.Uuid)
+	refreshToken, err := r.util.GenerateDeviceTokenJWT(r.jwtCfg.AppRefreshTokenExp, body.Uuid)
 	if err != nil {
 		return nil, consts.ErrServerError
 	}
 
 	// entity 생성
-	tokenEntity := &entities.AppTokenEntity{
+	tokenEntity := &pkgEntities.AppTokenEntity{
 		Uuid:         body.Uuid,
 		AppToken:     appToken,
 		RefreshToken: refreshToken,
@@ -134,8 +139,8 @@ func (r *serverUsecase) GenerateAppToken(body svCommonReqDto.GenerateAppTokenReq
 		return nil, err
 	}
 
-	return &svCommonResDto.GenerateAppTokenResponseDTO{
-		Body: svCommonResDto.GenerateAppTokenResponseBody{
+	return &responseDTO.GenerateAppTokenResponseDTO{
+		Body: responseDTO.GenerateAppTokenResponseBody{
 			Uuid:         tokenEntity.Uuid,
 			AppToken:     tokenEntity.AppToken,
 			RefreshToken: tokenEntity.RefreshToken,
