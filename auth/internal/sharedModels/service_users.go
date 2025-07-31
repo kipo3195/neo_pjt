@@ -1,4 +1,4 @@
-package models
+package sharedModels
 
 type ServiceUsers struct {
 	UserHash string `gorm:"column:user_hash;primaryKey;comment:pk"`

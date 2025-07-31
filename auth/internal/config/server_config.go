@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	cerificationModels "auth/internal/domains/certification/models"
-	sharedModels "auth/internal/sharedmodels"
+	sharedModels "auth/internal/sharedModels"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
