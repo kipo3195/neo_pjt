@@ -1,9 +1,9 @@
 package repositories
 
 import (
-	publicModels "auth/internal/db"
 	entities "auth/internal/domains/certification/entities"
 	models "auth/internal/domains/certification/models"
+	sharedModels "auth/internal/sharedModels"
 
 	"log"
 
@@ -72,7 +72,7 @@ func (r *cerificationRepository) GetUserHash(entity entities.AuthInfoEntity) (st
 
 func (r *cerificationRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
-	var validation publicModels.IssuedAppToken
+	var validation sharedModels.IssuedAppToken
 
 	log.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 
