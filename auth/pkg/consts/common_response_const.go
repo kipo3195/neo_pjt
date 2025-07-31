@@ -4,10 +4,14 @@ const (
 	SUCCESS = "success"
 	FAIL    = "fail"
 	ERROR   = "error"
+)
 
+const (
 	BAD_REQUEST  = 400
 	SERVER_ERROR = 500
+)
 
+const (
 	// ERROR
 	E_101     = "E101"
 	E_101_MSG = "Type Invalid."

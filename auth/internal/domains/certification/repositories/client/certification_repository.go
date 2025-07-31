@@ -1,10 +1,9 @@
 package repositories
 
 import (
+	publicModels "auth/internal/db"
 	entities "auth/internal/domains/certification/entities"
 	models "auth/internal/domains/certification/models"
-	pkgEntities "auth/pkg/entities"
-	pkgModels "auth/pkg/models"
 
 	"log"
 
@@ -63,17 +62,17 @@ func (r *cerificationRepository) GetUserHash(entity entities.AuthInfoEntity) (st
 	return userHash, nil
 }
 
-func toAppTokenModel(e *pkgEntities.AppTokenEntity) *pkgModels.IssuedAppToken {
-	return &pkgModels.IssuedAppToken{
-		Uuid:         e.Uuid,
-		AppToken:     e.AppToken,
-		RefreshToken: e.RefreshToken,
-	}
-}
+// func toAppTokenModel(e *pkgEntities.AppTokenEntity) *pkgModels.IssuedAppToken {
+// 	return &pkgModels.IssuedAppToken{
+// 		Uuid:         e.Uuid,
+// 		AppToken:     e.AppToken,
+// 		RefreshToken: e.RefreshToken,
+// 	}
+// }
 
 func (r *cerificationRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
-	var validation pkgModels.IssuedAppToken
+	var validation publicModels.IssuedAppToken
 
 	log.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 
@@ -93,22 +92,4 @@ func (r *cerificationRepository) GetValidation(entity entities.AppTokenValidatio
 		}
 	}
 
-	// if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-	// 	log.Println("[GetValidation] - No record found")
-	// 	return false, result.Error
-	// } else if result.Error != nil {
-	// 	log.Println("[GetValidation] - DB error")
-	// 	return false, result.Error
-	// } else {
-	// 	serverToken := validation.AppToken
-	// 	fmt.Printf("UUID %s 로 조회된 토큰 : %s \n", entity.Uuid, serverToken)
-	// 	if serverToken == entity.AppToken {
-	// 		// 토큰 일치
-	// 		return true, nil
-	// 	} else {
-	// 		// 토큰 불일치
-	// 		log.Println("[GetValidation] - token mismatch")
-	// 		return false, nil
-	// 	}
-	// }
 }

@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	cerificationModels "auth/internal/domains/certification/models"
-	pkgModels "auth/pkg/models"
+	sharedModels "auth/internal/sharedmodels"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -108,8 +108,8 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	// 도메인 마다 정의
 	db.AutoMigrate(&cerificationModels.AuthInfo{})
 
-	db.AutoMigrate(&pkgModels.IssuedAppToken{})
-	db.AutoMigrate(&pkgModels.ServiceUsers{})
+	db.AutoMigrate(&sharedModels.IssuedAppToken{})
+	db.AutoMigrate(&sharedModels.ServiceUsers{})
 
 	log.Println("Auth Database Connected !")
 	return db

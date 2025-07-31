@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"auth/internal/domains/token/entities"
-	pkgEntities "auth/pkg/entities"
-	"auth/pkg/models"
+	sharedEntities "auth/internal/sharedEntities"
+	sharedModels "auth/internal/sharedModels"
 	"errors"
 	"log"
 
@@ -15,7 +15,7 @@ type tokenRepository struct {
 }
 
 type TokenRepository interface {
-	PutIssuedAppToken(token *pkgEntities.AppTokenEntity) (bool, error)
+	PutIssuedAppToken(token *sharedEntities.AppTokenEntity) (bool, error)
 	GetValidation(entity entities.AppTokenValidationEntity) (bool, error)
 }
 
@@ -25,13 +25,13 @@ func NewTokenRepository(db *gorm.DB) TokenRepository {
 	}
 }
 
-func (r *tokenRepository) PutIssuedAppToken(token *pkgEntities.AppTokenEntity) (bool, error) {
+func (r *tokenRepository) PutIssuedAppToken(token *sharedEntities.AppTokenEntity) (bool, error) {
 
 	// entity -> model
-	models := toAppTokenModel(token)
+	issuedAppToken := toAppTokenModel(token)
 
 	// Insert 실행
-	if err := r.db.Create(&models).Error; err != nil {
+	if err := r.db.Create(&issuedAppToken).Error; err != nil {
 		log.Println("[PutAppToken] - DB error")
 		return false, err
 	}
@@ -41,7 +41,7 @@ func (r *tokenRepository) PutIssuedAppToken(token *pkgEntities.AppTokenEntity) (
 
 func (r *tokenRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
 
-	var validation models.IssuedAppToken
+	var validation sharedModels.IssuedAppToken
 
 	log.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 
@@ -67,8 +67,8 @@ func (r *tokenRepository) GetValidation(entity entities.AppTokenValidationEntity
 
 }
 
-func toAppTokenModel(e *pkgEntities.AppTokenEntity) *models.IssuedAppToken {
-	return &models.IssuedAppToken{
+func toAppTokenModel(e *sharedEntities.AppTokenEntity) *sharedModels.IssuedAppToken {
+	return &sharedModels.IssuedAppToken{
 		Uuid:         e.Uuid,
 		AppToken:     e.AppToken,
 		RefreshToken: e.RefreshToken,

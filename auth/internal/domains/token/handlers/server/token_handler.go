@@ -1,10 +1,12 @@
 package handlers
 
 import (
-	"auth/internal/consts"
+	internalConsts "auth/internal/consts"
 	requestDTO "auth/internal/domains/token/dto/server/request"
 	usecases "auth/internal/domains/token/usecases/server"
+	consts "auth/pkg/consts"
 	response "auth/pkg/response"
+
 	"context"
 	"encoding/json"
 	"log"
@@ -25,7 +27,7 @@ func (h *TokenHandler) GenerateAppToken(c *gin.Context) {
 
 	// request의 header 데이터 -> dto로 변경
 	header := requestDTO.GenerateAppTokenRequestHeader{
-		Token: c.GetHeader(consts.AUTHORIZATION),
+		Token: c.GetHeader(internalConsts.AUTHORIZATION),
 	}
 
 	log.Println("common service에서 호출시 던진 토큰 ", header.Token)
@@ -85,7 +87,7 @@ func (h *TokenHandler) AppTokenValidation(c *gin.Context) {
 	// 이거 나중에 모듈화 꼭 할 것
 	if err != nil || !resDto { // 에러
 		log.Println(err)
-		response.SendError(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
+		response.SendError(c, consts.BAD_REQUEST, consts.FAIL, internalConsts.AUTH_F003, internalConsts.AUTH_F003_MSG)
 	} else {
 		response.SendSuccess(c, "")
 	}

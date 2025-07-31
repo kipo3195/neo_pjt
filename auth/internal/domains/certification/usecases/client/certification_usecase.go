@@ -2,13 +2,13 @@ package usecases
 
 import (
 	"auth/internal/claims"
+	"auth/internal/config"
 	"auth/internal/consts"
-	clReqDto "auth/internal/domains/certification/dto/client/request"
-	clResDto "auth/internal/domains/certification/dto/client/response"
+	requestDTO "auth/internal/domains/certification/dto/client/request"
+	responseDTO "auth/internal/domains/certification/dto/client/response"
 	"auth/internal/domains/certification/entities"
-	clRepo "auth/internal/domains/certification/repositories/client"
+	repositories "auth/internal/domains/certification/repositories/client"
 	"auth/internal/utils"
-	"auth/pkg/config"
 	"errors"
 	"time"
 
@@ -17,26 +17,26 @@ import (
 )
 
 type certificationUsecase struct {
-	repo      clRepo.CerificationRepository
-	jwtCfg    *config.JWTConfig
-	authUtile *utils.AuthUtil
+	repository repositories.CerificationRepository
+	jwtCfg     *config.JWTConfig
+	authUtile  *utils.AuthUtil
 }
 
 type CertificationUsecase interface {
-	GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.AuthResponseDTO, error)
+	GetAuth(requestDTO requestDTO.AuthRequestDTO) (*responseDTO.AuthResponseDTO, error)
 }
 
-func NewCertificationUsecase(repo clRepo.CerificationRepository, jwtCfg *config.JWTConfig, authUtile *utils.AuthUtil) CertificationUsecase {
+func NewCertificationUsecase(repository repositories.CerificationRepository, jwtCfg *config.JWTConfig, authUtile *utils.AuthUtil) CertificationUsecase {
 	return &certificationUsecase{
-		repo:      repo,
-		jwtCfg:    jwtCfg,
-		authUtile: authUtile}
+		repository: repository,
+		jwtCfg:     jwtCfg,
+		authUtile:  authUtile}
 }
 
-func (u *certificationUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clResDto.AuthResponseDTO, error) {
+func (u *certificationUsecase) GetAuth(requestDTO requestDTO.AuthRequestDTO) (*responseDTO.AuthResponseDTO, error) {
 
 	// app hash 부터 검증
-	flag, err := u.repo.GetValidation(toAppTokenValidationEntity(requestDTO.Header.Uuid, requestDTO.Header.Token))
+	flag, err := u.repository.GetValidation(toAppTokenValidationEntity(requestDTO.Header.Uuid, requestDTO.Header.Token))
 	if err != nil {
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -53,7 +53,7 @@ func (u *certificationUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clR
 	}
 
 	// 사용자 정보 검증
-	auth, err := u.repo.CheckAuth(toGetAuthEntity(requestDTO.Body))
+	auth, err := u.repository.CheckAuth(toGetAuthEntity(requestDTO.Body))
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -65,7 +65,7 @@ func (u *certificationUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clR
 	}
 
 	// 등록 사용자 검증 (user_hash 구하기)
-	userHash, err := u.repo.GetUserHash(toGetAuthEntity(requestDTO.Body))
+	userHash, err := u.repository.GetUserHash(toGetAuthEntity(requestDTO.Body))
 
 	// 등록된 사용자가 아님.
 	if userHash == "" || err != nil {
@@ -89,8 +89,8 @@ func (u *certificationUsecase) GetAuth(requestDTO clReqDto.AuthRequestDTO) (*clR
 	// config 파일을 풀 수 있는 대칭키
 	// configKey = getConfigkey()
 
-	return &clResDto.AuthResponseDTO{
-		Body: clResDto.AuthResponseBody{
+	return &responseDTO.AuthResponseDTO{
+		Body: responseDTO.AuthResponseBody{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		},
@@ -104,7 +104,7 @@ func toAppTokenValidationEntity(uuid string, appToken string) entities.AppTokenV
 	}
 }
 
-func toGetAuthEntity(body clReqDto.AuthRequestBody) entities.AuthInfoEntity {
+func toGetAuthEntity(body requestDTO.AuthRequestBody) entities.AuthInfoEntity {
 	return entities.AuthInfoEntity{
 		Id:       body.Id,
 		Password: body.Password,

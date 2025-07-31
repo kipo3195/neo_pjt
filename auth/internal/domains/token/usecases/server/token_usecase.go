@@ -5,12 +5,12 @@ import (
 	"auth/internal/consts"
 	requestDTO "auth/internal/domains/token/dto/server/request"
 	responseDTO "auth/internal/domains/token/dto/server/response"
-	entities "auth/internal/domains/token/entities"
+	"auth/internal/domains/token/entities"
 	repositories "auth/internal/domains/token/repositories/server"
+	sharedEntities "auth/internal/sharedEntities"
 	"auth/internal/utils"
-	pkgEntities "auth/pkg/entities"
 
-	"auth/pkg/config"
+	"auth/internal/config"
 	"context"
 	"errors"
 	"fmt"
@@ -126,7 +126,7 @@ func (r *tokenUsecase) GenerateAppToken(body requestDTO.GenerateAppTokenRequestB
 	}
 
 	// entity 생성
-	tokenEntity := &pkgEntities.AppTokenEntity{
+	tokenEntity := &sharedEntities.AppTokenEntity{
 		Uuid:         body.Uuid,
 		AppToken:     appToken,
 		RefreshToken: refreshToken,

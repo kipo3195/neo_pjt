@@ -1,11 +1,11 @@
 package main
 
 import (
+	"auth/internal/config"
 	certification "auth/internal/domains/certification"
 	token "auth/internal/domains/token"
 	"auth/internal/routes"
 	"auth/internal/utils"
-	"auth/pkg/config"
 	"log"
 	"net/http"
 )
@@ -28,22 +28,11 @@ func InitServer() *http.Server {
 	authUtil := utils.NewAuthUtil(sfg.GetJWTConfig())
 
 	// 이런 구조로 변경할것.
-	certificationHandler := certification.InitCertificationModule(db, sfg.GetJWTConfig(), authUtil)
+	certificationHandler := certification.InitModules(db, sfg.GetJWTConfig(), authUtil)
 	routes.SetLoginRoute(baseGroup, certificationHandler)
 
-	tokenHandler := token.InitTokenModule(db, sfg.GetJWTConfig(), authUtil)
+	tokenHandler := token.InitModules(db, sfg.GetJWTConfig(), authUtil)
 	routes.SetTokenRoute(baseGroup, tokenHandler)
-
-	// routes.SetupServerTokenRoute(baseGroup)
-	// authRepo := repositories.NewAuthRepository(db)
-	// authUsecase := usecases.NewAuthUsecase(authRepo, sfg.GetJWTConfig())
-	// authHandler := handlers.NewAuthHandler(authUsecase)
-
-	// serverRepo := repositories.NewServerRepository(db)
-	// serverUsecase := usecases.NewServerUsecase(serverRepo, authRepo, sfg.GetJWTConfig())
-	// serverHandler := handlers.NewServerHandler(serverUsecase)
-
-	// router := routes.SetupRoutes(authHandler, serverHandler)
 
 	return &http.Server{
 		Addr:    ":8087",

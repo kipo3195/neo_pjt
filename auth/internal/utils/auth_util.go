@@ -2,16 +2,16 @@ package utils
 
 import (
 	"auth/internal/claims"
-	"auth/pkg/config"
+	"auth/internal/config"
 	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// internal/utils: 비즈니스 로직과 관련된 유틸
+// pkg/utils: 비즈니스 로직과 관련된 유틸
 
-// 도메인별 특화된 로직
+// 도메인 공통 로직
 // 비즈니스 규칙이 포함된 경우
 
 type AuthUtil struct {

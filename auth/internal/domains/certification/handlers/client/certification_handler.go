@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"auth/internal/consts"
+	internalConsts "auth/internal/consts"
 	clReqDto "auth/internal/domains/certification/dto/client/request"
 	clientUsecases "auth/internal/domains/certification/usecases/client"
 	usecases "auth/internal/domains/certification/usecases/client"
+	consts "auth/pkg/consts"
 	response "auth/pkg/response"
 	"encoding/json"
 
@@ -23,8 +24,8 @@ func (h *CertificationHandler) Login(c *gin.Context) {
 
 	// request의 header 데이터 -> dto로 변경
 	header := clReqDto.AuthRequestHeader{
-		Token: c.GetHeader(consts.LOGIN_HEADER_AUTH_TOKEN),
-		Uuid:  c.GetHeader(consts.LOGIN_HEADER_UUID),
+		Token: c.GetHeader(internalConsts.LOGIN_HEADER_AUTH_TOKEN),
+		Uuid:  c.GetHeader(internalConsts.LOGIN_HEADER_UUID),
 	}
 
 	// header 검증
@@ -50,18 +51,18 @@ func (h *CertificationHandler) Login(c *gin.Context) {
 
 	if err != nil {
 
-		if err == consts.ErrUnregisteredUuid {
+		if err == internalConsts.ErrUnregisteredUuid {
 			// 등록된 UUID가 아님
-			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F001, consts.AUTH_F001_MSG)
-		} else if err == consts.ErrTokenMismatch {
+			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, internalConsts.AUTH_F001, internalConsts.AUTH_F001_MSG)
+		} else if err == internalConsts.ErrTokenMismatch {
 			// 토큰 정보 불일치, 재발급 필요.
-			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F002, consts.AUTH_F002_MSG)
-		} else if err == consts.ErrAuthenticationFailed {
+			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, internalConsts.AUTH_F002, internalConsts.AUTH_F002_MSG)
+		} else if err == internalConsts.ErrAuthenticationFailed {
 			// 등록된 사용자가 없음.
-			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
-		} else if err == consts.ErrUnregisteredUser {
+			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, internalConsts.AUTH_F003, internalConsts.AUTH_F003_MSG)
+		} else if err == internalConsts.ErrUnregisteredUser {
 			// 등록된 사용자가 아님.
-			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, consts.AUTH_F004, consts.AUTH_F004_MSG)
+			response.SendError(c, consts.BAD_REQUEST, consts.FAIL, internalConsts.AUTH_F004, internalConsts.AUTH_F004_MSG)
 		} else {
 			// server error : db, jwt make
 			response.SendError(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)

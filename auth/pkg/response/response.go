@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"auth/internal/consts"
-	"auth/internal/dto"
+	consts "auth/pkg/consts"
+	"auth/pkg/dto"
+	errors "auth/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,9 +16,9 @@ import (
 
 func SendError(c *gin.Context, status int, result string, code string, msg string) {
 
-	res := dto.ResponseDTO[dto.ErrorDataDTO]{ // 제네릭 타입 명시 - ResponseDTO의 DATA 'T'에 들어갈 타입을 말함.
+	res := dto.ResponseDTO[errors.ErrorDataDTO]{ // 제네릭 타입 명시 - ResponseDTO의 DATA 'T'에 들어갈 타입을 말함.
 		Result: result, // error, fail
-		Data: dto.ErrorDataDTO{
+		Data: errors.ErrorDataDTO{
 			Code:    code,
 			Message: msg,
 		},
