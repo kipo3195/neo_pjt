@@ -3,8 +3,8 @@ package usecases
 import (
 	"auth/internal/claims"
 	"auth/internal/consts"
-	requestDTO "auth/internal/domains/token/dto/server/request"
-	responseDTO "auth/internal/domains/token/dto/server/response"
+	"auth/internal/domains/token/dto/server/requestDTO"
+	"auth/internal/domains/token/dto/server/responseDTO"
 	"auth/internal/domains/token/entities"
 	repositories "auth/internal/domains/token/repositories/server"
 	sharedEntities "auth/internal/sharedEntities"

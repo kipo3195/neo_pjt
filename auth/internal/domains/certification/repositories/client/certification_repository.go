@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	entities "auth/internal/domains/certification/entities"
-	models "auth/internal/domains/certification/models"
+	"auth/internal/domains/certification/entities"
+	"auth/internal/domains/certification/models"
 	sharedModels "auth/internal/sharedModels"
 
 	"log"

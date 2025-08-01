@@ -4,7 +4,7 @@ import (
 	"auth/internal/config"
 	certification "auth/internal/domains/certification"
 	token "auth/internal/domains/token"
-	"auth/internal/routes"
+	router "auth/internal/router"
 	"auth/internal/utils"
 	"log"
 	"net/http"
@@ -21,7 +21,7 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
-	r, baseGroup := routes.SetDefaultRoutes("auth")
+	r, baseGroup := router.SetDefaultRoutes("auth")
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
@@ -29,10 +29,10 @@ func InitServer() *http.Server {
 
 	// 이런 구조로 변경할것.
 	certificationHandler := certification.InitModules(db, sfg.GetJWTConfig(), authUtil)
-	routes.SetLoginRoute(baseGroup, certificationHandler)
+	router.SetLoginRoutes(baseGroup, certificationHandler)
 
 	tokenHandler := token.InitModules(db, sfg.GetJWTConfig(), authUtil)
-	routes.SetTokenRoute(baseGroup, tokenHandler)
+	router.SetTokenRoutes(baseGroup, tokenHandler)
 
 	return &http.Server{
 		Addr:    ":8087",
