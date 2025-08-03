@@ -1,9 +1,9 @@
 package utils
 
 import (
-	consts "core/pkg/consts"
-	"core/pkg/dto"
-	errors "core/pkg/errors"
+	consts "admin/pkg/consts"
+	"admin/pkg/dto"
+	errors "admin/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 )

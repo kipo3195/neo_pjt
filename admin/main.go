@@ -1,11 +1,12 @@
 package main
 
 import (
-	"admin/config"
-	"admin/handlers"
-	"admin/repositories"
-	"admin/routes"
-	"admin/usecases"
+	"admin/internal/config"
+	"admin/internal/domains/orgDeptUsers"
+	"admin/internal/domains/orgDepts"
+	"admin/internal/domains/orgFile"
+	"admin/internal/domains/skinImg"
+	"admin/internal/router"
 	"log"
 	"net/http"
 )
@@ -22,26 +23,27 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
-	// org - 조직도 관리
-	orgRepo := repositories.NewOrgRepository(db)
-	orgUC := usecases.NewOrgUsecase(orgRepo)
-	orgHandler := handlers.NewOrgHandler(orgUC)
+	r, baseGroup := router.SetDefaultRoutes("admin")
 
-	// common - 스킨, 앱 설정 관리
-	commonRepo := repositories.NewCommonRepository(db)
-	commonUC := usecases.NewCommonUsecase(commonRepo)
-	commonHandler := handlers.NewCommonHandler(commonUC)
+	// 스킨 이미지
+	skinImgHandlers := skinImg.InitModules(db)
+	router.SetSkinRoutes(baseGroup, skinImgHandlers)
 
-	handlers := &handlers.AdminHandlers{
-		Org:    orgHandler,
-		Common: commonHandler,
-	}
+	// 조직도 파일
+	orgFileHandlers := orgFile.InitModules(db)
+	router.SetOrgFilesRoutes(baseGroup, orgFileHandlers)
 
-	router := routes.SetupRoutes(handlers)
+	// 부서에 사용자 추가
+	orgDeptUsersHandlers := orgDeptUsers.InitModules(db)
+	router.SetOrgDeptUsersRoutes(baseGroup, orgDeptUsersHandlers)
+
+	// 부서 추가
+	orgDeptsHandlers := orgDepts.InitModules(db)
+	router.SetOrgDeptsRoutes(baseGroup, orgDeptsHandlers)
 
 	return &http.Server{
 		Addr:    ":8089",
-		Handler: router,
+		Handler: r,
 	}
 
 }

@@ -27,8 +27,8 @@ func InitServer() *http.Server {
 
 	r, baseGroup := router.SetDefaultRoutes("core")
 
-	appValidationHandler := appValidation.InitModules(db, sfg, serverInfoStorage)
-	router.SetAppValidationRoutes(baseGroup, appValidationHandler)
+	appValidationHandlers := appValidation.InitModules(db, sfg, serverInfoStorage)
+	router.SetAppValidationRoutes(baseGroup, appValidationHandlers)
 
 	// HTTP 서버 설정 및 반환
 	return &http.Server{
