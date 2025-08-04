@@ -15,10 +15,10 @@ type TokenHandlers struct {
 	ServerHandler *serverHandler.TokenHandler
 }
 
-func InitModules(db *gorm.DB, jwtCfg *config.JWTConfig, authUtile *utils.AuthUtil) *TokenHandlers {
+func InitModules(db *gorm.DB, jwtCfg *config.JWTConfig, authUtil *utils.AuthUtil) *TokenHandlers {
 
 	serverRepository := serverRepository.NewTokenRepository(db)
-	serverUsecase := serverUsecase.NewTokenUsecase(serverRepository, jwtCfg, authUtile)
+	serverUsecase := serverUsecase.NewTokenUsecase(serverRepository, jwtCfg, authUtil)
 	serverHandler := serverHandler.NewTokenHandler(serverUsecase)
 
 	return &TokenHandlers{

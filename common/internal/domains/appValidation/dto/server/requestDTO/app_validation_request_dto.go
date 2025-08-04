@@ -1,4 +1,4 @@
-package dto
+package requestDTO
 
 type AppValidationRequestDTO struct {
 	Body   AppValidationRequestBody

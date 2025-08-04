@@ -1,4 +1,4 @@
-package usecases
+package server
 
 import (
 	"auth/internal/claims"

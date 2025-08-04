@@ -4,7 +4,9 @@ import (
 	"common/config"
 	"common/handlers"
 	loader "common/infra/loader"
-	"common/infra/storage"
+	appValidation "common/internal/domains/appValidation"
+	"common/internal/infra/storage"
+	"common/internal/router"
 	"common/repositories"
 	"common/routes"
 	"common/usecases"
@@ -25,6 +27,11 @@ func InitServer() *http.Server {
 
 	// 메모리 저장소 생성 (빈 상태)
 	configHashStorage := storage.NewConfigHashStorage()
+
+	r, baseGroup := router.SetDefaultRoutes("common")
+
+	appValidationHandler := appValidation.InitModule(db, configHashStorage)
+	router.SetAppValidationRoutes(baseGroup, appValidationHandler)
 
 	publicRepo := repositories.NewPublicRepository(db)
 	publicUsecase := usecases.NewPublicUsecase(publicRepo, configHashStorage)
