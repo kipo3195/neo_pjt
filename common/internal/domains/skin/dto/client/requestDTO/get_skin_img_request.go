@@ -1,4 +1,4 @@
-package dto
+package requestDTO
 
 type GetSkinImgRequest struct {
 	SkinHash string `json:"skinHash" validate:"required"`

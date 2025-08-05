@@ -1,4 +1,4 @@
-package dto
+package requestDTO
 
 type AppTokenRefreshRequestDTO struct {
 	Header AppTokenRefreshRequestHeader

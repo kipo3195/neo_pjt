@@ -13,13 +13,6 @@ func SetupRoutes(handlers *handlers.CommonHandlers) *gin.Engine {
 	common := r.Group("/common")
 	{
 
-		// 토큰을 검증하지 않는 로직
-		public := common.Group("/public")
-		{
-			public.GET("", handlers.Public.AppValidation)
-			public.POST("", handlers.Public.AppTokenRefresh)
-		}
-
 		// 일부 API에 middleware 적용
 		v1 := common.Group("/v1")
 		v1.Use(AuthMiddleware)

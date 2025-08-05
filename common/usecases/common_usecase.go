@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 )
 
 type commonUsecase struct {
@@ -20,7 +19,6 @@ type commonUsecase struct {
 type CommonUsecase interface {
 	InitConfigHash() error
 	GetConfigHash(body entities.ConfigHashEntity, ctx context.Context) clDto.ConfigHashResult
-	GetSkinImg(ctx context.Context, dto clDto.GetSkinImgRequest) (*os.File, error)
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository, configHashStorage storage.ConfigStorage) CommonUsecase {
@@ -115,34 +113,4 @@ func toConfighashResultDto(entity entities.ConfigHashResultEntity) clDto.ConfigH
 		SkinExist:   entity.SkinExist,
 		SkinSame:    entity.SkinSame,
 	}
-}
-
-func (r *commonUsecase) GetSkinImg(ctx context.Context, dto clDto.GetSkinImgRequest) (*os.File, error) {
-
-	// skin hash 검증
-	serverSkinHash, err := r.configStorage.GetHash(consts.SKIN)
-	if err != nil {
-		return nil, err
-	}
-
-	// 현재 서버 기준의 최신 skinHash와 클라이언트가 전달한 값이 다르면 처리하지 않음.
-	if serverSkinHash != dto.SkinHash {
-		return nil, consts.ErrSkinHashInvalid
-	}
-
-	// skin hash에 매핑된 파일 찾기
-	filePath, err := r.configStorage.GetSkinFilePath(dto.SkinType)
-
-	// 파일 존재 확인 정도는 usecase에서 할 수도 있음
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("file not found: %s", filePath)
-	}
-
-	// 파일 열기
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open file: %w", err)
-	}
-
-	return file, nil
 }

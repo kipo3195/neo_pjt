@@ -1,13 +1,12 @@
-package usecases
+package client
 
 import (
 	"bytes"
-	"common/consts"
-	clCommonReqDto "common/dto/client/request"
-	dto "common/dto/common"
-	svAuthResDto "common/dto/server/auth/response"
-	"common/infra/storage"
-	"common/repositories"
+	"common/internal/consts"
+	"common/internal/domains/appToken/dto/client/requestDTO"
+	authResponseDTO "common/internal/domains/appToken/dto/external/auth/responseDTO"
+	repositories "common/internal/domains/appToken/repositories/client"
+	"common/pkg/dto"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,23 +14,21 @@ import (
 	"net/http"
 )
 
-type publicUsecase struct {
-	repo          repositories.PublicRepository
-	configStorage storage.ConfigStorage
+type appTokenUsecase struct {
+	repository repositories.AppTokenRepository
 }
 
-type PublicUsecase interface {
-	AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*svAuthResDto.AppTokenRefreshResponseBody, error)
+type AppTokenUsecase interface {
+	AppTokenReIssue(ctx context.Context, requestDTO requestDTO.AppTokenRefreshRequestDTO) (*authResponseDTO.AppTokenRefreshResponseBody, error)
 }
 
-func NewPublicUsecase(repo repositories.PublicRepository, configStorage storage.ConfigStorage) PublicUsecase {
-	return &publicUsecase{
-		repo:          repo,
-		configStorage: configStorage,
+func NewAppTokenUsecase(repository repositories.AppTokenRepository) AppTokenUsecase {
+	return &appTokenUsecase{
+		repository: repository,
 	}
 }
 
-func (r *publicUsecase) AppTokenReIssue(ctx context.Context, requestDTO clCommonReqDto.AppTokenRefreshRequestDTO) (*svAuthResDto.AppTokenRefreshResponseBody, error) {
+func (r *appTokenUsecase) AppTokenReIssue(ctx context.Context, requestDTO requestDTO.AppTokenRefreshRequestDTO) (*authResponseDTO.AppTokenRefreshResponseBody, error) {
 
 	// marshal
 	requestBody, err := json.Marshal(requestDTO.Body)
@@ -70,7 +67,7 @@ func (r *publicUsecase) AppTokenReIssue(ctx context.Context, requestDTO clCommon
 		return nil, fmt.Errorf("auth service returned status %d", resp.StatusCode)
 	}
 
-	var result dto.ServerResponseDTO[*svAuthResDto.AppTokenRefreshResponseDTO]
+	var result dto.ServerResponseDTO[*authResponseDTO.AppTokenRefreshResponseDTO]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Println("serverReponse 파싱시 에러")

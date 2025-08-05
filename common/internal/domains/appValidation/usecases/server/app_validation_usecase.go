@@ -3,7 +3,7 @@ package server
 import (
 	"bytes"
 	"common/internal/consts"
-	"common/internal/domains/appValidation/dto/external/exRequestDTO"
+	"common/internal/domains/appValidation/dto/external/authRequestDTO"
 	"common/internal/domains/appValidation/dto/server/requestDTO"
 
 	repositories "common/internal/domains/appValidation/repositories/server"
@@ -68,16 +68,16 @@ func (r *appValidationUsecase) AppValidation(ctx context.Context, requestDTO req
 	return true, nil
 }
 
-func toAppTokenValidationRequest(body requestDTO.AppValidationRequestBody) exRequestDTO.AppTokenValidationRequestDTO {
-	return exRequestDTO.AppTokenValidationRequestDTO{
-		Body: exRequestDTO.AppTokenValidationRequestBody{
+func toAppTokenValidationRequest(body requestDTO.AppValidationRequestBody) authRequestDTO.AppTokenValidationRequestDTO {
+	return authRequestDTO.AppTokenValidationRequestDTO{
+		Body: authRequestDTO.AppTokenValidationRequestBody{
 			AppToken: body.AppToken,
 			Uuid:     body.Uuid,
 		},
 	}
 }
 
-func getAppTokenValidationInAuth(ctx context.Context, requestDTO exRequestDTO.AppTokenValidationRequestDTO) (int, error) {
+func getAppTokenValidationInAuth(ctx context.Context, requestDTO authRequestDTO.AppTokenValidationRequestDTO) (int, error) {
 
 	// POST 요청 보내기
 	url := "http://172.16.10.114/auth/sv1/app-token-validation"
