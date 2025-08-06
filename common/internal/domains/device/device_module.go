@@ -1,9 +1,15 @@
 package device
 
-import "gorm.io/gorm"
+import (
+	serverHandler "common/internal/domains/device/handlers/server"
+	"common/internal/domains/device/repositories/serverRepository"
+	serverUsecase "common/internal/domains/device/usecases/server"
+
+	"gorm.io/gorm"
+)
 
 type DeviceHandlers struct {
-	ServerHandler *serverHandler.DeviceHandlers
+	ServerHandler *serverHandler.DeviceHandler
 }
 
 func InitModule(db *gorm.DB) *DeviceHandlers {

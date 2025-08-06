@@ -1,4 +1,4 @@
-package dto
+package requestDTO
 
 type GetConfigHashRequestDTO struct {
 	Body   GetConfigHashRequestBody

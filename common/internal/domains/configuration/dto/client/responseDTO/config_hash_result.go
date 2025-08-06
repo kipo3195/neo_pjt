@@ -1,4 +1,4 @@
-package dto
+package responseDTO
 
 type ConfigHashResult struct {
 	ConfigExist bool `json:"configExist"`

@@ -1,14 +1,21 @@
 package configuration
 
-import "gorm.io/gorm"
+import (
+	clientHandler "common/internal/domains/configuration/handlers/client"
+	clientRepository "common/internal/domains/configuration/repositories/client"
+	clientUsecase "common/internal/domains/configuration/usecases/client"
+	"common/internal/infra/storage"
+
+	"gorm.io/gorm"
+)
 
 type ConfigurationHandlers struct {
-	ClientHandler *clientHandler.ConfigurationHandlers
+	ClientHandler *clientHandler.ConfigurationHandler
 }
 
-func InitModule(db *gorm.DB) *ConfigurationHandlers {
+func InitModule(db *gorm.DB, configStorage storage.ConfigHashStorage) *ConfigurationHandlers {
 	clientRepository := clientRepository.NewConfigurationRepository(db)
-	clientUsecase := clientUsecase.NewConfigurationUsecase(clientRepository)
+	clientUsecase := clientUsecase.NewConfigurationUsecase(clientRepository, configStorage)
 	clientHandler := clientHandler.NewConfigurationHandler(clientUsecase)
 
 	return &ConfigurationHandlers{

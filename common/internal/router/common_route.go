@@ -3,6 +3,7 @@ package router
 import (
 	appToken "common/internal/domains/appToken"
 	appValidation "common/internal/domains/appValidation"
+	"common/internal/domains/configuration"
 	"common/internal/domains/device"
 	skin "common/internal/domains/skin"
 
@@ -39,4 +40,9 @@ func SetSkinRoutes(parent *gin.RouterGroup, handlers *skin.SkinHandlers) {
 func SetDeviceRoute(parent *gin.RouterGroup, handlers *device.DeviceHandlers) {
 	server := parent.Group("/server/v1/device")
 	server.POST("/init", handlers.ServerHandler.DeviceInit)
+}
+
+func SetConfigurationRoutes(parent *gin.RouterGroup, handlers *configuration.ConfigurationHandlers) {
+	client := parent.Group("/client/v1/config-hash")
+	client.GET("/config-hash", handlers.ClientHandler.GetConfigHash)
 }

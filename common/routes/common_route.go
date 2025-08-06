@@ -8,25 +8,25 @@ import (
 
 func SetupRoutes(handlers *handlers.CommonHandlers) *gin.Engine {
 
-	r := gin.Default()
+	// r := gin.Default()
 
-	common := r.Group("/common")
-	{
+	// common := r.Group("/common")
+	// {
 
-		// 일부 API에 middleware 적용
-		v1 := common.Group("/v1")
-		v1.Use(AuthMiddleware)
+	// 	// 일부 API에 middleware 적용
+	// 	v1 := common.Group("/v1")
+	// 	v1.Use(AuthMiddleware)
 
-		{
-			v1.GET("/config-hash", handlers.Common.GetConfigHash)
+	// 	{
+	// 		v1.GET("/config-hash", handlers.Common.GetConfigHash)
 
-		}
+	// 	}
 
-		sv1 := common.Group("/sv1")
-		{
-			//sv1.POST("/device-init", handlers.Server.DeviceInit)
-		}
-	}
+	// 	sv1 := common.Group("/sv1")
+	// 	{
+	// 		//sv1.POST("/device-init", handlers.Server.DeviceInit)
+	// 	}
+	// }
 
 	// // 토큰을 검증하지 않는 로직
 	// commonPub := r.PathPrefix("/common/pub").Subrouter()
