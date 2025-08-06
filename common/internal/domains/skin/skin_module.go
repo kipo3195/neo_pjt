@@ -6,6 +6,7 @@ import (
 	serverHandler "common/internal/domains/skin/handlers/server"
 	serverRepository "common/internal/domains/skin/repositories/server"
 	serverUsecase "common/internal/domains/skin/usecases/server"
+	"common/internal/infra/storage"
 
 	clientHandler "common/internal/domains/skin/handlers/client"
 	clientRepository "common/internal/domains/skin/repositories/client"
@@ -17,13 +18,13 @@ type SkinHandlers struct {
 	ClientHandler *clientHandler.SkinHandler
 }
 
-func InitModule(db *gorm.DB) *SkinHandlers {
+func InitModule(db *gorm.DB, configStorage storage.ConfigHashStorage, skinStorage storage.SkinStorage) *SkinHandlers {
 	serverRepository := serverRepository.NewSkinRepository(db)
 	serverUsecase := serverUsecase.NewSkinUsecase(serverRepository)
 	serverHandler := serverHandler.NewSkinHandler(serverUsecase)
 
 	clientRepository := clientRepository.NewSkinRepository(db)
-	clientUsecase := clientUsecase.NewSkinUsecase(clientRepository)
+	clientUsecase := clientUsecase.NewSkinUsecase(clientRepository, skinStorage, configStorage)
 	clientHandler := clientHandler.NewSkinHandler(clientUsecase)
 
 	return &SkinHandlers{

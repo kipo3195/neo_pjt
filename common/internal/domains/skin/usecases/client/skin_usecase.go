@@ -2,24 +2,29 @@ package client
 
 import (
 	"common/internal/consts"
-	"common/internal/domains/skin/dto/requestDTO"
+	"common/internal/domains/skin/dto/client/requestDTO"
 	repositories "common/internal/domains/skin/repositories/client"
+	"common/internal/infra/storage"
 	"context"
 	"fmt"
 	"os"
 )
 
 type skinUsecase struct {
-	repository repositories.SkinRepository
+	repository    repositories.SkinRepository
+	skinStorage   storage.SkinStorage
+	configStorage storage.ConfigHashStorage
 }
 
 type SkinUsecase interface {
 	GetSkinImg(ctx context.Context, dto requestDTO.GetSkinImgRequest) (*os.File, error)
 }
 
-func NewSkinUsecase(repository repositories.SkinRepository) SkinUsecase {
-	return skinUsecase{
-		repository: repository,
+func NewSkinUsecase(repository repositories.SkinRepository, skinStorage storage.SkinStorage, configStorage storage.ConfigHashStorage) SkinUsecase {
+	return &skinUsecase{
+		repository:    repository,
+		skinStorage:   skinStorage,
+		configStorage: configStorage,
 	}
 }
 
@@ -37,7 +42,7 @@ func (r *skinUsecase) GetSkinImg(ctx context.Context, dto requestDTO.GetSkinImgR
 	}
 
 	// skin hash에 매핑된 파일 찾기
-	filePath, err := r.configStorage.GetSkinFilePath(dto.SkinType)
+	filePath, err := r.skinStorage.GetSkinFilePath(dto.SkinType)
 
 	// 파일 존재 확인 정도는 usecase에서 할 수도 있음
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {

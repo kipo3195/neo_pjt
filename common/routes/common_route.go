@@ -19,14 +19,12 @@ func SetupRoutes(handlers *handlers.CommonHandlers) *gin.Engine {
 
 		{
 			v1.GET("/config-hash", handlers.Common.GetConfigHash)
-			v1.GET("/skin-img", handlers.Common.GetSkinImage)
 
 		}
 
 		sv1 := common.Group("/sv1")
 		{
-			sv1.POST("/device-init", handlers.Server.DeviceInit)
-			sv1.POST("/skin-img", handlers.Server.PutSkinImg)
+			//sv1.POST("/device-init", handlers.Server.DeviceInit)
 		}
 	}
 

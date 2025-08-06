@@ -1,4 +1,4 @@
-package common
+package requestDTO
 
 type DeviceInitRequest struct {
 	WorksCode string `json:"worksCode"`

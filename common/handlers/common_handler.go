@@ -6,15 +6,10 @@ import (
 	dto "common/dto/common"
 	"common/entities"
 	"common/usecases"
-	"context"
 	"encoding/json"
-	"io"
-	"log"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
 )
 
 type CommonHandler struct {
@@ -67,5 +62,3 @@ func toConfigHashEntity(dto clDto.GetConfigHash) entities.ConfigHashEntity {
 		Device:     dto.Device,
 	}
 }
-
-

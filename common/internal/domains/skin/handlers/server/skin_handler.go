@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type SkinHandler struct {
@@ -20,7 +22,7 @@ func NewSkinHandler(usecase serverUsecase.SkinUsecase) *SkinHandler {
 	}
 }
 
-func (h *SkinHandler) PutSkinImg(w http.ResponseWriter, r *http.Request) {
+func (h *SkinHandler) PutSkinImg(c *gin.Context) {
 
 	// context 생성
 	ctx := r.Context()

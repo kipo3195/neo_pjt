@@ -13,10 +13,10 @@ type AppValidationHandlers struct {
 	ServerHandler *serverHandler.AppValidationHandler
 }
 
-func InitModule(db *gorm.DB, configStorage storage.ConfigStorage) *AppValidationHandlers {
+func InitModule(db *gorm.DB, configHashStorage storage.ConfigHashStorage) *AppValidationHandlers {
 
 	serverRepository := serverRepository.NewAppValidationRepository(db)
-	serverUsecase := serverUsecase.NewAppValidationUsecase(serverRepository, configStorage)
+	serverUsecase := serverUsecase.NewAppValidationUsecase(serverRepository, configHashStorage)
 	serverHandler := serverHandler.NewAppValidationHandler(serverUsecase)
 
 	return &AppValidationHandlers{

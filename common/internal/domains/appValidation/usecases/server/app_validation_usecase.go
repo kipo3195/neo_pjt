@@ -16,18 +16,18 @@ import (
 )
 
 type appValidationUsecase struct {
-	repository    repositories.AppValidationRepository
-	configStorage storage.ConfigStorage
+	repository        repositories.AppValidationRepository
+	configHashStorage storage.ConfigHashStorage
 }
 
 type AppValidationUsecase interface {
 	AppValidation(ctx context.Context, requestDTO requestDTO.AppValidationRequestDTO) (bool, error)
 }
 
-func NewAppValidationUsecase(repository repositories.AppValidationRepository, configStorage storage.ConfigStorage) AppValidationUsecase {
+func NewAppValidationUsecase(repository repositories.AppValidationRepository, configHashStorage storage.ConfigHashStorage) AppValidationUsecase {
 	return &appValidationUsecase{
-		repository:    repository,
-		configStorage: configStorage,
+		repository:        repository,
+		configHashStorage: configHashStorage,
 	}
 }
 
@@ -42,7 +42,7 @@ func (r *appValidationUsecase) AppValidation(ctx context.Context, requestDTO req
 	}
 
 	// skin 검증
-	skinHash, err := r.configStorage.GetHash(consts.SKIN)
+	skinHash, err := r.configHashStorage.GetHash(consts.SKIN)
 	if err != nil {
 		log.Println("서버에 skin hash정보가 없음.")
 		return false, consts.ErrSkinHashInvalid
@@ -54,7 +54,7 @@ func (r *appValidationUsecase) AppValidation(ctx context.Context, requestDTO req
 	}
 
 	// config 검증
-	configHash, err := r.configStorage.GetHash(consts.CONFIG)
+	configHash, err := r.configHashStorage.GetHash(consts.CONFIG)
 	if err != nil {
 		log.Println("서버에 config hash정보가 없음.")
 		return false, consts.ErrConfigHashInvalid

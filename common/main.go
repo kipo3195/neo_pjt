@@ -1,14 +1,15 @@
 package main
 
 import (
-	"common/config"
 	"common/handlers"
 	loader "common/infra/loader"
+	"common/internal/config"
+	"common/internal/domains/appToken"
 	appValidation "common/internal/domains/appValidation"
+	"common/internal/domains/skin"
 	"common/internal/infra/storage"
 	"common/internal/router"
 	"common/repositories"
-	"common/routes"
 	"common/usecases"
 	"log"
 	"net/http"
@@ -27,11 +28,18 @@ func InitServer() *http.Server {
 
 	// 메모리 저장소 생성 (빈 상태)
 	configHashStorage := storage.NewConfigHashStorage()
+	skinStorage := storage.NewSkinStorage()
 
 	r, baseGroup := router.SetDefaultRoutes("common")
 
 	appValidationHandler := appValidation.InitModule(db, configHashStorage)
 	router.SetAppValidationRoutes(baseGroup, appValidationHandler)
+
+	skinHandler := skin.InitModule(db, configHashStorage, skinStorage)
+	router.SetSkinRoutes(baseGroup, skinHandler)
+
+	appTokenHandler := appToken.InitModule(db)
+	router.SetAppTokenRoutes(baseGroup, appTokenHandler)
 
 	publicRepo := repositories.NewPublicRepository(db)
 	publicUsecase := usecases.NewPublicUsecase(publicRepo, configHashStorage)
@@ -55,16 +63,16 @@ func InitServer() *http.Server {
 	// 초기화 완료된 usecase를 주입해 안전한 handler 구성
 	commonHandler := handlers.NewCommonHandler(commonUsecase)
 
-	handlers := &handlers.CommonHandlers{
-		Common: commonHandler,
-		Server: serverHandler,
-		Public: pubHandler,
-	}
+	// handlers := &handlers.CommonHandlers{
+	// 	Common: commonHandler,
+	// 	Server: serverHandler,
+	// 	Public: pubHandler,
+	// }
 
-	router := routes.SetupRoutes(handlers)
+	// router := routes.SetupRoutes(handlers)
 
 	return &http.Server{
 		Addr:    ":8086",
-		Handler: router,
+		Handler: r,
 	}
 }
