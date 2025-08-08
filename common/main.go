@@ -7,6 +7,7 @@ import (
 	"common/internal/domains/configuration"
 	"common/internal/domains/skin"
 	"common/internal/infra/storage"
+	"common/internal/modules"
 	"common/internal/router"
 	"log"
 	"net/http"
@@ -41,35 +42,18 @@ func InitServer() *http.Server {
 	configurationHandler := configuration.InitModule(db, configHashStorage)
 	router.SetConfigurationRoutes(baseGroup, configurationHandler)
 
-	// publicRepo := repositories.NewPublicRepository(db)
-	// publicUsecase := usecases.NewPublicUsecase(publicRepo, configHashStorage)
-	// pubHandler := handlers.NewPublicHandler(publicUsecase)
+	// service init
+	deps := modules.Dependencies{
+		DB:                db,
+		ConfigHashStorage: configHashStorage,
+	}
 
-	// serverRepo := repositories.NewServerRepository(db)
-	// serverUsecase := usecases.NewServerUsecase(serverRepo, configHashStorage)
-	// serverHandler := handlers.NewServerHandler(serverUsecase)
+	appInitHandler := modules.InitAppInitModule(deps)
+	r.POST("/server/v1/app-validation", appInitHandler.GetAppValidation)
 
-	// // DB 의존성 구성
-	// commonRepo := repositories.NewCommonRepository(db)
-	// // 의존성 주입 완료된 usecase 생성
-	// commonUsecase := usecases.NewCommonUsecase(commonRepo, configHashStorage)
-	// // usecase 내부 초기화 실행 (ex. DB → 캐시 로딩)
-	// commonLoader := loader.NewCommonLoader(commonUsecase)
-	// if err := commonLoader.RunAll(); err != nil {
-	// 	log.Fatalf("common loader 초기화 실패: %v", err)
-	// 	// 서버 종료됨.
-	// }
-	// log.Println("common service memory loading success !")
-	// // 초기화 완료된 usecase를 주입해 안전한 handler 구성
-	// commonHandler := handlers.NewCommonHandler(commonUsecase)
-
-	// handlers := &handlers.CommonHandlers{
-	// 	Common: commonHandler,
-	// 	Server: serverHandler,
-	// 	Public: pubHandler,
-	// }
-
-	// router := routes.SetupRoutes(handlers)
+	// 해야할 것
+	// 실제로 appValidation에서는 api 요청을 받지 않아도 된다.  usecase만 구현되면 됨.
+	//
 
 	return &http.Server{
 		Addr:    ":8086",
