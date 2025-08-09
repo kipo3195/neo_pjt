@@ -30,8 +30,8 @@ func InitServer() *http.Server {
 
 	r, baseGroup := router.SetDefaultRoutes("common")
 
-	appValidationHandler := appValidation.InitModule(db, configHashStorage)
-	router.SetAppValidationRoutes(baseGroup, appValidationHandler)
+	appValidation.InitModule(db, configHashStorage)
+	//router.SetAppValidationRoutes(baseGroup, appValidationHandler)
 
 	skinHandler := skin.InitModule(db, configHashStorage, skinStorage)
 	router.SetSkinRoutes(baseGroup, skinHandler)
@@ -50,10 +50,6 @@ func InitServer() *http.Server {
 
 	appInitHandler := modules.InitAppInitModule(deps)
 	r.POST("/server/v1/app-validation", appInitHandler.GetAppValidation)
-
-	// 해야할 것
-	// 실제로 appValidation에서는 api 요청을 받지 않아도 된다.  usecase만 구현되면 됨.
-	//
 
 	return &http.Server{
 		Addr:    ":8086",

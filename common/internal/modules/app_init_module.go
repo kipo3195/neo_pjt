@@ -1,22 +1,29 @@
 package modules
 
 import (
-	appValidation "common/internal/domains/appValidation"
-	configuration "common/internal/domains/configuration"
-	skin "common/internal/domains/skin"
+	appValidationRepository "common/internal/domains/appValidation/repositories/server"
+	appValidationUsecase "common/internal/domains/appValidation/usecases/server"
+	configurationRepository "common/internal/domains/configuration/repositories/client"
+	configurationUsecase "common/internal/domains/configuration/usecases/client"
+	skinRepositories "common/internal/domains/skin/repositories/client"
+	skinUsecase "common/internal/domains/skin/usecases/client"
+	handlers "common/internal/handlers"
+	"common/internal/infra/storage"
+	"common/internal/services"
 
 	"gorm.io/gorm"
 )
 
 type Dependencies struct {
 	DB                *gorm.DB
-	ConfigHashStorage interface{}
+	ConfigHashStorage storage.ConfigHashStorage
+	SkinStorage       storage.SkinStorage
 }
 
 func InitAppInitModule(dep Dependencies) *handlers.AppInitHandler {
-	appValidationUsecase := appValidation.NewUsecase(appValidation.NewAppValidationRepository(db))
-	skinUsecase := skin.NewSkinUsecase(skin.NewSkinRepository(db))
-	configurationUsecase := configuration.NewUsecase(configuration.NewConfigurationRepository(db))
+	appValidationUsecase := appValidationUsecase.NewAppValidationUsecase(appValidationRepository.NewAppValidationRepository(dep.DB), dep.ConfigHashStorage)
+	skinUsecase := skinUsecase.NewSkinUsecase(skinRepositories.NewSkinRepository(dep.DB), dep.SkinStorage, dep.ConfigHashStorage)
+	configurationUsecase := configurationUsecase.NewConfigurationUsecase(configurationRepository.NewConfigurationRepository(dep.DB), dep.ConfigHashStorage)
 
 	svc := services.NewAppInitService(appValidationUsecase, skinUsecase, configurationUsecase)
 	return handlers.NewAppInitHander(svc)
