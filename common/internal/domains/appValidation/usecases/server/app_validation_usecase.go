@@ -41,30 +41,6 @@ func (r *appValidationUsecase) AppValidation(ctx context.Context, requestDTO req
 		return false, consts.ErrServerError
 	}
 
-	// skin 검증
-	skinHash, err := r.configHashStorage.GetHash(consts.SKIN)
-	if err != nil {
-		log.Println("서버에 skin hash정보가 없음.")
-		return false, consts.ErrSkinHashInvalid
-	}
-
-	if skinHash != requestDTO.Body.SkinHash {
-		log.Println("서버의 skin hash 정보와 다름 server skin hash : ", skinHash)
-		return false, consts.ErrSkinHashInvalid
-	}
-
-	// config 검증
-	configHash, err := r.configHashStorage.GetHash(consts.CONFIG)
-	if err != nil {
-		log.Println("서버에 config hash정보가 없음.")
-		return false, consts.ErrConfigHashInvalid
-	}
-
-	if configHash != requestDTO.Body.ConfigHash {
-		log.Println("서버의 config hash 정보와 다름 server config hash : ", configHash)
-		return false, consts.ErrConfigHashInvalid
-	}
-
 	return true, nil
 }
 

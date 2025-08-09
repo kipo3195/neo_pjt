@@ -7,6 +7,7 @@ import (
 	"common/internal/infra/storage"
 	"context"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -18,6 +19,7 @@ type skinUsecase struct {
 
 type SkinUsecase interface {
 	GetSkinImg(ctx context.Context, dto requestDTO.GetSkinImgRequest) (*os.File, error)
+	CheckSkin(skinHash string) (bool, error)
 }
 
 func NewSkinUsecase(repository repositories.SkinRepository, skinStorage storage.SkinStorage, configStorage storage.ConfigHashStorage) SkinUsecase {
@@ -56,4 +58,21 @@ func (r *skinUsecase) GetSkinImg(ctx context.Context, dto requestDTO.GetSkinImgR
 	}
 
 	return file, nil
+}
+
+func (r *skinUsecase) CheckSkin(skinHash string) (bool, error) {
+
+	skinHash, err := r.skinStorage.GetSkinHash()
+	if err != nil {
+		log.Println("서버에 skin hash정보가 없음.")
+		return false, consts.ErrSkinHashInvalid
+	}
+
+	if skinHash != skinHash {
+		log.Println("서버의 skin hash 정보와 다름 server skin hash : ", skinHash)
+		return false, consts.ErrSkinHashInvalid
+	}
+
+	return true, nil
+
 }

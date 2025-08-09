@@ -18,6 +18,7 @@ type configurationUsecase struct {
 
 type ConfigurationUsecase interface {
 	GetConfigHash(body entities.ConfigHashEntity, ctx context.Context) responseDTO.ConfigHashResult
+	CheckConfiguration(configHash string) (bool, error)
 }
 
 func NewConfigurationUsecase(repository repositories.ConfigurationRepository, configHashStorage storage.ConfigHashStorage) ConfigurationUsecase {
@@ -38,7 +39,7 @@ func (r *configurationUsecase) GetConfigHash(body entities.ConfigHashEntity, ctx
 	clientSkin := body.SkinHash
 	device := body.Device
 
-	serverConfig, err := r.configHashStorage.GetHash(consts.CONFIG)
+	serverConfig, err := r.configHashStorage.GetConfigHash()
 	if err != nil {
 		log.Println("config 에 대한 hash 정보를 찾을 수 없음.")
 		configExist = false
@@ -49,7 +50,8 @@ func (r *configurationUsecase) GetConfigHash(body entities.ConfigHashEntity, ctx
 		configSame = true
 	}
 
-	serverSkin, err := r.configHashStorage.GetHash(consts.SKIN)
+	// skin은 skin에서 조회하도록 수정필요
+	serverSkin, err := r.skinConigStorage.GetHash(consts.SKIN)
 	if err != nil {
 		fmt.Printf("%s 에 대한 hash 정보를 찾을 수 없음. \n", device)
 		skinExist = false
@@ -77,4 +79,22 @@ func toConfighashResultDto(entity entities.ConfigHashResultEntity) responseDTO.C
 		SkinExist:   entity.SkinExist,
 		SkinSame:    entity.SkinSame,
 	}
+}
+
+// 변경된 처리
+func (r *configurationUsecase) CheckConfiguration(configHash string) (bool, error) {
+
+	skinHash, err := r.configHashStorage.GetConfigHash()
+	if err != nil {
+		log.Println("서버에 skin hash정보가 없음.")
+		return false, consts.ErrSkinHashInvalid
+	}
+
+	if skinHash != skinHash {
+		log.Println("서버의 skin hash 정보와 다름 server skin hash : ", skinHash)
+		return false, consts.ErrSkinHashInvalid
+	}
+
+	return true, nil
+
 }

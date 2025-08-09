@@ -21,10 +21,14 @@ type Dependencies struct {
 }
 
 func InitAppInitModule(dep Dependencies) *handlers.AppInitHandler {
+
 	appValidationUsecase := appValidationUsecase.NewAppValidationUsecase(appValidationRepository.NewAppValidationRepository(dep.DB), dep.ConfigHashStorage)
 	skinUsecase := skinUsecase.NewSkinUsecase(skinRepositories.NewSkinRepository(dep.DB), dep.SkinStorage, dep.ConfigHashStorage)
 	configurationUsecase := configurationUsecase.NewConfigurationUsecase(configurationRepository.NewConfigurationRepository(dep.DB), dep.ConfigHashStorage)
 
+	// 서비스 초기화
 	svc := services.NewAppInitService(appValidationUsecase, skinUsecase, configurationUsecase)
+
+	// 핸들러 초기화
 	return handlers.NewAppInitHander(svc)
 }

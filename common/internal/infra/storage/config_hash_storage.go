@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"common/internal/consts"
 	"errors"
 	"fmt"
 	"sync"
@@ -8,53 +9,53 @@ import (
 
 type ConfigHashStorage interface {
 	SaveConfigHash(kind string, hash string) error
-	GetHash(kind string) (string, error)
+	GetConfigHash() (string, error)
 	DeleteConfigHash(kind string) error
 }
 
 type configHashStorage struct {
-	mu       sync.RWMutex
-	hashInfo map[string]string // 해시 정보 저장용
+	mu         sync.RWMutex
+	configInfo map[string]string // 해시 정보 저장용
 
 }
 
 func NewConfigHashStorage() ConfigHashStorage {
 	return &configHashStorage{
-		hashInfo: make(map[string]string),
+		configInfo: make(map[string]string),
 	}
 }
 
-func (r *configHashStorage) SaveConfigHash(kind string, hash string) error {
+func (r *configHashStorage) SaveConfigHash(config string, hash string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.hashInfo[kind] = hash
-	fmt.Printf("kind : %s hash : %s save success. \n", kind, hash)
+	r.configInfo[config] = hash
+	fmt.Printf("config : %s hash : %s save success. \n", config, hash)
 	return nil
 }
 
-func (r *configHashStorage) GetHash(kind string) (string, error) {
+func (r *configHashStorage) GetConfigHash() (string, error) {
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	hash, exists := r.hashInfo[kind]
+	hash, exists := r.configInfo[consts.CONFIG]
 	if !exists {
-		return "", errors.New(kind + " is not exists")
+		return "", errors.New("configHash is not exists")
 	}
 
 	return hash, nil
 }
 
-func (r *configHashStorage) DeleteConfigHash(kind string) error {
+func (r *configHashStorage) DeleteConfigHash(config string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, exists := r.hashInfo[kind]; !exists {
-		return errors.New(kind + "is not exists")
+	if _, exists := r.configInfo[config]; !exists {
+		return errors.New(config + "is not exists")
 	}
 
-	delete(r.hashInfo, kind)
-	fmt.Printf("kind : %s delete success. \n", kind)
+	delete(r.configInfo, config)
+	fmt.Printf("config : %s delete success. \n", config)
 	return nil
 }

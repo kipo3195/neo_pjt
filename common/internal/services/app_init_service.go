@@ -7,9 +7,9 @@ import (
 )
 
 type AppInitService struct {
-	validator     appValidationUsecase.AppValidationUsecase
-	skin          skinUsecase.SkinUsecase
-	configuration configurationUsecase.ConfigurationUsecase
+	Validator     appValidationUsecase.AppValidationUsecase
+	Skin          skinUsecase.SkinUsecase
+	Configuration configurationUsecase.ConfigurationUsecase
 }
 
 func NewAppInitService(v appValidationUsecase.AppValidationUsecase, s skinUsecase.SkinUsecase, c configurationUsecase.ConfigurationUsecase) *AppInitService {
