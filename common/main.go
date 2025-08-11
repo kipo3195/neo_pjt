@@ -9,8 +9,10 @@ import (
 	"common/internal/infra/storage"
 	"common/internal/modules"
 	"common/internal/router"
+	"context"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -28,6 +30,23 @@ func InitServer() *http.Server {
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
 
+	deps := modules.Dependencies{
+		DB:                db,
+		ConfigHashStorage: configHashStorage,
+		SkinStorage:       skinStorage,
+	}
+
+	// 데이터 로딩
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := dataLoader.LoadAllData(ctx); err != nil {
+		log.Fatal("Failed to load initial data:", err)
+	}
+
+	// api init
+
 	r, baseGroup := router.SetDefaultRoutes("common")
 
 	appValidation.InitModule(db, configHashStorage)
@@ -43,11 +62,6 @@ func InitServer() *http.Server {
 	router.SetConfigurationRoutes(baseGroup, configurationHandler)
 
 	// service init
-	deps := modules.Dependencies{
-		DB:                db,
-		ConfigHashStorage: configHashStorage,
-	}
-
 	appInitHandler := modules.InitAppInitModule(deps)
 	r.POST("/server/v1/app-validation", appInitHandler.GetAppValidation)
 

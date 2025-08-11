@@ -1,22 +1,19 @@
 package usecases
 
 import (
-	"common/consts"
-	clDto "common/dto/client"
 	"common/entities"
 	"common/infra/storage"
+	"common/internal/consts"
 	"common/repositories"
-	"context"
 )
 
 type commonUsecase struct {
 	repo          repositories.CommonRepository
-	configStorage storage.ConfigStorage
+	configStorage storage.ConfigHashStorage
 }
 
 type CommonUsecase interface {
 	InitConfigHash() error
-	GetConfigHash(body entities.ConfigHashEntity, ctx context.Context) clDto.ConfigHashResult
 }
 
 func NewCommonUsecase(repo repositories.CommonRepository, configHashStorage storage.ConfigStorage) CommonUsecase {

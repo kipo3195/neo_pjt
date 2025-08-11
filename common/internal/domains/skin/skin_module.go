@@ -18,13 +18,13 @@ type SkinHandlers struct {
 	ClientHandler *clientHandler.SkinHandler
 }
 
-func InitModule(db *gorm.DB, configStorage storage.ConfigHashStorage, skinStorage storage.SkinStorage) *SkinHandlers {
+func InitModule(db *gorm.DB, configHashStorage storage.ConfigHashStorage, skinStorage storage.SkinStorage) *SkinHandlers {
 	serverRepository := serverRepository.NewSkinRepository(db)
 	serverUsecase := serverUsecase.NewSkinUsecase(serverRepository)
 	serverHandler := serverHandler.NewSkinHandler(serverUsecase)
 
 	clientRepository := clientRepository.NewSkinRepository(db)
-	clientUsecase := clientUsecase.NewSkinUsecase(clientRepository, skinStorage, configStorage)
+	clientUsecase := clientUsecase.NewSkinUsecase(clientRepository, skinStorage)
 	clientHandler := clientHandler.NewSkinHandler(clientUsecase)
 
 	return &SkinHandlers{

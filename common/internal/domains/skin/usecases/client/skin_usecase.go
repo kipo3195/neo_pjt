@@ -12,9 +12,8 @@ import (
 )
 
 type skinUsecase struct {
-	repository    repositories.SkinRepository
-	skinStorage   storage.SkinStorage
-	configStorage storage.ConfigHashStorage
+	repository  repositories.SkinRepository
+	skinStorage storage.SkinStorage
 }
 
 type SkinUsecase interface {
@@ -22,18 +21,17 @@ type SkinUsecase interface {
 	CheckSkin(skinHash string) (bool, error)
 }
 
-func NewSkinUsecase(repository repositories.SkinRepository, skinStorage storage.SkinStorage, configStorage storage.ConfigHashStorage) SkinUsecase {
+func NewSkinUsecase(repository repositories.SkinRepository, skinStorage storage.SkinStorage) SkinUsecase {
 	return &skinUsecase{
-		repository:    repository,
-		skinStorage:   skinStorage,
-		configStorage: configStorage,
+		repository:  repository,
+		skinStorage: skinStorage,
 	}
 }
 
 func (r *skinUsecase) GetSkinImg(ctx context.Context, dto requestDTO.GetSkinImgRequest) (*os.File, error) {
 
 	// skin hash 검증
-	serverSkinHash, err := r.configStorage.GetHash(consts.SKIN)
+	serverSkinHash, err := r.skinStorage.GetSkinHash()
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +60,14 @@ func (r *skinUsecase) GetSkinImg(ctx context.Context, dto requestDTO.GetSkinImgR
 
 func (r *skinUsecase) CheckSkin(skinHash string) (bool, error) {
 
-	skinHash, err := r.skinStorage.GetSkinHash()
+	serverSkinHash, err := r.skinStorage.GetSkinHash()
 	if err != nil {
 		log.Println("서버에 skin hash정보가 없음.")
 		return false, consts.ErrSkinHashInvalid
 	}
 
-	if skinHash != skinHash {
-		log.Println("서버의 skin hash 정보와 다름 server skin hash : ", skinHash)
+	if skinHash != serverSkinHash {
+		log.Printf("서버의 skin hash 정보와 다름 client : %s server skin hash : \n", skinHash, serverSkinHash)
 		return false, consts.ErrSkinHashInvalid
 	}
 

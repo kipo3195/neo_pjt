@@ -14,7 +14,6 @@ type commonRepository struct {
 
 type CommonRepository interface {
 	GetSkinHash() (string, error)
-	GetConfigHash() (string, error)
 }
 
 func NewCommonRepository(db *gorm.DB) CommonRepository {
@@ -34,24 +33,6 @@ func (r *commonRepository) GetSkinHash() (string, error) {
 	}
 
 	return config.SkinHash, nil
-}
-
-func (r *commonRepository) GetConfigHash() (string, error) {
-
-	var configHash string
-	result := r.db.Model(&models.WorksInfo{}).
-		Where("kind = ?", "config").
-		Select("value").
-		First(&configHash)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return "", nil // 조회 결과 없음
-		}
-		return "", result.Error // 다른 DB 오류
-	}
-
-	return configHash, nil
 }
 
 func (r *commonRepository) GetSkinInfo() ([]entities.SkinFileInfoEntity, error) {

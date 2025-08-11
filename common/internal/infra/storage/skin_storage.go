@@ -17,6 +17,7 @@ type SkinStorage interface {
 	GetSkinFilePath(skinType string) (string, error)
 	SaveSkinFilePath(skinType string, filePath string) error
 	GetSkinHash() (string, error)
+	SaveConfigHash(kind string, hash string) error
 }
 
 func NewSkinStorage() SkinStorage {
@@ -62,4 +63,12 @@ func (r *skinStorage) GetSkinHash() (string, error) {
 	}
 
 	return serverHash, nil
+}
+
+func (r *skinStorage) SaveConfigHash(kind string, hash string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.hashInfo[kind] = hash
+	fmt.Printf("skin hash : %s save success. \n", hash)
+	return nil
 }

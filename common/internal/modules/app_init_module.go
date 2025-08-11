@@ -23,7 +23,7 @@ type Dependencies struct {
 func InitAppInitModule(dep Dependencies) *handlers.AppInitHandler {
 
 	appValidationUsecase := appValidationUsecase.NewAppValidationUsecase(appValidationRepository.NewAppValidationRepository(dep.DB), dep.ConfigHashStorage)
-	skinUsecase := skinUsecase.NewSkinUsecase(skinRepositories.NewSkinRepository(dep.DB), dep.SkinStorage, dep.ConfigHashStorage)
+	skinUsecase := skinUsecase.NewSkinUsecase(skinRepositories.NewSkinRepository(dep.DB), dep.SkinStorage)
 	configurationUsecase := configurationUsecase.NewConfigurationUsecase(configurationRepository.NewConfigurationRepository(dep.DB), dep.ConfigHashStorage)
 
 	// 서비스 초기화
