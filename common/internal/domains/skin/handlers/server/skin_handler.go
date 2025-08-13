@@ -3,11 +3,9 @@ package server
 import (
 	serverUsecase "common/internal/domains/skin/usecases/server"
 	"common/pkg/consts"
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,9 +23,7 @@ func NewSkinHandler(usecase serverUsecase.SkinUsecase) *SkinHandler {
 func (h *SkinHandler) PutSkinImg(c *gin.Context) {
 
 	// context 생성
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+	ctx := c.Request.Context()
 
 	// server 토큰 검증은 미들웨어에서
 

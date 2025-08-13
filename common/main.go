@@ -6,6 +6,7 @@ import (
 	appValidation "common/internal/domains/appValidation"
 	"common/internal/domains/configuration"
 	"common/internal/domains/skin"
+	"common/internal/infra/loader"
 	"common/internal/infra/storage"
 	"common/internal/modules"
 	"common/internal/router"
@@ -26,7 +27,7 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
-	// 메모리 저장소 생성 (빈 상태)
+	// ---- STORAGE INIT -----
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
 
@@ -36,16 +37,20 @@ func InitServer() *http.Server {
 		SkinStorage:       skinStorage,
 	}
 
-	// 데이터 로딩
+	// ---- DATA LOADER -----
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+
+	dataLoader := loader.NewDataLoader()
+	dataLoader.Register(loader.NewSkinLoader(db, skinStorage))
+	dataLoader.Register(loader.NewConfigHashLoader(db, configHashStorage))
 
 	if err := dataLoader.LoadAllData(ctx); err != nil {
 		log.Fatal("Failed to load initial data:", err)
 	}
 
-	// api init
+	// ---- ROUTER -----
 
 	r, baseGroup := router.SetDefaultRoutes("common")
 
@@ -61,7 +66,7 @@ func InitServer() *http.Server {
 	configurationHandler := configuration.InitModule(db, configHashStorage)
 	router.SetConfigurationRoutes(baseGroup, configurationHandler)
 
-	// service init
+	// ---- SERVICE INIT ----
 	appInitHandler := modules.InitAppInitModule(deps)
 	r.POST("/server/v1/app-validation", appInitHandler.GetAppValidation)
 

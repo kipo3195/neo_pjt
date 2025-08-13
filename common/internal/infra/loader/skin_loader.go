@@ -10,18 +10,23 @@ import (
 
 type SkinLoader struct {
 	db      *gorm.DB
-	storage *storage.SkinStorage
+	storage storage.SkinStorage
 }
 
-func NewSkinLoader(db *gorm.DB, storage *storage.SkinStorage) *SkinLoader {
+func NewSkinLoader(db *gorm.DB, storage storage.SkinStorage) *SkinLoader {
 	return &SkinLoader{db: db, storage: storage}
 }
 
 func (l *SkinLoader) Load(ctx context.Context) error {
-	skins, err := repository.SaveConfigHash(l.db) // ← 도메인별 repository
+
+	repo := repository.NewSkinRepository(l.db)
+
+	skinHash, err := repo.GetSkinHash() // ← 도메인별 repository
 	if err != nil {
 		return err
+
 	}
-	l.storage.SaveConfigHash(skins)
+
+	l.storage.SaveSkinHash("skin", skinHash)
 	return nil
 }

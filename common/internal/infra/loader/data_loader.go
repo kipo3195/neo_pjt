@@ -28,3 +28,8 @@ func (d *DataLoader) LoadAllData(ctx context.Context) error {
 	}
 	return nil
 }
+
+// Loader 추가
+func (d *DataLoader) Register(loader Loader) {
+	d.loaders = append(d.loaders, loader)
+}

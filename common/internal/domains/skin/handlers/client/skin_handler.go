@@ -25,12 +25,12 @@ func NewSkinHandler(usecase clientUsecase.SkinUsecase) *SkinHandler {
 
 func (h *SkinHandler) GetSkinImage(c *gin.Context) {
 	// context 생성
-	ctx := c.Context()
+	ctx := c.Request.Context()
 
 	// 데이터 -> dto
 	var req = requestDTO.GetSkinImgRequest{
-		SkinHash: c.Get("skinHash"),
-		SkinType: c.Get("skinType"),
+		SkinHash: c.Query("skinHash"),
+		SkinType: c.Query("skinType"),
 	}
 
 	log.Println("2")
