@@ -45,7 +45,7 @@ func (h *AppValidationHandler) GetAppValidation(c *gin.Context) {
 		Body: body,
 	}
 
-	domainReq := toDomainDTO(requestDTO.Body)
+	domainReq := toAppValidationDomainDTO(requestDTO.Body)
 
 	// 기존 appValidtion 도메인에서 하던 처리
 	data, err := h.svc.Validator.AppValidation(c, domainReq)
@@ -75,7 +75,7 @@ func (h *AppValidationHandler) GetAppValidation(c *gin.Context) {
 }
 
 // 변환
-func toDomainDTO(serviceBody serviceDto.AppValidationRequestBody) domain.AppValidationRequestDTO {
+func toAppValidationDomainDTO(serviceBody serviceDto.AppValidationRequestBody) domain.AppValidationRequestDTO {
 	return domain.AppValidationRequestDTO{
 		Body: domain.AppValidationRequestBody{
 			Uuid:        serviceBody.Uuid,

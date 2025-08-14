@@ -3,7 +3,7 @@ package routes
 import (
 	"common/internal/claims"
 	"common/internal/consts"
-	"common/pkg/consts"
+	commonConsts "common/pkg/consts"
 	"common/pkg/response"
 	"errors"
 	"fmt"
@@ -25,7 +25,7 @@ func AuthMiddleware(next http.Handler) gin.HandlerFunc {
 		// 토큰 추출
 		tokenStr, err := extractTokenFromHeader(c.Request.Header)
 		if err != nil {
-			response.SendError(c, consts.BAD_REQUEST, consts.ERROR, consts.E_105, consts.E_105_MSG)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
 			c.Abort() // 다음 핸들러 중단
 			return
 		}
@@ -36,10 +36,10 @@ func AuthMiddleware(next http.Handler) gin.HandlerFunc {
 			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
 				log.Println("토큰 만료")
-				response.SendError(c, consts.BAD_REQUEST, consts.ERROR, consts.E_107, consts.E_107_MSG)
+				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
 			} else {
 				log.Println("토큰 검증 실패")
-				response.SendError(c, consts.BAD_REQUEST, consts.ERROR, consts.E_106, consts.E_106_MSG)
+				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
 				c.Abort() // 다음 핸들러 중단
 			}
 			return
@@ -81,12 +81,12 @@ func verifyJWT(tokenStr string) (string, error) {
 	// 유효성 체크
 	parsedClaims, ok := token.Claims.(*claims.JWTClaims) // ← 여기서도 JWTClaims로
 	if !ok || !token.Valid {
-		return "", serviceConsts.ErrInvalidClaims
+		return "", consts.ErrInvalidClaims
 	}
 
 	// 만료 시간 검증
 	if parsedClaims.ExpiresAt != nil && parsedClaims.ExpiresAt.Time.Before(time.Now()) {
-		return "", serviceConsts.ErrTokenExpired
+		return "", consts.ErrTokenExpired
 	}
 
 	return parsedClaims.UserHash, nil

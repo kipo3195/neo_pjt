@@ -2,6 +2,7 @@ package serverRepository
 
 import (
 	"common/internal/domains/device/entities"
+	"common/internal/domains/device/models"
 	"context"
 	"errors"
 	"log"

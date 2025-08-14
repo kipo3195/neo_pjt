@@ -20,12 +20,25 @@ type deviceUsecase struct {
 
 type DeviceUsecase interface {
 	DeviceInit(ctx context.Context, body *requestDTO.DeviceInitRequest) (*entities.InitResult, error)
+	GetConnectInfo(body *requestDTO.DeviceInitRequest) (*entities.ConnectInfo, error)
 }
 
 func NewDeviceUsecase(repository serverRepository.DeviceRepository) DeviceUsecase {
 	return &deviceUsecase{
 		repository: repository,
 	}
+}
+
+func (u *deviceUsecase) GetConnectInfo(body *requestDTO.DeviceInitRequest) (*entities.ConnectInfo, error) {
+
+	connectInfo, err := u.repository.GetConnectInfo(body.WorksCode)
+
+	if err != nil {
+		return nil, consts.ErrDB
+	}
+
+	return connectInfo, nil
+
 }
 
 func (u *deviceUsecase) DeviceInit(ctx context.Context, body *requestDTO.DeviceInitRequest) (*entities.InitResult, error) {
