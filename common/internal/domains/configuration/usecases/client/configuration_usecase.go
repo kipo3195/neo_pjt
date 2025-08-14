@@ -1,9 +1,9 @@
 package client
 
 import (
+	"common/internal/consts"
 	repositories "common/internal/domains/configuration/repositories/client"
 	"common/internal/infra/storage"
-	commonConsts "common/pkg/consts"
 	"log"
 )
 
@@ -29,12 +29,12 @@ func (r *configurationUsecase) CheckConfiguration(configHash string) (bool, erro
 	skinHash, err := r.configHashStorage.GetConfigHash()
 	if err != nil {
 		log.Println("서버에 skin hash정보가 없음.")
-		return false, commonConsts.ErrSkinHashInvalid
+		return false, consts.ErrSkinHashInvalid
 	}
 
 	if skinHash != skinHash {
 		log.Println("서버의 skin hash 정보와 다름 server skin hash : ", skinHash)
-		return false, commonConsts.ErrSkinHashInvalid
+		return false, consts.ErrSkinHashInvalid
 	}
 
 	return true, nil

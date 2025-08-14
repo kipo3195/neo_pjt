@@ -2,6 +2,7 @@ package routes
 
 import (
 	"common/internal/claims"
+	"common/internal/consts"
 	"common/pkg/consts"
 	"common/pkg/response"
 	"errors"
@@ -80,12 +81,12 @@ func verifyJWT(tokenStr string) (string, error) {
 	// 유효성 체크
 	parsedClaims, ok := token.Claims.(*claims.JWTClaims) // ← 여기서도 JWTClaims로
 	if !ok || !token.Valid {
-		return "", consts.ErrInvalidClaims
+		return "", serviceConsts.ErrInvalidClaims
 	}
 
 	// 만료 시간 검증
 	if parsedClaims.ExpiresAt != nil && parsedClaims.ExpiresAt.Time.Before(time.Now()) {
-		return "", consts.ErrTokenExpired
+		return "", serviceConsts.ErrTokenExpired
 	}
 
 	return parsedClaims.UserHash, nil

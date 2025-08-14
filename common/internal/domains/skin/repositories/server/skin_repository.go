@@ -2,7 +2,7 @@ package server
 
 import (
 	"common/internal/domains/device/entities"
-	"common/models"
+	"common/internal/domains/skin/models"
 	"context"
 	"errors"
 	"log"

@@ -1,8 +1,8 @@
 package client
 
 import (
-	"admin/entities"
 	"admin/internal/domains/orgFile/dto/client/requestDTO"
+	"admin/internal/domains/orgFile/entities"
 	repository "admin/internal/domains/orgFile/repositories/client"
 	"bytes"
 	"context"

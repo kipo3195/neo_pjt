@@ -53,11 +53,11 @@ func (h *AppValidationHandler) AppValidation(c *gin.Context) {
 
 	if err != nil || !data {
 		switch {
-		case errors.Is(err, commonConsts.ErrInvalidClaims):
+		case errors.Is(err, consts.ErrInvalidClaims):
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
-		case errors.Is(err, commonConsts.ErrSkinHashInvalid):
+		case errors.Is(err, consts.ErrSkinHashInvalid):
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_F001, consts.COMMON_F001_MSG)
-		case errors.Is(err, commonConsts.ErrConfigHashInvalid):
+		case errors.Is(err, consts.ErrConfigHashInvalid):
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_F002, consts.COMMON_F002_MSG)
 		default:
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)

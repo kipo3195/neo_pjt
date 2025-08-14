@@ -1,9 +1,9 @@
 package server
 
 import (
+	"common/internal/consts"
 	"common/internal/domains/device/dto/server/requestDTO"
 	deviceUsecase "common/internal/domains/device/usecases/server"
-	"common/pkg/consts"
 	commonConsts "common/pkg/consts"
 	"common/pkg/response"
 	"encoding/json"

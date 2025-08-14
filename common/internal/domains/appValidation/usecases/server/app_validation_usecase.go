@@ -2,11 +2,11 @@ package server
 
 import (
 	"bytes"
+	"common/internal/consts"
 	"common/internal/domains/appValidation/dto/external/authRequestDTO"
 	"common/internal/domains/appValidation/dto/server/requestDTO"
 	repositories "common/internal/domains/appValidation/repositories/server"
 	"common/internal/infra/storage"
-	commonConsts "common/pkg/consts"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -44,13 +44,13 @@ func (r *appValidationUsecase) AppValidation(ctx context.Context, requestDTO req
 		token = requestDTO.Body.AccessToken
 	} else {
 		log.Println("token type error.")
-		return false, commonConsts.ErrServerError
+		return false, consts.ErrServerError
 	}
 	_, err := getAppTokenValidationInAuth(ctx, toAppTokenValidationRequest(token, tokenType, requestDTO.Body.Uuid))
 
 	if err != nil {
 		// 에러 정의 후 response
-		return false, commonConsts.ErrServerError
+		return false, consts.ErrServerError
 	}
 
 	return true, nil

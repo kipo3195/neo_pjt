@@ -6,7 +6,6 @@ import (
 	requestDTO "common/internal/domains/skin/dto/server/requestDTO"
 	repositories "common/internal/domains/skin/repositories/server"
 	storage "common/internal/infra/storage"
-	commonConsts "common/pkg/consts"
 	"context"
 	"fmt"
 	"image"
@@ -68,17 +67,17 @@ func skinFileSaved(ctx context.Context, dto requestDTO.CreateSkinImgRequest) (*e
 	fileSize := dto.FileInfo.Size
 	sizeCheck := checkSkinImgSize(fileSize)
 	if !sizeCheck {
-		return nil, commonConsts.ErrFileSizeExceeded
+		return nil, consts.ErrFileSizeExceeded
 	}
 	log.Println("555")
 	// 파일의 확장자 검증 (이미지인지 판단.)
 	detectedType, err := detectContentType(dto.File)
 	if err != nil {
-		return nil, commonConsts.ErrFileExtentionDetect
+		return nil, consts.ErrFileExtentionDetect
 	}
 	log.Println("666")
 	if !strings.HasPrefix(detectedType, "image/") {
-		return nil, commonConsts.ErrFileExtentionInvalid
+		return nil, consts.ErrFileExtentionInvalid
 	}
 	log.Println("777")
 	// 1. 이미지 디코딩

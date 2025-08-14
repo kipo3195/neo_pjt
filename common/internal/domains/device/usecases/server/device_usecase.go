@@ -2,11 +2,11 @@ package server
 
 import (
 	"bytes"
+	"common/internal/consts"
 	"common/internal/domains/device/dto/external/authResponseDTO"
 	"common/internal/domains/device/dto/server/requestDTO"
 	"common/internal/domains/device/entities"
 	"common/internal/domains/device/repositories/serverRepository"
-	"common/pkg/consts"
 	"common/pkg/dto"
 	"context"
 	"encoding/json"
