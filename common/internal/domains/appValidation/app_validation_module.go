@@ -1,4 +1,4 @@
-package appvalidation
+package appValidation
 
 import (
 	serverHandler "common/internal/domains/appValidation/handlers/server"

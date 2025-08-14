@@ -1,10 +1,10 @@
 package client
 
 import (
-	"common/internal/consts"
 	"common/internal/domains/skin/dto/client/requestDTO"
 	repositories "common/internal/domains/skin/repositories/client"
 	"common/internal/infra/storage"
+	commonConsts "common/pkg/consts"
 	"context"
 	"fmt"
 	"log"
@@ -38,7 +38,7 @@ func (r *skinUsecase) GetSkinImg(ctx context.Context, dto requestDTO.GetSkinImgR
 
 	// 현재 서버 기준의 최신 skinHash와 클라이언트가 전달한 값이 다르면 처리하지 않음.
 	if serverSkinHash != dto.SkinHash {
-		return nil, consts.ErrSkinHashInvalid
+		return nil, commonConsts.ErrSkinHashInvalid
 	}
 
 	// skin hash에 매핑된 파일 찾기
@@ -63,12 +63,12 @@ func (r *skinUsecase) CheckSkin(skinHash string) (bool, error) {
 	serverSkinHash, err := r.skinStorage.GetSkinHash()
 	if err != nil {
 		log.Println("서버에 skin hash정보가 없음.")
-		return false, consts.ErrSkinHashInvalid
+		return false, commonConsts.ErrSkinHashInvalid
 	}
 
 	if skinHash != serverSkinHash {
 		log.Printf("서버의 skin hash 정보와 다름 client : %s server skin hash : \n", skinHash, serverSkinHash)
-		return false, consts.ErrSkinHashInvalid
+		return false, commonConsts.ErrSkinHashInvalid
 	}
 
 	return true, nil

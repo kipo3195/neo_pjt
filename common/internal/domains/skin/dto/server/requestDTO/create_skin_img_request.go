@@ -1,4 +1,4 @@
-package admin
+package requestDTO
 
 import "mime/multipart"
 

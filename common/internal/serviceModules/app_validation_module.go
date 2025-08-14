@@ -1,4 +1,4 @@
-package modules
+package serviceModules
 
 import (
 	appValidationRepository "common/internal/domains/appValidation/repositories/server"
@@ -7,8 +7,8 @@ import (
 	configurationUsecase "common/internal/domains/configuration/usecases/client"
 	skinRepositories "common/internal/domains/skin/repositories/client"
 	skinUsecase "common/internal/domains/skin/usecases/client"
-	handlers "common/internal/handlers"
 	"common/internal/infra/storage"
+	handlers "common/internal/serviceHandlers"
 	"common/internal/services"
 
 	"gorm.io/gorm"
@@ -20,15 +20,15 @@ type Dependencies struct {
 	SkinStorage       storage.SkinStorage
 }
 
-func InitAppInitModule(dep Dependencies) *handlers.AppInitHandler {
+func InitAppValidationModule(dep Dependencies) *handlers.AppValidationHandler {
 
 	appValidationUsecase := appValidationUsecase.NewAppValidationUsecase(appValidationRepository.NewAppValidationRepository(dep.DB), dep.ConfigHashStorage)
 	skinUsecase := skinUsecase.NewSkinUsecase(skinRepositories.NewSkinRepository(dep.DB), dep.SkinStorage)
 	configurationUsecase := configurationUsecase.NewConfigurationUsecase(configurationRepository.NewConfigurationRepository(dep.DB), dep.ConfigHashStorage)
 
 	// 서비스 초기화
-	svc := services.NewAppInitService(appValidationUsecase, skinUsecase, configurationUsecase)
+	svc := services.NewAppValidationService(appValidationUsecase, skinUsecase, configurationUsecase)
 
 	// 핸들러 초기화
-	return handlers.NewAppInitHander(svc)
+	return handlers.NewAppValidationHander(svc)
 }

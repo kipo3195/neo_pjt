@@ -2,23 +2,21 @@ package server
 
 import (
 	"common/internal/domains/device/dto/server/requestDTO"
-	serverUsecase "common/internal/domains/device/usecases/server"
+	deviceUsecase "common/internal/domains/device/usecases/server"
 	"common/pkg/consts"
-	"context"
+	commonConsts "common/pkg/consts"
+	"common/pkg/response"
 	"encoding/json"
 	"fmt"
-	"log"
-	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type DeviceHandler struct {
-	usecase serverUsecase.DeviceUsecase
+	usecase deviceUsecase.DeviceUsecase
 }
 
-func NewDeviceHandler(usecase serverUsecase.DeviceUsecase) *DeviceHandler {
+func NewDeviceHandler(usecase deviceUsecase.DeviceUsecase) *DeviceHandler {
 	return &DeviceHandler{
 		usecase: usecase,
 	}
@@ -27,22 +25,12 @@ func NewDeviceHandler(usecase serverUsecase.DeviceUsecase) *DeviceHandler {
 func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 
 	// context 생성
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	// core 서비스에서 온 토큰 검증은 미들 웨어에서
+	ctx := c.Request.Context()
 
 	// request body 데이터 -> dto로 변경
 	var body *requestDTO.DeviceInitRequest
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		res.Code = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 		return
 	}
 
@@ -52,18 +40,12 @@ func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 	data, err := h.usecase.DeviceInit(ctx, body)
 
 	if err != nil {
-		res.Code = consts.FAIL
-		res.Data = err
-		w.WriteHeader(http.StatusBadRequest)
+		if err == consts.ErrDB {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_102, commonConsts.E_102_MSG)
+		} else {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
 	} else {
-		res.Code = consts.SUCCESS
-		res.Data = data
+		response.SendSuccess(c, data)
 	}
-
-	fmt.Printf("res.Data 타입: %T\n", res.Data)
-	jsonBytes, _ := json.Marshal(res)
-	log.Println("최종 JSON 응답:", string(jsonBytes))
-
-	json.NewEncoder(w).Encode(res)
-
 }

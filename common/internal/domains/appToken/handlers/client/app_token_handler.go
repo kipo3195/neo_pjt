@@ -51,10 +51,10 @@ func (h *AppTokenHandler) AppTokenRefresh(c *gin.Context) {
 
 	if err != nil {
 		switch {
-		case errors.Is(err, consts.ErrRefreshTokenAuthInvalid):
+		case errors.Is(err, commonConsts.ErrRefreshTokenAuthInvalid):
 			// 토큰 검증 실패
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_F003, consts.COMMON_F003_MSG)
-		case errors.Is(err, consts.ErrRefreshTokenAuthExpired):
+		case errors.Is(err, commonConsts.ErrRefreshTokenAuthExpired):
 			// 토큰 만료
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_F004, consts.COMMON_F004_MSG)
 		default:

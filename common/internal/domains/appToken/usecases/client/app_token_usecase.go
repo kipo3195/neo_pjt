@@ -2,10 +2,10 @@ package client
 
 import (
 	"bytes"
-	"common/internal/consts"
 	"common/internal/domains/appToken/dto/client/requestDTO"
-	authResponseDTO "common/internal/domains/appToken/dto/external/auth/responseDTO"
+	authResponseDTO "common/internal/domains/appToken/dto/external/authResponseDTO"
 	repositories "common/internal/domains/appToken/repositories/client"
+	commonConsts "common/pkg/consts"
 	"common/pkg/dto"
 	"context"
 	"encoding/json"
@@ -33,13 +33,13 @@ func (r *appTokenUsecase) AppTokenReIssue(ctx context.Context, requestDTO reques
 	// marshal
 	requestBody, err := json.Marshal(requestDTO.Body)
 	if err != nil {
-		return nil, fmt.Errorf("marshal failed: %w", consts.ErrServerError)
+		return nil, fmt.Errorf("marshal failed: %w", commonConsts.ErrServerError)
 	}
 
 	url := "http://auth-service/auth/sv1/app-token-refresh"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", consts.ErrServerError)
+		return nil, fmt.Errorf("request failed: %w", commonConsts.ErrServerError)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -48,7 +48,7 @@ func (r *appTokenUsecase) AppTokenReIssue(ctx context.Context, requestDTO reques
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("auth call failed: %w", consts.ErrServerError)
+		return nil, fmt.Errorf("auth call failed: %w", commonConsts.ErrServerError)
 	}
 
 	defer resp.Body.Close()

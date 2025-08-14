@@ -1,7 +1,7 @@
 package serverRepository
 
 import (
-	"common/entities"
+	"common/internal/domains/device/entities"
 	"common/models"
 	"context"
 	"errors"
@@ -15,6 +15,7 @@ type deviceRepository struct {
 }
 
 type DeviceRepository interface {
+	GetConnectInfo(worksCode string) (*entities.ConnectInfo, error)
 	GetWorksConfig(entity entities.GetWorksConfig, ctx context.Context) (*entities.WorksConfig, error)
 }
 
@@ -22,6 +23,32 @@ func NewDeviceRepository(db *gorm.DB) DeviceRepository {
 	return &deviceRepository{
 		db: db,
 	}
+}
+
+func (r *deviceRepository) GetConnectInfo(worksCode string) (*entities.ConnectInfo, error) {
+
+	// model
+	var connectInfo models.ConnectInfo
+
+	// domain으로 auth에 접근할 것인가?
+	result := r.db.Where("works_code = ?", worksCode).First(&connectInfo)
+
+	// 에러 처리
+	if result.Error != nil {
+		log.Println("[GetConnectInfo] - DB error")
+		return nil, result.Error
+	} else {
+
+		if result.RowsAffected > 0 {
+			return &entities.ConnectInfo{
+				ServerUrl: connectInfo.ServerUrl,
+			}, nil
+		} else {
+			log.Println("[GetConnectInfo] - DB select X")
+			return nil, nil
+		}
+	}
+
 }
 
 func (r *deviceRepository) GetWorksConfig(entity entities.GetWorksConfig, ctx context.Context) (*entities.WorksConfig, error) {
@@ -88,7 +115,7 @@ func toWorksWorksConfigEntity(appSkinConfig models.AppSkinConfig, worksInfo []mo
 		TimeZone:   timeZone,
 		Language:   language,
 		ConfigHash: configHash,
-		SkinHash:   appSkinConfig.SkinHash,
+		SkinHash:   appSkinConfig.Value,
 		Skin:       skinFileInfo,
 	}
 }

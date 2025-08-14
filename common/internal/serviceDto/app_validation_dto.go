@@ -1,8 +1,7 @@
-package requestDTO
+package serviceDto
 
 type AppValidationRequestDTO struct {
-	Body   AppValidationRequestBody
-	Header AppValidationRequestHeader
+	Body AppValidationRequestBody
 }
 
 type AppValidationRequestBody struct {
@@ -12,7 +11,4 @@ type AppValidationRequestBody struct {
 	Device      string `json:"device" validate:"required"`
 	SkinHash    string `json:"skinHash" validate:"required"`
 	ConfigHash  string `json:"configHash" validate:"required"`
-}
-
-type AppValidationRequestHeader struct {
 }

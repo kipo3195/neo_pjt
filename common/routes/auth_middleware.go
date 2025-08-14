@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"common/claims"
-	"common/consts"
-	"common/utils"
+	"common/internal/claims"
+	"common/pkg/consts"
+	"common/pkg/response"
 	"errors"
 	"fmt"
 	"log"
@@ -24,7 +24,7 @@ func AuthMiddleware(next http.Handler) gin.HandlerFunc {
 		// 토큰 추출
 		tokenStr, err := extractTokenFromHeader(c.Request.Header)
 		if err != nil {
-			utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_105, consts.E_105_MSG)
+			response.SendError(c, consts.BAD_REQUEST, consts.ERROR, consts.E_105, consts.E_105_MSG)
 			c.Abort() // 다음 핸들러 중단
 			return
 		}
@@ -35,10 +35,10 @@ func AuthMiddleware(next http.Handler) gin.HandlerFunc {
 			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
 				log.Println("토큰 만료")
-				utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_107, consts.E_107_MSG)
+				response.SendError(c, consts.BAD_REQUEST, consts.ERROR, consts.E_107, consts.E_107_MSG)
 			} else {
 				log.Println("토큰 검증 실패")
-				utils.SendErrorResponse(c, consts.BAD_REQUEST, consts.ERROR, consts.E_106, consts.E_106_MSG)
+				response.SendError(c, consts.BAD_REQUEST, consts.ERROR, consts.E_106, consts.E_106_MSG)
 				c.Abort() // 다음 핸들러 중단
 			}
 			return

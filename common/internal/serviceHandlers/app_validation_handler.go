@@ -5,44 +5,34 @@ import (
 	"common/internal/services"
 	"common/pkg/response"
 
+	serviceDto "common/internal/serviceDto"
 	commonConsts "common/pkg/consts"
-
-	domain "common/internal/domains/appValidation/dto/server/requestDTO"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
+
+	domain "common/internal/domains/appValidation/dto/server/requestDTO"
 )
 
-type AppInitHandler struct {
-	svc *services.AppInitService
+type AppValidationHandler struct {
+	svc *services.AppValidationService
 }
 
-func NewAppInitHander(svc *services.AppInitService) *AppInitHandler {
-	return &AppInitHandler{svc: svc}
-}
-
-type AppValidationRequestDTO struct {
-	Body AppValidationRequestBody
-}
-
-type AppValidationRequestBody struct {
-	AppToken   string `json:"appToken" validate:"required"`
-	Uuid       string `json:"uuid" validate:"required"`
-	Device     string `json:"device" validate:"required"`
-	SkinHash   string `json:"skinHash" validate:"required"`
-	ConfigHash string `json:"configHash" validate:"required"`
+func NewAppValidationHander(svc *services.AppValidationService) *AppValidationHandler {
+	return &AppValidationHandler{svc: svc}
 }
 
 // POST /server/v1/app-validation
-func (h *AppInitHandler) GetAppValidation(c *gin.Context) {
+func (h *AppValidationHandler) GetAppValidation(c *gin.Context) {
 
 	// 실제 비즈니스 로직 처리? svc를 호출 기존 handler와 동일하게 처리하도록 수정 필요.
-	body := AppValidationRequestBody{
-		Uuid:       c.Query("uuid"),
-		AppToken:   c.Query("appToken"),
-		Device:     c.Query("device"),
-		SkinHash:   c.Query("skinHash"),
-		ConfigHash: c.Query("configHash"),
+	body := serviceDto.AppValidationRequestBody{
+		Uuid:        c.Query("uuid"),
+		AppToken:    c.Query("appToken"),
+		AccessToken: c.Query("accesssToken"),
+		Device:      c.Query("device"),
+		SkinHash:    c.Query("skinHash"),
+		ConfigHash:  c.Query("configHash"),
 	}
 	// 필수 데이터 검증
 	validate := validator.New()
@@ -51,7 +41,7 @@ func (h *AppInitHandler) GetAppValidation(c *gin.Context) {
 		return
 	}
 
-	requestDTO := AppValidationRequestDTO{
+	requestDTO := serviceDto.AppValidationRequestDTO{
 		Body: body,
 	}
 
@@ -82,18 +72,18 @@ func (h *AppInitHandler) GetAppValidation(c *gin.Context) {
 	}
 
 	response.SendSuccess(c, "")
-
 }
 
 // 변환
-func toDomainDTO(serviceBody AppValidationRequestBody) domain.AppValidationRequestDTO {
+func toDomainDTO(serviceBody serviceDto.AppValidationRequestBody) domain.AppValidationRequestDTO {
 	return domain.AppValidationRequestDTO{
 		Body: domain.AppValidationRequestBody{
-			Uuid:       serviceBody.Uuid,
-			AppToken:   serviceBody.AppToken,
-			Device:     serviceBody.Device,
-			SkinHash:   serviceBody.SkinHash,
-			ConfigHash: serviceBody.ConfigHash,
+			Uuid:        serviceBody.Uuid,
+			AppToken:    serviceBody.AppToken,
+			AccessToken: serviceBody.AccessToken,
+			Device:      serviceBody.Device,
+			SkinHash:    serviceBody.SkinHash,
+			ConfigHash:  serviceBody.ConfigHash,
 		},
 	}
 }

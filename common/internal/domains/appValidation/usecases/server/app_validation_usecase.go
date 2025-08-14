@@ -2,12 +2,11 @@ package server
 
 import (
 	"bytes"
-	"common/internal/consts"
 	"common/internal/domains/appValidation/dto/external/authRequestDTO"
 	"common/internal/domains/appValidation/dto/server/requestDTO"
-
 	repositories "common/internal/domains/appValidation/repositories/server"
 	"common/internal/infra/storage"
+	commonConsts "common/pkg/consts"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,21 +33,35 @@ func NewAppValidationUsecase(repository repositories.AppValidationRepository, co
 func (r *appValidationUsecase) AppValidation(ctx context.Context, requestDTO requestDTO.AppValidationRequestDTO) (bool, error) {
 
 	//http statuscode를 리턴함.
-	_, err := getAppTokenValidationInAuth(ctx, toAppTokenValidationRequest(requestDTO.Body))
+
+	var tokenType, token string
+
+	if requestDTO.Body.AppToken != "" {
+		tokenType = "appToken"
+		token = requestDTO.Body.AppToken
+	} else if requestDTO.Body.AccessToken != "" {
+		tokenType = "accessToken"
+		token = requestDTO.Body.AccessToken
+	} else {
+		log.Println("token type error.")
+		return false, commonConsts.ErrServerError
+	}
+	_, err := getAppTokenValidationInAuth(ctx, toAppTokenValidationRequest(token, tokenType, requestDTO.Body.Uuid))
 
 	if err != nil {
 		// 에러 정의 후 response
-		return false, consts.ErrServerError
+		return false, commonConsts.ErrServerError
 	}
 
 	return true, nil
 }
 
-func toAppTokenValidationRequest(body requestDTO.AppValidationRequestBody) authRequestDTO.AppTokenValidationRequestDTO {
+func toAppTokenValidationRequest(token string, tokenType string, uuid string) authRequestDTO.AppTokenValidationRequestDTO {
 	return authRequestDTO.AppTokenValidationRequestDTO{
 		Body: authRequestDTO.AppTokenValidationRequestBody{
-			AppToken: body.AppToken,
-			Uuid:     body.Uuid,
+			Token:     token,
+			TokenType: tokenType,
+			Uuid:      uuid,
 		},
 	}
 }
@@ -77,6 +90,7 @@ func getAppTokenValidationInAuth(ctx context.Context, requestDTO authRequestDTO.
 	resp, err := client.Do(req)
 	if err != nil {
 		return http.StatusInternalServerError, err
+
 	}
 
 	defer resp.Body.Close()

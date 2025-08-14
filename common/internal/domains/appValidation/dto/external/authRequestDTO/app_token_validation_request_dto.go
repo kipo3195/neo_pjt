@@ -6,8 +6,9 @@ type AppTokenValidationRequestDTO struct {
 }
 
 type AppTokenValidationRequestBody struct {
-	AppToken string `json:"appToken"`
-	Uuid     string `json:"uuid"`
+	Token     string `json:"token"`
+	TokenType string `json:"tokenType"`
+	Uuid      string `json:"uuid"`
 }
 
 type AppTokenValidationRequestHeader struct {

@@ -5,9 +5,7 @@ import (
 	clientUsecase "common/internal/domains/skin/usecases/client"
 	commonConsts "common/pkg/consts"
 	"common/pkg/response"
-	"io"
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -49,18 +47,9 @@ func (h *SkinHandler) GetSkinImage(c *gin.Context) {
 
 	defer file.Close()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
-	log.Println("4")
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", "inline")
 
-	_, err = io.Copy(w, file)
-	if err != nil {
-		http.Error(w, "failed to send file", http.StatusInternalServerError)
-	}
-	log.Println("5")
-
-	// 여기 파일로 response하도록 수정
+	response.SendFileStream(c, file, "", "")
 }

@@ -20,7 +20,7 @@ type SkinHandlers struct {
 
 func InitModule(db *gorm.DB, configHashStorage storage.ConfigHashStorage, skinStorage storage.SkinStorage) *SkinHandlers {
 	serverRepository := serverRepository.NewSkinRepository(db)
-	serverUsecase := serverUsecase.NewSkinUsecase(serverRepository)
+	serverUsecase := serverUsecase.NewSkinUsecase(serverRepository, skinStorage)
 	serverHandler := serverHandler.NewSkinHandler(serverUsecase)
 
 	clientRepository := clientRepository.NewSkinRepository(db)

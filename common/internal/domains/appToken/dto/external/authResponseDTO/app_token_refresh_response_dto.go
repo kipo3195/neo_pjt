@@ -1,4 +1,4 @@
-package auth
+package authResponseDTO
 
 type AppTokenRefreshResponseDTO struct {
 	Header AppTokenRefreshResponseHeader

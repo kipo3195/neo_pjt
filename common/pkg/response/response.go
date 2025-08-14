@@ -4,6 +4,9 @@ import (
 	consts "common/pkg/consts"
 	"common/pkg/dto"
 	"common/pkg/errors"
+	"fmt"
+	"io"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,4 +35,18 @@ func SendSuccess[T any](c *gin.Context, t T) {
 		Data:   t,
 	}
 	c.AbortWithStatusJSON(200, res) // 200 고정
+}
+
+// 바이트 배열 전송 (메모리에 있는 파일을 전송)
+func SendFileStream(c *gin.Context, f *os.File, downloadName string, contentType string) {
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", downloadName))
+	c.Header("Content-Type", contentType)
+	c.Status(200)
+
+	_, _ = io.Copy(c.Writer, f)
 }

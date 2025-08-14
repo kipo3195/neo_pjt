@@ -6,12 +6,12 @@ import (
 	skinUsecase "common/internal/domains/skin/usecases/client"
 )
 
-type AppInitService struct {
+type AppValidationService struct {
 	Validator     appValidationUsecase.AppValidationUsecase
 	Skin          skinUsecase.SkinUsecase
 	Configuration configurationUsecase.ConfigurationUsecase
 }
 
-func NewAppInitService(v appValidationUsecase.AppValidationUsecase, s skinUsecase.SkinUsecase, c configurationUsecase.ConfigurationUsecase) *AppInitService {
-	return &AppInitService{v, s, c}
+func NewAppValidationService(v appValidationUsecase.AppValidationUsecase, s skinUsecase.SkinUsecase, c configurationUsecase.ConfigurationUsecase) *AppValidationService {
+	return &AppValidationService{v, s, c}
 }

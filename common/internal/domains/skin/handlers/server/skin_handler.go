@@ -1,11 +1,11 @@
 package server
 
 import (
+	requestDTO "common/internal/domains/skin/dto/server/requestDTO"
 	serverUsecase "common/internal/domains/skin/usecases/server"
-	"common/pkg/consts"
-	"encoding/json"
+	commonConsts "common/pkg/consts"
+	"common/pkg/response"
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,28 +25,17 @@ func (h *SkinHandler) PutSkinImg(c *gin.Context) {
 	// context 생성
 	ctx := c.Request.Context()
 
-	// server 토큰 검증은 미들웨어에서
-
-	var res = adminDto.CreateSkinImgResponse{}
-
 	log.Println("111")
 
 	// 파일 데이터 추출
-	file, fileInfo, err := r.FormFile("File")
-	skinType := r.Header.Get("Skin-Type")
+	file, fileInfo, err := c.Request.FormFile("File")
+	skinType := c.GetHeader("Skin-Type")
 
 	if err != nil || file == nil || fileInfo.Size == 0 || skinType == "" {
-		res.Result = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-		return
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 	}
 
-	var req = adminDto.CreateSkinImgRequest{
+	var req = requestDTO.CreateSkinImgRequest{
 		File:     file,
 		FileInfo: fileInfo,
 		SkinType: skinType,
@@ -58,16 +47,10 @@ func (h *SkinHandler) PutSkinImg(c *gin.Context) {
 
 	if err == nil {
 		// http status code 200
-		res.Result = consts.SUCCESS
-		res.Data = data
+		response.SendSuccess(c, data)
 	} else {
 		// TODO 모든 에러 세분화 할 것.
-		w.WriteHeader(http.StatusInternalServerError)
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_500,
-			Message: consts.E_500_MSG,
-		}
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 	}
 
 }

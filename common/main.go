@@ -3,13 +3,13 @@ package main
 import (
 	"common/internal/config"
 	"common/internal/domains/appToken"
-	appValidation "common/internal/domains/appValidation"
+	"common/internal/domains/appValidation"
 	"common/internal/domains/configuration"
 	"common/internal/domains/skin"
 	"common/internal/infra/loader"
 	"common/internal/infra/storage"
-	"common/internal/modules"
 	"common/internal/router"
+	"common/internal/serviceModules"
 	"context"
 	"log"
 	"net/http"
@@ -31,7 +31,7 @@ func InitServer() *http.Server {
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
 
-	deps := modules.Dependencies{
+	deps := serviceModules.Dependencies{
 		DB:                db,
 		ConfigHashStorage: configHashStorage,
 		SkinStorage:       skinStorage,
@@ -50,7 +50,7 @@ func InitServer() *http.Server {
 		log.Fatal("Failed to load initial data:", err)
 	}
 
-	// ---- ROUTER -----
+	// ---- ROUTER INIT-----
 
 	r, baseGroup := router.SetDefaultRoutes("common")
 
@@ -67,8 +67,8 @@ func InitServer() *http.Server {
 	router.SetConfigurationRoutes(baseGroup, configurationHandler)
 
 	// ---- SERVICE INIT ----
-	appInitHandler := modules.InitAppInitModule(deps)
-	r.POST("/server/v1/app-validation", appInitHandler.GetAppValidation)
+	appInitHandler := serviceModules.InitAppValidationModule(deps)
+	r.POST("/client/v1/app-validation", appInitHandler.GetAppValidation)
 
 	return &http.Server{
 		Addr:    ":8086",
