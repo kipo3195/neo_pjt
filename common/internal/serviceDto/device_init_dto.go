@@ -11,7 +11,8 @@ type DeviceInitRequestBody struct {
 }
 
 type DeviceInitResultResponse struct {
+	WorksInfo      interface{} `json:"worksInfo"`
 	IssuedAppToken interface{} `json:"issuedAppToken"`
-	ConnectInfo    interface{} `json:"connectInfo"`
+	SkinInfo       interface{} `json:"skinInfo"`
 	WorksConfig    interface{} `json:"worksConfig"`
 }

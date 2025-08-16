@@ -1,7 +1,7 @@
 package server
 
 import (
-	"common/internal/domains/device/entities"
+	"common/internal/domains/skin/entities"
 	"common/internal/domains/skin/models"
 	"context"
 	"errors"

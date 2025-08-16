@@ -2,8 +2,8 @@ package server
 
 import (
 	"common/internal/consts"
-	"common/internal/domains/device/entities"
 	requestDTO "common/internal/domains/skin/dto/server/requestDTO"
+	"common/internal/domains/skin/entities"
 	repositories "common/internal/domains/skin/repositories/server"
 	storage "common/internal/infra/storage"
 	"context"
@@ -28,6 +28,7 @@ type skinUsecase struct {
 
 type SkinUsecase interface {
 	CreateSkinImg(ctx context.Context, body requestDTO.CreateSkinImgRequest) (interface{}, error)
+	GetSkinInfo() (*entities.SkinInfo, error)
 }
 
 func NewSkinUsecase(repository repositories.SkinRepository, skinStorage storage.SkinStorage) SkinUsecase {
@@ -35,6 +36,36 @@ func NewSkinUsecase(repository repositories.SkinRepository, skinStorage storage.
 		repository:  repository,
 		skinStorage: skinStorage,
 	}
+}
+
+func (r *skinUsecase) GetSkinInfo() (*entities.SkinInfo, error) {
+
+	skinHash, err := r.skinStorage.GetSkinHash()
+	if err != nil {
+		log.Println("[GetSkinInfo] skinHash invalid")
+		return nil, err
+	}
+
+	skinFileInfos, err := r.skinStorage.GetAllSkinFiles()
+	if err != nil {
+		log.Println("[GetSkinInfo] skinFileInfos invalid")
+		return nil, err
+	}
+	return &entities.SkinInfo{
+		SkinHash:      skinHash,
+		SkinFileInfos: toSkinFileInfos(skinFileInfos),
+	}, nil
+}
+
+func toSkinFileInfos(skinFiles []map[string]string) []entities.SkinFileInfoEntity {
+	var skinFileInfos []entities.SkinFileInfoEntity
+	for _, file := range skinFiles {
+		skinFileInfos = append(skinFileInfos, entities.SkinFileInfoEntity{
+			SkinType: file["skinType"],
+			FileHash: file["hash"],
+		})
+	}
+	return skinFileInfos
 }
 
 func (r *skinUsecase) CreateSkinImg(ctx context.Context, dto requestDTO.CreateSkinImgRequest) (interface{}, error) {

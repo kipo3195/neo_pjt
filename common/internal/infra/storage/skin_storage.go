@@ -11,6 +11,7 @@ type skinStorage struct {
 	mu           sync.RWMutex
 	skinFilePath map[string]string // 서버에서 접근할때 사용
 	hashInfo     map[string]string // 해시 정보 저장용
+	skinFiles    []map[string]string
 }
 
 type SkinStorage interface {
@@ -18,13 +19,22 @@ type SkinStorage interface {
 	SaveSkinFilePath(skinType string, filePath string) error
 	GetSkinHash() (string, error)
 	SaveSkinHash(kind string, hash string) error
+	GetAllSkinFiles() ([]map[string]string, error)
 }
 
 func NewSkinStorage() SkinStorage {
 	return &skinStorage{
 		skinFilePath: make(map[string]string),
-		hashInfo:     make(map[string]string), // 해시 정보 저장용
+		hashInfo:     make(map[string]string),
+		skinFiles:    []map[string]string{}, // 빈 slice 초기화
 	}
+}
+
+func (r *skinStorage) GetAllSkinFiles() ([]map[string]string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.skinFiles, nil
 }
 
 func (r *skinStorage) GetSkinFilePath(skinType string) (string, error) {

@@ -1,17 +1,19 @@
 package services
 
 import (
-	configurationUsecase "common/internal/domains/configuration/usecases/client"
-	deviceUsecase "common/internal/domains/device/usecases/server"
-	skinUsecase "common/internal/domains/skin/usecases/client"
+	appToken "common/internal/domains/appToken/usecases/server"
+	configuration "common/internal/domains/configuration/usecases/server"
+	device "common/internal/domains/device/usecases/server"
+	skin "common/internal/domains/skin/usecases/server"
 )
 
 type DeviceInitService struct {
-	Device        deviceUsecase.DeviceUsecase
-	Skin          skinUsecase.SkinUsecase
-	Configuration configurationUsecase.ConfigurationUsecase
+	Device        device.DeviceUsecase
+	Skin          skin.SkinUsecase
+	Configuration configuration.ConfigurationUsecase
+	AppToken      appToken.AppTokenUsecase
 }
 
-func NewDeviceInitService(v deviceUsecase.DeviceUsecase, s skinUsecase.SkinUsecase, c configurationUsecase.ConfigurationUsecase) *DeviceInitService {
-	return &DeviceInitService{v, s, c}
+func NewDeviceInitService(device device.DeviceUsecase, skin skin.SkinUsecase, configuration configuration.ConfigurationUsecase, appToken appToken.AppTokenUsecase) *DeviceInitService {
+	return &DeviceInitService{device, skin, configuration, appToken}
 }
