@@ -4,7 +4,6 @@ import (
 	appToken "common/internal/domains/appToken"
 	appValidation "common/internal/domains/appValidation"
 	"common/internal/domains/configuration"
-	"common/internal/domains/device"
 	skin "common/internal/domains/skin"
 
 	"github.com/gin-gonic/gin"
@@ -35,11 +34,6 @@ func SetSkinRoutes(parent *gin.RouterGroup, handlers *skin.SkinHandlers) {
 
 	server := parent.Group("/client/v1/skin-img")
 	server.POST("/", handlers.ServerHandler.PutSkinImg)
-}
-
-func SetDeviceRoute(parent *gin.RouterGroup, handlers *device.DeviceHandlers) {
-	server := parent.Group("/server/v1/device")
-	server.POST("/init", handlers.ServerHandler.DeviceInit)
 }
 
 // 이 API도 service 처리.

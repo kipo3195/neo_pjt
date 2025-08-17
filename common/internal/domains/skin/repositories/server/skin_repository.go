@@ -19,6 +19,11 @@ type SkinRepository interface {
 	PutSkinFileInfo(ctx context.Context, entity *entities.SkinFileInfoEntity) (bool, error)
 }
 
+func Migrate(db *gorm.DB) {
+	db.AutoMigrate(&models.AppSkinConfig{})
+	db.AutoMigrate(&models.AppSkinFileInfo{})
+}
+
 func NewSkinRepository(db *gorm.DB) SkinRepository {
 	return &skinRepository{
 		db: db,

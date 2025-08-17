@@ -18,6 +18,7 @@ type Dependencies struct {
 	DB                *gorm.DB
 	ConfigHashStorage storage.ConfigHashStorage
 	SkinStorage       storage.SkinStorage
+	AutoMigrate       bool
 }
 
 func InitAppValidationModule(dep Dependencies) *handlers.AppValidationHandler {

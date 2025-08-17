@@ -1,7 +1,6 @@
 package config
 
 import (
-	"common/models"
 	"log"
 	"os"
 
@@ -11,15 +10,17 @@ import (
 )
 
 type ServerConfig struct {
-	dbConfig *DBConfig
+	dbConfig    *DBConfig
+	AutoMigrate bool
 }
 
 type DBConfig struct {
-	Host     string
-	Port     string
-	Id       string
-	Pw       string
-	Database string
+	Host        string
+	Port        string
+	Id          string
+	Pw          string
+	Database    string
+	AutoMigrate bool
 }
 
 func isLocal() bool {
@@ -30,17 +31,21 @@ func isLocal() bool {
 }
 
 func NewServerConfig() *ServerConfig {
+
 	if isLocal() {
 		godotenv.Load()
 	}
 
 	// DB 설정
 	dbConfig := initDBConfig()
+	autoMigrate := initAutoMigrate()
 
 	return &ServerConfig{
-		dbConfig: dbConfig,
+		dbConfig:    dbConfig,
+		AutoMigrate: autoMigrate,
 	}
 }
+
 func initDBConfig() *DBConfig {
 	host := os.Getenv("HOST")
 	id := os.Getenv("ID")
@@ -50,6 +55,15 @@ func initDBConfig() *DBConfig {
 
 	return &DBConfig{
 		Host: host, Id: id, Pw: pw, Port: port, Database: database}
+}
+
+func initAutoMigrate() bool {
+	flag := os.Getenv("AUTO_MIGRATE")
+	if flag != "" && flag == "true" {
+		return true
+	} else {
+		return false
+	}
 }
 
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
@@ -62,11 +76,6 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	if err != nil {
 		log.Fatal("Failed to connect to database!")
 	}
-
-	db.AutoMigrate(&models.ConnectInfo{})
-	db.AutoMigrate(&models.AppSkinConfig{})
-	db.AutoMigrate(&models.WorksInfo{})
-	db.AutoMigrate(&models.AppSkinFileInfo{})
 
 	log.Println("Common Database Connected !")
 	return db

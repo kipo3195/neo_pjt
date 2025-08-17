@@ -1,7 +1,7 @@
 package client
 
 import (
-	"common/models"
+	"common/internal/domains/configuration/models"
 	"errors"
 
 	"gorm.io/gorm"
@@ -13,6 +13,10 @@ type configurationRepository struct {
 
 type ConfigurationRepository interface {
 	GetConfigHash() (string, error)
+}
+
+func Migrate(db *gorm.DB) {
+	db.AutoMigrate(&models.WorksInfo{})
 }
 
 func NewConfigurationRepository(db *gorm.DB) ConfigurationRepository {

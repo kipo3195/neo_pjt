@@ -35,6 +35,7 @@ func InitServer() *http.Server {
 		DB:                db,
 		ConfigHashStorage: configHashStorage,
 		SkinStorage:       skinStorage,
+		AutoMigrate:       sfg.AutoMigrate,
 	}
 
 	// ---- DATA LOADER -----
@@ -69,6 +70,9 @@ func InitServer() *http.Server {
 	// ---- SERVICE INIT ----
 	appInitHandler := serviceModules.InitAppValidationModule(deps)
 	r.POST("/client/v1/app-validation", appInitHandler.GetAppValidation)
+
+	deviceInitHandler := serviceModules.InitDeviceInitModule((deps))
+	r.POST("/server/v1/device-init", deviceInitHandler.DeviceInit)
 
 	return &http.Server{
 		Addr:    ":8086",
