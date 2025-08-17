@@ -1,4 +1,4 @@
-package routes
+package middleware
 
 import (
 	"common/internal/claims"
@@ -18,7 +18,7 @@ import (
 
 var jwtSecretKey = []byte("neo-test-secret-key")
 
-func AuthMiddleware(next http.Handler) gin.HandlerFunc {
+func AuthMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 

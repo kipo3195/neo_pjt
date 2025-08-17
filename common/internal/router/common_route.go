@@ -1,10 +1,11 @@
 package router
 
 import (
-	appToken "common/internal/domains/appToken"
-	appValidation "common/internal/domains/appValidation"
+	"common/internal/domains/appToken"
+	"common/internal/domains/appValidation"
 	"common/internal/domains/configuration"
-	skin "common/internal/domains/skin"
+	"common/internal/domains/skin"
+	"common/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +18,7 @@ func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
 func SetAppValidationRoutes(parent *gin.RouterGroup, handlers *appValidation.AppValidationHandlers) {
 
 	server := parent.Group("/server/v1/app-validation")
+
 	server.GET("/validate", handlers.ServerHandler.AppValidation)
 
 }
@@ -24,12 +26,14 @@ func SetAppValidationRoutes(parent *gin.RouterGroup, handlers *appValidation.App
 func SetAppTokenRoutes(parent *gin.RouterGroup, handlers *appToken.AppTokenHandlers) {
 
 	client := parent.Group("/client/v1/app-token")
+	client.Use(middleware.AuthMiddleware()) // JWT 적용
 	client.POST("/refresh", handlers.ClientHandler.AppTokenRefresh)
 
 }
 
 func SetSkinRoutes(parent *gin.RouterGroup, handlers *skin.SkinHandlers) {
 	client := parent.Group("/client/v1/skin-img")
+	client.Use(middleware.AuthMiddleware()) // JWT 적용
 	client.GET("/", handlers.ClientHandler.GetSkinImage)
 
 	server := parent.Group("/client/v1/skin-img")

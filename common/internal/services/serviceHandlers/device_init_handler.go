@@ -1,10 +1,10 @@
-package handlers
+package serviceHandlers
 
 import (
 	appTokenDomain "common/internal/domains/appToken/dto/server/requestDTO"
-	deviceDomain "common/internal/domains/device/dto/server/requestDTO"
-	serviceDto "common/internal/serviceDto"
-	"common/internal/services"
+	worksInfoDomain "common/internal/domains/worksInfo/dto/server/requestDTO"
+	"common/internal/services/serviceDto"
+	"common/internal/services/servicesDomains"
 	"common/pkg/response"
 	"encoding/json"
 
@@ -15,10 +15,10 @@ import (
 )
 
 type DeviceInitHandler struct {
-	svc *services.DeviceInitService
+	svc *servicesDomains.DeviceInitService
 }
 
-func NewDeviceInitHandler(svc *services.DeviceInitService) *DeviceInitHandler {
+func NewDeviceInitHandler(svc *servicesDomains.DeviceInitService) *DeviceInitHandler {
 	return &DeviceInitHandler{svc: svc}
 }
 
@@ -76,8 +76,8 @@ func (h *DeviceInitHandler) DeviceInit(c *gin.Context) {
 	response.SendSuccess(c, result)
 }
 
-func toDeviceDomainDTO(body serviceDto.DeviceInitRequestBody) *deviceDomain.DeviceInitRequest {
-	return &deviceDomain.DeviceInitRequest{
+func toDeviceDomainDTO(body serviceDto.DeviceInitRequestBody) *worksInfoDomain.ConnectInfoRequest {
+	return &worksInfoDomain.ConnectInfoRequest{
 		WorksCode: body.WorksCode,
 		Uuid:      body.Uuid,
 		Device:    body.Device,

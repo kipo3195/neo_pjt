@@ -1,23 +1,23 @@
 package serverRepository
 
 import (
-	"common/internal/domains/device/entities"
-	"common/internal/domains/device/models"
+	"common/internal/domains/worksInfo/entities"
+	"common/internal/domains/worksInfo/models"
 	"log"
 
 	"gorm.io/gorm"
 )
 
-type deviceRepository struct {
+type worksInfoRepository struct {
 	db *gorm.DB
 }
 
-type DeviceRepository interface {
+type WorksInfoRepository interface {
 	GetConnectInfo(worksCode string) (*entities.ConnectInfo, error)
 }
 
-func NewDeviceRepository(db *gorm.DB) DeviceRepository {
-	return &deviceRepository{
+func NewWorksInfoRepository(db *gorm.DB) WorksInfoRepository {
+	return &worksInfoRepository{
 		db: db,
 	}
 }
@@ -26,7 +26,7 @@ func Migrate(db *gorm.DB) {
 	db.AutoMigrate(&models.ConnectInfo{})
 }
 
-func (r *deviceRepository) GetConnectInfo(worksCode string) (*entities.ConnectInfo, error) {
+func (r *worksInfoRepository) GetConnectInfo(worksCode string) (*entities.ConnectInfo, error) {
 
 	// model
 	var connectInfo models.ConnectInfo

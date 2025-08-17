@@ -3,13 +3,15 @@ package main
 import (
 	"common/internal/config"
 	"common/internal/domains/appToken"
-	"common/internal/domains/appValidation"
 	"common/internal/domains/configuration"
 	"common/internal/domains/skin"
 	"common/internal/infra/loader"
+	"common/internal/infra/migration"
 	"common/internal/infra/storage"
+	"common/internal/middleware"
 	"common/internal/router"
-	"common/internal/serviceModules"
+	"common/internal/services/dependencies"
+	"common/internal/services/serviceModules"
 	"context"
 	"log"
 	"net/http"
@@ -27,19 +29,23 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
-	// ---- STORAGE INIT -----
+	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
+
+	// ---- Storage Init -----
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
 
-	deps := serviceModules.Dependencies{
+	deps := dependencies.Dependency{
 		DB:                db,
 		ConfigHashStorage: configHashStorage,
 		SkinStorage:       skinStorage,
 		AutoMigrate:       sfg.AutoMigrate,
 	}
 
-	// ---- DATA LOADER -----
-
+	// ---- Data Loader -----
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -51,12 +57,9 @@ func InitServer() *http.Server {
 		log.Fatal("Failed to load initial data:", err)
 	}
 
-	// ---- ROUTER INIT-----
+	// ---- Router Init-----
 
 	r, baseGroup := router.SetDefaultRoutes("common")
-
-	appValidation.InitModule(db, configHashStorage)
-	//router.SetAppValidationRoutes(baseGroup, appValidationHandler)
 
 	skinHandler := skin.InitModule(db, configHashStorage, skinStorage)
 	router.SetSkinRoutes(baseGroup, skinHandler)
@@ -67,9 +70,12 @@ func InitServer() *http.Server {
 	configurationHandler := configuration.InitModule(db, configHashStorage)
 	router.SetConfigurationRoutes(baseGroup, configurationHandler)
 
-	// ---- SERVICE INIT ----
+	// ---- Service Init ----
 	appInitHandler := serviceModules.InitAppValidationModule(deps)
-	r.POST("/client/v1/app-validation", appInitHandler.GetAppValidation)
+	r.POST("/client/v1/app-validation",
+		middleware.AuthMiddleware(),     // <- 여기서 JWT 미들웨어 적용
+		appInitHandler.GetAppValidation, // 실제 서비스 핸들러
+	)
 
 	deviceInitHandler := serviceModules.InitDeviceInitModule((deps))
 	r.POST("/server/v1/device-init", deviceInitHandler.DeviceInit)

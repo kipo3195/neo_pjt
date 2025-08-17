@@ -1,11 +1,11 @@
-package handlers
+package serviceHandlers
 
 import (
 	"common/internal/consts"
-	"common/internal/services"
+	"common/internal/services/servicesDomains"
 	"common/pkg/response"
 
-	serviceDto "common/internal/serviceDto"
+	"common/internal/services/serviceDto"
 	commonConsts "common/pkg/consts"
 
 	"github.com/gin-gonic/gin"
@@ -15,10 +15,10 @@ import (
 )
 
 type AppValidationHandler struct {
-	svc *services.AppValidationService
+	svc *servicesDomains.AppValidationService
 }
 
-func NewAppValidationHander(svc *services.AppValidationService) *AppValidationHandler {
+func NewAppValidationHander(svc *servicesDomains.AppValidationService) *AppValidationHandler {
 	return &AppValidationHandler{svc: svc}
 }
 

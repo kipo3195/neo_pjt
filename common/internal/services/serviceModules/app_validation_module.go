@@ -7,29 +7,20 @@ import (
 	configurationUsecase "common/internal/domains/configuration/usecases/client"
 	skinRepositories "common/internal/domains/skin/repositories/client"
 	skinUsecase "common/internal/domains/skin/usecases/client"
-	"common/internal/infra/storage"
-	handlers "common/internal/serviceHandlers"
-	"common/internal/services"
-
-	"gorm.io/gorm"
+	"common/internal/services/dependencies"
+	"common/internal/services/serviceHandlers"
+	"common/internal/services/servicesDomains"
 )
 
-type Dependencies struct {
-	DB                *gorm.DB
-	ConfigHashStorage storage.ConfigHashStorage
-	SkinStorage       storage.SkinStorage
-	AutoMigrate       bool
-}
-
-func InitAppValidationModule(dep Dependencies) *handlers.AppValidationHandler {
+func InitAppValidationModule(dep dependencies.Dependency) *serviceHandlers.AppValidationHandler {
 
 	appValidationUsecase := appValidationUsecase.NewAppValidationUsecase(appValidationRepository.NewAppValidationRepository(dep.DB), dep.ConfigHashStorage)
 	skinUsecase := skinUsecase.NewSkinUsecase(skinRepositories.NewSkinRepository(dep.DB), dep.SkinStorage)
 	configurationUsecase := configurationUsecase.NewConfigurationUsecase(configurationRepository.NewConfigurationRepository(dep.DB), dep.ConfigHashStorage)
 
 	// 서비스 초기화
-	svc := services.NewAppValidationService(appValidationUsecase, skinUsecase, configurationUsecase)
+	svc := servicesDomains.NewAppValidationService(appValidationUsecase, skinUsecase, configurationUsecase)
 
 	// 핸들러 초기화
-	return handlers.NewAppValidationHander(svc)
+	return serviceHandlers.NewAppValidationHander(svc)
 }

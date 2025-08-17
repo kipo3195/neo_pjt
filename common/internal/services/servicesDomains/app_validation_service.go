@@ -1,4 +1,4 @@
-package services
+package servicesDomains
 
 import (
 	appValidationUsecase "common/internal/domains/appValidation/usecases/server"
