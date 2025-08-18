@@ -1,4 +1,4 @@
-package errors
+package dto
 
 type ErrorDataDTO struct {
 	Code    string `json:"code"`    // Error code

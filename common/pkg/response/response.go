@@ -3,7 +3,6 @@ package response
 import (
 	consts "common/pkg/consts"
 	"common/pkg/dto"
-	"common/pkg/errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,9 +18,9 @@ import (
 
 func SendError(c *gin.Context, status int, result string, code string, msg string) {
 
-	res := dto.ResponseDTO[errors.ErrorDataDTO]{ // 제네릭 타입 명시 - ResponseDTO의 DATA 'T'에 들어갈 타입을 말함.
+	res := dto.ResponseDTO[dto.ErrorDataDTO]{ // 제네릭 타입 명시 - ResponseDTO의 DATA 'T'에 들어갈 타입을 말함.
 		Result: result, // error, fail
-		Data: errors.ErrorDataDTO{
+		Data: dto.ErrorDataDTO{
 			Code:    code,
 			Message: msg,
 		},
