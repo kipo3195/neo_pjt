@@ -36,7 +36,7 @@ func SetSkinRoutes(parent *gin.RouterGroup, handlers *skin.SkinHandlers) {
 	client.Use(middleware.AuthMiddleware()) // JWT 적용
 	client.GET("/", handlers.ClientHandler.GetSkinImage)
 
-	server := parent.Group("/client/v1/skin-img")
+	server := parent.Group("/server/v1/skin-img")
 	server.POST("/", handlers.ServerHandler.PutSkinImg)
 }
 

@@ -16,7 +16,7 @@ type tokenRepository struct {
 
 type TokenRepository interface {
 	PutIssuedAppToken(token *sharedEntities.AppTokenEntity) (bool, error)
-	GetValidation(entity entities.AppTokenValidationEntity) (bool, error)
+	GetValidationAppToken(entity entities.AppTokenValidationEntity) (bool, error)
 }
 
 func NewTokenRepository(db *gorm.DB) TokenRepository {
@@ -39,11 +39,11 @@ func (r *tokenRepository) PutIssuedAppToken(token *sharedEntities.AppTokenEntity
 	return true, nil
 }
 
-func (r *tokenRepository) GetValidation(entity entities.AppTokenValidationEntity) (bool, error) {
+func (r *tokenRepository) GetValidationAppToken(entity entities.AppTokenValidationEntity) (bool, error) {
 
 	var validation sharedModels.IssuedAppToken
 
-	log.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
+	log.Println("클라이언트가 전달한 토큰 : ", entity.Token)
 
 	result := r.db.Where("uuid = ?", entity.Uuid).Order("seq DESC").First(&validation)
 
@@ -55,7 +55,7 @@ func (r *tokenRepository) GetValidation(entity entities.AppTokenValidationEntity
 		return false, result.Error
 	} else {
 		serverToken := validation.AppToken
-		if serverToken == entity.AppToken {
+		if serverToken == entity.Token {
 			// 토큰 일치
 			return true, nil
 		} else {

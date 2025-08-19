@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"common/internal/consts"
 	"common/internal/domains/appToken/dto/client/requestDTO"
-	authResponseDTO "common/internal/domains/appToken/dto/external/authResponseDTO"
+	"common/internal/domains/appToken/dto/external/authResponseDTO"
 	repositories "common/internal/domains/appToken/repositories/client"
 	"common/pkg/dto"
 	"context"
@@ -19,7 +19,7 @@ type appTokenUsecase struct {
 }
 
 type AppTokenUsecase interface {
-	AppTokenReIssue(ctx context.Context, requestDTO requestDTO.AppTokenRefreshRequestDTO) (*authResponseDTO.AppTokenRefreshResponseBody, error)
+	AppTokenReIssueInAuth(ctx context.Context, requestDTO requestDTO.AppTokenRefreshRequestDTO) (*authResponseDTO.AppTokenRefreshResponseBody, error)
 }
 
 func NewAppTokenUsecase(repository repositories.AppTokenRepository) AppTokenUsecase {
@@ -28,7 +28,7 @@ func NewAppTokenUsecase(repository repositories.AppTokenRepository) AppTokenUsec
 	}
 }
 
-func (r *appTokenUsecase) AppTokenReIssue(ctx context.Context, requestDTO requestDTO.AppTokenRefreshRequestDTO) (*authResponseDTO.AppTokenRefreshResponseBody, error) {
+func (r *appTokenUsecase) AppTokenReIssueInAuth(ctx context.Context, requestDTO requestDTO.AppTokenRefreshRequestDTO) (*authResponseDTO.AppTokenRefreshResponseBody, error) {
 
 	// marshal
 	requestBody, err := json.Marshal(requestDTO.Body)
@@ -36,7 +36,7 @@ func (r *appTokenUsecase) AppTokenReIssue(ctx context.Context, requestDTO reques
 		return nil, fmt.Errorf("marshal failed: %w", consts.ErrServerError)
 	}
 
-	url := "http://auth-service/auth/sv1/app-token-refresh"
+	url := "http://auth-service/auth/server/v1/app-token-refresh"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", consts.ErrServerError)

@@ -6,7 +6,7 @@ type GenerateAppTokenRequestDTO struct {
 }
 
 type GenerateAppTokenRequestBody struct {
-	Uuid string
+	Uuid string `json:"uuid"`
 }
 
 type GenerateAppTokenRequestHeader struct {

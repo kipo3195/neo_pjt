@@ -1,6 +1,6 @@
 package entities
 
 type AppTokenValidationEntity struct {
-	Uuid     string `json:"uuid"`
-	AppToken string `json:"appToken"`
+	Uuid  string `json:"uuid"`
+	Token string `json:"token"`
 }

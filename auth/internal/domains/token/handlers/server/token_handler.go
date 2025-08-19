@@ -7,10 +7,8 @@ import (
 	commonConsts "auth/pkg/consts"
 	response "auth/pkg/response"
 
-	"context"
 	"encoding/json"
 	"log"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -70,8 +68,6 @@ func (h *TokenHandler) AppTokenValidation(c *gin.Context) {
 	var body requestDTO.AppTokenValidationRequestBody
 
 	ctx := c.Request.Context()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
@@ -82,10 +78,10 @@ func (h *TokenHandler) AppTokenValidation(c *gin.Context) {
 		Body: body,
 	}
 
-	resDto, err := h.usecase.AppTokenValidation(requestDTO, ctx)
+	result, err := h.usecase.AppTokenValidation(requestDTO, ctx)
 
 	// 이거 나중에 모듈화 꼭 할 것
-	if err != nil || !resDto { // 에러
+	if err != nil || !result { // 에러
 		log.Println(err)
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
 	} else {

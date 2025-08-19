@@ -50,8 +50,8 @@ func (a *AuthUtil) GenerateDeviceTokenJWT(appTokenExp int, uuid string) (string,
 	secret := []byte("neo-test-secret-key")
 
 	// 서명 및 문자열 반환
-	accessToken, err := accToken.SignedString(secret)
+	token, err := accToken.SignedString(secret)
 
-	log.Println("jwt 토큰 생성  2 :", accessToken)
-	return accessToken, err
+	log.Println("jwt 토큰 생성  2 :", token)
+	return token, err
 }

@@ -40,8 +40,19 @@ func NewTokenUsecase(repo repositories.TokenRepository, jwtCfg *config.JWTConfig
 
 func (r *tokenUsecase) AppTokenValidation(requestDTO requestDTO.AppTokenValidationRequestDTO, ctx context.Context) (bool, error) {
 
-	// authUsecase를 주입받아 사용, uuid에 해당하는 토큰이 일치하는지 점검
-	flag, err := r.repo.GetValidation(toAppTokenValidationEntity(requestDTO.Body.Uuid, requestDTO.Body.AppToken))
+	// 결과 데이터를 미리 정의함.
+	var flag bool
+	var err error
+
+	if requestDTO.Body.TokenType == "appToken" {
+		flag, err = r.repo.GetValidationAppToken(toAppTokenValidationEntity(requestDTO.Body.Uuid, requestDTO.Body.Token))
+	} else if requestDTO.Body.TokenType == "accessToken" {
+		// accessToken은 DB에 저장하여 관리하지 않으므로 만료 여부만 체크.
+		// 아래 appTokenValidationCheck 로직...
+	} else {
+		err = fmt.Errorf("token type error")
+	}
+
 	if err != nil {
 		// DB error, 조회 X
 		return false, err
@@ -53,7 +64,7 @@ func (r *tokenUsecase) AppTokenValidation(requestDTO requestDTO.AppTokenValidati
 	}
 
 	// 토큰 만료 점검
-	err = appTokenValidationCheck(requestDTO.Body.AppToken)
+	err = appTokenValidationCheck(requestDTO.Body.Token)
 
 	if err != nil {
 		// 만료 에러 확인
@@ -74,10 +85,10 @@ func (r *tokenUsecase) AppTokenValidation(requestDTO requestDTO.AppTokenValidati
 	return true, nil
 }
 
-func toAppTokenValidationEntity(uuid string, appToken string) entities.AppTokenValidationEntity {
+func toAppTokenValidationEntity(uuid string, token string) entities.AppTokenValidationEntity {
 	return entities.AppTokenValidationEntity{
-		Uuid:     uuid,
-		AppToken: appToken,
+		Uuid:  uuid,
+		Token: token,
 	}
 }
 

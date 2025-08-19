@@ -48,7 +48,7 @@ func (h *DeviceInitHandler) DeviceInit(c *gin.Context) {
 
 	var serverUrl string // 호출 도메인을 주입받아서 사용할 수 있도록 하기
 	// 수정완료
-	issuedAppToken, err := h.svc.AppToken.GenerateAppToken(toAppTokenDomainDTO(body), serverUrl)
+	issuedAppToken, err := h.svc.AppToken.GenerateAppTokenInAuth(toAppTokenDomainDTO(body), serverUrl)
 	if err != nil {
 
 	}
@@ -84,8 +84,8 @@ func toDeviceDomainDTO(body serviceDto.DeviceInitRequestBody) *worksInfoDomain.C
 	}
 }
 
-func toAppTokenDomainDTO(body serviceDto.DeviceInitRequestBody) *appTokenDomain.GenerateAppTokenRequest {
-	return &appTokenDomain.GenerateAppTokenRequest{
+func toAppTokenDomainDTO(body serviceDto.DeviceInitRequestBody) *appTokenDomain.GenerateAppTokenRequestDTO {
+	return &appTokenDomain.GenerateAppTokenRequestDTO{
 		Body: appTokenDomain.GenerateAppTokenBody{
 			Uuid: body.Uuid,
 		},

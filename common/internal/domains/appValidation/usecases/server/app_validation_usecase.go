@@ -69,7 +69,7 @@ func toAppTokenValidationRequest(token string, tokenType string, uuid string) au
 func getAppTokenValidationInAuth(ctx context.Context, requestDTO authRequestDTO.AppTokenValidationRequestDTO) (int, error) {
 
 	// POST 요청 보내기
-	url := "http://172.16.10.114/auth/sv1/app-token-validation"
+	url := "http://auth-service/auth/server/v1/app-token-validation"
 	log.Println("auth service 호출! url : ", url)
 
 	// JSON 변환

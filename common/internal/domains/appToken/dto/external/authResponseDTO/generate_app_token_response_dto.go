@@ -1,4 +1,4 @@
-package responseDTO
+package authResponseDTO
 
 type GenerateAppTokenResponseDTO struct {
 	Body GenerateAppTokenResponseBody

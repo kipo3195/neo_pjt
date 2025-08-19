@@ -1,6 +1,6 @@
 package requestDTO
 
-type GenerateAppTokenRequest struct {
+type GenerateAppTokenRequestDTO struct {
 	Body GenerateAppTokenBody
 }
 

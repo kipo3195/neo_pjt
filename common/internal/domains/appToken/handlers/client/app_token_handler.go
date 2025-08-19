@@ -47,7 +47,7 @@ func (h *AppTokenHandler) AppTokenRefresh(c *gin.Context) {
 		Body: body,
 	}
 
-	data, err := h.usecase.AppTokenReIssue(ctx, requestDTO)
+	data, err := h.usecase.AppTokenReIssueInAuth(ctx, requestDTO)
 
 	if err != nil {
 		switch {
