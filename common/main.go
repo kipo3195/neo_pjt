@@ -57,7 +57,7 @@ func InitServer() *http.Server {
 		log.Fatal("Failed to load initial data:", err)
 	}
 
-	// ---- Router Init-----
+	// ---- Router Init -----
 
 	r, baseGroup := router.SetDefaultRoutes("common")
 
@@ -70,7 +70,7 @@ func InitServer() *http.Server {
 	configurationHandler := configuration.InitModule(db, configHashStorage)
 	router.SetConfigurationRoutes(baseGroup, configurationHandler)
 
-	// ---- Service Init ----
+	// ---- Service Init -----
 	appInitHandler := serviceModules.InitAppValidationModule(deps)
 	r.POST("/client/v1/app-validation",
 		middleware.AuthMiddleware(),     // <- 여기서 JWT 미들웨어 적용

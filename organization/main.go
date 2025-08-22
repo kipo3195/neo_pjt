@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"org/config"
 	"org/handlers"
 	"org/infra/storage"
+	"org/internal/domains/department"
+	"org/internal/router"
 	"org/repositories"
-	"org/routes"
 	"org/usecases"
+	"time"
 )
 
 func main() {
@@ -22,7 +25,23 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 	db := config.ConnectDatabase(sfg)
 
+	// ---- DB Migration -----
+
+	// ---- Storage Init -----
 	orgFileStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
+
+	// ---- Data Loader -----
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// ---- Router Init -----
+
+	r, baseGroup := router.SetDefaultRoutes("org")
+
+	departmentHandler := department.InitModule(db)
+	router.SetDepartmentRoutes(baseGroup, departmentHandler)
+
+	// ---- Service Init -----
 
 	orgRepo := repositories.NewOrgRepository(db)
 	orgUsecase := usecases.NewOrgUsecase(orgRepo, orgFileStorage)
@@ -36,16 +55,10 @@ func InitServer() *http.Server {
 	serverUsecase := usecases.NewServerUsecase(serverRepo, orgFileStorage)
 	serverHandler := handlers.NewServerHandler(sfg, serverUsecase)
 
-	handlers := &handlers.OrgHandlers{
-		Org:    orgHandler,
-		User:   userHandler,
-		Server: serverHandler,
-	}
-
-	router := routes.SetupRoutes(handlers)
+	//router := routes.SetupRoutes(handlers)
 
 	return &http.Server{
 		Addr:    ":8088",
-		Handler: router,
+		Handler: r,
 	}
 }
