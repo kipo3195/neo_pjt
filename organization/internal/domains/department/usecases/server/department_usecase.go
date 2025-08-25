@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"log"
-	"org/entities"
 	requestDTO "org/internal/domains/department/dto/server/requestDTO"
+	"org/internal/domains/department/entities"
 	repositories "org/internal/domains/department/repositories/server"
 	"org/internal/utils"
 )

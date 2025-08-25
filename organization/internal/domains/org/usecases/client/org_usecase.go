@@ -3,12 +3,12 @@ package client
 import (
 	"context"
 	"fmt"
-	"org/entities"
 	"org/internal/consts"
 	"org/internal/domains/org/dto/client/requestDTO"
+	"org/internal/domains/org/entities"
+	"org/internal/domains/org/models"
 	repositories "org/internal/domains/org/repositories/client"
 	"org/internal/infra/storage"
-	"org/models"
 	"strings"
 )
 

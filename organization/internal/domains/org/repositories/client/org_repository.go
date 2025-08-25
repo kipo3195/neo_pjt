@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"org/models"
+	"org/internal/domains/org/models"
 
 	"gorm.io/gorm"
 )

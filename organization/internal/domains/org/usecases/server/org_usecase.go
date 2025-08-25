@@ -7,12 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"org/entities"
 	"org/internal/domains/org/dto/server/requestDTO"
+	"org/internal/domains/org/entities"
+	"org/internal/domains/org/models"
 	repositories "org/internal/domains/org/repositories/server"
 	"org/internal/infra/storage"
+	"org/internal/sharedEntities"
 	"org/internal/utils"
-	"org/models"
 	"org/pkg/consts"
 )
 
@@ -114,7 +115,7 @@ func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
 
 	for _, org := range orgTree {
 		// 이름 다국어 처리
-		name := entities.NameEntity{
+		name := sharedEntities.NameEntity{
 			Def: org.KoLang, // 수정 필요.
 			Ko:  org.KoLang,
 			En:  org.EnLang,
@@ -140,23 +141,23 @@ func parseOrgTree(orgTree []models.WorksOrg) *entities.OrgEntity {
 	}
 
 	// 트리 구조로 변환
-	orgTreeInfos := buildOrgTree(flatList, "root")
+	orgTreeInfo := buildOrgTree(flatList, "root")
 
 	return &entities.OrgEntity{
 		RootDept: rootOrgInfos,
-		OrgTree:  orgTreeInfos,
+		OrgTree:  orgTreeInfo,
 	}
 }
 
-func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.OrgTreeInfos {
-	var tree []entities.OrgTreeInfos
+func buildOrgTree(flatList []entities.OrgInfo, parentCode string) []entities.OrgTreeInfo {
+	var tree []entities.OrgTreeInfo
 
 	for _, org := range flatList {
 		if org.ParentDeptCode == parentCode {
 			// 재귀적으로 하위 부서를 구성
 			sub := buildOrgTree(flatList, org.DeptCode)
 
-			tree = append(tree, entities.OrgTreeInfos{
+			tree = append(tree, entities.OrgTreeInfo{
 				DeptCode:       org.DeptCode,
 				ParentDeptCode: org.ParentDeptCode,
 				Name:           org.Name,

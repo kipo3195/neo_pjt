@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"org/entities"
+	"org/internal/domains/department/entities"
 	"org/models"
 
 	"org/internal/utils"

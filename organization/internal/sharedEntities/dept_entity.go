@@ -1,4 +1,4 @@
-package entities
+package sharedEntities
 
 type DeptEntity struct {
 	DeptOrg  string `json:"deptOrg"`

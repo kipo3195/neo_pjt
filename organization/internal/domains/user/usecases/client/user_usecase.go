@@ -2,10 +2,10 @@ package client
 
 import (
 	"context"
-	"org/entities"
 	"org/internal/domains/user/dto/client/requestDTO"
 	"org/internal/domains/user/dto/client/responseDTO"
 	respositories "org/internal/domains/user/repositories/client"
+	"org/internal/sharedEntities"
 )
 
 type userUsecase struct {
@@ -31,7 +31,7 @@ func (r *userUsecase) GetMyInfo(ctx context.Context, req requestDTO.GetMyInfoReq
 	return toMyInfoDto(MyInfoEntity), nil
 }
 
-func toMyInfoDto(entity entities.MyInfoEntity) responseDTO.GetMyInfoResponseBody {
+func toMyInfoDto(entity sharedEntities.MyInfoEntity) responseDTO.GetMyInfoResponseBody {
 
 	username := responseDTO.UsernameDto{
 		Def: entity.Username.Ko, // 수정 필요
@@ -56,7 +56,7 @@ func toMyInfoDto(entity entities.MyInfoEntity) responseDTO.GetMyInfoResponseBody
 	}
 }
 
-func toDeptInfoDto(deptInfos []entities.DeptEntity) []responseDTO.DeptInfoDto {
+func toDeptInfoDto(deptInfos []sharedEntities.DeptEntity) []responseDTO.DeptInfoDto {
 
 	var deptInfoDto []responseDTO.DeptInfoDto
 

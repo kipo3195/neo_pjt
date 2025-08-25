@@ -1,4 +1,4 @@
-package entities
+package sharedEntities
 
 type MyInfoEntity struct {
 	UserHash     string       `json:"userHash"`
