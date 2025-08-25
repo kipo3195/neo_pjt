@@ -2,7 +2,7 @@ package serviceHandlers
 
 import (
 	"common/internal/consts"
-	"common/internal/services/servicesDomains"
+	"common/internal/services/serviceDomains"
 	"common/pkg/response"
 
 	"common/internal/services/serviceDto"
@@ -15,10 +15,10 @@ import (
 )
 
 type AppValidationHandler struct {
-	svc *servicesDomains.AppValidationService
+	svc *serviceDomains.AppValidationService
 }
 
-func NewAppValidationHander(svc *servicesDomains.AppValidationService) *AppValidationHandler {
+func NewAppValidationHander(svc *serviceDomains.AppValidationService) *AppValidationHandler {
 	return &AppValidationHandler{svc: svc}
 }
 

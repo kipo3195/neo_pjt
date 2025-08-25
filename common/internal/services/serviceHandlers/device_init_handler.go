@@ -3,8 +3,8 @@ package serviceHandlers
 import (
 	appTokenDomain "common/internal/domains/appToken/dto/server/requestDTO"
 	worksInfoDomain "common/internal/domains/worksInfo/dto/server/requestDTO"
+	"common/internal/services/serviceDomains"
 	"common/internal/services/serviceDto"
-	"common/internal/services/servicesDomains"
 	"common/pkg/response"
 	"encoding/json"
 
@@ -15,10 +15,10 @@ import (
 )
 
 type DeviceInitHandler struct {
-	svc *servicesDomains.DeviceInitService
+	svc *serviceDomains.DeviceInitService
 }
 
-func NewDeviceInitHandler(svc *servicesDomains.DeviceInitService) *DeviceInitHandler {
+func NewDeviceInitHandler(svc *serviceDomains.DeviceInitService) *DeviceInitHandler {
 	return &DeviceInitHandler{svc: svc}
 }
 

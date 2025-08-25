@@ -8,8 +8,8 @@ import (
 	"common/internal/domains/worksInfo/repositories/serverRepository"
 	worksInfoUsecase "common/internal/domains/worksInfo/usecases/server"
 	"common/internal/services/dependencies"
+	"common/internal/services/serviceDomains"
 	"common/internal/services/serviceHandlers"
-	"common/internal/services/servicesDomains"
 )
 
 func InitDeviceInitModule(dep dependencies.Dependency) *serviceHandlers.DeviceInitHandler {
@@ -20,7 +20,7 @@ func InitDeviceInitModule(dep dependencies.Dependency) *serviceHandlers.DeviceIn
 	appTokenUsecase := appToken.NewAppTokenUsecase()
 
 	// 서비스 초기화
-	svc := servicesDomains.NewDeviceInitService(deviceUsecase, skinUsecase, configurationUsecase, appTokenUsecase)
+	svc := serviceDomains.NewDeviceInitService(deviceUsecase, skinUsecase, configurationUsecase, appTokenUsecase)
 
 	// 핸들러 초기화
 	return serviceHandlers.NewDeviceInitHandler(svc)

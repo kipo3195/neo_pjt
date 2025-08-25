@@ -8,8 +8,8 @@ import (
 	skinRepositories "common/internal/domains/skin/repositories/client"
 	skinUsecase "common/internal/domains/skin/usecases/client"
 	"common/internal/services/dependencies"
+	"common/internal/services/serviceDomains"
 	"common/internal/services/serviceHandlers"
-	"common/internal/services/servicesDomains"
 )
 
 func InitAppValidationModule(dep dependencies.Dependency) *serviceHandlers.AppValidationHandler {
@@ -19,7 +19,7 @@ func InitAppValidationModule(dep dependencies.Dependency) *serviceHandlers.AppVa
 	configurationUsecase := configurationUsecase.NewConfigurationUsecase(configurationRepository.NewConfigurationRepository(dep.DB), dep.ConfigHashStorage)
 
 	// 서비스 초기화
-	svc := servicesDomains.NewAppValidationService(appValidationUsecase, skinUsecase, configurationUsecase)
+	svc := serviceDomains.NewAppValidationService(appValidationUsecase, skinUsecase, configurationUsecase)
 
 	// 핸들러 초기화
 	return serviceHandlers.NewAppValidationHander(svc)

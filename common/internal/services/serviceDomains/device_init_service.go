@@ -1,4 +1,4 @@
-package servicesDomains
+package serviceDomains
 
 import (
 	appToken "common/internal/domains/appToken/usecases/server"
