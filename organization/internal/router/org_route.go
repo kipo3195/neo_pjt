@@ -3,6 +3,7 @@ package router
 import (
 	"org/internal/domains/department"
 	"org/internal/domains/org"
+	"org/internal/domains/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,5 +33,12 @@ func SetOrgRoute(parent *gin.RouterGroup, handlers *org.OrgHandlers) {
 
 	server := parent.Group("/server/v1/org")
 	server.POST("/file", handlers.ServerHandler.CreateOrgFile)
+
+}
+
+func SetUserRoute(parent *gin.RouterGroup, handlers *user.UserHandlers) {
+	client := parent.Group("/client/v1/user")
+	client.GET("/my-info", handlers.ClientHandler.GetMyInfo)
+	client.GET("/info", handlers.ClientHandler.GetUserInfo)
 
 }

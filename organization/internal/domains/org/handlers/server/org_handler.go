@@ -2,10 +2,10 @@ package server
 
 import (
 	"encoding/json"
-	"net/http"
-	"org/consts"
-	dto "org/dto/common"
+	"org/internal/domains/org/dto/client/requestDTO"
 	usecases "org/internal/domains/org/usecases/server"
+	commonConsts "org/pkg/consts"
+	"org/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,20 +25,11 @@ func (h *OrgHandler) CreateOrgFile(c *gin.Context) {
 	// context 생성
 	ctx := c.Request.Context()
 
-	// response dto 생성
-	var res = dto.Response{}
-
 	// request 데이터 파싱 header, body -> dto
-	var req = adminDto.CreateOrgFileRequest{}
+	var req = requestDTO.CreateOrgFileRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.Result = consts.FAIL
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_103,
-			Message: consts.E_103_MSG,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 		return
 	}
 
@@ -47,19 +38,12 @@ func (h *OrgHandler) CreateOrgFile(c *gin.Context) {
 
 	if err == nil {
 		// http status code 200
-		res.Result = consts.SUCCESS
-		res.Data = data
+		response.SendSuccess(c, data)
 	} else {
 		// http status code 500
-		w.WriteHeader(http.StatusInternalServerError)
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_500,
-			Message: consts.E_500_MSG,
-		}
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 	}
 
 	// response.
-	json.NewEncoder(w).Encode(res)
 
 }

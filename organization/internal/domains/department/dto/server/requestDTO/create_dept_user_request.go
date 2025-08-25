@@ -1,4 +1,4 @@
-package admin
+package requestDTO
 
 type CreateDeptUserRequest struct {
 	UserHash             string `json:"userHash" validate:"required"`

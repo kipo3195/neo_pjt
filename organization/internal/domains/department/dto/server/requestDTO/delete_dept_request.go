@@ -1,4 +1,4 @@
-package admin
+package requestDTO
 
 type DeleteDeptRequest struct {
 	DeptOrg  string `json:"deptOrg"`

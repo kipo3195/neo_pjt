@@ -1,6 +1,8 @@
 package client
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type departmentRepository struct {
 	db *gorm.DB

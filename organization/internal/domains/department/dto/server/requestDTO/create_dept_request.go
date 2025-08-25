@@ -1,4 +1,4 @@
-package admin
+package requestDTO
 
 type CreateDeptRequest struct {
 	DeptOrg        string `json:"deptOrg"`

@@ -1,4 +1,4 @@
-package admin
+package requestDTO
 
 type DeleteDeptUserRequest struct {
 	UserHash string `json:"userHash" validate:"required"`

@@ -5,12 +5,11 @@ import (
 	"log"
 	"net/http"
 	"org/config"
-	"org/handlers"
 	"org/infra/storage"
 	"org/internal/domains/department"
+	"org/internal/domains/org"
+	"org/internal/domains/user"
 	"org/internal/router"
-	"org/repositories"
-	"org/usecases"
 	"time"
 )
 
@@ -41,19 +40,13 @@ func InitServer() *http.Server {
 	departmentHandler := department.InitModule(db)
 	router.SetDepartmentRoutes(baseGroup, departmentHandler)
 
+	orgHandler := org.InitModule(db)
+	router.SetOrgRoute(baseGroup, orgHandler)
+
+	userHandler := user.InitModule(db)
+	router.SetUserRoute(baseGroup, userHandler)
+
 	// ---- Service Init -----
-
-	orgRepo := repositories.NewOrgRepository(db)
-	orgUsecase := usecases.NewOrgUsecase(orgRepo, orgFileStorage)
-	orgHandler := handlers.NewOrgHandler(sfg, orgUsecase)
-
-	userRepo := repositories.NewUserRepository(db)
-	userUsecase := usecases.NewUserUsecase(userRepo)
-	userHandler := handlers.NewUserHandler(sfg, userUsecase)
-
-	serverRepo := repositories.NewServerRepository(db)
-	serverUsecase := usecases.NewServerUsecase(serverRepo, orgFileStorage)
-	serverHandler := handlers.NewServerHandler(sfg, serverUsecase)
 
 	//router := routes.SetupRoutes(handlers)
 

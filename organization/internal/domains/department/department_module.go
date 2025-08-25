@@ -4,8 +4,8 @@ import (
 	clientHandler "org/internal/domains/department/handlers/client"
 	serverHandler "org/internal/domains/department/handlers/server"
 
-	serverRepository "org/internal/domains/department/repositories/client"
-	clientRepository "org/internal/domains/department/repositories/server"
+	clientRepository "org/internal/domains/department/repositories/client"
+	serverRepository "org/internal/domains/department/repositories/server"
 
 	clientUsecase "org/internal/domains/department/usecases/client"
 	serverUsecase "org/internal/domains/department/usecases/server"

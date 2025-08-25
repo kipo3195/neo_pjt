@@ -1,4 +1,4 @@
-package client
+package requestDTO
 
 type GetOrgDataRequest struct {
 	OrgCode string `json:"orgCode"`

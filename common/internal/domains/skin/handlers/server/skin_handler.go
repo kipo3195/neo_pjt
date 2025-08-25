@@ -33,6 +33,7 @@ func (h *SkinHandler) PutSkinImg(c *gin.Context) {
 
 	if err != nil || file == nil || fileInfo.Size == 0 || skinType == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
 	}
 
 	var req = requestDTO.CreateSkinImgRequest{
