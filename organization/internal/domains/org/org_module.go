@@ -3,6 +3,7 @@ package org
 import (
 	clientHandler "org/internal/domains/org/handlers/client"
 	serverHandler "org/internal/domains/org/handlers/server"
+	"org/internal/infra/storage"
 
 	clientRepository "org/internal/domains/org/repositories/client"
 	serverRepository "org/internal/domains/org/repositories/server"
@@ -18,14 +19,14 @@ type OrgHandlers struct {
 	ServerHandler *serverHandler.OrgHandler
 }
 
-func InitModule(db *gorm.DB) *OrgHandlers {
+func InitModule(db *gorm.DB, orgStorage storage.OrgFileStorage) *OrgHandlers {
 
 	serverRepository := serverRepository.NewOrgRepository(db)
-	serverUsecase := serverUsecase.NewOrgUsecase(serverRepository)
+	serverUsecase := serverUsecase.NewOrgUsecase(serverRepository, orgStorage)
 	serverHandler := serverHandler.NewOrgHandler(serverUsecase)
 
 	clientRepository := clientRepository.NewOrgRepository(db)
-	clientUsecase := clientUsecase.NewOrgUsecase(clientRepository)
+	clientUsecase := clientUsecase.NewOrgUsecase(clientRepository, orgStorage)
 	clientHandler := clientHandler.NewOrgHandler(clientUsecase)
 
 	return &OrgHandlers{

@@ -1,4 +1,4 @@
-package client
+package responseDTO
 
 type UsernameDto struct {
 	Def string `json:"def"`

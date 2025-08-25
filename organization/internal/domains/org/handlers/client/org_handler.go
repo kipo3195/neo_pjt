@@ -1,10 +1,12 @@
 package client
 
 import (
+	"fmt"
 	"org/internal/domains/org/dto/client/requestDTO"
 	usecases "org/internal/domains/org/usecases/client"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,10 +67,10 @@ func (h *OrgHandler) GetOrgData(c *gin.Context) {
 		return
 	}
 	// usecase 호출
-	file, data, err := h.usecase.GetOrgData(ctx, req)
+	fileName, data, err := h.usecase.GetOrgData(ctx, req)
 
 	// response.
-	if file != "" {
+	if fileName != "" {
 		orgCode := req.OrgCode
 		// http status code 200
 		// w.Header().Set("Content-Type", "application/octet-stream")
@@ -76,7 +78,15 @@ func (h *OrgHandler) GetOrgData(c *gin.Context) {
 		// w.Write(data.([]byte))
 		// // 전송 헤더의 순서가 영향을 미침 - 파일명 적용이 안됨.
 		// w.WriteHeader(http.StatusOK)
-		response.SendFileStream(c, data, orgCode+"_"+file+".zip", "")
+
+		// interface{} → *os.File 로 변환
+		if realFile, ok := data.(*os.File); ok {
+			fmt.Println("변환 성공:", realFile.Name())
+			response.SendFileStream(c, realFile, orgCode+"_"+fileName+".zip", "")
+		} else {
+			fmt.Println("변환 실패")
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
 		return
 
 	} else if err != nil {

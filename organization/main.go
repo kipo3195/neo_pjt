@@ -1,16 +1,14 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
-	"org/config"
-	"org/infra/storage"
+	"org/internal/config"
 	"org/internal/domains/department"
 	"org/internal/domains/org"
 	"org/internal/domains/user"
+	"org/internal/infra/storage"
 	"org/internal/router"
-	"time"
 )
 
 func main() {
@@ -27,11 +25,9 @@ func InitServer() *http.Server {
 	// ---- DB Migration -----
 
 	// ---- Storage Init -----
-	orgFileStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
+	orgStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
 
 	// ---- Data Loader -----
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
 	// ---- Router Init -----
 
@@ -40,7 +36,7 @@ func InitServer() *http.Server {
 	departmentHandler := department.InitModule(db)
 	router.SetDepartmentRoutes(baseGroup, departmentHandler)
 
-	orgHandler := org.InitModule(db)
+	orgHandler := org.InitModule(db, orgStorage)
 	router.SetOrgRoute(baseGroup, orgHandler)
 
 	userHandler := user.InitModule(db)

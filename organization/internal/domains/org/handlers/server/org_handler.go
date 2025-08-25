@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"org/internal/domains/org/dto/client/requestDTO"
+	"org/internal/domains/org/dto/server/requestDTO"
 	usecases "org/internal/domains/org/usecases/server"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"

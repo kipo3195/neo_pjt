@@ -1,6 +1,10 @@
-package client
+package responseDTO
 
-type GetMyInfoResponse struct {
+type GetMyInfoResponseDTO struct {
+	Body GetMyInfoResponseBody
+}
+
+type GetMyInfoResponseBody struct {
 	UserHash     string        `json:"userHash"`
 	UserPhoneNum string        `json:"userPhoneNum"`
 	Username     UsernameDto   `json:"userName"`

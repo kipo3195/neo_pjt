@@ -4,6 +4,7 @@ import (
 	"context"
 	"org/entities"
 	"org/internal/domains/user/dto/client/requestDTO"
+	"org/internal/domains/user/dto/client/responseDTO"
 	respositories "org/internal/domains/user/repositories/client"
 )
 
@@ -12,7 +13,7 @@ type userUsecase struct {
 }
 
 type UserUsecase interface {
-	GetMyInfo(ctx context.Context, req requestDTO.GetMyInfoRequest) (requestDTO.GetMyInfoResponse, error)
+	GetMyInfo(ctx context.Context, req requestDTO.GetMyInfoRequest) (responseDTO.GetMyInfoResponseBody, error)
 }
 
 func NewUserUsecase(repository respositories.UserRepository) UserUsecase {
@@ -21,18 +22,18 @@ func NewUserUsecase(repository respositories.UserRepository) UserUsecase {
 	}
 }
 
-func (r *userUsecase) GetMyInfo(ctx context.Context, req userDto.GetMyInfoRequest) (userDto.GetMyInfoResponse, error) {
+func (r *userUsecase) GetMyInfo(ctx context.Context, req requestDTO.GetMyInfoRequest) (responseDTO.GetMyInfoResponseBody, error) {
 
 	MyInfoEntity, err := r.repository.GetMyInfo(ctx, req.MyHash)
 	if err != nil {
-		return userDto.GetMyInfoResponse{}, err
+		return responseDTO.GetMyInfoResponseBody{}, err
 	}
 	return toMyInfoDto(MyInfoEntity), nil
 }
 
-func toMyInfoDto(entity entities.MyInfoEntity) userDto.GetMyInfoResponse {
+func toMyInfoDto(entity entities.MyInfoEntity) responseDTO.GetMyInfoResponseBody {
 
-	username := userDto.UsernameDto{
+	username := responseDTO.UsernameDto{
 		Def: entity.Username.Ko, // 수정 필요
 		Ko:  entity.Username.Ko,
 		En:  entity.Username.En,
@@ -44,7 +45,7 @@ func toMyInfoDto(entity entities.MyInfoEntity) userDto.GetMyInfoResponse {
 
 	deptInfoDto := toDeptInfoDto(entity.DeptInfo)
 
-	return userDto.GetMyInfoResponse{
+	return responseDTO.GetMyInfoResponseBody{
 		UserHash:     entity.UserHash,
 		UserPhoneNum: entity.UserPhoneNum,
 		Username:     username,
@@ -53,4 +54,26 @@ func toMyInfoDto(entity entities.MyInfoEntity) userDto.GetMyInfoResponse {
 		ProfileMsg:   entity.ProfileMsg,
 		DeptInfo:     deptInfoDto,
 	}
+}
+
+func toDeptInfoDto(deptInfos []entities.DeptEntity) []responseDTO.DeptInfoDto {
+
+	var deptInfoDto []responseDTO.DeptInfoDto
+
+	for _, deptInfo := range deptInfos {
+		deptInfoDto = append(deptInfoDto, responseDTO.DeptInfoDto{
+			DeptOrg:  deptInfo.DeptOrg,
+			DeptCode: deptInfo.DeptCode,
+			DefLang:  deptInfo.DefLang,
+			KoLang:   deptInfo.KoLang,
+			EnLang:   deptInfo.EnLang,
+			JpLang:   deptInfo.JpLang,
+			ZhLang:   deptInfo.ZhLang,
+			ViLang:   deptInfo.ViLang,
+			RuLang:   deptInfo.RuLang,
+			Header:   deptInfo.Header,
+		})
+	}
+
+	return deptInfoDto
 }

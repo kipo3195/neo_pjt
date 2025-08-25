@@ -2,13 +2,13 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"log"
-	"net/http"
-	"org/consts"
-	"org/contextkey"
-	dto "org/dto/common"
+	"org/internal/consts"
+	"org/internal/domains/user/dto/client/requestDTO"
 	usecases "org/internal/domains/user/usecases/client"
+	"org/internal/middleware/contextkey"
+	commonConsts "org/pkg/consts"
+	"org/pkg/response"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,25 +30,18 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	// context 생성
 	ctx := c.Request.Context()
 
-	// response dto 생성
-	var res = dto.Response{}
-
 	// 인증 토큰에서 요청 사용자의 hash 정보 추출
-	val := r.Context().Value(contextkey.UserHashKey)
+	val := c.Value(contextkey.UserHashKey)
 	myHash, ok := val.(string)
 	if !ok {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, consts.ORG_F101, consts.ORG_F101_MSG)
 		log.Println("인증 토큰의 userHash 데이터 에러 ")
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.ORG_F101,
-			Message: consts.ORG_F101_MSG,
-		}
 		return
 	}
 
 	log.Println("내 정보 요청시 myHash : ", myHash)
 	// dto 생성
-	var req = userDto.GetMyInfoRequest{
+	var req = requestDTO.GetMyInfoRequest{
 		MyHash: myHash,
 	}
 
@@ -57,19 +50,11 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	// response.
 	if err == nil {
 		// http status code 200
-		res.Result = consts.SUCCESS
-		res.Data = data
+		response.SendSuccess(c, data)
 	} else {
 		// http status code 400
-		w.WriteHeader(http.StatusInternalServerError)
-		res.Result = consts.ERROR
-		res.Data = dto.ErrorResponse{
-			Code:    consts.E_500,
-			Message: consts.E_500_MSG,
-		}
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 	}
-	// response.
-	json.NewEncoder(w).Encode(res)
 
 }
 

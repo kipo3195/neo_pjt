@@ -5,8 +5,9 @@ const (
 	FAIL    = "fail"
 	ERROR   = "error"
 
-	BAD_REQUEST  = 400
-	SERVER_ERROR = 500
+	BAD_REQUEST        = 400
+	SERVER_ERROR       = 500
+	StatusUnauthorized = 401
 
 	// ERROR
 	E_101     = "E101"

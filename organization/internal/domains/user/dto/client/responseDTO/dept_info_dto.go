@@ -1,4 +1,4 @@
-package client
+package responseDTO
 
 type DeptInfoDto struct {
 	DeptOrg  string `json:"deptOrg"`

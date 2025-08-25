@@ -1,10 +1,10 @@
 package response
 
 import (
-	"common/pkg/dto"
 	"fmt"
 	"io"
 	"org/pkg/consts"
+	"org/pkg/dto"
 	"os"
 
 	"github.com/gin-gonic/gin"

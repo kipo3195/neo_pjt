@@ -7,12 +7,14 @@ import (
 	"org/internal/consts"
 	"org/internal/domains/org/dto/client/requestDTO"
 	repositories "org/internal/domains/org/repositories/client"
+	"org/internal/infra/storage"
 	"org/models"
 	"strings"
 )
 
 type orgUsecase struct {
 	repository repositories.OrgRepository
+	orgStorage storage.OrgFileStorage
 }
 
 type OrgUsecase interface {
@@ -20,9 +22,10 @@ type OrgUsecase interface {
 	GetOrgData(ctx context.Context, req requestDTO.GetOrgDataRequest) (string, interface{}, error)
 }
 
-func NewOrgUsecase(repository repositories.OrgRepository) OrgUsecase {
+func NewOrgUsecase(repository repositories.OrgRepository, orgStorage storage.OrgFileStorage) OrgUsecase {
 	return &orgUsecase{
 		repository: repository,
+		orgStorage: orgStorage,
 	}
 }
 
@@ -65,7 +68,7 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req requestDTO.GetOrgDataRe
 			return "", nil, err
 		}
 
-		data, err := r.orgFileStorage.GetOrgFile(req.OrgCode)
+		data, err := r.orgStorage.GetOrgFile(req.OrgCode)
 
 		//filePath := "./storage/" + req.OrgCode + "/org_files/" + version // 전달할 파일 경로
 		// 파일을 메모리에 가지고 있도록 수정 할 것.
