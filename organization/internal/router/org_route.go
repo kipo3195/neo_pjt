@@ -15,13 +15,13 @@ func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
 
 func SetDepartmentRoutes(parent *gin.RouterGroup, handlers *department.DepartmentHandlers) {
 	client := parent.Group("/client/v1/department")
-	client.GET("/", handlers.ClientHandler.GetDept)
+	client.GET("/", handlers.ClientHandler.GetDept) //
 
 	server := parent.Group("/server/v1/department")
 	server.POST("/", handlers.ServerHandler.CreateDept)
 	server.DELETE("/", handlers.ServerHandler.DeleteDept)
-	server.POST("/user", handlers.ServerHandler.DeleteDept)
-	server.DELETE("/user", handlers.ServerHandler.DeleteDept)
+	server.POST("/user", handlers.ServerHandler.CreateDeptUser)
+	server.DELETE("/user", handlers.ServerHandler.DeleteDeptUser)
 
 }
 
