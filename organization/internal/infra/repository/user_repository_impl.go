@@ -1,28 +1,25 @@
-package client
+package repository
 
 import (
 	"context"
-	"org/internal/domains/user/models"
+	"org/internal/domain/user/models"
+	"org/internal/domain/user/repository"
 	"org/internal/sharedEntities"
 
 	"gorm.io/gorm"
 )
 
-type userRepository struct {
+type userRepositoryImpl struct {
 	db *gorm.DB
 }
 
-type UserRepository interface {
-	GetMyInfo(ctx context.Context, myHash string) (sharedEntities.MyInfoEntity, error)
-}
-
-func NewUserRepository(db *gorm.DB) UserRepository {
-	return &userRepository{
+func NewUserRepository(db *gorm.DB) repository.UserRepository {
+	return &userRepositoryImpl{
 		db: db,
 	}
 }
 
-func (r *userRepository) GetMyInfo(ctx context.Context, myHash string) (sharedEntities.MyInfoEntity, error) {
+func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, myHash string) (sharedEntities.MyInfoEntity, error) {
 	var myDetailInfo models.MyDetailInfo
 	var myDeptInfo []models.DeptInfo
 

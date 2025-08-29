@@ -1,37 +1,29 @@
-package server
+package repository
 
 import (
 	"context"
 	"fmt"
 	"log"
-	"org/internal/domains/department/entities"
-	"org/models"
-
+	"org/internal/domain/department/entities"
+	"org/internal/domain/department/repository"
 	"org/internal/utils"
+	"org/models"
 
 	"gorm.io/gorm"
 )
 
-type departmentRepository struct {
+type departmentRepositoryImpl struct {
 	db *gorm.DB
 }
 
-type DepartmentRepository interface {
-	PutDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error)
-	DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error)
-
-	PutDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error)
-	DeleteDeptUser(ctx context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error)
-}
-
-func NewDepartmentRepository(db *gorm.DB) DepartmentRepository {
-	return &departmentRepository{
+func NewDepartmentRepository(db *gorm.DB) repository.DepartmentRepository {
+	return &departmentRepositoryImpl{
 		db: db,
 	}
 }
 
 // 추가
-func (r *departmentRepository) PutDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error) {
+func (r *departmentRepositoryImpl) PutDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error) {
 
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
@@ -105,7 +97,7 @@ func toOrgCreateEventModel(e entities.CreateDeptEntity) models.OrgEvent {
 }
 
 // 삭제
-func (r *departmentRepository) DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error) {
+func (r *departmentRepositoryImpl) DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error) {
 
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
@@ -155,7 +147,7 @@ func toOrgDeleteEventModel(e entities.DeleteDeptEntity) models.OrgEvent {
 	}
 }
 
-func (r *departmentRepository) PutDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error) {
+func (r *departmentRepositoryImpl) PutDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error) {
 	// 트랜잭션 시작
 	// tx := r.db.WithContext(ctx).Begin()
 	// if tx.Error != nil {
@@ -190,7 +182,7 @@ func toWorksDeptUser(entity entities.CreateDeptUserEntity) *models.WorksDeptUser
 	}
 }
 
-func (r *departmentRepository) DeleteDeptUser(txt context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error) {
+func (r *departmentRepositoryImpl) DeleteDeptUser(txt context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error) {
 
 	result := r.db.Model(&models.WorksDeptUser{}).Where("dept_org = ? AND dept_code = ? AND user_hash = ? ", entity.DeptOrg, entity.DeptCode, entity.UserHash).Update("use_yn", "N")
 	return nil, result.Error
