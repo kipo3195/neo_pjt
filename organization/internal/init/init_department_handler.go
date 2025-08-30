@@ -1,4 +1,4 @@
-package app
+package init
 
 import (
 	"org/internal/application/usecase"
