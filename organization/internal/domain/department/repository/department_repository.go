@@ -2,12 +2,12 @@ package repository
 
 import (
 	"context"
-	"org/internal/domain/department/entities"
+	"org/internal/domain/department/entity"
 )
 
 type DepartmentRepository interface {
-	PutDept(ctx context.Context, entity entities.CreateDeptEntity) (interface{}, error)
-	DeleteDept(ctx context.Context, entity entities.DeleteDeptEntity) (interface{}, error)
-	PutDeptUser(ctx context.Context, entity entities.CreateDeptUserEntity) (interface{}, error)
-	DeleteDeptUser(ctx context.Context, entity entities.DeleteDeptUserEntity) (interface{}, error)
+	PutDept(ctx context.Context, entity entity.CreateDeptEntity) (interface{}, error)
+	DeleteDept(ctx context.Context, entity entity.DeleteDeptEntity) (interface{}, error)
+	PutDeptUser(ctx context.Context, entity entity.CreateDeptUserEntity) (interface{}, error)
+	DeleteDeptUser(ctx context.Context, entity entity.DeleteDeptUserEntity) (interface{}, error)
 }

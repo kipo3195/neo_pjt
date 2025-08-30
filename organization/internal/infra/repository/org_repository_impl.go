@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"org/models"
-
+	"org/internal/domain/org/entity"
 	"org/internal/domain/org/repository"
+	"org/internal/infra/model"
 
 	"gorm.io/gorm"
 )
@@ -21,10 +21,15 @@ func NewOrgRepository(db *gorm.DB) repository.OrgRepository {
 	}
 }
 
+func OrgMigrate(db *gorm.DB) {
+	db.AutoMigrate(&model.OrgEvent{})
+	db.AutoMigrate(&model.OrgEventHash{})
+}
+
 func (r *orgRepositoryImpl) CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error) {
 
 	var count int64
-	var events models.OrgEvent
+	var events model.OrgEvent
 
 	// hash 검증 'req'데이터를 '_' 기준으로 split하면 [0]은 org code, [1]은 hash
 
@@ -50,7 +55,7 @@ func (r *orgRepositoryImpl) CheckOrgHash(ctx context.Context, org string, hash s
 
 func (r *orgRepositoryImpl) GetOrgLatestVersion(ctx context.Context, orgCode string) (string, error) {
 
-	var result models.OrgEventHash
+	var result model.OrgEventHash
 	err := r.db.Where("org_code = ?", orgCode).Order("update_hash DESC").First(&result).Error
 	if err != nil {
 		// 결과가 없을때
@@ -62,9 +67,9 @@ func (r *orgRepositoryImpl) GetOrgLatestVersion(ctx context.Context, orgCode str
 
 }
 
-func (r *orgRepositoryImpl) GetOrgDiffEvent(ctx context.Context, orgCode string, orgHash string) ([]models.OrgEvent, error) {
+func (r *orgRepositoryImpl) GetOrgDiffEvent(ctx context.Context, orgCode string, orgHash string) ([]entity.OrgEventEntity, error) {
 
-	var events []models.OrgEvent
+	var events []model.OrgEvent
 
 	err := r.db.Where("org_code = ? AND update_hash > ?", orgCode, orgHash).Find(&events).Error
 
@@ -72,36 +77,78 @@ func (r *orgRepositoryImpl) GetOrgDiffEvent(ctx context.Context, orgCode string,
 		return nil, err
 	}
 
-	return events, nil
+	return convertToOrgEventEntities(events), nil
+}
+
+// 변환 함수
+func convertToOrgEventEntities(events []model.OrgEvent) []entity.OrgEventEntity {
+	entities := make([]entity.OrgEventEntity, 0, len(events))
+	for _, e := range events {
+		entity := entity.OrgEventEntity{
+			Id:         e.Id,
+			EventType:  e.EventType,
+			Kind:       e.Kind,
+			OrgCode:    e.OrgCode,
+			UpdateHash: e.UpdateHash,
+		}
+		entities = append(entities, entity)
+	}
+	return entities
 }
 
 func (r *orgRepositoryImpl) PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error) {
 
-	models := toOrgEventHashModel(org, hash)
-	if err := r.db.Create(&models).Error; err != nil {
+	model := toOrgEventHashModel(org, hash)
+	if err := r.db.Create(&model).Error; err != nil {
 		log.Println("[PutOrgEventHash] - DB error")
 		return false, err
 	}
 	return true, nil
 }
 
-func toOrgEventHashModel(org string, hash string) models.OrgEventHash {
-	return models.OrgEventHash{
+func toOrgEventHashModel(org string, hash string) model.OrgEventHash {
+	return model.OrgEventHash{
 		OrgCode:    org,
 		UpdateHash: hash,
 	}
 }
 
-func (r *orgRepositoryImpl) GetOrg(ctx context.Context, orgCode string) ([]models.WorksOrg, error) {
+func (r *orgRepositoryImpl) GetOrg(ctx context.Context, orgCode string) ([]entity.WorksOrg, error) {
 
-	var orgTree []models.WorksOrg
+	var worksOrgs []model.WorksOrg
 	viewSql := `SELECT * FROM org.vw_dept_and_user_tree where org = ?`
-	err := r.db.Raw(viewSql, orgCode).Scan(&orgTree).Error
+	err := r.db.Raw(viewSql, orgCode).Scan(&worksOrgs).Error
 
 	if err != nil {
 		log.Println("[GetOrg] - No record found or DB error")
 		return nil, err
 	}
 
-	return orgTree, nil
+	// 파싱 로직 추가 var orgTree []model.WorksOrg -> []entity.WorksOrg
+
+	return convertWorksOrgToEntity(worksOrgs), nil
+}
+
+// 변환 함수
+func convertWorksOrgToEntity(models []model.WorksOrg) []entity.WorksOrg {
+	entities := make([]entity.WorksOrg, 0, len(models))
+	for _, m := range models {
+		entity := entity.WorksOrg{
+			Org:            m.Org,
+			DeptCode:       m.DeptCode,
+			ParentDeptCode: m.ParentDeptCode,
+			KoLang:         m.KoLang,
+			EnLang:         m.EnLang,
+			ZhLang:         m.ZhLang,
+			JpLang:         m.JpLang,
+			RuLang:         m.RuLang,
+			ViLang:         m.ViLang,
+			UpdateHash:     m.UpdateHash,
+			Kind:           m.Kind,
+			Id:             m.Id,
+			Header:         m.Header,
+		}
+		entities = append(entities, entity)
+	}
+	return entities
 }

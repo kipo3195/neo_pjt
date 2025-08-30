@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"org/internal/domain/user/models"
 	"org/internal/domain/user/repository"
+	"org/internal/infra/model"
 	"org/internal/sharedEntities"
 
 	"gorm.io/gorm"
@@ -19,9 +19,15 @@ func NewUserRepository(db *gorm.DB) repository.UserRepository {
 	}
 }
 
+func UserMigrate(db *gorm.DB) {
+	db.AutoMigrate(&model.UserDetail{})
+	db.AutoMigrate(&model.UserGrade{})
+	db.AutoMigrate(&model.UserProfile{})
+}
+
 func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, myHash string) (sharedEntities.MyInfoEntity, error) {
-	var myDetailInfo models.MyDetailInfo
-	var myDeptInfo []models.DeptInfo
+	var myDetailInfo model.MyDetailInfo
+	var myDeptInfo []model.DeptInfo
 
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
@@ -93,7 +99,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, myHash string) (shar
 	return toMyInfoEntity(myDetailInfo, myDeptInfo), nil
 }
 
-func toMyInfoEntity(myDetailInfo models.MyDetailInfo, myDeptInfo []models.DeptInfo) sharedEntities.MyInfoEntity {
+func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo) sharedEntities.MyInfoEntity {
 
 	// 사용자 명 다국어 처리
 	userName := sharedEntities.NameEntity{
@@ -120,7 +126,7 @@ func toMyInfoEntity(myDetailInfo models.MyDetailInfo, myDeptInfo []models.DeptIn
 	}
 }
 
-func toDeptInfoEntity(myDeptInfo []models.DeptInfo) []sharedEntities.DeptEntity {
+func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []sharedEntities.DeptEntity {
 
 	var deptEntity []sharedEntities.DeptEntity
 

@@ -2,7 +2,7 @@ package config
 
 import (
 	"log"
-	"org/models"
+	"org/internal/infra/model"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -11,7 +11,8 @@ import (
 )
 
 type ServerConfig struct {
-	dbConfig *DBConfig
+	dbConfig    *DBConfig
+	AutoMigrate bool
 }
 
 type DBConfig struct {
@@ -36,11 +37,13 @@ func NewServerConfig() *ServerConfig {
 
 	// DB 설정
 	dbConfig := initDBConfig()
+	autoMigrate := initAutoMigrate()
 
 	// API 요청 설정
 
 	return &ServerConfig{
-		dbConfig: dbConfig,
+		dbConfig:    dbConfig,
+		AutoMigrate: autoMigrate,
 	}
 }
 
@@ -62,6 +65,15 @@ func initDBConfig() *DBConfig {
 	}
 }
 
+func initAutoMigrate() bool {
+	flag := os.Getenv("AUTO_MIGRATE")
+	if flag != "" && flag == "true" {
+		return true
+	} else {
+		return false
+	}
+}
+
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
 	//log.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
@@ -74,19 +86,10 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	}
 
 	/* 마이그레이션 */
-	db.AutoMigrate(&models.WorksDept{})
-	db.AutoMigrate(&models.WorksDeptMultiLang{})
-	db.AutoMigrate(&models.PositionMultiLang{})
-	db.AutoMigrate(&models.RoleMultiLang{})
-	db.AutoMigrate(&models.ServiceUserTenant{})
-	db.AutoMigrate(&models.ServiceUsers{})
-	db.AutoMigrate(&models.UserDetail{})
-	db.AutoMigrate(&models.UserGrade{})
-	db.AutoMigrate(&models.WorksDeptUser{})
-	db.AutoMigrate(&models.WorksUserMultiLang{})
-	db.AutoMigrate(&models.OrgEvent{})
-	db.AutoMigrate(&models.OrgEventHash{})
-	db.AutoMigrate(&models.UserProfile{})
+	// 다른쪽으로 이관 필요.
+	db.AutoMigrate(&model.ServiceUserTenant{})
+	db.AutoMigrate(&model.ServiceUsers{})
+
 	log.Println("Org Database Connected !")
 	return db
 }

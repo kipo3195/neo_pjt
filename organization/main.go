@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+	"org/internal/app"
 	"org/internal/config"
-	"org/internal/domains/department"
-	"org/internal/domains/org"
-	"org/internal/domains/user"
+	"org/internal/infra/migration"
 	"org/internal/infra/storage"
 	"org/internal/router"
 )
@@ -23,6 +22,9 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
 
 	// ---- Storage Init -----
 	orgStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
@@ -33,14 +35,14 @@ func InitServer() *http.Server {
 
 	r, baseGroup := router.SetDefaultRoutes("org")
 
-	departmentHandler := department.InitModule(db)
-	router.SetDepartmentRoutes(baseGroup, departmentHandler)
+	departmentHandler := app.InitDepartmentHandler(db)
+	router.SetDepartmentRoutes(baseGroup, departmentHandler.Handler)
 
-	orgHandler := org.InitModule(db, orgStorage)
-	router.SetOrgRoute(baseGroup, orgHandler)
+	orgHandler := app.InitOrgHandler(db, orgStorage)
+	router.SetOrgRoute(baseGroup, orgHandler.Handler)
 
-	userHandler := user.InitModule(db)
-	router.SetUserRoute(baseGroup, userHandler)
+	userHandler := app.InitUserHandler(db)
+	router.SetUserRoute(baseGroup, userHandler.Handler)
 
 	// ---- Service Init -----
 
