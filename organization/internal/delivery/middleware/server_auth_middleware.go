@@ -1,39 +1,49 @@
-package routes
+package middleware
 
 import (
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"org/internal/consts"
+	commonConsts "org/pkg/consts"
+	"org/pkg/response"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var serverJwtSecretKey = []byte("neo-test-secret-key")
 
-func ServerAuthMiddleware(next http.Handler) http.Handler {
+func ServerAuthMiddleware() gin.HandlerFunc {
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(c *gin.Context) {
 		// 토큰 추출 및 검증 로직
-		tokenStr, err := serverExtractTokenFromHeader(r.Header)
+		tokenStr, err := serverExtractTokenFromHeader(c.Request.Header)
 		if err != nil {
-			log.Println("토큰 전달 형식이 맞지 않음. header check.")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
+			c.Abort() // 다음 핸들러 중단
 			return
 		}
 
 		_, err = serverVerifyJWT(tokenStr)
-		log.Println(err.Error())
 		if err != nil {
-			log.Println("인증된 토큰이 아님. ")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			log.Println(err, err.Error())
+			if errors.Is(err, consts.ErrTokenExpired) {
+				log.Println("토큰 만료")
+				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
+			} else {
+				log.Println("토큰 검증 실패")
+				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
+				c.Abort() // 다음 핸들러 중단
+			}
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
+		c.Next()
+	}
 }
 
 // Authorization 헤더에서 "Bearer <token>" 형태로 된 토큰 추출

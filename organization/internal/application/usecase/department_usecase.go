@@ -3,9 +3,9 @@ package usecase
 import (
 	"context"
 	"log"
+	"org/internal/delivery/dto/department"
 	"org/internal/domain/department/entity"
 	"org/internal/domain/department/repository"
-	"org/internal/dto/department"
 	"org/internal/utils"
 )
 

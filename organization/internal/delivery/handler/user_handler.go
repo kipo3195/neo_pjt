@@ -3,10 +3,10 @@ package handler
 import (
 	"context"
 	"log"
+	"org/internal/application/usecase"
 	"org/internal/consts"
-	"org/internal/dto/user"
-	"org/internal/middleware/contextkey"
-	"org/internal/usecase"
+	"org/internal/delivery/dto/user"
+	"org/internal/delivery/middleware/contextkey"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
 	"time"

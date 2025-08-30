@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"org/internal/app"
 	"org/internal/config"
-	"org/internal/infra/migration"
-	"org/internal/infra/storage"
-	"org/internal/router"
+	"org/internal/delivery/router"
+	"org/internal/infrastructure/migration"
+	"org/internal/infrastructure/storage"
 )
 
 func main() {

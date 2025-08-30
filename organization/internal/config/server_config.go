@@ -2,7 +2,7 @@ package config
 
 import (
 	"log"
-	"org/internal/infra/model"
+	"org/internal/infrastructure/model"
 	"os"
 
 	"github.com/joho/godotenv"

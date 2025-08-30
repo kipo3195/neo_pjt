@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"org/internal/infra/repository"
+	"org/internal/infrastructure/repository"
 
 	"gorm.io/gorm"
 )

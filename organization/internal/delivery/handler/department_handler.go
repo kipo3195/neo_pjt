@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"org/internal/dto/department"
-	"org/internal/usecase"
+	"org/internal/application/usecase"
+	"org/internal/delivery/dto/department"
 	commonConsts "org/pkg/consts"
 
 	"encoding/json"

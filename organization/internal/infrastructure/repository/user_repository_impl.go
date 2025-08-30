@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"org/internal/domain/user/repository"
-	"org/internal/infra/model"
+	"org/internal/infrastructure/model"
 	"org/internal/sharedEntities"
 
 	"gorm.io/gorm"

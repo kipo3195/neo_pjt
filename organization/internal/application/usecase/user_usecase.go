@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
+	"org/internal/delivery/dto/user"
 	"org/internal/domain/user/repository"
-	"org/internal/dto/user"
 	"org/internal/sharedEntities"
 )
 

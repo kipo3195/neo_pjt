@@ -1,10 +1,10 @@
 package app
 
 import (
-	"org/internal/handler"
-	"org/internal/infra/repository"
-	"org/internal/infra/storage"
-	"org/internal/usecase"
+	"org/internal/application/usecase"
+	"org/internal/delivery/handler"
+	"org/internal/infrastructure/repository"
+	"org/internal/infrastructure/storage"
 
 	"gorm.io/gorm"
 )

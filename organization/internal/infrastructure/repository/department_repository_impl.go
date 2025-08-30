@@ -6,7 +6,7 @@ import (
 	"log"
 	"org/internal/domain/department/entity"
 	"org/internal/domain/department/repository"
-	"org/internal/infra/model"
+	"org/internal/infrastructure/model"
 	"org/internal/utils"
 
 	"gorm.io/gorm"

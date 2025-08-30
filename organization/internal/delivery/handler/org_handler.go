@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"org/internal/dto/org"
-	"org/internal/usecase"
+	"org/internal/application/usecase"
+	"org/internal/delivery/dto/org"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
 	"os"
