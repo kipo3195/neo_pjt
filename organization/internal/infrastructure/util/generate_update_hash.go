@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"org/internal/consts"
+	"org/internal/infrastructure/consts"
 	"time"
 )
 

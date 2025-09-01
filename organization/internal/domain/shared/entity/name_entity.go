@@ -1,4 +1,4 @@
-package sharedEntities
+package entity
 
 type NameEntity struct {
 	Def string `json:"def"`

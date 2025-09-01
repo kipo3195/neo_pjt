@@ -7,13 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"org/internal/consts"
+	"org/internal/application/consts"
+	"org/internal/application/util"
 	"org/internal/delivery/dto/org"
 	"org/internal/domain/org/entity"
 	"org/internal/domain/org/repository"
+	sharedEntity "org/internal/domain/shared/entity"
 	"org/internal/infrastructure/storage"
-	"org/internal/sharedEntities"
-	"org/internal/utils"
 	commonConsts "org/pkg/consts"
 	"strings"
 )
@@ -114,7 +114,7 @@ func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req org.CreateOrgF
 		}
 
 		// 저장시간 생성 = 파일 명
-		fileName := utils.GetNow()
+		fileName := util.GetNow()
 		fmt.Printf("org %s file name: %s\n", org, fileName)
 
 		orgEntity := parseOrgTree(orgTree)
@@ -183,7 +183,7 @@ func parseOrgTree(orgTree []entity.WorksOrg) *entity.OrgEntity {
 
 	for _, org := range orgTree {
 		// 이름 다국어 처리
-		name := sharedEntities.NameEntity{
+		name := sharedEntity.NameEntity{
 			Def: org.KoLang, // 수정 필요.
 			Ko:  org.KoLang,
 			En:  org.EnLang,

@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"org/internal/config"
 	"org/internal/delivery/router"
 	"org/internal/di"
+	"org/internal/infrastructure/config"
 	"org/internal/infrastructure/migration"
 	"org/internal/infrastructure/storage"
 )
@@ -32,7 +32,6 @@ func InitServer() *http.Server {
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-
 	r, baseGroup := router.SetDefaultRoutes("org")
 
 	departmentHandler := di.InitDepartmentHandler(db)
@@ -43,7 +42,6 @@ func InitServer() *http.Server {
 
 	userHandler := di.InitUserHandler(db)
 	router.SetUserRoute(baseGroup, userHandler.Handler)
-
 	// ---- Service Init -----
 
 	//router := routes.SetupRoutes(handlers)

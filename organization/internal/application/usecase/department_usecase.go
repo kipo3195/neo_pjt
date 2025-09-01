@@ -3,10 +3,10 @@ package usecase
 import (
 	"context"
 	"log"
+	"org/internal/application/util"
 	"org/internal/delivery/dto/department"
 	"org/internal/domain/department/entity"
 	"org/internal/domain/department/repository"
-	"org/internal/utils"
 )
 
 type departmentUsecase struct {
@@ -63,7 +63,7 @@ func toDeleteDeptUserEntity(req department.DeleteDeptUserRequest) entity.DeleteD
 
 func (r *departmentUsecase) CreateDeptUser(ctx context.Context, req department.CreateDeptUserRequest) (interface{}, error) {
 
-	updateHash := utils.MakeUpdateHash()
+	updateHash := util.MakeUpdateHash()
 	log.Println("사용자 추가시 update Hash 생성 : ", updateHash)
 
 	return r.repository.PutDeptUser(ctx, toCreateDeptUserEntity(req, updateHash))

@@ -44,5 +44,4 @@ func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler) {
 	clientApi.Use(middleware.AuthMiddleware())
 	clientApi.GET("/my-info", handler.GetMyInfo)
 	clientApi.GET("/info", handler.GetUserInfo)
-
 }

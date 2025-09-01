@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"org/internal/consts"
+	"org/internal/delivery/consts"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
 	"strings"

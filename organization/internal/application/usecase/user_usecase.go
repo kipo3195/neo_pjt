@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 	"org/internal/delivery/dto/user"
+	sharedEntity "org/internal/domain/shared/entity"
 	"org/internal/domain/user/repository"
-	"org/internal/sharedEntities"
 )
 
 type userUsecase struct {
@@ -30,7 +30,7 @@ func (r *userUsecase) GetMyInfo(ctx context.Context, req user.GetMyInfoRequest) 
 	return toMyInfoDto(MyInfoEntity), nil
 }
 
-func toMyInfoDto(entity sharedEntities.MyInfoEntity) user.GetMyInfoResponseBody {
+func toMyInfoDto(entity sharedEntity.MyInfoEntity) user.GetMyInfoResponseBody {
 
 	username := user.UsernameDto{
 		Def: entity.Username.Ko, // 수정 필요
@@ -55,7 +55,7 @@ func toMyInfoDto(entity sharedEntities.MyInfoEntity) user.GetMyInfoResponseBody 
 	}
 }
 
-func toDeptInfoDto(deptInfos []sharedEntities.DeptEntity) []user.DeptInfoDto {
+func toDeptInfoDto(deptInfos []sharedEntity.DeptEntity) []user.DeptInfoDto {
 
 	var deptInfoDto []user.DeptInfoDto
 

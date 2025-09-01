@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"org/internal/claims"
-	"org/internal/consts"
+	"org/internal/delivery/consts"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
 	"strings"
@@ -17,6 +16,11 @@ import (
 )
 
 var jwtSecretKey = []byte("neo-test-secret-key")
+
+type JWTClaims struct {
+	UserHash string `json:"userHash"`
+	jwt.RegisteredClaims
+}
 
 func AuthMiddleware() gin.HandlerFunc {
 
@@ -67,7 +71,7 @@ func verifyJWT(tokenStr string) (string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
 
-	token, err := parser.ParseWithClaims(tokenStr, &claims.JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := parser.ParseWithClaims(tokenStr, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -79,7 +83,7 @@ func verifyJWT(tokenStr string) (string, error) {
 	}
 
 	// 유효성 체크
-	parsedClaims, ok := token.Claims.(*claims.JWTClaims) // ← 여기서도 JWTClaims로
+	parsedClaims, ok := token.Claims.(*JWTClaims) // ← 여기서도 JWTClaims로
 	if !ok || !token.Valid {
 		return "", consts.ErrInvalidClaims
 	}

@@ -1,13 +1,13 @@
 package entity
 
 import (
-	"org/internal/sharedEntities"
+	sharedEntity "org/internal/domain/shared/entity"
 )
 
 type OrgTreeInfo struct {
-	DeptCode       string                    `json:"deptCode"`
-	ParentDeptCode string                    `json:"parentDeptCode"`
-	Name           sharedEntities.NameEntity `json:"name"`
+	DeptCode       string                  `json:"deptCode"`
+	ParentDeptCode string                  `json:"parentDeptCode"`
+	Name           sharedEntity.NameEntity `json:"name"`
 	//UpdateHash     string         `json:"updateHash"`
 	SubDept []OrgTreeInfo `json:"subDept,omitempty"` // 재귀 구조
 	Id      string        `json:"id"`

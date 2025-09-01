@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
+	sharedEntity "org/internal/domain/shared/entity"
 	"org/internal/domain/user/repository"
 	"org/internal/infrastructure/model"
-	"org/internal/sharedEntities"
 
 	"gorm.io/gorm"
 )
@@ -25,14 +25,14 @@ func UserMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.UserProfile{})
 }
 
-func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, myHash string) (sharedEntities.MyInfoEntity, error) {
+func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, myHash string) (sharedEntity.MyInfoEntity, error) {
 	var myDetailInfo model.MyDetailInfo
 	var myDeptInfo []model.DeptInfo
 
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
 	if tx.Error != nil {
-		return sharedEntities.MyInfoEntity{}, tx.Error
+		return sharedEntity.MyInfoEntity{}, tx.Error
 	}
 
 	// 첫 번째 쿼리: 사용자 상세 정보
@@ -59,7 +59,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, myHash string) (shar
 		myHash).Scan(&myDetailInfo).Error
 	if err != nil {
 		tx.Rollback()
-		return sharedEntities.MyInfoEntity{}, err
+		return sharedEntity.MyInfoEntity{}, err
 	}
 
 	// 두 번째 쿼리: 부서 정보
@@ -87,22 +87,22 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, myHash string) (shar
 		myHash).Scan(&myDeptInfo).Error
 	if err != nil {
 		tx.Rollback()
-		return sharedEntities.MyInfoEntity{}, err
+		return sharedEntity.MyInfoEntity{}, err
 	}
 
 	// 트랜잭션 커밋
 	if err := tx.Commit().Error; err != nil {
-		return sharedEntities.MyInfoEntity{}, err
+		return sharedEntity.MyInfoEntity{}, err
 	}
 
 	// 매핑 및 반환
 	return toMyInfoEntity(myDetailInfo, myDeptInfo), nil
 }
 
-func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo) sharedEntities.MyInfoEntity {
+func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo) sharedEntity.MyInfoEntity {
 
 	// 사용자 명 다국어 처리
-	userName := sharedEntities.NameEntity{
+	userName := sharedEntity.NameEntity{
 		Def: myDetailInfo.KoLang, // 수정 필요
 		Ko:  myDetailInfo.KoLang,
 		En:  myDetailInfo.EnLang,
@@ -116,7 +116,7 @@ func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo
 	deptInfoEntity := toDeptInfoEntity(myDeptInfo)
 
 	// 내 정보
-	return sharedEntities.MyInfoEntity{
+	return sharedEntity.MyInfoEntity{
 		UserHash:     myDetailInfo.UserHash,
 		UserPhoneNum: myDetailInfo.UserPhoneNum,
 		Username:     userName,
@@ -126,12 +126,12 @@ func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo
 	}
 }
 
-func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []sharedEntities.DeptEntity {
+func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []sharedEntity.DeptEntity {
 
-	var deptEntity []sharedEntities.DeptEntity
+	var deptEntity []sharedEntity.DeptEntity
 
 	for _, dept := range myDeptInfo {
-		deptEntity = append(deptEntity, sharedEntities.DeptEntity{
+		deptEntity = append(deptEntity, sharedEntity.DeptEntity{
 			DeptOrg:  dept.DeptOrg,
 			DeptCode: dept.DeptOrg,
 			DefLang:  dept.DefLang,
