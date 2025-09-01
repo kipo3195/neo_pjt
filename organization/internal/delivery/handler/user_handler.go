@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 	"org/internal/application/usecase"
-	"org/internal/delivery/consts"
+	"org/internal/consts"
 	"org/internal/delivery/dto/user"
 	"org/internal/delivery/middleware/contextkey"
 	commonConsts "org/pkg/consts"
