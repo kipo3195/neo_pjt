@@ -1,10 +1,11 @@
 package main
 
 import (
-	"core/internal/config"
-	appValidation "core/internal/domains/appValidation"
-	"core/internal/infra/storage"
-	"core/internal/router"
+	"core/internal/delivery/router"
+	"core/internal/di"
+	"core/internal/infrastructure/config"
+	"core/internal/infrastructure/migration"
+	"core/internal/infrastructure/storage"
 	"log"
 	"net/http"
 )
@@ -16,19 +17,29 @@ func main() {
 }
 
 func InitServer() *http.Server {
-	// 서버 설정 로드 (.env 또는 환경 변수 기반)
+	// ---- Server Config Init -----
 	sfg := config.NewServerConfig()
 
-	// 데이터베이스 연결 설정
+	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
 
-	// 서버 관련 메타 정보 메모리 캐시 초기화, 필요시 메모리 로딩 로직 (loader) 추가
+	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
+	// ---- Storage Init -----
 	serverInfoStorage := storage.NewServerInfoStorage()
 
+	// ---- Data Loader -----
+
+	// ---- Router Init -----
 	r, baseGroup := router.SetDefaultRoutes("core")
 
-	appValidationHandlers := appValidation.InitModules(db, sfg, serverInfoStorage)
-	router.SetAppValidationRoutes(baseGroup, appValidationHandlers)
+	// ---- Domain Handler Init -----
+	appValidationHandler := di.InitAppValidationHandler(db, sfg, serverInfoStorage)
+	router.SetAppValidationRoute(baseGroup, appValidationHandler.Handler)
+
+	// ---- Orchestrator Init -----
 
 	// HTTP 서버 설정 및 반환
 	return &http.Server{

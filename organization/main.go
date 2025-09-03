@@ -18,7 +18,10 @@ func main() {
 
 func InitServer() *http.Server {
 
+	// ---- Server Config Init -----
 	sfg := config.NewServerConfig()
+
+	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
@@ -34,6 +37,7 @@ func InitServer() *http.Server {
 	// ---- Router Init -----
 	r, baseGroup := router.SetDefaultRoutes("org")
 
+	// ---- Domain Handler Init -----
 	departmentHandler := di.InitDepartmentHandler(db)
 	router.SetDepartmentRoutes(baseGroup, departmentHandler.Handler)
 
@@ -42,7 +46,7 @@ func InitServer() *http.Server {
 
 	userHandler := di.InitUserHandler(db)
 	router.SetUserRoute(baseGroup, userHandler.Handler)
-	// ---- Service Init -----
+	// ---- Orchestrator Init -----
 
 	//router := routes.SetupRoutes(handlers)
 
