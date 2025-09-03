@@ -5,6 +5,6 @@ import (
 )
 
 type AppValidationRepository interface {
-	GetValidation(where entity.ValidationEntity) (bool, error)
+	GetValidation(where entity.ValidationEntity) error
 	GetWorksCommonInfo(worksCode string) (*entity.WorksCommonInfo, error)
 }

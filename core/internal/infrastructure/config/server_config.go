@@ -11,7 +11,6 @@ import (
 
 type ServerConfig struct {
 	dbConfig    *DBConfig
-	ApiConfig   *ApiConfig
 	AutoMigrate bool
 }
 
@@ -21,10 +20,6 @@ type DBConfig struct {
 	Id       string
 	Pw       string
 	Database string
-}
-
-type ApiConfig struct {
-	NeoHeaderPrefix string
 }
 
 func isLocal() bool {
@@ -42,14 +37,10 @@ func NewServerConfig() *ServerConfig {
 	// DB 설정
 	dbConfig := initDBConfig()
 
-	// API 요청 설정
-	apiConfig := initApiConfig()
-
 	autoMigrate := initAutoMigrate()
 
 	return &ServerConfig{
 		dbConfig:    dbConfig,
-		ApiConfig:   apiConfig,
 		AutoMigrate: autoMigrate,
 	}
 }
@@ -88,16 +79,6 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 }
 
 /* API Config Area*/
-
-func initApiConfig() *ApiConfig {
-
-	neoHeaderPrefix := os.Getenv("NEO_HEADER_PREFIX")
-
-	return &ApiConfig{
-		NeoHeaderPrefix: neoHeaderPrefix,
-	}
-
-}
 
 func initAutoMigrate() bool {
 	flag := os.Getenv("AUTO_MIGRATE")

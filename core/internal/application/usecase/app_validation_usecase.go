@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"bytes"
+	"core/internal/application/usecase/input"
 	"core/internal/domain/appValidation/entity"
 	"core/internal/domain/appValidation/repository"
 	"core/internal/infrastructure/storage"
@@ -20,8 +21,8 @@ type appValidationUsecase struct {
 }
 
 type AppValidationUsecase interface {
-	CheckValidation(header appValidation.AppValidationRequestHeader) (bool, error)
-	GetWorksInfos(reqDto appValidation.AppValidationRequestDTO) (*appValidation.AppValidationResponseDTO, error)
+	CheckValidation(in input.AppValidationInput) (interface{}, error)
+	GetWorksInfos(entity entity.ValidationEntity) (*appValidation.AppValidationResponseDTO, error)
 }
 
 func NewAppValidationUsecase(repository repository.AppValidationRepository, serverInfoStorage storage.ServerInfoStorage) AppValidationUsecase {
@@ -32,26 +33,28 @@ func NewAppValidationUsecase(repository repository.AppValidationRepository, serv
 	}
 }
 
-func (u *appValidationUsecase) CheckValidation(header appValidation.AppValidationRequestHeader) (bool, error) {
+func (u *appValidationUsecase) CheckValidation(in input.AppValidationInput) (interface{}, error) {
 
-	return u.repository.GetValidation(toValidationEntity(header))
+	entity := entity.NewAppValidationEntity(in.Hash, in.Device, in.Uuid, in.WorksCode)
+	err := u.repository.GetValidation(entity)
 
-}
-
-func toValidationEntity(header appValidation.AppValidationRequestHeader) entity.ValidationEntity {
-	return entity.ValidationEntity{
-		Hash:   header.Hash,
-		Device: header.Device,
+	if err != nil {
+		return nil, err
 	}
+
+	result, err := u.GetWorksInfos(entity)
+
+	return result, nil
+
 }
 
-func (u *appValidationUsecase) GetWorksInfos(reqDto appValidation.AppValidationRequestDTO) (*appValidation.AppValidationResponseDTO, error) {
+// entitiy로 변경
+func (u *appValidationUsecase) GetWorksInfos(entity entity.ValidationEntity) (*appValidation.AppValidationResponseDTO, error) {
 
-	var worksCommonInfo *entity.WorksCommonInfo
-	worksCode := reqDto.Body.WorksCode
+	worksCode := entity.WorksCode
 
 	// 메모리를 통한 조회
-	worksCommonInfo = u.serverInfoStorage.GetWorksCommonInfo(worksCode)
+	worksCommonInfo := u.serverInfoStorage.GetWorksCommonInfo(worksCode)
 
 	if worksCommonInfo == nil {
 		fmt.Printf("[GetWorksCommonInfo] %s's worksCommonInfo is empty... check DB  \n", worksCode)
@@ -67,7 +70,7 @@ func (u *appValidationUsecase) GetWorksInfos(reqDto appValidation.AppValidationR
 	}
 
 	// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
-	worksInfo, err := getWorksInfoInCommon(toWorksInfoRequestDtoBody(reqDto.Header.Uuid, reqDto.Header.Device, reqDto.Body.WorksCode), worksCommonInfo.ServerUrl)
+	worksInfo, err := getWorksInfoInCommon(entity, worksCommonInfo.ServerUrl)
 
 	log.Println("worksInfo", worksInfo)
 
@@ -94,7 +97,7 @@ func toWorksInfoRequestDtoBody(uuid string, device string, worksCode string) app
 	}
 }
 
-func getWorksInfoInCommon(body appValidation.DeviceInitRequestBody, serverUrl string) (*appValidation.DeviceInitResponseBody, error) {
+func getWorksInfoInCommon(entity entity.ValidationEntity, serverUrl string) (*appValidation.DeviceInitResponseBody, error) {
 
 	// server to server DTO 정의
 	header := appValidation.DeviceInitRequestHeader{

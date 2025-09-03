@@ -24,7 +24,7 @@ func AppValidationMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.WorksList{})
 }
 
-func (r *appValidationRepository) GetValidation(where entity.ValidationEntity) (bool, error) {
+func (r *appValidationRepository) GetValidation(where entity.ValidationEntity) error {
 	var validation model.AppValidation
 
 	result := r.db.Where("app_hash = ?", where.Hash).Where("device_kind = ?", where.Device).First(&validation)
@@ -32,14 +32,14 @@ func (r *appValidationRepository) GetValidation(where entity.ValidationEntity) (
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		// 조회 결과가 없을 때
 		fmt.Print("[GetValidation] result record = 0")
-		return false, result.Error
+		return result.Error
 	} else if result.Error != nil {
 		// 기타 에러 발생 (DB 오류 등)
 		fmt.Print("[GetValidation] DB error")
-		return false, result.Error
+		return result.Error
 	}
 
-	return true, nil
+	return nil
 }
 
 func (r *appValidationRepository) GetWorksCommonInfo(worksCode string) (*entity.WorksCommonInfo, error) {

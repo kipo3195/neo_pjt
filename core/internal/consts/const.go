@@ -1,3 +1,5 @@
 package consts
 
-const ()
+const (
+	HEADER_PRIFIX = "X-NEO-"
+)
