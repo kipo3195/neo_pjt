@@ -5,8 +5,8 @@ import (
 )
 
 type AppValidationResponseBody struct {
-	WorksCommonInfo *entity.WorksCommonInfo `json:"worksCommonInfo"`
-	WorksInfo       *DeviceInitResponseBody `json:"worksInfo"`
+	WorksCommonInfo *entity.WorksCommonInfo  `json:"worksCommonInfo"`
+	WorksInfo       *entity.DeviceInitResult `json:"worksInfo"`
 }
 
 type AppValidationResponseDTO struct {

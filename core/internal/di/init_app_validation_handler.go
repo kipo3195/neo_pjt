@@ -16,8 +16,9 @@ type AppValidationHandler struct {
 
 func InitAppValidationHandler(db *gorm.DB, sfg *config.ServerConfig, serverInfoStorage storage.ServerInfoStorage) *AppValidationHandler {
 
-	repository := repository.NewAppValidationRepository(db)
-	usecase := usecase.NewAppValidationUsecase(repository, serverInfoStorage)
+	repo := repository.NewAppValidationRepository(db)
+	apiRepository := repository.NewAppValidationAPIRepository(sfg.Domain)
+	usecase := usecase.NewAppValidationUsecase(repo, apiRepository, serverInfoStorage)
 	handler := handler.NewAppValidationHandler(sfg, usecase)
 
 	return &AppValidationHandler{

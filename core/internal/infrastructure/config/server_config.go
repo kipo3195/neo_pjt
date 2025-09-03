@@ -10,6 +10,7 @@ import (
 )
 
 type ServerConfig struct {
+	Domain      string
 	dbConfig    *DBConfig
 	AutoMigrate bool
 }
@@ -39,14 +40,20 @@ func NewServerConfig() *ServerConfig {
 
 	autoMigrate := initAutoMigrate()
 
+	domain := initDomain()
+
 	return &ServerConfig{
 		dbConfig:    dbConfig,
 		AutoMigrate: autoMigrate,
+		Domain:      domain,
 	}
 }
 
-/* DB Config Area*/
+func initDomain() string {
+	return os.Getenv("DOMAIN")
+}
 
+/* DB Config Area*/
 func initDBConfig() *DBConfig {
 	host := os.Getenv("HOST")
 	id := os.Getenv("ID")

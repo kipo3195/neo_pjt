@@ -57,7 +57,7 @@ func (h *AppValidationHandler) ValidateApp(c *gin.Context) {
 	validationInput := adapter.MakeValidateAppInput(requestDTO)
 
 	// 배포 앱 hash 검증
-	result, err := h.usecase.CheckValidation(validationInput)
+	result, err := h.usecase.CheckValidation(c, validationInput)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
