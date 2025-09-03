@@ -7,7 +7,6 @@ import (
 	"core/internal/domain/appValidation/repository"
 	"core/internal/infrastructure/storage"
 
-	"core/internal/delivery/dto/appValidation"
 	"fmt"
 	"log"
 )
@@ -19,8 +18,8 @@ type appValidationUsecase struct {
 }
 
 type AppValidationUsecase interface {
-	CheckValidation(ctx context.Context, in input.AppValidationInput) (interface{}, error)
-	GetWorksInfos(ctx context.Context, entity entity.ValidationEntity) (*appValidation.AppValidationResponseDTO, error)
+	CheckValidation(ctx context.Context, in input.AppValidationInput) (*entity.DeviceInitResult, error)
+	GetWorksInfos(ctx context.Context, entity entity.ValidationEntity) (*entity.DeviceInitResult, error)
 }
 
 func NewAppValidationUsecase(repository repository.AppValidationRepository, apiRepository repository.AppValidationAPIRepository, serverInfoStorage storage.ServerInfoStorage) AppValidationUsecase {
@@ -32,10 +31,9 @@ func NewAppValidationUsecase(repository repository.AppValidationRepository, apiR
 	}
 }
 
-func (u *appValidationUsecase) CheckValidation(ctx context.Context, in input.AppValidationInput) (interface{}, error) { //output
+func (u *appValidationUsecase) CheckValidation(ctx context.Context, in input.AppValidationInput) (*entity.DeviceInitResult, error) { //output
 
 	entity := entity.NewAppValidationEntity(in.Hash, in.Device, in.Uuid, in.WorksCode)
-
 	err := u.repository.GetValidation(entity)
 
 	if err != nil {
@@ -44,12 +42,16 @@ func (u *appValidationUsecase) CheckValidation(ctx context.Context, in input.App
 
 	result, err := u.GetWorksInfos(ctx, entity)
 
+	if err != nil {
+		return nil, err
+	}
+
 	return result, nil
 
 }
 
 // entitiy로 변경
-func (u *appValidationUsecase) GetWorksInfos(ctx context.Context, entity entity.ValidationEntity) (*appValidation.AppValidationResponseDTO, error) {
+func (u *appValidationUsecase) GetWorksInfos(ctx context.Context, entity entity.ValidationEntity) (*entity.DeviceInitResult, error) {
 
 	worksCode := entity.WorksCode
 
@@ -70,20 +72,16 @@ func (u *appValidationUsecase) GetWorksInfos(ctx context.Context, entity entity.
 	}
 
 	// works의 domain/common API 호출 -> auth 호출 해서 jwt 발급, 저장, 결과 response.
-	worksInfo, err := u.apiRepository.DeviceInit(ctx, entity)
+	result, err := u.apiRepository.DeviceInit(ctx, entity)
 
-	log.Println("worksInfo", worksInfo)
+	log.Println("worksInfo : ", result)
 
 	if err != nil {
 		log.Println("common service 호출시 에러 발생함.")
 		return nil, err
 	}
 
-	return &appValidation.AppValidationResponseDTO{
-		Body: appValidation.AppValidationResponseBody{
-			WorksCommonInfo: worksCommonInfo,
-			WorksInfo:       worksInfo,
-		},
-	}, nil
+	// dto가 아닌 별도의 entity로 정의 할 것.
+	return result, nil
 
 }

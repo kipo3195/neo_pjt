@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"core/internal/application/adapter"
 	"core/internal/application/usecase"
 	"core/internal/consts"
+	"core/internal/delivery/adapter"
 	"core/internal/delivery/dto/appValidation"
 	"core/internal/infrastructure/config"
 	commonConsts "core/pkg/consts"
@@ -59,6 +59,8 @@ func (h *AppValidationHandler) ValidateApp(c *gin.Context) {
 	// 배포 앱 hash 검증
 	result, err := h.usecase.CheckValidation(c, validationInput)
 
+	validationOutput := adapter.MakeValidateAppOutput(result)
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 조회된 결과 없음 - 앱 해시 검증 실패
@@ -69,7 +71,7 @@ func (h *AppValidationHandler) ValidateApp(c *gin.Context) {
 		}
 		return
 	}
-	response.SendSuccess(c, result)
+	response.SendSuccess(c, validationOutput)
 
 	// 클라이언트가 넘겨준 Domain : 테넌트 정보로 검증
 
