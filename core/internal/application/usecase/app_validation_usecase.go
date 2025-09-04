@@ -81,7 +81,7 @@ func (u *appValidationUsecase) GetWorksInfos(ctx context.Context, entity entity.
 		return nil, err
 	}
 
-	// dto가 아닌 별도의 entity로 정의 할 것.
+	result.WorksCommonInfo = *worksCommonInfo
 	return result, nil
 
 }

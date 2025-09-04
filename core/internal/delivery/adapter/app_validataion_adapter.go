@@ -20,6 +20,13 @@ func MakeValidateAppInput(req appValidation.AppValidationRequestDTO) input.AppVa
 
 func MakeValidateAppOutput(en *entity.DeviceInitResult) output.AppValidationOutput {
 	return output.AppValidationOutput{
-		// 데이터 정의 필요
+		WorksInfo: output.WorksInfo{
+			IssuedAppToken: output.IssuedAppToken{
+				AppToken:     en.IssuedAppToken.AppToken,
+				RefreshToken: en.IssuedAppToken.RefreshToken,
+			},
+		},
+		WorksConfig:     en.WorksConfig.(output.WorksConfig),
+		WorksCommonInfo: output.WorksCommonInfo(en.WorksCommonInfo),
 	}
 }

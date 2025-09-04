@@ -9,6 +9,7 @@ import (
 	commonConsts "core/pkg/consts"
 	"encoding/json"
 	"errors"
+	"log"
 
 	response "core/pkg/response"
 
@@ -59,6 +60,7 @@ func (h *AppValidationHandler) ValidateApp(c *gin.Context) {
 	// 배포 앱 hash 검증
 	result, err := h.usecase.CheckValidation(c, validationInput)
 
+	// adapter : entity <-> output
 	validationOutput := adapter.MakeValidateAppOutput(result)
 
 	if err != nil {
@@ -71,6 +73,7 @@ func (h *AppValidationHandler) ValidateApp(c *gin.Context) {
 		}
 		return
 	}
+	log.Println("ValidateApp validationOutput : ", validationOutput)
 	response.SendSuccess(c, validationOutput)
 
 	// 클라이언트가 넘겨준 Domain : 테넌트 정보로 검증
