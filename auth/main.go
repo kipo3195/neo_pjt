@@ -1,11 +1,10 @@
 package main
 
 import (
-	"auth/internal/config"
-	certification "auth/internal/domains/certification"
-	token "auth/internal/domains/token"
+	"auth/internal/di"
+	"auth/internal/infrastructure/config"
+	"auth/internal/infrastructure/migration"
 	router "auth/internal/router"
-	"auth/internal/utils"
 	"log"
 	"net/http"
 )
@@ -18,21 +17,32 @@ func main() {
 
 func InitServer() *http.Server {
 
+	// ---- Server Config Init -----
 	sfg := config.NewServerConfig()
+
+	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
 
+	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
+	// ---- Storage Init -----
+
+	// ---- Data Loader -----
+
+	// ---- Router Init -----
 	r, baseGroup := router.SetDefaultRoutes("auth")
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
-	authUtil := utils.NewAuthUtil(sfg.GetJWTConfig())
-
+	// ---- Domain Handler Init -----
 	// 이런 구조로 변경할것.
-	certificationHandler := certification.InitModules(db, sfg.GetJWTConfig(), authUtil)
-	router.SetLoginRoutes(baseGroup, certificationHandler)
+	certificationHandler := di.InitCertificationHandler(db, sfg)
+	router.SetCertificationRoutes(baseGroup, certificationHandler.Handler)
 
-	tokenHandler := token.InitModules(db, sfg.GetJWTConfig(), authUtil)
-	router.SetTokenRoutes(baseGroup, tokenHandler)
+	tokenHandler := di.InitTokenHandler(db, sfg)
+	router.SetTokenRoutes(baseGroup, tokenHandler.Handler)
 
 	return &http.Server{
 		Addr:    ":8087",

@@ -34,6 +34,8 @@ func InitServer() *http.Server {
 
 	// ---- Router Init -----
 	r, baseGroup := router.SetDefaultRoutes("core")
+	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
+	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
 	appValidationHandler := di.InitAppValidationHandler(db, sfg, serverInfoStorage)
