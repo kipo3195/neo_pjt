@@ -12,14 +12,12 @@ func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
 }
 
 func SetCertificationRoutes(parent *gin.RouterGroup, handler *handler.CertificationHandler) {
-
-	api := parent.Group("/client/v1/certification")
-	api.POST("/login", handler.Login)
+	client := parent.Group("/client/v1/certification")
+	client.POST("/login", handler.Login)
 
 }
 
 func SetTokenRoutes(parent *gin.RouterGroup, handler *handler.TokenHandler) {
-
 	// 클라이언트 영역이 있다면
 	// client := parent.Group("/client/v1/token")
 
@@ -28,4 +26,10 @@ func SetTokenRoutes(parent *gin.RouterGroup, handler *handler.TokenHandler) {
 	server.POST("/app-token-validation", handler.AppTokenValidation)
 	server.POST("/app-token-refresh", handler.AppTokenRefresh)
 
+}
+
+func SetUserAuthRoutes(parent *gin.RouterGroup, handler *handler.UserAuthHandler) {
+	client := parent.Group("/client/v1/user/auth")
+	client.GET("/challenge", handler.GenerateAuthChallenge)
+	client.GET("/", handler.GetAuthStatus)
 }
