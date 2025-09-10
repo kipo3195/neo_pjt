@@ -1,7 +1,7 @@
 package dependencies
 
 import (
-	"common/internal/infra/storage"
+	"common/internal/infrastructure/storage"
 
 	"gorm.io/gorm"
 )
