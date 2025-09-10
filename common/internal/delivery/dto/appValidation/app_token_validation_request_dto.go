@@ -1,4 +1,4 @@
-package authRequestDTO
+package appValidation
 
 type AppTokenValidationRequestDTO struct {
 	Header AppTokenValidationRequestHeader

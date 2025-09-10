@@ -16,7 +16,7 @@ func SetAppValidationRoutes(parent *gin.RouterGroup, handler *handler.AppValidat
 
 	server := parent.Group("/server/v1/app-validation")
 
-	server.GET("/validate", handler.ServerHandler.AppValidation)
+	server.GET("/validate", handler.GetAppValidation)
 
 }
 
@@ -39,7 +39,7 @@ func SetSkinRoutes(parent *gin.RouterGroup, handler *handler.SkinHandler) {
 
 // 이 API도 service 처리.
 // appValidation 했던것 처럼  config, skin을 아우르는  service생성하고 api의 전달되는 데이터에 따라서 조회하여 response하도록 수정.
-func SetConfigurationRoutes(parent *gin.RouterGroup, handlers *configuration.ConfigurationHandlers) {
+func SetConfigurationRoutes(parent *gin.RouterGroup, handlers *handler.ConfigurationHandler) {
 	// client := parent.Group("/client/v1/config-hash")
 	// client.GET("/config-hash", handlers.ClientHandler.GetConfigHash)
 }

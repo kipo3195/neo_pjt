@@ -5,7 +5,7 @@ import (
 	"common/internal/delivery/dto/skin"
 	"common/internal/domain/skin/entity"
 	"common/internal/domain/skin/repository"
-	"common/internal/infra/storage"
+	"common/internal/infrastructure/storage"
 	"context"
 	"fmt"
 	"image"

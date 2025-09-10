@@ -2,8 +2,8 @@ package loader
 
 import (
 	"common/internal/consts"
-	repository "common/internal/domains/configuration/repositories/client"
-	"common/internal/infra/storage"
+	"common/internal/infrastructure/repository"
+	"common/internal/infrastructure/storage"
 	"context"
 
 	"gorm.io/gorm"

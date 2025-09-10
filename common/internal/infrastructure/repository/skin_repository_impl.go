@@ -2,8 +2,8 @@ package repository
 
 import (
 	"common/internal/domain/skin/entity"
-	"common/internal/domain/skin/models"
 	"common/internal/domain/skin/repository"
+	"common/internal/infrastructure/model"
 	"context"
 	"errors"
 	"log"
@@ -16,8 +16,8 @@ type skinRepositoryImpl struct {
 }
 
 func SkinMigrate(db *gorm.DB) {
-	db.AutoMigrate(&models.AppSkinConfig{})
-	db.AutoMigrate(&models.AppSkinFileInfo{})
+	db.AutoMigrate(&model.AppSkinConfig{})
+	db.AutoMigrate(&model.AppSkinFileInfo{})
 }
 
 func NewSkinRepository(db *gorm.DB) repository.SkinRepository {
@@ -29,7 +29,7 @@ func NewSkinRepository(db *gorm.DB) repository.SkinRepository {
 func (r *skinRepositoryImpl) GetSkinHash() (string, error) {
 
 	var skinHash string
-	result := r.db.Model(&models.AppSkinConfig{}).
+	result := r.db.Model(&model.AppSkinConfig{}).
 		Where("kind = ?", "skin").
 		Select("value").
 		First(&skinHash)
@@ -53,7 +53,7 @@ func (r *skinRepositoryImpl) PutSkinFileInfo(ctx context.Context, entity *entity
 	}
 
 	// 스킨 해시 insert
-	if err := tx.Create(&models.AppSkinConfig{
+	if err := tx.Create(&model.AppSkinConfig{
 		Value: entity.FileHash,
 	}).Error; err != nil {
 		tx.Rollback()
@@ -62,7 +62,7 @@ func (r *skinRepositoryImpl) PutSkinFileInfo(ctx context.Context, entity *entity
 
 	// 스킨 정보 저장
 	// insert 처리
-	if err := tx.Create(&models.AppSkinFileInfo{
+	if err := tx.Create(&model.AppSkinFileInfo{
 		SkinType: entity.SkinType,
 		//FileUrl:  entity.FileUrl,
 		//FileName: entity.FileName,

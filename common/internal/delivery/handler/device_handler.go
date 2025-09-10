@@ -1,10 +1,10 @@
-package serviceHandlers
+package handler
 
 import (
+	"common/internal/application/orchestrator"
+	"common/internal/delivery/dto/device"
 	appTokenDomain "common/internal/domains/appToken/dto/server/requestDTO"
 	worksInfoDomain "common/internal/domains/worksInfo/dto/server/requestDTO"
-	"common/internal/services/serviceDomains"
-	"common/internal/services/serviceDto"
 	"common/pkg/response"
 	"encoding/json"
 
@@ -14,18 +14,18 @@ import (
 	"github.com/go-playground/validator"
 )
 
-type DeviceInitHandler struct {
-	svc *serviceDomains.DeviceInitService
+type DeviceHandler struct {
+	svc *orchestrator.DeviceInitService
 }
 
-func NewDeviceInitHandler(svc *serviceDomains.DeviceInitService) *DeviceInitHandler {
-	return &DeviceInitHandler{svc: svc}
+func NewDeviceHandler(svc *orchestrator.DeviceInitService) *DeviceHandler {
+	return &DeviceHandler{svc: svc}
 }
 
-func (h *DeviceInitHandler) DeviceInit(c *gin.Context) {
+func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 
 	// request body 데이터 -> dto로 변경
-	var body serviceDto.DeviceInitRequestBody
+	var body device.DeviceRequestBody
 	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 		return
@@ -66,7 +66,7 @@ func (h *DeviceInitHandler) DeviceInit(c *gin.Context) {
 	}
 
 	// 결국 수정되어야할 api의 방향
-	result := serviceDto.DeviceInitResultResponse{
+	result := device.DeviceResultResponse{
 		WorksInfo:      worksInfo, // works의 정보
 		IssuedAppToken: issuedAppToken,
 		WorksConfig:    worksConfig, // works의 설정정보
@@ -76,7 +76,7 @@ func (h *DeviceInitHandler) DeviceInit(c *gin.Context) {
 	response.SendSuccess(c, result)
 }
 
-func toDeviceDomainDTO(body serviceDto.DeviceInitRequestBody) *worksInfoDomain.ConnectInfoRequest {
+func toDeviceDomainDTO(body device.DeviceRequestBody) *worksInfoDomain.ConnectInfoRequest {
 	return &worksInfoDomain.ConnectInfoRequest{
 		WorksCode: body.WorksCode,
 		Uuid:      body.Uuid,
@@ -84,7 +84,7 @@ func toDeviceDomainDTO(body serviceDto.DeviceInitRequestBody) *worksInfoDomain.C
 	}
 }
 
-func toAppTokenDomainDTO(body serviceDto.DeviceInitRequestBody) *appTokenDomain.GenerateAppTokenRequestDTO {
+func toAppTokenDomainDTO(body device.DeviceRequestBody) *appTokenDomain.GenerateAppTokenRequestDTO {
 	return &appTokenDomain.GenerateAppTokenRequestDTO{
 		Body: appTokenDomain.GenerateAppTokenBody{
 			Uuid: body.Uuid,

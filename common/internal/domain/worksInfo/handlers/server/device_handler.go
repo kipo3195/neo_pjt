@@ -1,14 +1,14 @@
 package server
 
 import (
-	worksInfoUsecase "common/internal/domains/worksInfo/usecases/server"
+	"common/internal/application/usecase"
 )
 
 type WorksInfoHandler struct {
-	usecase worksInfoUsecase.WorksInfoUsecase
+	usecase usecase.WorksInfoUsecase
 }
 
-func NewWorksInfoHandler(usecase worksInfoUsecase.WorksInfoUsecase) *WorksInfoHandler {
+func NewWorksInfoHandler(usecase usecase.WorksInfoUsecase) *WorksInfoHandler {
 	return &WorksInfoHandler{
 		usecase: usecase,
 	}

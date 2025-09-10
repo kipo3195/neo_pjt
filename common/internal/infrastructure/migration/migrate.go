@@ -1,7 +1,6 @@
 package migration
 
 import (
-	configuration "common/internal/domains/configuration/repositories/client"
 	"common/internal/infrastructure/repository"
 
 	"gorm.io/gorm"
@@ -10,5 +9,5 @@ import (
 func RunAll(db *gorm.DB) {
 	repository.SkinMigrate(db)
 	repository.WorksInfoMigrate(db)
-	configuration.Migrate(db)
+	repository.ConfigurationMigrate(db)
 }

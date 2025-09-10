@@ -1,16 +1,16 @@
-package serviceDto
+package device
 
-type DeviceInitDTO struct {
-	Body DeviceInitRequestBody
+type DeviceDTO struct {
+	Body DeviceRequestBody
 }
 
-type DeviceInitRequestBody struct {
+type DeviceRequestBody struct {
 	WorksCode string `json:"worksCode"`
 	Uuid      string `json:"uuid"`
 	Device    string `json:"device"`
 }
 
-type DeviceInitResultResponse struct {
+type DeviceResultResponse struct {
 	WorksInfo      interface{} `json:"worksInfo"`
 	IssuedAppToken interface{} `json:"issuedAppToken"`
 	SkinInfo       interface{} `json:"skinInfo"`

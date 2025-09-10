@@ -1,17 +1,14 @@
 package main
 
 import (
-	"common/internal/config"
-	"common/internal/domains/appToken"
-	"common/internal/domains/configuration"
-	"common/internal/domains/skin"
-	"common/internal/infra/loader"
-	"common/internal/infra/migration"
-	"common/internal/infra/storage"
-	"common/internal/middleware"
-	"common/internal/router"
+	"common/internal/delivery/middleware"
+	"common/internal/delivery/router"
+	"common/internal/di"
+	"common/internal/infrastructure/config"
+	"common/internal/infrastructure/loader"
+	"common/internal/infrastructure/migration"
+	"common/internal/infrastructure/storage"
 	"common/internal/services/dependencies"
-	"common/internal/services/serviceModules"
 	"context"
 	"log"
 	"net/http"
@@ -61,23 +58,23 @@ func InitServer() *http.Server {
 
 	r, baseGroup := router.SetDefaultRoutes("common")
 
-	skinHandler := skin.InitModule(db, configHashStorage, skinStorage)
-	router.SetSkinRoutes(baseGroup, skinHandler)
+	skinHandler := di.InitSkinHandler(db, configHashStorage, skinStorage)
+	router.SetSkinRoutes(baseGroup, skinHandler.Handler)
 
-	appTokenHandler := appToken.InitModule(db)
-	router.SetAppTokenRoutes(baseGroup, appTokenHandler)
+	appTokenHandler := di.InitAppTokenHandler(db)
+	router.SetAppTokenRoutes(baseGroup, appTokenHandler.Handler)
 
-	configurationHandler := configuration.InitModule(db, configHashStorage)
-	router.SetConfigurationRoutes(baseGroup, configurationHandler)
+	configurationHandler := di.InitConfigurationHandler(db, configHashStorage)
+	router.SetConfigurationRoutes(baseGroup, configurationHandler.Handler)
 
 	// ---- Service Init -----
-	appInitHandler := serviceModules.InitAppValidationModule(deps)
+	appInitHandler := di.InitAppValidationService(deps)
 	r.POST("/client/v1/app-validation",
 		middleware.AuthMiddleware(),     // <- 여기서 JWT 미들웨어 적용
 		appInitHandler.GetAppValidation, // 실제 서비스 핸들러
 	)
 
-	deviceInitHandler := serviceModules.InitDeviceInitModule((deps))
+	deviceInitHandler := di.InitDeviceInitService((deps))
 	r.POST("/server/v1/device-init", deviceInitHandler.DeviceInit)
 
 	return &http.Server{

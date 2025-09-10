@@ -5,7 +5,7 @@ import (
 	"common/internal/consts"
 	"common/internal/delivery/dto/appValidation"
 	"common/internal/domain/appValidation/repository"
-	"common/internal/infra/storage"
+	"common/internal/infrastructure/storage"
 	"context"
 	"encoding/json"
 	"fmt"

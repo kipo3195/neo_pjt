@@ -4,7 +4,7 @@ import (
 	"common/internal/consts"
 	"common/internal/domain/configuration/entity"
 	"common/internal/domain/configuration/repository"
-	"common/internal/infra/storage"
+	"common/internal/infrastructure/storage"
 	"log"
 )
 

@@ -1,8 +1,8 @@
 package loader
 
 import (
-	repository "common/internal/domains/skin/repositories/server"
-	"common/internal/infra/storage"
+	"common/internal/infrastructure/repository"
+	"common/internal/infrastructure/storage"
 	"context"
 
 	"gorm.io/gorm"

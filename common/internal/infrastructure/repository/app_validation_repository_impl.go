@@ -10,6 +10,6 @@ type appValidationRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewAppTokenRepository(db *gorm.DB) repository.AppTokenRepository {
+func NewAppValidationRepository(db *gorm.DB) repository.AppTokenRepository {
 	return &appValidationRepositoryImpl{}
 }

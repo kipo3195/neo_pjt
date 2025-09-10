@@ -1,24 +1,23 @@
-package serviceHandlers
+package handler
 
 import (
+	"common/internal/application/orchestrator"
 	"common/internal/consts"
-	"common/internal/services/serviceDomains"
 	"common/pkg/response"
 
-	"common/internal/services/serviceDto"
 	commonConsts "common/pkg/consts"
+
+	"common/internal/delivery/dto/appValidation"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
-
-	domain "common/internal/domains/appValidation/dto/server/requestDTO"
 )
 
 type AppValidationHandler struct {
-	svc *serviceDomains.AppValidationService
+	svc *orchestrator.AppValidationService
 }
 
-func NewAppValidationHander(svc *serviceDomains.AppValidationService) *AppValidationHandler {
+func NewAppValidationHander(svc *orchestrator.AppValidationService) *AppValidationHandler {
 	return &AppValidationHandler{svc: svc}
 }
 
@@ -26,7 +25,7 @@ func NewAppValidationHander(svc *serviceDomains.AppValidationService) *AppValida
 func (h *AppValidationHandler) GetAppValidation(c *gin.Context) {
 
 	// 실제 비즈니스 로직 처리? svc를 호출 기존 handler와 동일하게 처리하도록 수정 필요.
-	body := serviceDto.AppValidationRequestBody{
+	body := appValidation.AppValidationRequestBody{
 		Uuid:        c.Query("uuid"),
 		AppToken:    c.Query("appToken"),
 		AccessToken: c.Query("accesssToken"),
@@ -41,7 +40,7 @@ func (h *AppValidationHandler) GetAppValidation(c *gin.Context) {
 		return
 	}
 
-	requestDTO := serviceDto.AppValidationRequestDTO{
+	requestDTO := appValidation.AppValidationRequestDTO{
 		Body: body,
 	}
 
@@ -75,9 +74,9 @@ func (h *AppValidationHandler) GetAppValidation(c *gin.Context) {
 }
 
 // 변환
-func toAppValidationDomainDTO(serviceBody serviceDto.AppValidationRequestBody) domain.AppValidationRequestDTO {
-	return domain.AppValidationRequestDTO{
-		Body: domain.AppValidationRequestBody{
+func toAppValidationDomainDTO(serviceBody appValidation.AppValidationRequestBody) appValidation.AppValidationRequestDTO {
+	return appValidation.AppValidationRequestDTO{
+		Body: appValidation.AppValidationRequestBody{
 			Uuid:        serviceBody.Uuid,
 			AppToken:    serviceBody.AppToken,
 			AccessToken: serviceBody.AccessToken,
