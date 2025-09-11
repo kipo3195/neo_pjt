@@ -100,7 +100,7 @@ func (u userUsecase) UserRegister(ctx context.Context, input input.UserRegisterI
 
 	if input.Salt == info.Salt {
 		u.storage.DeleteUserChallenge(en.Id)
-		result, err := u.apiRepository.UserRegistInAuth(ctx, en.Id, info)
+		result, err := u.apiRepository.UserRegistInAuth(ctx, en.Id, info, challenge)
 		if result != "success" || err != nil {
 			return "code2"
 		}

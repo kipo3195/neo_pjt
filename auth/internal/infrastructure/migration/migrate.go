@@ -9,4 +9,5 @@ import (
 func RunAll(db *gorm.DB) {
 	repository.TokenMigrate(db)
 	repository.CertificationMigrate(db)
+	repository.UserAuthMigrate(db)
 }

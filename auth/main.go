@@ -4,6 +4,7 @@ import (
 	"auth/internal/di"
 	"auth/internal/infrastructure/config"
 	"auth/internal/infrastructure/migration"
+	"auth/internal/infrastructure/storage"
 	router "auth/internal/router"
 	"log"
 	"net/http"
@@ -28,6 +29,7 @@ func InitServer() *http.Server {
 		migration.RunAll(db)
 	}
 	// ---- Storage Init -----
+	userAuthStorage := storage.NewUserAuthStorage()
 
 	// ---- Data Loader -----
 
@@ -38,11 +40,14 @@ func InitServer() *http.Server {
 
 	// ---- Domain Handler Init -----
 	// 이런 구조로 변경할것.
-	certificationHandler := di.InitCertificationHandler(db, sfg)
-	router.SetCertificationRoutes(baseGroup, certificationHandler.Handler)
+	certificationModule := di.InitCertificationModule(db, sfg)
+	router.SetCertificationRoutes(baseGroup, certificationModule.Handler)
 
-	tokenHandler := di.InitTokenHandler(db, sfg)
-	router.SetTokenRoutes(baseGroup, tokenHandler.Handler)
+	tokenModule := di.InitTokenModule(db, sfg)
+	router.SetTokenRoutes(baseGroup, tokenModule.Handler)
+
+	userAuthModule := di.InitUserAuthModule(db, userAuthStorage)
+	router.SetUserAuthRoutes(baseGroup, userAuthModule.Handler)
 
 	return &http.Server{
 		Addr:    ":8087",

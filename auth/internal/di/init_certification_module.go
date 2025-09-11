@@ -9,17 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type CertificationHandler struct {
+type CertificationModule struct {
 	Handler *handler.CertificationHandler
 }
 
-func InitCertificationHandler(db *gorm.DB, sfg *config.ServerConfig) *CertificationHandler {
+func InitCertificationModule(db *gorm.DB, sfg *config.ServerConfig) *CertificationModule {
 
 	repo := repository.NewCertificationRepository(db)
 	usecase := usecase.NewCertificationUsecase(repo)
 	handler := handler.NewCertificationHandler(usecase)
 
-	return &CertificationHandler{
+	return &CertificationModule{
 		Handler: handler,
 	}
 }

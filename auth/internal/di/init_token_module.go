@@ -9,17 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type TokenHandler struct {
+type TokenModule struct {
 	Handler *handler.TokenHandler
 }
 
-func InitTokenHandler(db *gorm.DB, sfg *config.ServerConfig) *TokenHandler {
+func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig) *TokenModule {
 
 	repo := repository.NewTokenRepository(db)
 	usecase := usecase.NewTokenUsecase(repo, sfg.GetJWTConfig())
 	handler := handler.NewTokenHandler(usecase)
 
-	return &TokenHandler{
+	return &TokenModule{
 		Handler: handler,
 	}
 }

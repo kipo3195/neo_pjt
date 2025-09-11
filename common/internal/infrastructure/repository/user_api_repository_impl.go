@@ -23,15 +23,16 @@ func NewUserAPIRepository() repository.UserAPIRepository {
 	}
 }
 
-func (r *userAPIRepository) UserRegistInAuth(ctx context.Context, id string, entity entity.UserRegisterInfoEntity) (string, error) {
+func (r *userAPIRepository) UserAuthRegistInAuth(ctx context.Context, id string, entity entity.UserRegisterInfoEntity, challenge string) (string, error) {
 
-	url := "http://" + "" + "/auth/sv1/user/register"
+	url := "http://" + "" + "/auth/server/v1/user/auth/register"
 	log.Println("auth service 호출! url : ", url)
 
-	reqBody := user.UserRegisterRequest{
-		Id:   id,
-		Salt: entity.Salt,
-		Hash: entity.Hash,
+	reqBody := user.UserAuthRegisterRequest{
+		Id:       id,
+		Salt:     entity.Salt,
+		UserHash: challenge,
+		AuthHash: entity.Hash,
 	}
 
 	// 직렬화
@@ -58,7 +59,7 @@ func (r *userAPIRepository) UserRegistInAuth(ctx context.Context, id string, ent
 	defer resp.Body.Close()
 
 	// serverResponse로 전달받기 -> dto 뽑아내기 제네릭
-	var result dto.ServerResponseDTO[*user.UserRegisterResponse]
+	var result dto.ServerResponseDTO[*user.UserAuthRegisterResponse]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Println("serverReponse 파싱시 에러")

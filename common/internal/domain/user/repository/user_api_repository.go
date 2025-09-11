@@ -6,5 +6,5 @@ import (
 )
 
 type UserAPIRepository interface {
-	UserRegistInAuth(ctx context.Context, id string, entity entity.UserRegisterInfoEntity) (string, error)
+	UserAuthRegistInAuth(ctx context.Context, id string, entity entity.UserRegisterInfoEntity, challenge string) (string, error)
 }

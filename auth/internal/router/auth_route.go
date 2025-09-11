@@ -32,4 +32,7 @@ func SetUserAuthRoutes(parent *gin.RouterGroup, handler *handler.UserAuthHandler
 	client := parent.Group("/client/v1/user/auth")
 	client.GET("/challenge", handler.GenerateAuthChallenge)
 	client.GET("/", handler.GetAuthStatus)
+
+	server := parent.Group("/server/v1/user/auth/register")
+	server.POST("/", handler.UserAuthRegister)
 }
