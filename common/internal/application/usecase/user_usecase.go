@@ -3,6 +3,7 @@ package usecase
 import (
 	"common/internal/application/usecase/input"
 	"common/internal/application/usecase/output"
+	"common/internal/consts"
 	"common/internal/domain/user/entity"
 	"common/internal/domain/user/repository"
 	"common/internal/infrastructure/storage"
@@ -20,8 +21,9 @@ import (
 )
 
 type userUsecase struct {
-	repository repository.UserRepository
-	storage    storage.UserStorage
+	repository    repository.UserRepository
+	storage       storage.UserStorage
+	apiRepository repository.UserAPIRepository
 }
 
 type UserUsecase interface {
@@ -29,11 +31,12 @@ type UserUsecase interface {
 	UserRegister(ctx context.Context, input input.UserRegisterInput) string
 }
 
-func NewUserUsecase(repository repository.UserRepository, storage storage.UserStorage) UserUsecase {
+func NewUserUsecase(repository repository.UserRepository, storage storage.UserStorage, apiRepository repository.UserAPIRepository) UserUsecase {
 
 	return &userUsecase{
-		repository: repository,
-		storage:    storage,
+		repository:    repository,
+		storage:       storage,
+		apiRepository: apiRepository,
 	}
 }
 
@@ -72,7 +75,7 @@ func (u userUsecase) UserRegister(ctx context.Context, input input.UserRegisterI
 	challenge, err := u.storage.GetUserChallenge(en.Id)
 
 	if err != nil {
-		return "code2"
+		return consts.COMMON_F001
 	}
 
 	// CBC 복호화 호출
@@ -97,7 +100,10 @@ func (u userUsecase) UserRegister(ctx context.Context, input input.UserRegisterI
 
 	if input.Salt == info.Salt {
 		u.storage.DeleteUserChallenge(en.Id)
-		// 외부 API 호출하기
+		result, err := u.apiRepository.UserRegistInAuth(ctx, en.Id, info)
+		if result != "success" || err != nil {
+			return "code2"
+		}
 		return "code1"
 	} else {
 		return "code2"

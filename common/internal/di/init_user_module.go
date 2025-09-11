@@ -16,8 +16,9 @@ type UserModule struct {
 
 func InitUserModule(db *gorm.DB, userStorage storage.UserStorage) *UserModule {
 
-	repository := repository.NewUserRepository(db)
-	usecase := usecase.NewUserUsecase(repository, userStorage)
+	repo := repository.NewUserRepository(db)
+	apiRepository := repository.NewUserAPIRepository()
+	usecase := usecase.NewUserUsecase(repo, userStorage, apiRepository)
 	handler := handler.NewUserHandler(usecase)
 
 	return &UserModule{
