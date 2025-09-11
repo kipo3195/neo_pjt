@@ -44,6 +44,13 @@ func SetConfigurationRoutes(parent *gin.RouterGroup, handlers *handler.Configura
 	// client.GET("/config-hash", handlers.ClientHandler.GetConfigHash)
 }
 
+func SetUserRoutes(parent *gin.RouterGroup, handler *handler.UserHandler) {
+	client := parent.Group("client/v1/user/register")
+	client.POST("/", handler.UserRegister)
+	client.GET("/challenge", handler.GetUserRegisterChallenge)
+
+}
+
 func SetInitAppValidtaionRoutes(parent *gin.RouterGroup, handler *handler.AppValidationHandler) {
 	client := parent.Group("client/v1/app-validation")
 	client.Use(middleware.AuthMiddleware())

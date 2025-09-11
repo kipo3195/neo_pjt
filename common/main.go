@@ -32,6 +32,7 @@ func InitServer() *http.Server {
 	// ---- Storage Init -----
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
+	userStorage := storage.NewUserStorage()
 
 	// deps := dependencies.Dependency{
 	// 	DB:                db,
@@ -63,6 +64,9 @@ func InitServer() *http.Server {
 
 	configurationModule := di.InitConfigurationModule(db, configHashStorage)
 	router.SetConfigurationRoutes(baseGroup, configurationModule.Handler)
+
+	userModule := di.InitUserModule(db, userStorage)
+	router.SetUserRoutes(baseGroup, userModule.Handler)
 
 	// ---- Service Init -----
 	appValidationHandler := di.InitAppValidationHandler(nil, skinModule.Usecase, configurationModule.Usecase)
