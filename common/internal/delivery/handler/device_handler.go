@@ -2,9 +2,8 @@ package handler
 
 import (
 	"common/internal/application/orchestrator"
+	"common/internal/delivery/adapter"
 	"common/internal/delivery/dto/device"
-	appTokenDomain "common/internal/domains/appToken/dto/server/requestDTO"
-	worksInfoDomain "common/internal/domains/worksInfo/dto/server/requestDTO"
 	"common/pkg/response"
 	"encoding/json"
 
@@ -38,7 +37,14 @@ func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 		return
 	}
 
-	worksInfo, err := h.svc.Device.GetConnectInfo(toDeviceDomainDTO(body))
+	requestDTO := device.DeviceDTO{
+		Body: body,
+	}
+
+	deviceWrapper := adapter.DeviceWrapper{DeviceRequestBody: requestDTO.Body}
+	connectInfoInput := adapter.MakeConnectInfoInput(deviceWrapper)
+
+	worksInfo, err := h.svc.Device.GetConnectInfo(connectInfoInput)
 	// 호출 도메인(DNS)만 뽑아내는데 도메인 명칭이 Device?  차라리 configuration에서 통합 관리 또는 worksInfo 도메인을 별도로 생성한다면?
 	// 서버 정보 (도메인), worksCode, worksName, useYn, regDate
 	// 그리고 값을 매번 DB에서 조회할 필요가 있나?
@@ -48,7 +54,8 @@ func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 
 	var serverUrl string // 호출 도메인을 주입받아서 사용할 수 있도록 하기
 	// 수정완료
-	issuedAppToken, err := h.svc.AppToken.GenerateAppTokenInAuth(toAppTokenDomainDTO(body), serverUrl)
+
+	issuedAppToken, err := h.svc.AppToken.GenerateAppTokenInAuth(body.Uuid, serverUrl)
 	if err != nil {
 
 	}
@@ -74,20 +81,4 @@ func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 	}
 
 	response.SendSuccess(c, result)
-}
-
-func toDeviceDomainDTO(body device.DeviceRequestBody) *worksInfoDomain.ConnectInfoRequest {
-	return &worksInfoDomain.ConnectInfoRequest{
-		WorksCode: body.WorksCode,
-		Uuid:      body.Uuid,
-		Device:    body.Device,
-	}
-}
-
-func toAppTokenDomainDTO(body device.DeviceRequestBody) *appTokenDomain.GenerateAppTokenRequestDTO {
-	return &appTokenDomain.GenerateAppTokenRequestDTO{
-		Body: appTokenDomain.GenerateAppTokenBody{
-			Uuid: body.Uuid,
-		},
-	}
 }

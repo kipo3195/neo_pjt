@@ -20,7 +20,7 @@ type appTokenUsecase struct {
 
 type AppTokenUsecase interface {
 	AppTokenReIssueInAuth(ctx context.Context, requestDTO appToken.AppTokenRefreshRequestDTO) (*appToken.AppTokenRefreshResponseBody, error)
-	GenerateAppTokenInAuth(requestDTO *appToken.GenerateAppTokenRequestDTO, serverUrl string) (*entity.GenerateAppToken, error)
+	GenerateAppTokenInAuth(uuid string, serverUrl string) (*entity.GenerateAppToken, error)
 }
 
 func NewAppTokenUsecase(repository repository.AppTokenRepository) AppTokenUsecase {
@@ -82,10 +82,10 @@ func (r *appTokenUsecase) AppTokenReIssueInAuth(ctx context.Context, requestDTO 
 
 }
 
-func (r *appTokenUsecase) GenerateAppTokenInAuth(requestDTO *appToken.GenerateAppTokenRequestDTO, serverUrl string) (*entity.GenerateAppToken, error) {
+func (r *appTokenUsecase) GenerateAppTokenInAuth(uuid string, serverUrl string) (*entity.GenerateAppToken, error) {
 	// 소스 모듈화 처리하기
 	data := map[string]string{
-		"uuid": requestDTO.Body.Uuid,
+		"uuid": uuid,
 	}
 
 	// JSON 변환

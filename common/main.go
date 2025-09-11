@@ -53,7 +53,6 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-
 	r, baseGroup := router.SetDefaultRoutes("common")
 
 	skinModule := di.InitSkinModule(db, skinStorage)
