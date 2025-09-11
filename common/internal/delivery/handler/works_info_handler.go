@@ -1,8 +1,6 @@
-package server
+package handler
 
-import (
-	"common/internal/application/usecase"
-)
+import "common/internal/application/usecase"
 
 type WorksInfoHandler struct {
 	usecase usecase.WorksInfoUsecase

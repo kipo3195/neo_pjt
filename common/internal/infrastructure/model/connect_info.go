@@ -1,4 +1,4 @@
-package models
+package model
 
 // 테넌트 (works)의 연결 정보 상세
 

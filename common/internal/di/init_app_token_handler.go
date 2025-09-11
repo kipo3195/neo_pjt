@@ -8,17 +8,19 @@ import (
 	"gorm.io/gorm"
 )
 
-type AppTokenHandler struct {
+type AppTokenModule struct {
 	Handler *handler.AppTokenHandler
+	Usecase usecase.AppTokenUsecase
 }
 
-func InitAppTokenHandler(db *gorm.DB) *AppTokenHandler {
+func InitAppTokenModule(db *gorm.DB) *AppTokenModule {
 
 	repository := repository.NewAppTokenRepository(db)
 	usecase := usecase.NewAppTokenUsecase(repository)
 	handler := handler.NewAppTokenHandler(usecase)
 
-	return &AppTokenHandler{
+	return &AppTokenModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }

@@ -2,8 +2,8 @@ package repository
 
 import (
 	"common/internal/domain/worksInfo/entity"
-	"common/internal/domain/worksInfo/models"
 	"common/internal/domain/worksInfo/repository"
+	"common/internal/infrastructure/model"
 	"log"
 
 	"gorm.io/gorm"
@@ -20,13 +20,13 @@ func NewWorksInfoRepository(db *gorm.DB) repository.WorksInfoRepository {
 }
 
 func WorksInfoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&models.ConnectInfo{})
+	db.AutoMigrate(&model.ConnectInfo{})
 }
 
 func (r *worksInfoRepositoryImpl) GetConnectInfo(worksCode string) (*entity.ConnectInfo, error) {
 
 	// model
-	var connectInfo models.ConnectInfo
+	var connectInfo model.ConnectInfo
 
 	// domain으로 auth에 접근할 것인가?
 	result := r.db.Where("works_code = ?", worksCode).First(&connectInfo)

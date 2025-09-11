@@ -1,4 +1,4 @@
-package requestDTO
+package worksInfo
 
 type ConnectInfoRequest struct {
 	WorksCode string `json:"worksCode"`

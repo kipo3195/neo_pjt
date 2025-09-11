@@ -4,20 +4,23 @@ import (
 	"common/internal/application/usecase"
 	"common/internal/delivery/handler"
 	"common/internal/infrastructure/repository"
+	"common/internal/infrastructure/storage"
 
 	"gorm.io/gorm"
 )
 
-type SkinHandler struct {
+type SkinModule struct {
+	Usecase usecase.SkinUsecase
 	Handler *handler.SkinHandler
 }
 
-func InitSkinHandler(db *gorm.DB) *SkinHandler {
+func InitSkinModule(db *gorm.DB, skinStorage storage.SkinStorage) *SkinModule {
 	repository := repository.NewSkinRepository(db)
-	usecase := usecase.NewSkinUsecase(repository, nil) // storage 필요
+	usecase := usecase.NewSkinUsecase(repository, skinStorage) // storage 필요
 	handler := handler.NewSkinHandler(usecase)
 
-	return &SkinHandler{
+	return &SkinModule{
+		Usecase: usecase,
 		Handler: handler,
 	}
 }

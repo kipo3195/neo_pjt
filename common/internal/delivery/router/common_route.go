@@ -43,3 +43,14 @@ func SetConfigurationRoutes(parent *gin.RouterGroup, handlers *handler.Configura
 	// client := parent.Group("/client/v1/config-hash")
 	// client.GET("/config-hash", handlers.ClientHandler.GetConfigHash)
 }
+
+func SetInitAppValidtaionRoutes(parent *gin.RouterGroup, handler *handler.AppValidationHandler) {
+	client := parent.Group("client/v1/app-validation")
+	client.Use(middleware.AuthMiddleware())
+	client.GET("/", handler.GetAppValidation)
+}
+
+func SetDeviceRoutes(parent *gin.RouterGroup, handler *handler.DeviceHandler) {
+	client := parent.Group("server/v1/device-init")
+	client.GET("/", handler.DeviceInit)
+}

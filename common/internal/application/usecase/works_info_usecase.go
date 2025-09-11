@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"common/internal/consts"
-	"common/internal/domain/worksInfo/dto/server/requestDTO"
+	"common/internal/delivery/dto/worksInfo"
 	"common/internal/domain/worksInfo/entity"
 	"common/internal/domain/worksInfo/repository"
 )
@@ -12,7 +12,7 @@ type worksInfoUsecase struct {
 }
 
 type WorksInfoUsecase interface {
-	GetConnectInfo(body *requestDTO.ConnectInfoRequest) (*entity.ConnectInfo, error)
+	GetConnectInfo(body *worksInfo.ConnectInfoRequest) (*entity.ConnectInfo, error)
 }
 
 func NewWorksInfoUsecase(repository repository.WorksInfoRepository) WorksInfoUsecase {
@@ -21,7 +21,7 @@ func NewWorksInfoUsecase(repository repository.WorksInfoRepository) WorksInfoUse
 	}
 }
 
-func (u *worksInfoUsecase) GetConnectInfo(body *requestDTO.ConnectInfoRequest) (*entity.ConnectInfo, error) {
+func (u *worksInfoUsecase) GetConnectInfo(body *worksInfo.ConnectInfoRequest) (*entity.ConnectInfo, error) {
 
 	connectInfo, err := u.repository.GetConnectInfo(body.WorksCode)
 
