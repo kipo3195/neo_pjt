@@ -1,17 +1,15 @@
 package entity
 
 type UserAuthEntity struct {
-	Id       string `json:"id"`
-	Salt     string `json:"salt"`
-	AuthHash string `json:"authHash"`
-	UserHash string `json:"userHash"`
+	Id     string
+	Fv     string
+	Device string
 }
 
-func MakeUserAuthEntity(id string, salt string, authHash string, userHash string) UserAuthEntity {
+func MakeUserAuthEntity(id string, fv string, device string) UserAuthEntity {
 	return UserAuthEntity{
-		Id:       id,
-		Salt:     salt,
-		UserHash: userHash,
-		AuthHash: authHash,
+		Id:     id,
+		Fv:     fv,
+		Device: device,
 	}
 }

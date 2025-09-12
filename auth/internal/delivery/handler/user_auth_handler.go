@@ -24,13 +24,50 @@ func NewUserAuthHandler(uc usecase.UserAuthUsecase) *UserAuthHandler {
 
 func (h UserAuthHandler) GenerateAuthChallenge(c *gin.Context) {
 
+	ctx := c.Request.Context()
+
+	var req userAuth.UserAuthChallengeRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	userAuthChallengeInput := input.MakeUserAuthChallengeInput(req.Id, req.Device)
+	userAuthChallengeOutput, err := h.usecase.GenerateUserAuthChallenge(ctx, userAuthChallengeInput)
+
+	if err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+	} else {
+		response.SendSuccess(c, userAuthChallengeOutput)
+	}
+
 }
 
-func (h UserAuthHandler) GetAuthStatus(c *gin.Context) {
+func (h UserAuthHandler) GetUserAuth(c *gin.Context) {
+
+	ctx := c.Request.Context()
+	var req userAuth.UserAuthRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	userAuthInput := input.MakeUserAuthInput(req.Id, req.Fv, req.Device)
+	userAuthOutput := h.usecase.GetUserAuth(ctx, userAuthInput)
+
+	res := userAuth.UserAuthResponse{
+		AccessToken:     userAuthOutput.AccessToken,
+		RefreshToken:    userAuthOutput.RefreshToken,
+		DeviceChallenge: userAuthOutput.DeviceChallenge,
+	}
+
+	response.SendSuccess(c, res)
 
 }
 
-func (h UserAuthHandler) UserAuthRegister(c *gin.Context) {
+func (h UserAuthHandler) UserAuthInfoRegister(c *gin.Context) {
 
 	ctx := c.Request.Context()
 

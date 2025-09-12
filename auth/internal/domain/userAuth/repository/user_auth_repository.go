@@ -12,5 +12,7 @@ type userAuthRepository struct {
 }
 
 type UserAuthRepository interface {
-	PutUserAuth(ctx context.Context, entity entity.UserAuthEntity) error
+	PutUserAuthInfo(ctx context.Context, entity entity.UserAuthInfoEntity) error
+	GetUserSalt(ctx context.Context, Id string) (string, error)
+	GetUserAuthHash(ctx context.Context, Id string) (string, error)
 }

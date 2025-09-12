@@ -31,8 +31,8 @@ func SetTokenRoutes(parent *gin.RouterGroup, handler *handler.TokenHandler) {
 func SetUserAuthRoutes(parent *gin.RouterGroup, handler *handler.UserAuthHandler) {
 	client := parent.Group("/client/v1/user/auth")
 	client.GET("/challenge", handler.GenerateAuthChallenge)
-	client.GET("/", handler.GetAuthStatus)
+	client.GET("/", handler.GetUserAuth)
 
-	server := parent.Group("/server/v1/user/auth/register")
-	server.POST("/", handler.UserAuthRegister)
+	server := parent.Group("/server/v1/user/auth/info/register")
+	server.POST("/", handler.UserAuthInfoRegister)
 }

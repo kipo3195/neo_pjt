@@ -25,7 +25,7 @@ func NewUserAPIRepository() repository.UserAPIRepository {
 
 func (r *userAPIRepository) UserAuthRegistInAuth(ctx context.Context, id string, entity entity.UserRegisterInfoEntity, challenge string) (string, error) {
 
-	url := "http://" + "" + "/auth/server/v1/user/auth/register"
+	url := "http://" + "" + "/auth/server/v1/user/info/auth/register"
 	log.Println("auth service 호출! url : ", url)
 
 	reqBody := user.UserAuthRegisterRequest{
