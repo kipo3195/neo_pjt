@@ -6,6 +6,7 @@ import (
 	"common/internal/delivery/dto/device"
 	"common/pkg/response"
 	"encoding/json"
+	"log"
 
 	commonConsts "common/pkg/consts"
 
@@ -43,33 +44,33 @@ func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 
 	deviceWrapper := adapter.DeviceWrapper{DeviceRequestBody: requestDTO.Body}
 	connectInfoInput := adapter.MakeConnectInfoInput(deviceWrapper)
+	log.Println("connectInfoInput : ", connectInfoInput)
 
 	worksInfo, err := h.svc.Device.GetConnectInfo(connectInfoInput)
 	// 호출 도메인(DNS)만 뽑아내는데 도메인 명칭이 Device?  차라리 configuration에서 통합 관리 또는 worksInfo 도메인을 별도로 생성한다면?
 	// 서버 정보 (도메인), worksCode, worksName, useYn, regDate
 	// 그리고 값을 매번 DB에서 조회할 필요가 있나?
 	if err != nil {
-
+		log.Println("worksInfo 추출 에러")
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 	}
 
-	var serverUrl string // 호출 도메인을 주입받아서 사용할 수 있도록 하기
-	// 수정완료
-
-	issuedAppToken, err := h.svc.AppToken.GenerateAppTokenInAuth(body.Uuid, serverUrl)
+	issuedAppToken, err := h.svc.AppToken.GenerateAppTokenInAuth(body.Uuid, worksInfo.ServerUrl)
 	if err != nil {
-
+		log.Println("appToken 생성 API 호출 에러")
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 	}
 
 	// 수정완료
 	worksConfig := h.svc.Configuration.GetWorksConfig()
-	if err != nil {
+	// if err != nil {
 
-	}
+	// }
 
 	// 수정완료
 	skinInfo, err := h.svc.Skin.GetSkinInfo()
 	if err != nil {
-
+		log.Println("skinInfo error")
 	}
 
 	// 결국 수정되어야할 api의 방향
@@ -79,6 +80,8 @@ func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 		WorksConfig:    worksConfig, // works의 설정정보
 		SkinInfo:       skinInfo,
 	}
+
+	log.Println("result : ", result)
 
 	response.SendSuccess(c, result)
 }

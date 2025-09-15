@@ -28,7 +28,7 @@ func NewAppValidationAPIRepository(serverUrl string) repository.AppValidationAPI
 
 func (c *appValidationAPIRepository) DeviceInit(ctx context.Context, e entity.ValidationEntity) (*entity.DeviceInitResult, error) {
 
-	url := "http://" + c.serverUrl + "/common/sv1/device-init"
+	url := "http://" + c.serverUrl + "/common/server/v1/device-init"
 	log.Println("common service 호출! url : ", url)
 
 	header := appValidation.DeviceInitRequestHeader{
@@ -68,7 +68,7 @@ func (c *appValidationAPIRepository) DeviceInit(ctx context.Context, e entity.Va
 	defer resp.Body.Close()
 
 	// serverResponse로 전달받기 -> dto 뽑아내기 제네릭
-	var result dto.ServerResponseDTO[*appValidation.DeviceInitResponseDTO]
+	var result dto.ServerResponseDTO[*appValidation.DeviceInitResponseBody]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Println("serverReponse 파싱시 에러")
@@ -78,7 +78,7 @@ func (c *appValidationAPIRepository) DeviceInit(ctx context.Context, e entity.Va
 	log.Println("common service 호출 end !")
 
 	return &entity.DeviceInitResult{
-		IssuedAppToken: (*entity.IssuedAppToken)(result.Data.Body.IssuedAppToken),
-		WorksConfig:    result.Data.Body.WorksConfig,
+		IssuedAppToken: (*entity.IssuedAppToken)(result.Data.IssuedAppToken),
+		WorksConfig:    result.Data.WorksConfig,
 	}, nil
 }

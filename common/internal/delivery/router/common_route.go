@@ -58,6 +58,6 @@ func SetInitAppValidtaionRoutes(parent *gin.RouterGroup, handler *handler.AppVal
 }
 
 func SetDeviceRoutes(parent *gin.RouterGroup, handler *handler.DeviceHandler) {
-	client := parent.Group("server/v1/device-init")
-	client.GET("/", handler.DeviceInit)
+	server := parent.Group("server/v1/device-init")
+	server.POST("/", handler.DeviceInit)
 }

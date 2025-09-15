@@ -96,7 +96,7 @@ func (r *appTokenUsecase) GenerateAppTokenInAuth(uuid string, serverUrl string) 
 
 	log.Println("auth service 호출! 1")
 
-	url := "http://auth-service/auth/server/v1/generate-app-token"
+	url := "http://" + serverUrl + "/auth/server/v1/token/generate-app-token"
 	//url := domain + "/auth/v1/generate-device-token"
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
@@ -117,7 +117,7 @@ func (r *appTokenUsecase) GenerateAppTokenInAuth(uuid string, serverUrl string) 
 	defer resp.Body.Close()
 
 	// 응답 출력
-	var result dto.ServerResponseDTO[*appToken.GenerateAppTokenResponseDTO]
+	var result dto.ServerResponseDTO[*appToken.GenerateAppTokenResponseBody]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Println("serverReponse 파싱시 에러")
@@ -127,10 +127,10 @@ func (r *appTokenUsecase) GenerateAppTokenInAuth(uuid string, serverUrl string) 
 	return toGenerateAppTokenEntity(result.Data), nil
 }
 
-func toGenerateAppTokenEntity(data *appToken.GenerateAppTokenResponseDTO) *entity.GenerateAppToken {
+func toGenerateAppTokenEntity(data *appToken.GenerateAppTokenResponseBody) *entity.GenerateAppToken {
 
 	return &entity.GenerateAppToken{
-		AppToken:     data.Body.AppToken,
-		RefreshToken: data.Body.RefreshToken,
+		AppToken:     data.AppToken,
+		RefreshToken: data.RefreshToken,
 	}
 }

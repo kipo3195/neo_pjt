@@ -68,11 +68,13 @@ func InitServer() *http.Server {
 	userModule := di.InitUserModule(db, userStorage)
 	router.SetUserRoutes(baseGroup, userModule.Handler)
 
+	worksInfoModule := di.InitWorksInfoModule(db)
+
 	// ---- Service Init -----
 	appValidationHandler := di.InitAppValidationHandler(nil, skinModule.Usecase, configurationModule.Usecase)
 	router.SetInitAppValidtaionRoutes(baseGroup, appValidationHandler)
 
-	deviceInitHandler := di.InitDeviceInitHandler(nil, skinModule.Usecase, configurationModule.Usecase, appTokenModule.Usecase)
+	deviceInitHandler := di.InitDeviceInitHandler(worksInfoModule.Usecase, skinModule.Usecase, configurationModule.Usecase, appTokenModule.Usecase)
 	router.SetDeviceRoutes(baseGroup, deviceInitHandler)
 
 	return &http.Server{

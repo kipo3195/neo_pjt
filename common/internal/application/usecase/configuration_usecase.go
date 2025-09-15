@@ -46,20 +46,23 @@ func (r *configurationUsecase) CheckConfiguration(configHash string) (bool, erro
 func (r *configurationUsecase) GetWorksConfig() *entity.WorksConfig {
 
 	configHash, err := r.configHashStorage.GetConfigHash()
+	log.Println("111111")
 	if err != nil {
 		log.Println("[GetWorksInfo] configHash is invalid")
 	}
 
 	timeZone, err := r.configHashStorage.GetWorkConfig("timeZone")
+	log.Println("222222")
 	if err != nil {
 		log.Println("[GetWorksInfo] timeZone is invalid")
 	}
 
 	language, err := r.configHashStorage.GetWorkConfig("language")
+	log.Println("333333")
 	if err != nil {
 		log.Println("[GetWorksInfo] language is invalid")
 	}
-
+	log.Println("444444")
 	return &entity.WorksConfig{
 		TimeZone:   timeZone,
 		Language:   language,

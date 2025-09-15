@@ -20,5 +20,6 @@ func InitConfigurationModule(db *gorm.DB, configHashStorage storage.ConfigHashSt
 	handler := handler.NewConfigurationHandler(usecase)
 	return &ConfigurationModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }

@@ -26,7 +26,13 @@ func MakeValidateAppOutput(en *entity.DeviceInitResult) output.AppValidationOutp
 				RefreshToken: en.IssuedAppToken.RefreshToken,
 			},
 		},
-		WorksConfig:     en.WorksConfig.(output.WorksConfig),
+		WorksConfig: output.WorksConfig{
+			TimeZone:   "",
+			Language:   "",
+			SkinHash:   "",
+			ConfigHash: "",
+			Skin:       nil,
+		},
 		WorksCommonInfo: output.WorksCommonInfo(en.WorksCommonInfo),
 	}
 }

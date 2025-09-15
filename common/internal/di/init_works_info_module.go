@@ -13,7 +13,7 @@ type WorksInfoModule struct {
 	Usecase usecase.WorksInfoUsecase
 }
 
-func InitWorksInfoHandler(db *gorm.DB) *WorksInfoModule {
+func InitWorksInfoModule(db *gorm.DB) *WorksInfoModule {
 	repository := repository.NewWorksInfoRepository(db)
 	usecase := usecase.NewWorksInfoUsecase(repository)
 	handler := handler.NewWorksInfoHandler(usecase)

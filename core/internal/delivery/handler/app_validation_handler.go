@@ -9,6 +9,7 @@ import (
 	commonConsts "core/pkg/consts"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 
 	response "core/pkg/response"
@@ -44,7 +45,10 @@ func (h *AppValidationHandler) ValidateApp(c *gin.Context) {
 
 	// request body 데이터 -> dto로 변경
 	var body appValidation.AppValidationRequestBody
-	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+	temp := c.Request.Body
+	if err := json.NewDecoder(temp).Decode(&body); err != nil {
+		fmt.Println("body : ", temp)
+		fmt.Println("err : ", err)
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 		return
 	}
