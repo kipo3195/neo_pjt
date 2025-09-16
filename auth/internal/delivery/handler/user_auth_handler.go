@@ -3,9 +3,12 @@ package handler
 import (
 	"auth/internal/application/usecase"
 	"auth/internal/application/usecase/input"
+	"auth/internal/application/usecase/output"
+	"auth/internal/consts"
 	commonConsts "auth/pkg/consts"
 	response "auth/pkg/response"
 	"encoding/json"
+	"errors"
 
 	"auth/internal/delivery/dto/userAuth"
 
@@ -34,13 +37,25 @@ func (h UserAuthHandler) GenerateAuthChallenge(c *gin.Context) {
 	}
 
 	userAuthChallengeInput := input.MakeUserAuthChallengeInput(req.Id, req.Device)
-	userAuthChallengeOutput, err := h.usecase.GenerateUserAuthChallenge(ctx, userAuthChallengeInput)
+	temp, err := h.usecase.GenerateUserAuthChallenge(ctx, userAuthChallengeInput)
 
 	if err != nil {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
-	} else {
-		response.SendSuccess(c, userAuthChallengeOutput)
+		if errors.Is(err, consts.ErrSaltNotRegist) {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, consts.AUTH_F006, consts.AUTH_F006_MSG)
+		} else {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+		return
 	}
+
+	userAuthChallengeOutput := output.MakeUserAuthChallengeOutput(temp.Challenge, temp.Salt)
+
+	res := userAuth.UserAuthChallengeResponse{
+		Challenge: userAuthChallengeOutput.Challenge,
+		Salt:      userAuthChallengeOutput.Salt,
+	}
+
+	response.SendSuccess(c, res)
 
 }
 
@@ -55,7 +70,11 @@ func (h UserAuthHandler) GetUserAuth(c *gin.Context) {
 	}
 
 	userAuthInput := input.MakeUserAuthInput(req.Id, req.Fv, req.Device)
-	userAuthOutput := h.usecase.GetUserAuth(ctx, userAuthInput)
+	userAuthOutput, err := h.usecase.GetUserAuth(ctx, userAuthInput)
+	if err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
 
 	res := userAuth.UserAuthResponse{
 		AccessToken:     userAuthOutput.AccessToken,

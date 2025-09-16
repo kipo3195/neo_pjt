@@ -16,4 +16,7 @@ const (
 
 	AUTH_F005     = "AUTH_F005"
 	AUTH_F005_MSG = "Signature is invalid."
+
+	AUTH_F006     = "AUTH_006"
+	AUTH_F006_MSG = "Salt it not regist."
 )

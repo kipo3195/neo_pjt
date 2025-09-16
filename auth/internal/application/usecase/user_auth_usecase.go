@@ -3,15 +3,20 @@ package usecase
 import (
 	"auth/internal/application/usecase/input"
 	"auth/internal/application/usecase/output"
+	"auth/internal/consts"
 	"auth/internal/domain/userAuth/entity"
 	"auth/internal/domain/userAuth/repository"
 	"auth/internal/infrastructure/storage"
 	"context"
-	"crypto/md5"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"log"
 	"time"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
 type userAuthUsecase struct {
@@ -21,8 +26,8 @@ type userAuthUsecase struct {
 
 type UserAuthUsecase interface {
 	PutUserAuth(ctx context.Context, input input.UserAuthRegisterInput) string
-	GenerateUserAuthChallenge(ctx context.Context, input input.UserAuthChallengeInput) (string, error)
-	GetUserAuth(ctx context.Context, input input.UserAuthInput) output.UserAuthOutput
+	GenerateUserAuthChallenge(ctx context.Context, input input.UserAuthChallengeInput) (output.UserAuthChallengeOutput, error)
+	GetUserAuth(ctx context.Context, input input.UserAuthInput) (output.UserAuthOutput, error)
 }
 
 func NewUserAuthUsecase(repo repository.UserAuthRepository, storage storage.UserAuthStorage) UserAuthUsecase {
@@ -44,21 +49,27 @@ func (u userAuthUsecase) PutUserAuth(ctx context.Context, input input.UserAuthRe
 	return "success"
 }
 
-func (u userAuthUsecase) GenerateUserAuthChallenge(ctx context.Context, input input.UserAuthChallengeInput) (string, error) {
+func (u userAuthUsecase) GenerateUserAuthChallenge(ctx context.Context, input input.UserAuthChallengeInput) (output.UserAuthChallengeOutput, error) {
 
-	// id 기반으로 salt를 조회해야할까?
 	entity := entity.MakeUserAuthChallengeEntity(input.Id)
 
+	// DB 조회
 	salt, err := u.repo.GetUserSalt(ctx, entity.Id)
 
 	if err != nil {
-		return "", err
+		return output.UserAuthChallengeOutput{}, err
 	}
-	challenge := generateChallenge(entity.Id, salt)
-	log.Printf("[GenerateUserAuthChallenge] challenge : %s", challenge)
 
+	// challenge 생성
+	challenge := generateChallenge(entity.Id, salt)
+
+	// 메모리 저장 (TOBE redis)
 	u.storage.PutUserAuthChallenge(entity.Id, challenge)
-	return challenge, nil
+
+	return output.UserAuthChallengeOutput{
+		Challenge: challenge,
+		Salt:      salt,
+	}, nil
 }
 
 func generateChallenge(userID string, salt string) string {
@@ -68,30 +79,52 @@ func generateChallenge(userID string, salt string) string {
 	// 조합 문자열
 	data := fmt.Sprintf("%s:%s:%d", userID, salt, now)
 
-	// MD5 해싱
-	hash := md5.Sum([]byte(data))
+	// SHA-256 해싱
+	hash := sha256.Sum256([]byte(data))
 
-	// 32자리 문자열로 변환
-	return hex.EncodeToString(hash[:])
+	// 32자리 문자열로 변환 (원래 64자리)
+	challenge := hex.EncodeToString(hash[:16])
+
+	log.Printf("[generateChallenge] challenge : %s", challenge)
+
+	return challenge
 }
 
-func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthInput) output.UserAuthOutput {
+func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthInput) (output.UserAuthOutput, error) {
 
 	entity := entity.MakeUserAuthEntity(input.Id, input.Fv, input.Device)
 
-	authHash, err := u.repo.GetUserAuthHash(ctx, entity.Id)
+	// id 기반으로 salt 찾기
+	salt, err := u.repo.GetUserSalt(ctx, entity.Id)
 	if err != nil {
-		return output.UserAuthOutput{
-			DeviceChallenge: "",
-			AccessToken:     "",
-			RefreshToken:    "",
-		}
+		return output.UserAuthOutput{}, err
 	}
 
+	// id 기반으로 hash 찾기
+	authHash, err := u.repo.GetUserAuthHash(ctx, entity.Id)
+	if err != nil {
+		return output.UserAuthOutput{}, err
+	}
+
+	// id 기반으로 challenge 찾기 (TOBE redis)
 	challenge := u.storage.GetUserAuthChallenge(entity.Id)
 
-	serverFv := generateHMAC(authHash, challenge)
+	if challenge != "" {
+		return output.UserAuthOutput{}, consts.ErrUserAuthChallengeExpired
+	}
+
+	hash, err := generateHash(authHash, salt)
+
+	if challenge != "" {
+		return output.UserAuthOutput{}, consts.ErrUserAuthChallengeExpired
+	}
+
+	// 서버 hash + challenge
+	serverFv := generateFV(hash, challenge)
+
 	log.Println("GetUserAuth serverFn :", serverFv)
+	log.Println("GetUserAuth entity.Fv :", entity.Fv)
+
 	if serverFv == entity.Fv {
 		// device를 기반으로 한 키가 있는지 여부 탐색 ... 일단은 없다 치고
 		deviceChallenge := generateChallenge(entity.Device, challenge)
@@ -99,16 +132,33 @@ func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthIn
 			DeviceChallenge: deviceChallenge,
 			AccessToken:     "",
 			RefreshToken:    "",
-		}
+		}, nil
 	}
 
 	return output.UserAuthOutput{
 		DeviceChallenge: "",
 		AccessToken:     "",
 		RefreshToken:    "",
-	}
+	}, nil
 }
 
-func generateHMAC(a string, b string) string {
-	return ""
+func generateFV(hash string, challenge string) string {
+
+	h := hmac.New(sha256.New, []byte(hash))
+	h.Write([]byte(challenge))
+
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func generateHash(hash string, salt string) (string, error) {
+	const iterations = 150000
+	const saltLen = 16
+	const keyLen = 32
+
+	dk := pbkdf2.Key([]byte(hash), []byte(salt), iterations, keyLen, sha256.New)
+
+	// 저장 포맷: iterations:salt_base64:hash_base64
+	saltB64 := base64.StdEncoding.EncodeToString([]byte(salt))
+	hashB64 := base64.StdEncoding.EncodeToString(dk)
+	return fmt.Sprintf("%d:%s:%s", iterations, saltB64, hashB64), nil
 }

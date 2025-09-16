@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"auth/internal/consts"
 	"auth/internal/domain/userAuth/entity"
 	"auth/internal/domain/userAuth/repository"
 	"auth/internal/infrastructure/model"
@@ -61,7 +62,7 @@ func (r *userAuthRepository) GetUserSalt(ctx context.Context, id string) (string
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return "", nil // 조회 결과 없음
+			return "", consts.ErrSaltNotRegist // 조회 결과 없음
 		}
 		return "", result.Error // 다른 DB 오류
 	}
@@ -78,7 +79,7 @@ func (r *userAuthRepository) GetUserAuthHash(ctx context.Context, id string) (st
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return "", nil // 조회 결과 없음
+			return "", result.Error // 조회 결과 없음
 		}
 		return "", result.Error // 다른 DB 오류
 	}
