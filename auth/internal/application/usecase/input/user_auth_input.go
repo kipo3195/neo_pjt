@@ -1,15 +1,15 @@
 package input
 
 type UserAuthInput struct {
-	Id     string
-	Fv     string
-	Device string
+	Id   string
+	Fv   string
+	Uuid string
 }
 
-func MakeUserAuthInput(id string, fv string, device string) UserAuthInput {
+func MakeUserAuthInput(id string, fv string, uuid string) UserAuthInput {
 	return UserAuthInput{
-		Id:     id,
-		Fv:     fv,
-		Device: device,
+		Id:   id,
+		Fv:   fv,
+		Uuid: uuid,
 	}
 }

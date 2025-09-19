@@ -92,7 +92,7 @@ func generateChallenge(userID string, salt string) string {
 
 func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthInput) (output.UserAuthOutput, error) {
 
-	entity := entity.MakeUserAuthEntity(input.Id, input.Fv, input.Device)
+	entity := entity.MakeUserAuthEntity(input.Id, input.Fv, input.Uuid)
 
 	// id 기반으로 salt 찾기
 	salt, err := u.repo.GetUserSalt(ctx, entity.Id)
@@ -109,15 +109,11 @@ func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthIn
 	// id 기반으로 challenge 찾기 (TOBE redis)
 	challenge := u.storage.GetUserAuthChallenge(entity.Id)
 
-	if challenge != "" {
+	if challenge == "" {
 		return output.UserAuthOutput{}, consts.ErrUserAuthChallengeExpired
 	}
 
-	hash, err := generateHash(authHash, salt)
-
-	if challenge != "" {
-		return output.UserAuthOutput{}, consts.ErrUserAuthChallengeExpired
-	}
+	hash := generateHash(authHash, salt)
 
 	// 서버 hash + challenge
 	serverFv := generateFV(hash, challenge)
@@ -127,12 +123,13 @@ func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthIn
 
 	if serverFv == entity.Fv {
 		// device를 기반으로 한 키가 있는지 여부 탐색 ... 일단은 없다 치고
-		deviceChallenge := generateChallenge(entity.Device, challenge)
+		deviceChallenge := generateChallenge(entity.Uuid, challenge)
 		return output.UserAuthOutput{
 			DeviceChallenge: deviceChallenge,
-			AccessToken:     "",
-			RefreshToken:    "",
 		}, nil
+	} else if serverFv != entity.Fv {
+		// fv 불일치
+		return output.UserAuthOutput{}, consts.ErrUserAuthFvMismatch
 	}
 
 	return output.UserAuthOutput{
@@ -150,9 +147,8 @@ func generateFV(hash string, challenge string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func generateHash(hash string, salt string) (string, error) {
+func generateHash(hash string, salt string) string {
 	const iterations = 150000
-	const saltLen = 16
 	const keyLen = 32
 
 	dk := pbkdf2.Key([]byte(hash), []byte(salt), iterations, keyLen, sha256.New)
@@ -160,5 +156,6 @@ func generateHash(hash string, salt string) (string, error) {
 	// 저장 포맷: iterations:salt_base64:hash_base64
 	saltB64 := base64.StdEncoding.EncodeToString([]byte(salt))
 	hashB64 := base64.StdEncoding.EncodeToString(dk)
-	return fmt.Sprintf("%d:%s:%s", iterations, saltB64, hashB64), nil
+
+	return fmt.Sprintf("%d:%s:%s", iterations, saltB64, hashB64)
 }

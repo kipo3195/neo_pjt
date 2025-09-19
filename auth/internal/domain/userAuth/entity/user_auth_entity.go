@@ -1,15 +1,15 @@
 package entity
 
 type UserAuthEntity struct {
-	Id     string
-	Fv     string
-	Device string
+	Id   string
+	Fv   string
+	Uuid string
 }
 
-func MakeUserAuthEntity(id string, fv string, device string) UserAuthEntity {
+func MakeUserAuthEntity(id string, fv string, uuid string) UserAuthEntity {
 	return UserAuthEntity{
-		Id:     id,
-		Fv:     fv,
-		Device: device,
+		Id:   id,
+		Fv:   fv,
+		Uuid: uuid,
 	}
 }

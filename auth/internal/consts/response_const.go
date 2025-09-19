@@ -18,5 +18,8 @@ const (
 	AUTH_F005_MSG = "Signature is invalid."
 
 	AUTH_F006     = "AUTH_006"
-	AUTH_F006_MSG = "Salt it not regist."
+	AUTH_F006_MSG = "Unregistered salt."
+
+	AUTH_F007     = "AUTH_007"
+	AUTH_F007_MSG = "Auth Challenge expired."
 )

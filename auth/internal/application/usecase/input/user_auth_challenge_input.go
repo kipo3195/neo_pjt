@@ -1,13 +1,13 @@
 package input
 
 type UserAuthChallengeInput struct {
-	Id     string
-	Device string
+	Id   string
+	Uuid string
 }
 
-func MakeUserAuthChallengeInput(id string, device string) UserAuthChallengeInput {
+func MakeUserAuthChallengeInput(id string, uuid string) UserAuthChallengeInput {
 	return UserAuthChallengeInput{
-		Id:     id,
-		Device: device,
+		Id:   id,
+		Uuid: uuid,
 	}
 }
