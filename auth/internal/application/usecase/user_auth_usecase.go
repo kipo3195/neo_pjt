@@ -123,20 +123,15 @@ func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthIn
 
 	if serverFv == entity.Fv {
 		// device를 기반으로 한 키가 있는지 여부 탐색 ... 일단은 없다 치고
+
 		deviceChallenge := generateChallenge(entity.Uuid, challenge)
 		return output.UserAuthOutput{
 			DeviceChallenge: deviceChallenge,
 		}, nil
-	} else if serverFv != entity.Fv {
+	} else {
 		// fv 불일치
 		return output.UserAuthOutput{}, consts.ErrUserAuthFvMismatch
 	}
-
-	return output.UserAuthOutput{
-		DeviceChallenge: "",
-		AccessToken:     "",
-		RefreshToken:    "",
-	}, nil
 }
 
 func generateFV(hash string, challenge string) string {

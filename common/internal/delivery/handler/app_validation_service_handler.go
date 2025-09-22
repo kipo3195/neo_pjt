@@ -13,16 +13,16 @@ import (
 	"github.com/go-playground/validator"
 )
 
-type AppValidationHandler struct {
+type AppValidationServiceHandler struct {
 	svc *orchestrator.AppValidationService
 }
 
-func NewAppValidationHander(svc *orchestrator.AppValidationService) *AppValidationHandler {
-	return &AppValidationHandler{svc: svc}
+func NewAppValidationServiceHander(svc *orchestrator.AppValidationService) *AppValidationServiceHandler {
+	return &AppValidationServiceHandler{svc: svc}
 }
 
 // POST /server/v1/app-validation
-func (h *AppValidationHandler) GetAppValidation(c *gin.Context) {
+func (h *AppValidationServiceHandler) GetAppValidation(c *gin.Context) {
 
 	// 실제 비즈니스 로직 처리? svc를 호출 기존 handler와 동일하게 처리하도록 수정 필요.
 	body := appValidation.AppValidationRequestBody{

@@ -12,7 +12,7 @@ func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
 	return r, r.Group("/" + serviceName)
 }
 
-func SetAppValidationRoutes(parent *gin.RouterGroup, handler *handler.AppValidationHandler) {
+func SetAppValidationRoutes(parent *gin.RouterGroup, handler *handler.AppValidationServiceHandler) {
 
 	server := parent.Group("/server/v1/app-validation")
 
@@ -51,7 +51,7 @@ func SetUserRoutes(parent *gin.RouterGroup, handler *handler.UserHandler) {
 
 }
 
-func SetInitAppValidtaionRoutes(parent *gin.RouterGroup, handler *handler.AppValidationHandler) {
+func SetInitAppValidtaionRoutes(parent *gin.RouterGroup, handler *handler.AppValidationServiceHandler) {
 	client := parent.Group("client/v1/app-validation")
 	client.Use(middleware.AuthMiddleware())
 	client.GET("/", handler.GetAppValidation)

@@ -71,7 +71,7 @@ func InitServer() *http.Server {
 	worksInfoModule := di.InitWorksInfoModule(db)
 
 	// ---- Service Init -----
-	appValidationHandler := di.InitAppValidationHandler(nil, skinModule.Usecase, configurationModule.Usecase)
+	appValidationHandler := di.InitAppValidationServiceModule(nil, skinModule.Usecase, configurationModule.Usecase)
 	router.SetInitAppValidtaionRoutes(baseGroup, appValidationHandler)
 
 	deviceInitHandler := di.InitDeviceInitHandler(worksInfoModule.Usecase, skinModule.Usecase, configurationModule.Usecase, appTokenModule.Usecase)
