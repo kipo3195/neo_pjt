@@ -49,6 +49,12 @@ func InitServer() *http.Server {
 	userAuthModule := di.InitUserAuthModule(db, userAuthStorage)
 	router.SetUserAuthRoutes(baseGroup, userAuthModule.Handler)
 
+	deviceModule := di.InitDeviceModule(db)
+
+	// ---- Service Handler Init ----
+	userAuthServiceModule := di.InitUserAuthServiceModule(userAuthModule.Usecase, deviceModule.Usecase)
+	router.SetUserAuthServiceRoutes(baseGroup, userAuthServiceModule)
+
 	return &http.Server{
 		Addr:    ":8087",
 		Handler: r,

@@ -11,6 +11,7 @@ import (
 
 type UserAuthModule struct {
 	Handler *handler.UserAuthHandler
+	Usecase usecase.UserAuthUsecase
 }
 
 func InitUserAuthModule(db *gorm.DB, storage storage.UserAuthStorage) *UserAuthModule {
@@ -21,5 +22,6 @@ func InitUserAuthModule(db *gorm.DB, storage storage.UserAuthStorage) *UserAuthM
 
 	return &UserAuthModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }
