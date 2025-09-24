@@ -100,13 +100,14 @@ func (h UserAuthHandler) GetUserAuth(c *gin.Context) {
 		return
 	}
 
-	res := userAuth.UserAuthResponse{
-		AccessToken:     userAuthOutput.AccessToken,
-		RefreshToken:    userAuthOutput.RefreshToken,
-		DeviceChallenge: userAuthOutput.DeviceChallenge,
+	if userAuthOutput {
+		res := userAuth.UserAuthResponse{
+			AccessToken:     "",
+			RefreshToken:    "",
+			DeviceChallenge: "",
+		}
+		response.SendSuccess(c, res)
 	}
-
-	response.SendSuccess(c, res)
 
 }
 

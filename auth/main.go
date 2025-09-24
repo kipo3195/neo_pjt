@@ -30,6 +30,7 @@ func InitServer() *http.Server {
 	}
 	// ---- Storage Init -----
 	userAuthStorage := storage.NewUserAuthStorage()
+	deviceStorage := storage.NewDeviceStorage()
 
 	// ---- Data Loader -----
 
@@ -49,7 +50,8 @@ func InitServer() *http.Server {
 	userAuthModule := di.InitUserAuthModule(db, userAuthStorage)
 	router.SetUserAuthRoutes(baseGroup, userAuthModule.Handler)
 
-	deviceModule := di.InitDeviceModule(db)
+	deviceModule := di.InitDeviceModule(db, deviceStorage)
+	router.SetDeviceRoutes(baseGroup, deviceModule.Handler)
 
 	// ---- Service Handler Init ----
 	userAuthServiceModule := di.InitUserAuthServiceModule(userAuthModule.Usecase, deviceModule.Usecase)

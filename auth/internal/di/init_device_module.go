@@ -4,6 +4,7 @@ import (
 	"auth/internal/application/usecase"
 	"auth/internal/delivery/handler"
 	"auth/internal/infrastructure/repository"
+	"auth/internal/infrastructure/storage"
 
 	"gorm.io/gorm"
 )
@@ -13,10 +14,10 @@ type DeviceModule struct {
 	Usecase usecase.DeviceUsecase
 }
 
-func InitDeviceModule(db *gorm.DB) DeviceModule {
+func InitDeviceModule(db *gorm.DB, deviceStorage storage.DeviceStorage) DeviceModule {
 
 	repo := repository.NewDeviceRepository(db)
-	usecase := usecase.NewDeviceUsecase(repo)
+	usecase := usecase.NewDeviceUsecase(repo, deviceStorage)
 	handler := handler.NewDeviceHandler(usecase)
 	return DeviceModule{
 		Handler: handler,

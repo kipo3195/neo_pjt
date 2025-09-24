@@ -27,7 +27,7 @@ type userAuthUsecase struct {
 type UserAuthUsecase interface {
 	PutUserAuth(ctx context.Context, input input.UserAuthRegisterInput) string
 	GenerateUserAuthChallenge(ctx context.Context, input input.UserAuthChallengeInput) (output.UserAuthChallengeOutput, error)
-	GetUserAuth(ctx context.Context, input input.UserAuthInput) (output.UserAuthOutput, error)
+	GetUserAuth(ctx context.Context, input input.UserAuthInput) (bool, error)
 }
 
 func NewUserAuthUsecase(repo repository.UserAuthRepository, storage storage.UserAuthStorage) UserAuthUsecase {
@@ -90,27 +90,27 @@ func generateChallenge(userID string, salt string) string {
 	return challenge
 }
 
-func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthInput) (output.UserAuthOutput, error) {
+func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthInput) (bool, error) {
 
 	entity := entity.MakeUserAuthEntity(input.Id, input.Fv, input.Uuid)
 
 	// id 기반으로 salt 찾기
 	salt, err := u.repo.GetUserSalt(ctx, entity.Id)
 	if err != nil {
-		return output.UserAuthOutput{}, err
+		return false, err
 	}
 
 	// id 기반으로 hash 찾기
 	authHash, err := u.repo.GetUserAuthHash(ctx, entity.Id)
 	if err != nil {
-		return output.UserAuthOutput{}, err
+		return false, err
 	}
 
 	// id 기반으로 challenge 찾기 (TOBE redis)
 	challenge := u.storage.GetUserAuthChallenge(entity.Id)
 
 	if challenge == "" {
-		return output.UserAuthOutput{}, consts.ErrUserAuthChallengeExpired
+		return false, consts.ErrUserAuthChallengeExpired
 	}
 
 	hash := generateHash(authHash, salt)
@@ -121,16 +121,11 @@ func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthIn
 	log.Println("GetUserAuth serverFn :", serverFv)
 	log.Println("GetUserAuth entity.Fv :", entity.Fv)
 
-	if serverFv == entity.Fv {
+	if serverFv != entity.Fv {
+		return false, consts.ErrUserAuthFvMismatch
 		// device를 기반으로 한 키가 있는지 여부 탐색 ... 일단은 없다 치고
-
-		deviceChallenge := generateChallenge(entity.Uuid, challenge)
-		return output.UserAuthOutput{
-			DeviceChallenge: deviceChallenge,
-		}, nil
 	} else {
-		// fv 불일치
-		return output.UserAuthOutput{}, consts.ErrUserAuthFvMismatch
+		return true, nil
 	}
 }
 
