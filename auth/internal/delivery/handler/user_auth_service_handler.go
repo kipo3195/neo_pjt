@@ -64,7 +64,7 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 		deviceRegistCheckOutput, err = h.svc.Device.GetDeviceRegistState(ctx, deviceRegistCheckInput)
 
 		if err != nil {
-
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}
 
 	} else {

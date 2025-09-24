@@ -31,10 +31,10 @@ func (r *deviceRepository) CheckDeviceRegist(ctx context.Context, entity entity.
 	result := r.db.Where("uuid = ? and id = ?", entity.Uuid, entity.Id).First(&deviceRegistHis)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		log.Println("[CheckDeviceRegist] result record = 0")
-		return false, result.Error
+		return false, consts.ErrDeviceNotRegist
 	} else if result.Error != nil {
 		log.Println("[CheckDeviceRegist] DB error")
-		return false, result.Error
+		return false, consts.ErrDB
 	} else {
 		log.Println("[CheckDeviceRegist] 등록된 device")
 		return true, nil

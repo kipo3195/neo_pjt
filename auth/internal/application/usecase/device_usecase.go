@@ -39,11 +39,18 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 
 	_, err := r.repo.CheckDeviceRegist(ctx, entity)
 	if err != nil {
-		challenge := generateChallenge(entity.Id, entity.Uuid)
-		r.storage.PutDeviceChallenge(entity.Id, entity.Uuid, challenge)
-		return output.DeviceRegistStateOutput{
-			DeviceRegistChallenge: challenge,
-		}, err
+
+		// 등록되지 않았을때
+		if err == consts.ErrDeviceNotRegist {
+			challenge := generateChallenge(entity.Id, entity.Uuid)
+			r.storage.PutDeviceChallenge(entity.Id, entity.Uuid, challenge)
+			return output.DeviceRegistStateOutput{
+				DeviceRegistChallenge: challenge,
+			}, nil
+		} else {
+			return output.DeviceRegistStateOutput{}, err
+		}
+
 	}
 
 	at := r.storage.GetAccessToken(entity.Id, entity.Uuid)

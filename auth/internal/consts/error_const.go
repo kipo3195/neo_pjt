@@ -23,5 +23,7 @@ var ErrSaltNotRegist = errors.New("salt is not regist")
 var ErrUserAuthChallengeExpired = errors.New("user auth challenge expired")
 var ErrUserAuthFvMismatch = errors.New("user auth fv mismatch")
 
+var ErrDeviceNotRegist = errors.New("device not regist")
+
 var ErrDeviceChallengeExpired = errors.New("device challenge expired")
 var ErrDeviceChallengeMismatch = errors.New("device challenge mismatch")
