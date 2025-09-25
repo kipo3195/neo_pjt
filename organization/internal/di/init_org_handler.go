@@ -9,17 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrgHandler struct {
+type OrgModule struct {
 	Handler *handler.OrgHandler
 }
 
-func InitOrgHandler(db *gorm.DB, orgStorage storage.OrgFileStorage) *OrgHandler {
+func InitOrgModule(db *gorm.DB, orgStorage storage.OrgFileStorage) *OrgModule {
 
 	repository := repository.NewOrgRepository(db)
 	usecase := usecase.NewOrgUsecase(repository, orgStorage)
 	handler := handler.NewOrgHandler(usecase)
 
-	return &OrgHandler{
+	return &OrgModule{
 		Handler: handler,
 	}
 }

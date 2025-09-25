@@ -8,17 +8,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserHandler struct {
+type UserModule struct {
 	Handler *handler.UserHandler
 }
 
-func InitUserHandler(db *gorm.DB) *UserHandler {
+func InitUserModule(db *gorm.DB) *UserModule {
 
 	repository := repository.NewUserRepository(db)
 	usecase := usecase.NewUserUsecase(repository)
 	handler := handler.NewUserHandler(usecase)
 
-	return &UserHandler{
+	return &UserModule{
 		Handler: handler,
 	}
 }

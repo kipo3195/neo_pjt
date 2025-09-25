@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
-	sharedEntity "org/internal/domain/shared/entity"
+	"org/internal/domain/user/entity"
 )
 
 type UserRepository interface {
-	GetMyInfo(ctx context.Context, myHash string) (sharedEntity.MyInfoEntity, error)
+	GetMyInfo(ctx context.Context, entity entity.MyInfoHashEntity) (entity.MyInfoEntity, error)
 }

@@ -2,8 +2,10 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"org/internal/application/usecase"
+	"org/internal/application/usecase/input"
 	"org/internal/consts"
 	"org/internal/delivery/dto/user"
 	"org/internal/delivery/middleware/contextkey"
@@ -12,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 )
 
 type UserHandler struct {
@@ -39,18 +42,66 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		return
 	}
 
-	log.Println("내 정보 요청시 myHash : ", myHash)
-	// dto 생성
-	var req = user.GetMyInfoRequest{
-		MyHash: myHash,
+	var req user.GetMyInfoRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
 	}
 
-	data, err := h.usecase.GetMyInfo(ctx, req)
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	log.Println("내 정보 요청시 myHash : ", myHash)
+	// dto 생성
+	myInfoInput := input.MakeMyInfoInput(req.MyHash)
+	output, err := h.usecase.GetMyInfo(ctx, myInfoInput)
+
+	username := user.UsernameDto{
+		Def: output.Username.Ko, // 수정 필요
+		Ko:  output.Username.Ko,
+		En:  output.Username.En,
+		Jp:  output.Username.Jp,
+		Zh:  output.Username.Zh,
+		Ru:  output.Username.Ru,
+		Vi:  output.Username.Vi,
+	}
+
+	var deptInfo []user.DeptInfoDto
+
+	for _, temp := range output.DeptInfo {
+		deptInfo = append(deptInfo, user.DeptInfoDto{
+			DeptOrg:  temp.DeptOrg,
+			DeptCode: temp.DeptCode,
+			DefLang:  temp.DefLang,
+			KoLang:   temp.KoLang,
+			EnLang:   temp.EnLang,
+			JpLang:   temp.JpLang,
+			ZhLang:   temp.ZhLang,
+			ViLang:   temp.ViLang,
+			RuLang:   temp.RuLang,
+			Header:   temp.Header,
+		})
+	}
+
+	res := user.GetMyInfoResponse{
+		UserHash:     output.UserHash,
+		UserPhoneNum: output.UserPhoneNum,
+		Username:     username,
+		OrgCodes:     nil,
+		ProfileUrl:   output.ProfileUrl,
+		ProfileMsg:   output.ProfileMsg,
+		DeptInfo:     deptInfo,
+	}
 
 	// response.
 	if err == nil {
 		// http status code 200
-		response.SendSuccess(c, data)
+		response.SendSuccess(c, res)
 	} else {
 		// http status code 400
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)

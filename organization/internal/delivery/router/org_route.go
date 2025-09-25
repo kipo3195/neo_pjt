@@ -41,6 +41,7 @@ func SetOrgRoute(parent *gin.RouterGroup, handler *handler.OrgHandler) {
 
 func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler) {
 	clientApi := parent.Group("/client/v1/user")
+
 	clientApi.Use(middleware.AuthMiddleware())
 	clientApi.GET("/my-info", handler.GetMyInfo)
 	clientApi.GET("/info", handler.GetUserInfo)

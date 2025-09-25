@@ -8,17 +8,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type DepartmentHandler struct {
+type DepartmentModule struct {
 	Handler *handler.DepartmentHandler
 }
 
-func InitDepartmentHandler(db *gorm.DB) *DepartmentHandler {
+func InitDepartmentModule(db *gorm.DB) *DepartmentModule {
 
 	repository := repository.NewDepartmentRepository(db)
 	usecase := usecase.NewDepartmentUsecase(repository)
 	handler := handler.NewDepartmentHandler(usecase)
 
-	return &DepartmentHandler{
+	return &DepartmentModule{
 		Handler: handler,
 	}
 }
