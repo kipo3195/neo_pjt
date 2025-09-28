@@ -66,7 +66,7 @@ func serverVerifyJWT(tokenStr string) (bool, error) {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		// 시크릿 키 반환
-		return jwtSecretKey, nil
+		return serverJwtSecretKey, nil
 	})
 
 	if err != nil {

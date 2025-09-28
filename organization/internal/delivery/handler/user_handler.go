@@ -1,20 +1,15 @@
 package handler
 
 import (
-	"context"
-	"encoding/json"
 	"log"
 	"org/internal/application/usecase"
 	"org/internal/application/usecase/input"
 	"org/internal/consts"
 	"org/internal/delivery/dto/user"
-	"org/internal/delivery/middleware/contextkey"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
 )
 
 type UserHandler struct {
@@ -34,31 +29,17 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 인증 토큰에서 요청 사용자의 hash 정보 추출
-	val := c.Value(contextkey.UserHashKey)
-	myHash, ok := val.(string)
+	id := c.Value(consts.USER_ID)
+	myHash, ok := id.(string)
 	if !ok {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, consts.ORG_F101, consts.ORG_F101_MSG)
-		log.Println("인증 토큰의 userHash 데이터 에러 ")
-		return
-	}
-
-	var req user.GetMyInfoRequest
-
-	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
-		return
-	}
-
-	// 필수 데이터 검증
-	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
 		return
 	}
 
 	log.Println("내 정보 요청시 myHash : ", myHash)
+
 	// dto 생성
-	myInfoInput := input.MakeMyInfoInput(req.MyHash)
+	myInfoInput := input.MakeMyInfoInput(myHash)
 	output, err := h.usecase.GetMyInfo(ctx, myInfoInput)
 
 	username := user.UsernameDto{
@@ -110,10 +91,5 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUserInfo(c *gin.Context) {
-
-	// context 생성
-	ctx := c.Request.Context()
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
 
 }

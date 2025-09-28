@@ -18,7 +18,7 @@ WORKDIR /root/
 
 # 빌드된 바이너리만 복사
 COPY --from=builder /app/main .
-COPY ./config ./config 
+COPY ./internal/infrastructure/config ./internal/infrastructure/config
 
 EXPOSE 8088
 CMD ["./main"]

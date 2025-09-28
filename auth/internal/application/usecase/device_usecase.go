@@ -3,8 +3,8 @@ package usecase
 import (
 	"auth/internal/application/usecase/input"
 	"auth/internal/application/usecase/output"
-	"auth/internal/claims"
 	"auth/internal/consts"
+	"auth/internal/delivery/middleware/claims"
 	"auth/internal/domain/device/entity"
 	"auth/internal/domain/device/repository"
 	"auth/internal/infrastructure/storage"
@@ -16,8 +16,10 @@ import (
 )
 
 type deviceUsecase struct {
-	repo    repository.DeviceRepository
-	storage storage.DeviceStorage
+	repo        repository.DeviceRepository
+	storage     storage.DeviceStorage
+	accessHash  string
+	refreshHash string
 }
 
 type DeviceUsecase interface {
@@ -25,10 +27,12 @@ type DeviceUsecase interface {
 	DeviceRegist(ctx context.Context, input input.DeviceRegistInput) (output.DeviceRegistOutput, error)
 }
 
-func NewDeviceUsecase(repo repository.DeviceRepository, storage storage.DeviceStorage) DeviceUsecase {
+func NewDeviceUsecase(repo repository.DeviceRepository, storage storage.DeviceStorage, accessHash string, refreshHash string) DeviceUsecase {
 	return &deviceUsecase{
-		repo:    repo,
-		storage: storage,
+		repo:        repo,
+		storage:     storage,
+		accessHash:  accessHash,
+		refreshHash: refreshHash,
 	}
 }
 
@@ -59,12 +63,12 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 	// 없으면 신규 생성함.
 	if at == "" || rt == "" {
 		log.Printf("[GetDeviceRegistState] id : %s at, rt 신규 발급.", entity.Id)
-		at, err = generateJWT(entity.Id, entity.Uuid, 60, []byte("access"), true)
+		at, err = generateJWT(entity.Id, entity.Uuid, 60, []byte(r.accessHash), true)
 		if err != nil {
 			return output.DeviceRegistStateOutput{}, err
 		}
 		r.storage.PutAccessToken(entity.Id, entity.Uuid, at)
-		rt, err := generateJWT(entity.Id, entity.Uuid, 30, []byte("refresh"), false)
+		rt, err := generateJWT(entity.Id, entity.Uuid, 30, []byte(r.refreshHash), false)
 		if err != nil {
 			return output.DeviceRegistStateOutput{}, err
 		}

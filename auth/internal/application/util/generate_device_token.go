@@ -1,7 +1,7 @@
 package util
 
 import (
-	"auth/internal/claims"
+	"auth/internal/delivery/middleware/claims"
 	"log"
 	"time"
 

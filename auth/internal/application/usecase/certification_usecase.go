@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"auth/internal/application/usecase/input"
-	"auth/internal/claims"
 	"auth/internal/delivery/dto/certification"
+	"auth/internal/delivery/middleware/claims"
 	"auth/internal/domain/certification/repository"
 	"time"
 

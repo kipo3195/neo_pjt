@@ -3,14 +3,13 @@ package usecase
 import (
 	"auth/internal/application/usecase/input"
 	"auth/internal/application/util"
-	"auth/internal/claims"
 	"auth/internal/consts"
 	"auth/internal/delivery/dto/token"
+	"auth/internal/delivery/middleware/claims"
 	"auth/internal/domain/shared"
 	"auth/internal/domain/token/entity"
-	"auth/internal/domain/token/repository"
 	"auth/internal/infrastructure/config"
-
+	"auth/internal/infrastructure/repository"
 	"context"
 	"errors"
 	"fmt"
