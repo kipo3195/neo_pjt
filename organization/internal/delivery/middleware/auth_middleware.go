@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"org/internal/consts"
 	"org/internal/delivery/middleware/claims"
+	"org/internal/infrastructure/config"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
 	"strings"
@@ -17,15 +18,8 @@ import (
 )
 
 // 토큰 생성시 사용한 key와 동일해야함.
-// var jwtSecretKey = []byte("neo-test-secret-key")
-var newAccessHash = []byte("neo-access-hash")
 
-type JWTClaims struct {
-	UserHash string `json:"userHash"`
-	jwt.RegisteredClaims
-}
-
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(tokenConfig config.TokenHashConfig) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -38,7 +32,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// 토큰 검증
-		id, err := verifyJWT(tokenStr)
+		id, err := verifyJWT(tokenStr, tokenConfig)
 		if err != nil {
 			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
@@ -73,16 +67,19 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 	return parts[1], nil
 }
 
-func verifyJWT(tokenStr string) (string, error) {
+func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
+	log.Println("111 tokenHash : ", tokenHash)
 
 	token, err := parser.ParseWithClaims(tokenStr, &claims.DeviceJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return newAccessHash, nil
+		return []byte(tokenHash.AccessTokenHash), nil
 	})
+
+	log.Println("222")
 
 	if err != nil {
 		return "", fmt.Errorf("token parsing failed: %w", err)

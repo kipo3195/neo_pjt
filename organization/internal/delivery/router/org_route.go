@@ -3,6 +3,7 @@ package router
 import (
 	"org/internal/delivery/handler"
 	"org/internal/delivery/middleware"
+	"org/internal/infrastructure/config"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,9 +13,9 @@ func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
 	return r, r.Group("/" + serviceName)
 }
 
-func SetDepartmentRoutes(parent *gin.RouterGroup, handler *handler.DepartmentHandler) {
+func SetDepartmentRoutes(parent *gin.RouterGroup, handler *handler.DepartmentHandler, tokenConfig config.TokenHashConfig) {
 	clientApi := parent.Group("/client/v1/department")
-	clientApi.Use(middleware.AuthMiddleware())
+	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
 	clientApi.GET("/", handler.GetDept) //
 
 	serverApi := parent.Group("/server/v1/department")
@@ -26,10 +27,10 @@ func SetDepartmentRoutes(parent *gin.RouterGroup, handler *handler.DepartmentHan
 
 }
 
-func SetOrgRoute(parent *gin.RouterGroup, handler *handler.OrgHandler) {
+func SetOrgRoute(parent *gin.RouterGroup, handler *handler.OrgHandler, tokenConfig config.TokenHashConfig) {
 
 	clientApi := parent.Group("/client/v1/org")
-	clientApi.Use(middleware.AuthMiddleware())
+	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
 	clientApi.GET("/hash", handler.GetOrgHash)
 	clientApi.GET("/data", handler.GetOrgData)
 
@@ -39,10 +40,10 @@ func SetOrgRoute(parent *gin.RouterGroup, handler *handler.OrgHandler) {
 
 }
 
-func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler) {
+func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler, tokenConfig config.TokenHashConfig) {
 	clientApi := parent.Group("/client/v1/user")
 
-	clientApi.Use(middleware.AuthMiddleware())
+	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
 	clientApi.GET("/my-info", handler.GetMyInfo)
 	clientApi.GET("/info", handler.GetUserInfo)
 }

@@ -63,6 +63,7 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 	// 없으면 신규 생성함.
 	if at == "" || rt == "" {
 		log.Printf("[GetDeviceRegistState] id : %s at, rt 신규 발급.", entity.Id)
+		log.Println("at 서명 : ", r.accessHash)
 		at, err = generateJWT(entity.Id, entity.Uuid, 60, []byte(r.accessHash), true)
 		if err != nil {
 			return output.DeviceRegistStateOutput{}, err

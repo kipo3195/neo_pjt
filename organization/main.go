@@ -39,13 +39,13 @@ func InitServer() *http.Server {
 
 	// ---- Domain Handler Init -----
 	departmentModule := di.InitDepartmentModule(db)
-	router.SetDepartmentRoutes(baseGroup, departmentModule.Handler)
+	router.SetDepartmentRoutes(baseGroup, departmentModule.Handler, sfg.TokenConfig)
 
 	orgModule := di.InitOrgModule(db, orgStorage)
-	router.SetOrgRoute(baseGroup, orgModule.Handler)
+	router.SetOrgRoute(baseGroup, orgModule.Handler, sfg.TokenConfig)
 
 	userModule := di.InitUserModule(db)
-	router.SetUserRoute(baseGroup, userModule.Handler)
+	router.SetUserRoute(baseGroup, userModule.Handler, sfg.TokenConfig)
 	// ---- Orchestrator Init -----
 
 	//router := routes.SetupRoutes(handlers)
