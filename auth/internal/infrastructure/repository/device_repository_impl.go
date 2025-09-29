@@ -26,7 +26,7 @@ func (r *deviceRepository) CheckDeviceRegist(ctx context.Context, entity entity.
 
 	var deviceRegistHis model.DeviceRegistHistory
 
-	log.Println("디바이스 등록 조회 id :", entity.Id)
+	log.Printf("디바이스 등록 조회 id : %s, uuid : %s \n", entity.Id, entity.Uuid)
 
 	result := r.db.Where("uuid = ? and id = ?", entity.Uuid, entity.Id).First(&deviceRegistHis)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
