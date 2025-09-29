@@ -8,4 +8,5 @@ import (
 type TokenRepository interface {
 	PutIssuedAppToken(token *shared.AppTokenEntity) (bool, error)
 	GetValidationAppToken(entity entity.AppTokenValidationEntity) (bool, error)
+	InitUserAuthToken() ([]entity.AuthTokenEntity, error)
 }

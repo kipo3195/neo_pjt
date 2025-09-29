@@ -16,10 +16,11 @@ import (
 )
 
 type deviceUsecase struct {
-	repo        repository.DeviceRepository
-	storage     storage.DeviceStorage
-	accessHash  string
-	refreshHash string
+	repo             repository.DeviceRepository
+	deviceStorage    storage.DeviceStorage
+	authTokenStorage storage.AuthTokenStorage
+	accessHash       string
+	refreshHash      string
 }
 
 type DeviceUsecase interface {
@@ -27,12 +28,13 @@ type DeviceUsecase interface {
 	DeviceRegist(ctx context.Context, input input.DeviceRegistInput) (output.DeviceRegistOutput, error)
 }
 
-func NewDeviceUsecase(repo repository.DeviceRepository, storage storage.DeviceStorage, accessHash string, refreshHash string) DeviceUsecase {
+func NewDeviceUsecase(repo repository.DeviceRepository, deviceStorage storage.DeviceStorage, authTokenStorage storage.AuthTokenStorage, accessHash string, refreshHash string) DeviceUsecase {
 	return &deviceUsecase{
-		repo:        repo,
-		storage:     storage,
-		accessHash:  accessHash,
-		refreshHash: refreshHash,
+		repo:             repo,
+		deviceStorage:    deviceStorage,
+		authTokenStorage: authTokenStorage,
+		accessHash:       accessHash,
+		refreshHash:      refreshHash,
 	}
 }
 
@@ -47,7 +49,7 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 		// 등록되지 않았을때
 		if err == consts.ErrDeviceNotRegist {
 			challenge := generateChallenge(entity.Id, entity.Uuid)
-			r.storage.PutDeviceChallenge(entity.Id, entity.Uuid, challenge)
+			r.deviceStorage.PutDeviceChallenge(entity.Id, entity.Uuid, challenge)
 			return output.DeviceRegistStateOutput{
 				DeviceRegistChallenge: challenge,
 			}, nil
@@ -57,26 +59,32 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 
 	}
 
-	at := r.storage.GetAccessToken(entity.Id, entity.Uuid)
-	rt := r.storage.GetRefreshToken(entity.Id, entity.Uuid)
+	at := r.authTokenStorage.GetAccessToken(entity.Id, entity.Uuid)
+	rt := r.authTokenStorage.GetRefreshToken(entity.Id, entity.Uuid)
 
 	// 없으면 신규 생성함.
 	if at == "" || rt == "" {
-		log.Printf("[GetDeviceRegistState] id : %s at, rt 신규 발급.", entity.Id)
-		log.Println("at 서명 : ", r.accessHash)
+		log.Printf("[GetDeviceRegistState] id : %s at, rt 신규 발급..", entity.Id)
 		at, err = generateJWT(entity.Id, entity.Uuid, 60, []byte(r.accessHash), true)
 		if err != nil {
 			return output.DeviceRegistStateOutput{}, err
 		}
-		r.storage.PutAccessToken(entity.Id, entity.Uuid, at)
-		rt, err := generateJWT(entity.Id, entity.Uuid, 30, []byte(r.refreshHash), false)
+		r.authTokenStorage.PutAccessToken(entity.Id, entity.Uuid, at)
+		rt, err = generateJWT(entity.Id, entity.Uuid, 30, []byte(r.refreshHash), false)
+
 		if err != nil {
 			return output.DeviceRegistStateOutput{}, err
 		}
-		r.storage.PutRefreshToken(entity.Id, entity.Uuid, rt)
+		r.authTokenStorage.PutRefreshToken(entity.Id, entity.Uuid, rt)
+
+		// DB 저장.
+		err := r.repo.PutAuthToken(ctx, entity.Id, entity.Uuid, at, rt)
+		if err != nil {
+			return output.DeviceRegistStateOutput{}, err
+		}
 	}
 
-	log.Printf("[GetDeviceRegistState] id : %s at : %s rt : %s", entity.Id, at, rt)
+	log.Printf("[GetDeviceRegistState] id : %s \n at : %s \n rt : %s", entity.Id, at, rt)
 
 	return output.DeviceRegistStateOutput{
 		RefreshToken: rt,
@@ -139,7 +147,7 @@ func (r *deviceUsecase) DeviceRegist(ctx context.Context, input input.DeviceRegi
 	entity := entity.MakeDeviceRegistEntity(input.Id, input.Uuid, input.ModelName, input.Version, input.Challenge)
 
 	// challenge 체크
-	svChallenge := r.storage.GetDeviceChallenge(entity.Id, entity.Uuid)
+	svChallenge := r.deviceStorage.GetDeviceChallenge(entity.Id, entity.Uuid)
 
 	if svChallenge == "" {
 		return output.DeviceRegistOutput{}, consts.ErrDeviceChallengeExpired
@@ -160,19 +168,21 @@ func (r *deviceUsecase) DeviceRegist(ctx context.Context, input input.DeviceRegi
 	if err != nil {
 		return output.DeviceRegistOutput{}, err
 	}
-	r.storage.PutAccessToken(entity.Id, entity.Uuid, at)
+	r.authTokenStorage.PutAccessToken(entity.Id, entity.Uuid, at)
 
 	// rt 생성 및 저장
 	rt, err := generateJWT(entity.Id, entity.Uuid, 30, []byte("refresh"), false)
 	if err != nil {
 		return output.DeviceRegistOutput{}, err
 	}
-	r.storage.PutRefreshToken(entity.Id, entity.Uuid, rt)
+	r.authTokenStorage.PutRefreshToken(entity.Id, entity.Uuid, rt)
+
+	r.repo.PutAuthToken(ctx, entity.Id, entity.Uuid, at, rt)
 
 	output := output.MakeDeviceRegistOutput(at, rt)
 
 	// challenge 삭제
-	r.storage.DeleteDeviceChallenge(entity.Id, entity.Uuid)
+	r.deviceStorage.DeleteDeviceChallenge(entity.Id, entity.Uuid)
 
 	return output, nil
 }

@@ -66,3 +66,29 @@ func (r *deviceRepository) PutDevice(ctx context.Context, entity entity.DeviceRe
 	log.Println("[PutDevice] - Commit Success")
 	return nil
 }
+
+func (r *deviceRepository) PutAuthToken(ctx context.Context, id string, uuid string, at string, rt string) error {
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if err := tx.Create(&model.IssuedAuthTokenHistory{
+		Id:           id,
+		Uuid:         uuid,
+		AccessToken:  at,
+		RefreshToken: rt,
+	}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[PutAuthToken] - Commit failed")
+		return consts.ErrDB
+	}
+	log.Println("[PutAuthToken] - Commit Success")
+	return nil
+}

@@ -3,11 +3,14 @@ package main
 import (
 	"auth/internal/di"
 	"auth/internal/infrastructure/config"
+	"auth/internal/infrastructure/loader"
 	"auth/internal/infrastructure/migration"
 	"auth/internal/infrastructure/storage"
 	router "auth/internal/router"
+	"context"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -31,8 +34,18 @@ func InitServer() *http.Server {
 	// ---- Storage Init -----
 	userAuthStorage := storage.NewUserAuthStorage()
 	deviceStorage := storage.NewDeviceStorage()
+	authTokenStorage := storage.NewAuthTokenStorage()
 
 	// ---- Data Loader -----
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	dataLoader := loader.NewDataLoader()
+	dataLoader.Register(loader.NewAuthTokenLoader(db, authTokenStorage))
+
+	if err := dataLoader.LoadAllData(ctx); err != nil {
+		log.Fatal("Failed to load initial data:", err)
+	}
 
 	// ---- Router Init -----
 	r, baseGroup := router.SetDefaultRoutes("auth")
@@ -50,7 +63,7 @@ func InitServer() *http.Server {
 	userAuthModule := di.InitUserAuthModule(db, userAuthStorage)
 	router.SetUserAuthRoutes(baseGroup, userAuthModule.Handler)
 
-	deviceModule := di.InitDeviceModule(db, deviceStorage, sfg.TokenConfig.AccessTokenHash, sfg.TokenConfig.RefreshTokenHash)
+	deviceModule := di.InitDeviceModule(db, deviceStorage, authTokenStorage, sfg.TokenConfig.AccessTokenHash, sfg.TokenConfig.RefreshTokenHash)
 	router.SetDeviceRoutes(baseGroup, deviceModule.Handler)
 
 	// ---- Service Handler Init ----

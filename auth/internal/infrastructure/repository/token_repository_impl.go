@@ -3,6 +3,7 @@ package repository
 import (
 	"auth/internal/domain/shared"
 	"auth/internal/domain/token/entity"
+	"auth/internal/domain/token/repository"
 	"auth/internal/infrastructure/model"
 	"errors"
 	"log"
@@ -14,12 +15,7 @@ type tokenRepository struct {
 	db *gorm.DB
 }
 
-type TokenRepository interface {
-	PutIssuedAppToken(token *shared.AppTokenEntity) (bool, error)
-	GetValidationAppToken(entity entity.AppTokenValidationEntity) (bool, error)
-}
-
-func NewTokenRepository(db *gorm.DB) TokenRepository {
+func NewTokenRepository(db *gorm.DB) repository.TokenRepository {
 	return &tokenRepository{
 		db: db,
 	}
@@ -27,6 +23,7 @@ func NewTokenRepository(db *gorm.DB) TokenRepository {
 
 func TokenMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.IssuedAppToken{})
+	db.AutoMigrate(&model.IssuedAuthTokenHistory{})
 }
 
 func (r *tokenRepository) PutIssuedAppToken(token *shared.AppTokenEntity) (bool, error) {
@@ -76,5 +73,43 @@ func toAppTokenModel(e *shared.AppTokenEntity) *model.IssuedAppToken {
 		Uuid:         e.Uuid,
 		AppToken:     e.AppToken,
 		RefreshToken: e.RefreshToken,
+	}
+}
+
+func (r *tokenRepository) InitUserAuthToken() ([]entity.AuthTokenEntity, error) {
+
+	var histories []model.IssuedAuthTokenHistory
+
+	// 서브쿼리: id, uuid 기준으로 최신 create_at 찾기
+	subQuery := r.db.Model(&model.IssuedAuthTokenHistory{}).
+		Select("id, uuid, MAX(create_at) as max_create_at").
+		Group("id, uuid")
+
+	// 메인쿼리: 해당 최신 create_at 레코드 가져오기
+	err := r.db.Table("issued_auth_token_history h").
+		Joins("JOIN (?) m ON h.id = m.id AND h.uuid = m.uuid AND h.create_at = m.max_create_at", subQuery).
+		Find(&histories).Error
+
+	if err != nil {
+		panic(err)
+	}
+
+	return ToAuthTokenEntities(histories), nil
+}
+
+func ToAuthTokenEntities(histories []model.IssuedAuthTokenHistory) []entity.AuthTokenEntity {
+	result := make([]entity.AuthTokenEntity, len(histories))
+	for i, h := range histories {
+		result[i] = ToAuthTokenEntity(h)
+	}
+	return result
+}
+
+func ToAuthTokenEntity(h model.IssuedAuthTokenHistory) entity.AuthTokenEntity {
+	return entity.AuthTokenEntity{
+		Id:   h.Id,
+		Uuid: h.Uuid,
+		At:   h.AccessToken,
+		Rt:   h.RefreshToken,
 	}
 }
