@@ -40,6 +40,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 		`SELECT 
 			su.user_hash,
 			ud.user_phone_num,
+			ud.user_email,
 			wuml.ko_lang,
 			wuml.en_lang,
 			wuml.zh_lang,
@@ -55,7 +56,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 			ON su.user_hash = wuml.user_hash
 		LEFT JOIN user_profile AS up
 			ON su.user_hash = up.user_hash	
-		WHERE su.user_hash = ? AND su.use_yn = 'Y'`,
+		WHERE su.user_id = ? AND su.use_yn = 'Y'`,
 		en.MyHash).Scan(&myDetailInfo).Error
 	if err != nil {
 		tx.Rollback()
@@ -82,7 +83,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 			SELECT wdu.dept_code FROM service_users AS su 
 			JOIN works_dept_user AS wdu 
 				ON su.user_hash = wdu.user_hash 
-			WHERE su.use_yn = 'Y' AND su.user_hash = ?) AS a 
+			WHERE su.use_yn = 'Y' AND su.user_id = ?) AS a 
 			ON wdml.dept_code = a.dept_code`,
 		en.MyHash).Scan(&myDeptInfo).Error
 	if err != nil {

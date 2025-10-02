@@ -1,9 +1,12 @@
 package model
 
+import "time"
+
 type ServiceUsers struct {
-	UserHash string `gorm:"column:user_hash;primaryKey;comment:pk"`
-	UserId   string `gorm:"column:user_id;comment:사용자 ID"`
-	UseYn    string `gorm:"column:use_yn;default:Y;comment:사용여부"`
+	UserHash string    `gorm:"column:user_hash;primaryKey;comment:pk"`
+	UserId   string    `gorm:"column:user_id;comment:사용자 ID"`
+	UseYn    string    `gorm:"column:use_yn;default:Y;comment:사용여부"`
+	CreateAt time.Time `gorm:"column:create_at;autoCreateTime;comment:DB 저장시간"`
 }
 
 func (ServiceUsers) TableName() string {
