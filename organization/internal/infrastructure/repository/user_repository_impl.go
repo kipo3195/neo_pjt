@@ -7,6 +7,7 @@ import (
 	"org/internal/infrastructure/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type userRepositoryImpl struct {
@@ -162,6 +163,53 @@ func (r *userRepositoryImpl) CreateServiceUser(ctx context.Context, entities []e
 
 	tx := r.db.WithContext(ctx)
 	if err := tx.Create(&models).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *userRepositoryImpl) GetServiceUsers(ctx context.Context, keyword string) ([]entity.UserDetailEntity, error) {
+
+	var models []model.ServiceUsers
+
+	tx := r.db.WithContext(ctx)
+	if err := tx.
+		Where("user_id LIKE ? AND use_yn = 'Y'", keyword+"%").
+		Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	// model → entity 변환
+	var entities []entity.UserDetailEntity
+	for _, m := range models {
+		entities = append(entities, entity.UserDetailEntity{
+			UserHash: m.UserHash,
+		})
+	}
+
+	return entities, nil
+}
+
+func (r *userRepositoryImpl) CreateUserDetail(ctx context.Context, entities []entity.UserDetailEntity) error {
+
+	// entity → model 변환
+	var models []model.UserDetail
+	for _, e := range entities {
+		models = append(models, model.UserDetail{
+			UserHash:     e.UserHash,
+			UserPhoneNum: e.UserPhoneNum,
+			UserEmail:    e.UserEmail, // entity에 이메일이 있다면
+		})
+	}
+
+	tx := r.db.WithContext(ctx)
+
+	// Upsert: 이미 존재하면 update, 없으면 insert
+	if err := tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_hash"}},                               // PK 기준
+		DoUpdates: clause.AssignmentColumns([]string{"user_phone_num", "user_email"}), // update할 컬럼
+	}).Create(&models).Error; err != nil {
 		return err
 	}
 

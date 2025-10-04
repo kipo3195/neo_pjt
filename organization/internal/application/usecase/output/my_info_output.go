@@ -8,6 +8,7 @@ type MyInfoOutput struct {
 	UserHash     string           `json:"userHash"`
 	UserPhoneNum string           `json:"userPhoneNum"`
 	Username     UsernameOutput   `json:"userName"`
+	UserEmail    string           `json:"userEmail"`
 	OrgCodes     []string         `json:"orgCodes"`
 	ProfileUrl   string           `json:"profileUrl"`
 	ProfileMsg   string           `json:"profileMsg"`
@@ -32,6 +33,7 @@ func MakeMyInfoOutput(entity entity.MyInfoEntity) MyInfoOutput {
 		UserHash:     entity.UserHash,
 		UserPhoneNum: entity.UserPhoneNum,
 		Username:     username,
+		UserEmail:    entity.UserEmail,
 		DeptInfo:     deptInfo,
 		ProfileUrl:   entity.ProfileUrl,
 		ProfileMsg:   entity.ProfileMsg,
