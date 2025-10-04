@@ -46,9 +46,10 @@ func InitServer() *http.Server {
 
 	userModule := di.InitUserModule(db)
 	router.SetUserRoute(baseGroup, userModule.Handler, sfg.TokenConfig)
-	// ---- Orchestrator Init -----
 
-	//router := routes.SetupRoutes(handlers)
+	// ---- Orchestrator Init -----
+	dummyDataInitServiceModule := di.InitDummyDataServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
+	router.SetDummyDataServiceRoute(baseGroup, dummyDataInitServiceModule)
 
 	return &http.Server{
 		Addr:    ":8088",

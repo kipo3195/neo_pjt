@@ -147,3 +147,23 @@ func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []entity.DeptInfoEntity {
 	}
 	return deptEntity
 }
+
+func (r *userRepositoryImpl) CreateServiceUser(ctx context.Context, entities []entity.ServiceUserEntity) error {
+
+	// entity → model 변환
+	var models []model.ServiceUsers
+	for _, e := range entities {
+		models = append(models, model.ServiceUsers{
+			UserHash: e.UserHash,
+			UserId:   e.UserId,
+			UseYn:    "Y", // 기본값 설정
+		})
+	}
+
+	tx := r.db.WithContext(ctx)
+	if err := tx.Create(&models).Error; err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -11,6 +11,7 @@ import (
 
 type OrgModule struct {
 	Handler *handler.OrgHandler
+	Usecase usecase.OrgUsecase
 }
 
 func InitOrgModule(db *gorm.DB, orgStorage storage.OrgFileStorage) *OrgModule {
@@ -21,5 +22,6 @@ func InitOrgModule(db *gorm.DB, orgStorage storage.OrgFileStorage) *OrgModule {
 
 	return &OrgModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }

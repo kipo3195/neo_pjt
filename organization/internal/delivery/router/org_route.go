@@ -47,3 +47,12 @@ func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler, tokenCo
 	clientApi.GET("/my-info", handler.GetMyInfo)
 	clientApi.GET("/info", handler.GetUserInfo)
 }
+
+// /////////////////////////////
+func SetDummyDataServiceRoute(parent *gin.RouterGroup, handler *handler.DummyDataServiceHandler) {
+	//org := parent.Group("/test/v1/org")
+	//department := parent.Group("/test/v1/department")
+	user := parent.Group("/test/v1/user")
+
+	user.POST("/init/service-user/", handler.InitServiceUser)
+}

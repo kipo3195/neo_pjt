@@ -10,6 +10,7 @@ import (
 
 type DepartmentModule struct {
 	Handler *handler.DepartmentHandler
+	Usecase usecase.DepartmentUsecase
 }
 
 func InitDepartmentModule(db *gorm.DB) *DepartmentModule {
@@ -20,5 +21,6 @@ func InitDepartmentModule(db *gorm.DB) *DepartmentModule {
 
 	return &DepartmentModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }

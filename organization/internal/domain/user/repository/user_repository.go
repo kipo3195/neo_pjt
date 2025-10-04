@@ -7,4 +7,5 @@ import (
 
 type UserRepository interface {
 	GetMyInfo(ctx context.Context, entity entity.MyInfoHashEntity) (entity.MyInfoEntity, error)
+	CreateServiceUser(ctx context.Context, entity []entity.ServiceUserEntity) error
 }

@@ -10,6 +10,7 @@ import (
 
 type UserModule struct {
 	Handler *handler.UserHandler
+	Usecase usecase.UserUsecase
 }
 
 func InitUserModule(db *gorm.DB) *UserModule {
@@ -20,5 +21,6 @@ func InitUserModule(db *gorm.DB) *UserModule {
 
 	return &UserModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }

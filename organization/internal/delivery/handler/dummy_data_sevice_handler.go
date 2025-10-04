@@ -1,0 +1,50 @@
+package handler
+
+import (
+	"encoding/json"
+	"org/internal/application/orchestrator"
+	"org/internal/application/usecase/input"
+	"org/internal/delivery/dto/dummy"
+	commonConsts "org/pkg/consts"
+	"org/pkg/response"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
+)
+
+type DummyDataServiceHandler struct {
+	svc *orchestrator.DummyDataService
+}
+
+func NewDummyDataServiceHandler(svc *orchestrator.DummyDataService) *DummyDataServiceHandler {
+	return &DummyDataServiceHandler{svc: svc}
+}
+
+func (h *DummyDataServiceHandler) InitServiceUser(c *gin.Context) {
+	ctx := c.Request.Context()
+	//.. init service 비즈니스 로직 작성
+
+	var req dummy.CreateServiceUserRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	input := input.MakeCreateServiceUserInput(req.UserCount, req.Keyword)
+	err := h.svc.User.CreateServiceUser(ctx, input)
+
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+	} else {
+		response.SendSuccess(c, "success")
+	}
+
+}
