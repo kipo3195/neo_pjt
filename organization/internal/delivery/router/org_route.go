@@ -53,7 +53,6 @@ func SetDummyDataServiceRoute(parent *gin.RouterGroup, handler *handler.DummyDat
 
 	//
 	user := parent.Group("/test/v1/user")
-
 	user.POST("/init/service-user/", handler.InitServiceUser)
 	user.POST("/init/user-detail/", handler.InitUserDetail)
 	user.POST("/init/user-multi-lang", handler.InitUserMultiLang)
@@ -61,5 +60,6 @@ func SetDummyDataServiceRoute(parent *gin.RouterGroup, handler *handler.DummyDat
 	department := parent.Group("/test/v1/department")
 	department.POST("/init/works-dept", handler.InitWorksDept)
 	department.POST("/init/works-dept-multi-lang", handler.InitWorksDeptMultiLang)
+	department.POST("/init/works-dept-user", handler.InitWorksDeptUser)
 
 }

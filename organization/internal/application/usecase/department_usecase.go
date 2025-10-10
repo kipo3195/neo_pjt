@@ -28,6 +28,8 @@ type DepartmentUsecase interface {
 
 	CreateWorksDeptMultiLang(ctx context.Context, input input.CreateWorksDeptMultiLangInput) error
 	CreateDeptMultiLang(ctx context.Context, en entity.WorksDeptEntity) error
+
+	CreateWorksDeptUser(ctx context.Context, input input.CreateWorksDeptUserInput) error
 }
 
 func NewDepartmentUsecase(repository repository.DepartmentRepository) DepartmentUsecase {
@@ -307,4 +309,37 @@ func (u *departmentUsecase) CreateDeptMultiLang(ctx context.Context, en entity.W
 	err := u.repository.PutWorksDeptMultiLang(ctx, entity)
 
 	return err
+}
+
+func (u *departmentUsecase) CreateWorksDeptUser(ctx context.Context, input input.CreateWorksDeptUserInput) error {
+
+	// 부서 조회
+	depts, err := u.repository.GetDepts(ctx, input.Org)
+	if err != nil {
+		return err
+	}
+
+	// 매핑
+	for i := 0; i < len(input.UserHashs); i++ {
+		// 랜덤한 부서
+		userHash := input.UserHashs[i]
+		dept := depts[rand.Intn(len(depts))]
+		updateHash := util.MakeUpdateHash()
+		en := entity.CreateDeptUserEntity{
+			UserHash:             userHash,
+			DeptCode:             dept.DeptCode,
+			DeptOrg:              dept.DeptOrg,
+			PositionCode:         "",
+			RoleCode:             "",
+			IsConcurrentPosition: "N",
+			UpdateHash:           updateHash,
+		}
+		log.Println("[CreateWorksDeptUser] user hash : ", en.UserHash, " dept : ", en.DeptCode)
+		_, err := u.repository.PutDeptUser(ctx, en)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
