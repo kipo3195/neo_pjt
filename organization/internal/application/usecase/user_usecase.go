@@ -24,6 +24,7 @@ type UserUsecase interface {
 	CreateServiceUser(ctx context.Context, input input.CreateServiceUserInput) error
 	CreateUserDetail(ctx context.Context, input input.CreateUserDetailInput) error
 	CreateUserMultiLang(ctx context.Context, input input.CreateUserMultiLangInput) error
+	GetServiceUsers(ctx context.Context, org string) ([]output.ServiceUsersOutput, error)
 }
 
 func NewUserUsecase(repository repository.UserRepository) UserUsecase {
@@ -72,6 +73,27 @@ func generateUserHash() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func (r *userUsecase) GetServiceUsers(ctx context.Context, org string) ([]output.ServiceUsersOutput, error) {
+
+	// like 검색으로 사용자를 조회함.
+	entities, err := r.repository.GetServiceUsers(ctx, org)
+
+	if err != nil {
+		return nil, err
+	}
+
+	temp := make([]output.ServiceUsersOutput, len(entities))
+
+	for i := 0; i < len(entities); i++ {
+		temp[i] = output.ServiceUsersOutput{
+			UserHash: entities[i].UserHash,
+		}
+	}
+
+	return temp, nil
+
 }
 
 func (r *userUsecase) CreateUserDetail(ctx context.Context, input input.CreateUserDetailInput) error {

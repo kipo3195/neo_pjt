@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
-	"org/internal/application/usecase/input"
 	"org/internal/application/util"
 	"org/internal/consts"
 	"org/internal/delivery/dto/org"
@@ -29,7 +27,6 @@ type OrgUsecase interface {
 	GetOrgHash(ctx context.Context, req org.GetOrgHashRequest) (map[string]any, error)
 	GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error)
 	ServerCreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error)
-	CreateWorksDept(ctx context.Context, input input.CreateWorksDeptInput) error
 }
 
 func NewOrgUsecase(repository repository.OrgRepository, orgStorage storage.OrgFileStorage) OrgUsecase {
@@ -241,48 +238,4 @@ func buildOrgTree(flatList []entity.OrgInfo, parentCode string) []entity.OrgTree
 	}
 
 	return tree
-}
-
-func (u *orgUsecase) CreateWorksDept(ctx context.Context, input input.CreateWorksDeptInput) error {
-
-	u.CreateDeptTree(ctx, "root", 1, input.MaxDepth, input.Org, input.DeptCount)
-
-	return nil
-
-}
-
-func (u *orgUsecase) CreateDeptTree(ctx context.Context, parentCode string, depth, maxDepth int, org string, deptCount int) error {
-	if depth > maxDepth {
-		return nil
-	}
-
-	numDepts := rand.Intn(deptCount) + 1 // 각 단계에서 1~5개의 부서
-	for i := 0; i < numDepts; i++ {
-		deptCode := randomString(8)
-		log.Printf("depth : %d, code : %s", depth, deptCode)
-		dept := entity.WorksDeptEntity{
-			DeptCode:        deptCode,
-			DeptOrg:         org,
-			ParentsDeptCode: parentCode,
-		}
-
-		if err := u.repository.CreateDeptTree(ctx, dept); err != nil {
-			return fmt.Errorf("insert failed (deptCode=%s): %w", deptCode, err)
-		}
-
-		// 하위 부서 생성
-		if err := u.CreateDeptTree(ctx, deptCode, depth+1, maxDepth, org, deptCount); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func randomString(n int) string {
-	letters := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-	s := make([]rune, n)
-	for i := range s {
-		s[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(s)
 }

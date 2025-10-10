@@ -50,12 +50,16 @@ func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler, tokenCo
 
 // /////////////////////////////
 func SetDummyDataServiceRoute(parent *gin.RouterGroup, handler *handler.DummyDataServiceHandler) {
-	//org := parent.Group("/test/v1/org")
-	//department := parent.Group("/test/v1/department")
+
+	//
 	user := parent.Group("/test/v1/user")
 
 	user.POST("/init/service-user/", handler.InitServiceUser)
 	user.POST("/init/user-detail/", handler.InitUserDetail)
 	user.POST("/init/user-multi-lang", handler.InitUserMultiLang)
-	user.POST("/init/works-dept", handler.InitWorksDept)
+
+	department := parent.Group("/test/v1/department")
+	department.POST("/init/works-dept", handler.InitWorksDept)
+	department.POST("/init/works-dept-multi-lang", handler.InitWorksDeptMultiLang)
+
 }

@@ -7,7 +7,6 @@ import (
 	"org/internal/domain/org/entity"
 	"org/internal/domain/org/repository"
 	"org/internal/infrastructure/model"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -152,23 +151,4 @@ func convertWorksOrgToEntity(models []model.WorksOrg) []entity.WorksOrg {
 		entities = append(entities, entity)
 	}
 	return entities
-}
-
-func (r *orgRepositoryImpl) CreateDeptTree(ctx context.Context, e entity.WorksDeptEntity) error {
-	deptModel := model.WorksDept{
-		DeptCode:        e.DeptCode,
-		DeptOrg:         e.DeptOrg,
-		ParentsDeptCode: e.ParentsDeptCode,
-	}
-
-	// DeptCreateDate가 비어있다면 현재 시각으로 설정
-	if deptModel.DeptCreateDate.IsZero() {
-		deptModel.DeptCreateDate = time.Now()
-	}
-
-	if err := r.db.WithContext(ctx).Create(&deptModel).Error; err != nil {
-		return err
-	}
-
-	return nil
 }

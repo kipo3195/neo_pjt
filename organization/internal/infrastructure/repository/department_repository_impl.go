@@ -8,6 +8,7 @@ import (
 	"org/internal/domain/department/repository"
 	"org/internal/infrastructure/model"
 	utils "org/internal/infrastructure/util"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -195,4 +196,70 @@ func (r *departmentRepositoryImpl) DeleteDeptUser(txt context.Context, entity en
 
 	result := r.db.Model(&model.WorksDeptUser{}).Where("dept_org = ? AND dept_code = ? AND user_hash = ? ", entity.DeptOrg, entity.DeptCode, entity.UserHash).Update("use_yn", "N")
 	return nil, result.Error
+}
+
+func (r *departmentRepositoryImpl) CreateDeptTree(ctx context.Context, e entity.WorksDeptEntity) error {
+	deptModel := model.WorksDept{
+		DeptCode:        e.DeptCode,
+		DeptOrg:         e.DeptOrg,
+		ParentsDeptCode: e.ParentsDeptCode,
+	}
+
+	// DeptCreateDate가 비어있다면 현재 시각으로 설정
+	if deptModel.DeptCreateDate.IsZero() {
+		deptModel.DeptCreateDate = time.Now()
+	}
+
+	if err := r.db.WithContext(ctx).Create(&deptModel).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *departmentRepositoryImpl) GetDepts(ctx context.Context, org string) ([]entity.WorksDeptEntity, error) {
+
+	var worksOrgs []model.WorksDept
+
+	err := r.db.Raw(`SELECT * FROM org.works_dept where dept_org = ?`, org).Scan(&worksOrgs).Error
+
+	if err != nil {
+		log.Println("[GetDepts] - No record found or DB error")
+		return nil, err
+	}
+
+	temp := make([]entity.WorksDeptEntity, len(worksOrgs))
+
+	for i := 0; i < len(worksOrgs); i++ {
+		log.Println(worksOrgs[i].DeptCode, " : ", worksOrgs[i].DeptOrg)
+		temp[i] = entity.WorksDeptEntity{
+			DeptCode: worksOrgs[i].DeptCode,
+			DeptOrg:  worksOrgs[i].DeptOrg,
+		}
+	}
+
+	return temp, nil
+}
+
+func (r *departmentRepositoryImpl) PutWorksDeptMultiLang(ctx context.Context, e entity.CreateMultiLangEntity) error {
+
+	log.Println("insert > ", e.DeptCode, " : ", e.DeptOrg)
+
+	deptModel := model.WorksDeptMultiLang{
+		DeptCode: e.DeptCode,
+		DeptOrg:  e.DeptOrg,
+		KoLang:   e.KoLang,
+		EnLang:   e.EnLang,
+		ZhLang:   e.ZhLang,
+		JpLang:   e.JpLang,
+		RuLang:   e.RuLang,
+		ViLang:   e.ViLang,
+		DefLang:  e.KoLang,
+	}
+
+	if err := r.db.WithContext(ctx).Create(&deptModel).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
