@@ -11,4 +11,5 @@ type OrgRepository interface {
 	GetOrgDiffEvent(ctx context.Context, orgCode string, orgHash string) ([]entity.OrgEventEntity, error)
 	PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error)
 	GetOrg(ctx context.Context, orgCode string) ([]entity.WorksOrg, error)
+	CreateDeptTree(ctx context.Context, entity entity.WorksDeptEntity) error
 }
