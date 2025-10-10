@@ -10,4 +10,5 @@ type UserRepository interface {
 	CreateServiceUser(ctx context.Context, entity []entity.ServiceUserEntity) error
 	GetServiceUsers(ctx context.Context, keyword string) ([]entity.UserDetailEntity, error)
 	CreateUserDetail(ctx context.Context, entity []entity.UserDetailEntity) error
+	CreateUserMultiLang(ctx context.Context, entity entity.UserMultiLangEntity) error
 }

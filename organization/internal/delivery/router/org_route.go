@@ -56,4 +56,5 @@ func SetDummyDataServiceRoute(parent *gin.RouterGroup, handler *handler.DummyDat
 
 	user.POST("/init/service-user/", handler.InitServiceUser)
 	user.POST("/init/user-detail/", handler.InitUserDetail)
+	user.POST("/init/user-multi-lang", handler.InitUserMultiLang)
 }

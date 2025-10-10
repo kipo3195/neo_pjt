@@ -5,6 +5,7 @@ import (
 	"org/internal/domain/user/entity"
 	"org/internal/domain/user/repository"
 	"org/internal/infrastructure/model"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -214,4 +215,30 @@ func (r *userRepositoryImpl) CreateUserDetail(ctx context.Context, entities []en
 	}
 
 	return nil
+}
+
+func (r *userRepositoryImpl) CreateUserMultiLang(ctx context.Context, e entity.UserMultiLangEntity) error {
+
+	modelData := model.WorksUserMultiLang{
+		UserHash:   e.UserHash,
+		DefLang:    e.Ko,
+		KoLang:     e.Ko,
+		EnLang:     e.En,
+		ZhLang:     e.Zh,
+		JpLang:     e.Jp,
+		RuLang:     e.Ru,
+		ViLang:     e.Vi,
+		CreateDate: time.Now(),
+	}
+
+	// Upsert: 존재하면 Update, 없으면 Insert
+	result := r.db.WithContext(ctx).Clauses(
+		clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_hash"}}, // user_hash 기준 중복 체크
+			DoUpdates: clause.AssignmentColumns([]string{"def_lang", "ko_lang", "en_lang", "zh_lang", "jp_lang", "ru_lang", "vi_lang"}),
+		},
+	).Create(&modelData)
+
+	return result.Error
+
 }
