@@ -31,6 +31,7 @@ func InitServer() *http.Server {
 	if sfg.AutoMigrate {
 		migration.RunAll(db)
 	}
+
 	// ---- Storage Init -----
 	userAuthStorage := storage.NewUserAuthStorage()
 	deviceStorage := storage.NewDeviceStorage()

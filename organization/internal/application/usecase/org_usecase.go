@@ -26,7 +26,7 @@ type orgUsecase struct {
 type OrgUsecase interface {
 	GetOrgHash(ctx context.Context, req org.GetOrgHashRequest) (map[string]any, error)
 	GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error)
-	ServerCreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error)
+	CreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error)
 }
 
 func NewOrgUsecase(repository repository.OrgRepository, orgStorage storage.OrgFileStorage) OrgUsecase {
@@ -101,7 +101,7 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req org.GetOrgDataRequest) 
 
 }
 
-func (r *orgUsecase) ServerCreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error) {
+func (r *orgUsecase) CreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error) {
 
 	for i := 0; i < len(req.OrgCode); i++ {
 
@@ -198,7 +198,7 @@ func parseOrgTree(orgTree []entity.WorksOrg) *entity.OrgEntity {
 			ParentDeptCode: org.ParentDeptCode,
 			Name:           name,
 			Kind:           org.Kind,
-			Id:             org.Id,
+			Id:             org.UserHash,
 			Header:         org.Header,
 		}
 

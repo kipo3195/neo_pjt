@@ -3,13 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"org/internal/application/usecase"
 	"org/internal/delivery/dto/org"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
-	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 )
 
 type OrgHandler struct {
@@ -80,14 +81,18 @@ func (h *OrgHandler) GetOrgData(c *gin.Context) {
 		// // 전송 헤더의 순서가 영향을 미침 - 파일명 적용이 안됨.
 		// w.WriteHeader(http.StatusOK)
 
+		c.Header("Content-Type", "application/octet-stream")
+		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, orgCode+"_"+fileName+".zip"))
+		c.Data(http.StatusOK, "application/octet-stream", data.([]byte))
+
 		// interface{} → *os.File 로 변환
-		if realFile, ok := data.(*os.File); ok {
-			fmt.Println("변환 성공:", realFile.Name())
-			response.SendFileStream(c, realFile, orgCode+"_"+fileName+".zip", "")
-		} else {
-			fmt.Println("변환 실패")
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
-		}
+		// if realFile, ok := data.(*os.File); ok {
+		// 	fmt.Println("변환 성공:", realFile.Name())
+		// 	response.SendFileStream(c, realFile, orgCode+"_"+fileName+".zip", "")
+		// } else {
+		// 	fmt.Println("변환 실패")
+		// 	response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		// }
 		return
 
 	} else if err != nil {
@@ -111,8 +116,15 @@ func (h *OrgHandler) CreateOrgFile(c *gin.Context) {
 		return
 	}
 
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
 	// usecase 호출
-	data, err := h.usecase.ServerCreateOrgFile(ctx, req)
+	data, err := h.usecase.CreateOrgFile(ctx, req)
 
 	if err == nil {
 		// http status code 200

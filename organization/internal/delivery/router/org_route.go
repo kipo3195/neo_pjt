@@ -35,7 +35,7 @@ func SetOrgRoute(parent *gin.RouterGroup, handler *handler.OrgHandler, tokenConf
 	clientApi.GET("/data", handler.GetOrgData)
 
 	serverApi := parent.Group("/server/v1/org")
-	serverApi.Use(middleware.ServerAuthMiddleware())
+	//serverApi.Use(middleware.ServerAuthMiddleware())
 	serverApi.POST("/file", handler.CreateOrgFile)
 
 }
@@ -48,10 +48,9 @@ func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler, tokenCo
 	clientApi.GET("/info", handler.GetUserInfo)
 }
 
-// /////////////////////////////
+// 더미데이터 생성 Service /////////////////////////////
 func SetDummyDataServiceRoute(parent *gin.RouterGroup, handler *handler.DummyDataServiceHandler) {
 
-	//
 	user := parent.Group("/test/v1/user")
 	user.POST("/init/service-user/", handler.InitServiceUser)
 	user.POST("/init/user-detail/", handler.InitUserDetail)
