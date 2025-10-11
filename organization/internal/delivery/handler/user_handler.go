@@ -32,11 +32,11 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	id := c.Value(consts.USER_ID)
 	myHash, ok := id.(string)
 	if !ok {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, consts.ORG_F101, consts.ORG_F101_MSG)
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.ORG_F101, consts.ORG_F101_MSG)
 		return
 	}
 
-	log.Println("내 정보 요청시 myHash : ", myHash)
+	log.Println("[GetMyInfo] myHash : ", myHash)
 
 	// dto 생성
 	myInfoInput := input.MakeMyInfoInput(myHash)

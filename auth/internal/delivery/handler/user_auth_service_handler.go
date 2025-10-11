@@ -42,7 +42,7 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 	}
 
 	userAuthInput := input.MakeUserAuthInput(req.Id, req.Fv, req.Uuid)
-	userAuthOutput, err := h.svc.UserAuth.GetUserAuth(ctx, userAuthInput)
+	userAuthResult, err := h.svc.UserAuth.GetUserAuth(ctx, userAuthInput)
 
 	if err != nil {
 		if errors.Is(err, consts.ErrUserAuthFvMismatch) {
@@ -58,7 +58,7 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 	var deviceRegistCheckOutput output.DeviceRegistStateOutput
 
 	// 인증이 성공했을때, device 등록 체크
-	if userAuthOutput {
+	if userAuthResult {
 
 		deviceRegistCheckInput := input.MakeDeviceRegistCheckInput(req.Id, req.Uuid)
 		deviceRegistCheckOutput, err = h.svc.Device.GetDeviceRegistState(ctx, deviceRegistCheckInput)

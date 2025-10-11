@@ -36,7 +36,6 @@ func NewUserUsecase(repository repository.UserRepository) UserUsecase {
 func (r *userUsecase) GetMyInfo(ctx context.Context, input input.MyInfoInput) (output.MyInfoOutput, error) {
 
 	entity := entity.MakeMyInfoHashEntity(input.MyHash)
-
 	myInfo, err := r.repository.GetMyInfo(ctx, entity)
 
 	if err != nil {
