@@ -22,6 +22,10 @@ func NewDeviceRepository(db *gorm.DB) repository.DeviceRepository {
 	}
 }
 
+func DeviceMigrate(db *gorm.DB) {
+	db.AutoMigrate(&model.DeviceTokenInfo{})
+}
+
 func (r *deviceRepository) CheckDeviceRegist(ctx context.Context, entity entity.DeviceRegistStateEntity) (bool, error) {
 
 	var deviceRegistHis model.DeviceRegistHistory
@@ -67,7 +71,7 @@ func (r *deviceRepository) PutDevice(ctx context.Context, entity entity.DeviceRe
 	return nil
 }
 
-func (r *deviceRepository) PutAuthToken(ctx context.Context, id string, uuid string, at string, rt string) error {
+func (r *deviceRepository) PutAuthToken(ctx context.Context, id string, uuid string, at string, rt string, rtExp string) error {
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
 	if tx.Error != nil {
@@ -75,10 +79,11 @@ func (r *deviceRepository) PutAuthToken(ctx context.Context, id string, uuid str
 	}
 
 	if err := tx.Create(&model.IssuedAuthTokenHistory{
-		Id:           id,
-		Uuid:         uuid,
-		AccessToken:  at,
-		RefreshToken: rt,
+		Id:              id,
+		Uuid:            uuid,
+		AccessToken:     at,
+		RefreshToken:    rt,
+		RefreshTokenExp: rtExp,
 	}).Error; err != nil {
 		tx.Rollback()
 		return err
@@ -91,4 +96,38 @@ func (r *deviceRepository) PutAuthToken(ctx context.Context, id string, uuid str
 	}
 	log.Println("[PutAuthToken] - Commit Success")
 	return nil
+}
+
+func (r *deviceRepository) InitDeviceTokenInfo(ctx context.Context) ([]entity.DeviceTokenInfoEntity, error) {
+
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	var deviceTokenInfo []model.DeviceTokenInfo
+	if err := tx.Find(&deviceTokenInfo).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// model -> entity
+	var entities []entity.DeviceTokenInfoEntity
+	for _, m := range deviceTokenInfo {
+		e := entity.DeviceTokenInfoEntity{
+			TokenType: m.TokenType,
+			TokenExp:  m.TokenExp,
+		}
+		entities = append(entities, e)
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[InitDeviceTokenInfo] - Commit failed")
+		return nil, consts.ErrDB
+	}
+	log.Println("[InitDeviceTokenInfo] - Commit Success")
+
+	return entities, nil
 }

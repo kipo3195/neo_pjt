@@ -76,6 +76,7 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 		AccessToken:     deviceRegistCheckOutput.AccessToken,
 		RefreshToken:    deviceRegistCheckOutput.RefreshToken,
 		DeviceChallenge: deviceRegistCheckOutput.DeviceRegistChallenge,
+		RefreshTokenExp: deviceRegistCheckOutput.RefreshTokenExp,
 	}
 
 	response.SendSuccess(c, res)

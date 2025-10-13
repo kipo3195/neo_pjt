@@ -9,5 +9,6 @@ type UserAuthServiceRequest struct {
 type UserAuthServiceResponse struct {
 	AccessToken     string `json:"accessToken"`
 	RefreshToken    string `json:"refreshToken"`
+	RefreshTokenExp string `json:"refreshTokenExp"`
 	DeviceChallenge string `json:"deviceChallenge"`
 }

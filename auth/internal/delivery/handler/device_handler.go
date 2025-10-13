@@ -47,9 +47,11 @@ func (h DeviceHandler) DeviceRegist(c *gin.Context) {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
+
 	res := device.DeviceRegistResponse{
-		AccessToken:  deviceRegistOutput.AccessToken,
-		RefreshToken: deviceRegistOutput.RefreshToken,
+		AccessToken:     deviceRegistOutput.AccessToken,
+		RefreshToken:    deviceRegistOutput.RefreshToken,
+		RefreshTokenExp: deviceRegistOutput.RefreshTokenExp,
 	}
 
 	response.SendSuccess(c, res)

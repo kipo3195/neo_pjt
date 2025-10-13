@@ -43,6 +43,7 @@ func InitServer() *http.Server {
 
 	dataLoader := loader.NewDataLoader()
 	dataLoader.Register(loader.NewAuthTokenLoader(db, authTokenStorage))
+	dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage))
 
 	if err := dataLoader.LoadAllData(ctx); err != nil {
 		log.Fatal("Failed to load initial data:", err)

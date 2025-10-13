@@ -9,6 +9,7 @@ type DeviceRegistRequest struct {
 }
 
 type DeviceRegistResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	AccessToken     string `json:"accessToken"`
+	RefreshToken    string `json:"refreshToken"`
+	RefreshTokenExp string `json:"refreshTokenExp"`
 }
