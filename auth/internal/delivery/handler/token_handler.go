@@ -66,7 +66,7 @@ func (h *TokenHandler) GenerateAppToken(c *gin.Context) {
 
 func (h *TokenHandler) AppTokenValidation(c *gin.Context) {
 
-	var body token.AppTokenValidationRequestBody
+	var body token.AppTokenValidationRequest
 
 	ctx := c.Request.Context()
 
@@ -75,12 +75,7 @@ func (h *TokenHandler) AppTokenValidation(c *gin.Context) {
 		return
 	}
 
-	requestDTO := token.AppTokenValidationRequestDTO{
-		Body: body,
-	}
-
-	appTokenValidationInput := adapter.MakeAppTokenValidationInput(requestDTO)
-
+	appTokenValidationInput := adapter.MakeAppTokenValidationInput(body.AppToken, body.Token, body.TokenType, body.Uuid)
 	result, err := h.usecase.AppTokenValidation(appTokenValidationInput, ctx)
 
 	// 이거 나중에 모듈화 꼭 할 것

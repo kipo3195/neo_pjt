@@ -11,6 +11,7 @@ import (
 
 type TokenModule struct {
 	Handler *handler.TokenHandler
+	Usecase usecase.TokenUsecase
 }
 
 func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig) *TokenModule {
@@ -21,5 +22,6 @@ func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig) *TokenModule {
 
 	return &TokenModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }

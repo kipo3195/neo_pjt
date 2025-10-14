@@ -2,15 +2,14 @@ package adapter
 
 import (
 	"auth/internal/application/usecase/input"
-	"auth/internal/delivery/dto/token"
 )
 
-func MakeAppTokenValidationInput(req token.AppTokenValidationRequestDTO) input.AppTokenValidationInput {
+func MakeAppTokenValidationInput(appToken string, token string, tokenType string, uuid string) input.AppTokenValidationInput {
 
 	return input.AppTokenValidationInput{
-		AppToken:  req.Body.AppToken,
-		Token:     req.Body.Token,
-		TokenType: req.Body.TokenType,
-		Uuid:      req.Body.Uuid,
+		AppToken:  appToken,
+		Token:     token,
+		TokenType: tokenType,
+		Uuid:      uuid,
 	}
 }
