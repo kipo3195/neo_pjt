@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"auth/internal/consts"
 	"auth/internal/domain/shared"
 	"auth/internal/domain/token/entity"
 	"auth/internal/domain/token/repository"
 	"auth/internal/infrastructure/model"
+	"context"
 	"errors"
 	"log"
 
@@ -24,6 +26,7 @@ func NewTokenRepository(db *gorm.DB) repository.TokenRepository {
 func TokenMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.IssuedAppToken{})
 	db.AutoMigrate(&model.IssuedAuthTokenHistory{})
+	db.AutoMigrate(&model.AuthTokenInfo{})
 }
 
 func (r *tokenRepository) PutIssuedAppToken(token *shared.AppTokenEntity) (bool, error) {
@@ -112,4 +115,38 @@ func ToAuthTokenEntity(h model.IssuedAuthTokenHistory) entity.AuthTokenEntity {
 		At:   h.AccessToken,
 		Rt:   h.RefreshToken,
 	}
+}
+
+func (r *tokenRepository) InitAuthTokenInfo(ctx context.Context) ([]entity.AuthTokenInfoEntity, error) {
+
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	var authTokenInfo []model.AuthTokenInfo
+	if err := tx.Find(&authTokenInfo).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// model -> entity
+	var entities []entity.AuthTokenInfoEntity
+	for _, m := range authTokenInfo {
+		e := entity.AuthTokenInfoEntity{
+			TokenType: m.TokenType,
+			TokenExp:  m.TokenExp,
+		}
+		entities = append(entities, e)
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[InitDeviceTokenInfo] - Commit failed")
+		return nil, consts.ErrDB
+	}
+	log.Println("[InitDeviceTokenInfo] - Commit Success")
+
+	return entities, nil
 }

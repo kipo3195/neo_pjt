@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"auth/internal/application/usecase/input"
+	"auth/internal/application/usecase/output"
 	"auth/internal/application/util"
 	"auth/internal/consts"
 	"auth/internal/delivery/dto/token"
@@ -10,6 +11,7 @@ import (
 	"auth/internal/domain/token/entity"
 	"auth/internal/domain/token/repository"
 	"auth/internal/infrastructure/config"
+	"auth/internal/infrastructure/storage"
 	"context"
 	"errors"
 	"fmt"
@@ -19,19 +21,22 @@ import (
 )
 
 type tokenUsecase struct {
-	repo   repository.TokenRepository
-	jwtCfg *config.JWTConfig
+	repo    repository.TokenRepository
+	storage storage.AuthTokenStorage
+	jwtCfg  *config.JWTConfig
 }
 
 type TokenUsecase interface {
 	AppTokenValidation(in input.AppTokenValidationInput, ctx context.Context) (bool, error)
 	GenerateAppToken(body token.GenerateAppTokenRequestBody) (*token.GenerateAppTokenResponseDTO, error)
+	GenerateAuthToken(ctx context.Context, in input.GenerateAuthTokenInput) (output.GenerateAuthTokenOutput, error)
 }
 
-func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig) TokenUsecase {
+func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig, storage storage.AuthTokenStorage) TokenUsecase {
 	return &tokenUsecase{
-		repo:   repo,
-		jwtCfg: jwtCfg,
+		repo:    repo,
+		jwtCfg:  jwtCfg,
+		storage: storage,
 	}
 }
 
@@ -149,4 +154,40 @@ func (r *tokenUsecase) GenerateAppToken(body token.GenerateAppTokenRequestBody) 
 			RefreshToken: tokenEntity.RefreshToken,
 		},
 	}, nil
+}
+
+func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.UserAuthTokenInput) (output.UserAuthTokenOutput, error) {
+
+	entity := entity.MakeGenerateAuthTokenEntity(in.Id, in.Uuid)
+
+	at := r.storage.GetAccessToken(entity.Id, entity.Uuid)
+	rt := r.storage.GetRefreshToken(entity.Id, entity.Uuid)
+	rtExp := r.storage.GetRefreshTokenExp(entity.Id, entity.Uuid)
+
+	if at == "" || rt == "" || rtExp == "" {
+		log.Printf("[GetDeviceRegistState] id : %s at, rt 신규 발급..", entity.Id)
+
+		at, _, err = generateJWT(entity.Id, entity.Uuid, 30, []byte(r.accessHash), true)
+		if err != nil {
+			return output.GenerateAuthTokenOutput{}, err
+		}
+		r.storage.PutAccessToken(entity.Id, entity.Uuid, at)
+
+		rt, rtExp, err = generateJWT(entity.Id, entity.Uuid, 60, []byte(r.refreshHash), false)
+		if err != nil {
+			return output.GenerateAuthTokenOutput{}, err
+		}
+		r.storage.PutRefreshToken(entity.Id, entity.Uuid, rt)
+		r.storage.PutRefreshTokenExp(entity.Id, entity.Uuid, rtExp)
+
+		// DB 저장.
+		err := r.repo.PutAuthToken(ctx, entity.Id, entity.Uuid, at, rt, rtExp)
+		if err != nil {
+			return output.GenerateAuthTokenOutput{}, err
+		}
+	}
+
+	log.Printf("[GenerateAuthToken] id : %s \n at : %s \n rt : %s", entity.Id, at, rt)
+
+	return nil, nil
 }

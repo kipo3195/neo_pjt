@@ -3,7 +3,6 @@ package handler
 import (
 	"auth/internal/application/orchestrator"
 	"auth/internal/application/usecase/input"
-	"auth/internal/application/usecase/output"
 	"auth/internal/consts"
 	commonConsts "auth/pkg/consts"
 	response "auth/pkg/response"
@@ -55,29 +54,42 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 		return
 	}
 
-	var deviceRegistCheckOutput output.DeviceRegistStateOutput
+	//var deviceRegistCheckOutput output.DeviceRegistStateOutput
 
 	// 인증이 성공했을때, device 등록 체크
 	if userAuthResult {
 
 		deviceRegistCheckInput := input.MakeDeviceRegistCheckInput(req.Id, req.Uuid)
-		deviceRegistCheckOutput, err = h.svc.Device.GetDeviceRegistState(ctx, deviceRegistCheckInput)
+		challenge, err := h.svc.Device.GetDeviceRegistState(ctx, deviceRegistCheckInput)
 
 		if err != nil {
-			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+			if err == consts.ErrDeviceNotRegist {
+				// 등록되지 않은 device이므로 challenge 발급함.
+				res := userAuthService.UserAuthServiceResponse{
+					DeviceChallenge: challenge,
+				}
+				response.SendSuccess(c, res)
+			} else {
+				response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+			}
+			return
 		}
 
+		// at, rt 발급 (token)
+		userAuthTokenInput := input.MakeUserAuthTokenInput(req.Id, req.Uuid)
+		h.svc.Token.GenerateAuthToken(ctx, userAuthTokenInput)
+
 	} else {
+		// 인증 실패.
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
 
-	res := userAuthService.UserAuthServiceResponse{
-		AccessToken:     deviceRegistCheckOutput.AccessToken,
-		RefreshToken:    deviceRegistCheckOutput.RefreshToken,
-		DeviceChallenge: deviceRegistCheckOutput.DeviceRegistChallenge,
-		RefreshTokenExp: deviceRegistCheckOutput.RefreshTokenExp,
-	}
+	// res.AccessToken = deviceRegistCheckOutput.AccessToken
+	// 	res.RefreshToken:    deviceRegistCheckOutput.RefreshToken,
+	// 	res.DeviceChallenge: deviceRegistCheckOutput.DeviceRegistChallenge,
+	// 	res.RefreshTokenExp: deviceRegistCheckOutput.RefreshTokenExp,
+	// }
 
 	response.SendSuccess(c, res)
 }

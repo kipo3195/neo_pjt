@@ -1,6 +1,6 @@
 package entity
 
-type DeviceTokenInfoEntity struct {
+type AuthTokenInfoEntity struct {
 	TokenType string
 	TokenExp  int
 }

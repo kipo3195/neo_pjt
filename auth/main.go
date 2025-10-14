@@ -43,7 +43,7 @@ func InitServer() *http.Server {
 
 	dataLoader := loader.NewDataLoader()
 	dataLoader.Register(loader.NewAuthTokenLoader(db, authTokenStorage))
-	dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage))
+	//dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage))
 
 	if err := dataLoader.LoadAllData(ctx); err != nil {
 		log.Fatal("Failed to load initial data:", err)
@@ -59,7 +59,7 @@ func InitServer() *http.Server {
 	certificationModule := di.InitCertificationModule(db, sfg)
 	router.SetCertificationRoutes(baseGroup, certificationModule.Handler)
 
-	tokenModule := di.InitTokenModule(db, sfg)
+	tokenModule := di.InitTokenModule(db, sfg, authTokenStorage)
 	router.SetTokenRoutes(baseGroup, tokenModule.Handler)
 
 	userAuthModule := di.InitUserAuthModule(db, userAuthStorage)
@@ -69,11 +69,8 @@ func InitServer() *http.Server {
 	router.SetDeviceRoutes(baseGroup, deviceModule.Handler)
 
 	// ---- Service Handler Init ----
-	userAuthServiceModule := di.InitUserAuthServiceModule(userAuthModule.Usecase, deviceModule.Usecase)
+	userAuthServiceModule := di.InitUserAuthServiceModule(userAuthModule.Usecase, deviceModule.Usecase, tokenModule.Usecase)
 	router.SetUserAuthServiceRoutes(baseGroup, userAuthServiceModule)
-
-	authTokenServiceMudule := di.InitAuthTokenServiceModule(tokenModule.Usecase, userAuthModule.Usecase)
-	router.SetAuthTokenServiceRoutes(baseGroup, authTokenServiceMudule)
 
 	return &http.Server{
 		Addr:    ":8087",

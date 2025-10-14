@@ -18,7 +18,7 @@ func SetCertificationRoutes(parent *gin.RouterGroup, handler *handler.Certificat
 }
 
 func SetTokenRoutes(parent *gin.RouterGroup, handler *handler.TokenHandler) {
-	// 클라이언트 영역이 있다면
+
 	client := parent.Group("/client/v1/token")
 	client.POST("/re-issue-at", handler.AccessTokenRefresh)
 

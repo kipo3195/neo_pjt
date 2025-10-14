@@ -5,6 +5,7 @@ import (
 	"auth/internal/delivery/handler"
 	"auth/internal/infrastructure/config"
 	"auth/internal/infrastructure/repository"
+	"auth/internal/infrastructure/storage"
 
 	"gorm.io/gorm"
 )
@@ -14,10 +15,10 @@ type TokenModule struct {
 	Usecase usecase.TokenUsecase
 }
 
-func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig) *TokenModule {
+func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig, storage storage.AuthTokenStorage) *TokenModule {
 
 	repo := repository.NewTokenRepository(db)
-	usecase := usecase.NewTokenUsecase(repo, sfg.GetJWTConfig())
+	usecase := usecase.NewTokenUsecase(repo, sfg.GetJWTConfig(), storage)
 	handler := handler.NewTokenHandler(usecase)
 
 	return &TokenModule{

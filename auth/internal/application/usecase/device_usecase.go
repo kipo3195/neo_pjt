@@ -9,7 +9,6 @@ import (
 	"auth/internal/domain/device/repository"
 	"auth/internal/infrastructure/storage"
 	"context"
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,7 +23,7 @@ type deviceUsecase struct {
 }
 
 type DeviceUsecase interface {
-	GetDeviceRegistState(ctx context.Context, input input.DeviceRegistCheckInput) (output.DeviceRegistStateOutput, error)
+	GetDeviceRegistState(ctx context.Context, input input.DeviceRegistCheckInput) (string, error)
 	DeviceRegist(ctx context.Context, input input.DeviceRegistInput) (output.DeviceRegistOutput, error)
 }
 
@@ -38,7 +37,7 @@ func NewDeviceUsecase(repo repository.DeviceRepository, deviceStorage storage.De
 	}
 }
 
-func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.DeviceRegistCheckInput) (output.DeviceRegistStateOutput, error) {
+func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.DeviceRegistCheckInput) (string, error) {
 
 	entity := entity.MakeDeviceRegistStateEntity(input.Id, input.Uuid)
 
@@ -46,54 +45,16 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 	_, err := r.repo.CheckDeviceRegist(ctx, entity)
 	if err != nil {
 
-		// 등록되지 않았을때
+		// 등록되지 않았을때 challenge 발급
 		if err == consts.ErrDeviceNotRegist {
 			challenge := generateChallenge(entity.Id, entity.Uuid)
 			r.deviceStorage.PutDeviceChallenge(entity.Id, entity.Uuid, challenge)
-			return output.DeviceRegistStateOutput{
-				DeviceRegistChallenge: challenge,
-			}, nil
+			return challenge, err
 		} else {
-			return output.DeviceRegistStateOutput{}, err
-		}
-
-	}
-
-	at := r.authTokenStorage.GetAccessToken(entity.Id, entity.Uuid)
-	rt := r.authTokenStorage.GetRefreshToken(entity.Id, entity.Uuid)
-	rtExp := r.authTokenStorage.GetRefreshTokenExp(entity.Id, entity.Uuid)
-
-	// 없으면 신규 생성함.
-	if at == "" || rt == "" || rtExp == "" {
-		log.Printf("[GetDeviceRegistState] id : %s at, rt 신규 발급..", entity.Id)
-
-		at, _, err = generateJWT(entity.Id, entity.Uuid, r.deviceStorage.GetDeviceTokenExp(consts.DEVICE_ACCESSS_TOKEN), []byte(r.accessHash), true)
-		if err != nil {
-			return output.DeviceRegistStateOutput{}, err
-		}
-		r.authTokenStorage.PutAccessToken(entity.Id, entity.Uuid, at)
-
-		rt, rtExp, err = generateJWT(entity.Id, entity.Uuid, r.deviceStorage.GetDeviceTokenExp(consts.DEVICE_REFRESH_TOKEN), []byte(r.refreshHash), false)
-		if err != nil {
-			return output.DeviceRegistStateOutput{}, err
-		}
-		r.authTokenStorage.PutRefreshToken(entity.Id, entity.Uuid, rt)
-		r.authTokenStorage.PutRefreshTokenExp(entity.Id, entity.Uuid, rtExp)
-
-		// DB 저장.
-		err := r.repo.PutAuthToken(ctx, entity.Id, entity.Uuid, at, rt, rtExp)
-		if err != nil {
-			return output.DeviceRegistStateOutput{}, err
+			return "", err
 		}
 	}
-
-	log.Printf("[GetDeviceRegistState] id : %s \n at : %s \n rt : %s", entity.Id, at, rt)
-
-	return output.DeviceRegistStateOutput{
-		RefreshToken:    rt,
-		AccessToken:     at,
-		RefreshTokenExp: rtExp,
-	}, nil
+	return "", nil
 }
 
 func generateJWT(id string, uuid string, exp int, jwtKey []byte, accessFlag bool) (string, string, error) {

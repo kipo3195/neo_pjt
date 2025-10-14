@@ -6,7 +6,7 @@ import (
 	"auth/internal/delivery/handler"
 )
 
-func InitUserAuthServiceModule(userAuth usecase.UserAuthUsecase, device usecase.DeviceUsecase) *handler.UserAuthServiceHandler {
-	service := orchestrator.NewUserAuthService(userAuth, device)
+func InitUserAuthServiceModule(userAuth usecase.UserAuthUsecase, device usecase.DeviceUsecase, token usecase.TokenUsecase) *handler.UserAuthServiceHandler {
+	service := orchestrator.NewUserAuthService(userAuth, device, token)
 	return handler.NewUserAuthServiceHandler(service)
 }
