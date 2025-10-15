@@ -8,7 +8,9 @@ import (
 	response "auth/pkg/response"
 	"encoding/json"
 	"errors"
+	"log"
 
+	"auth/internal/delivery/adapter"
 	"auth/internal/delivery/dto/userAuthService"
 
 	"github.com/gin-gonic/gin"
@@ -40,10 +42,12 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 		return
 	}
 
+	// 인증 도메인
 	userAuthInput := input.MakeUserAuthInput(req.Id, req.Fv, req.Uuid)
 	userAuthResult, err := h.svc.UserAuth.GetUserAuth(ctx, userAuthInput)
 
 	if err != nil {
+		log.Println("[UserAuthAndDeviceCheck] 인증 실패 1")
 		if errors.Is(err, consts.ErrUserAuthFvMismatch) {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F003, consts.AUTH_F003_MSG)
 		} else if errors.Is(err, consts.ErrUserAuthChallengeExpired) {
@@ -56,40 +60,49 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 
 	//var deviceRegistCheckOutput output.DeviceRegistStateOutput
 
-	// 인증이 성공했을때, device 등록 체크
+	// device 도메인. 인증이 성공했을때
 	if userAuthResult {
 
-		deviceRegistCheckInput := input.MakeDeviceRegistCheckInput(req.Id, req.Uuid)
-		challenge, err := h.svc.Device.GetDeviceRegistState(ctx, deviceRegistCheckInput)
+		deviceRegistStateInput := adapter.MakeDeviceRegistStateInput(req.Id, req.Uuid)
+		challenge, err := h.svc.Device.GetDeviceRegistState(ctx, deviceRegistStateInput)
 
 		if err != nil {
 			if err == consts.ErrDeviceNotRegist {
+				log.Println("[UserAuthAndDeviceCheck] device 등록을 위한 challenge 발급")
 				// 등록되지 않은 device이므로 challenge 발급함.
 				res := userAuthService.UserAuthServiceResponse{
 					DeviceChallenge: challenge,
 				}
 				response.SendSuccess(c, res)
 			} else {
+				log.Println("[UserAuthAndDeviceCheck] 인증 실패 2")
 				response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 			}
 			return
 		}
 
-		// at, rt 발급 (token)
-		userAuthTokenInput := input.MakeUserAuthTokenInput(req.Id, req.Uuid)
-		h.svc.Token.GenerateAuthToken(ctx, userAuthTokenInput)
+		// device는 등록 완료.
+		// token 도메인. at, rt 발급 체크 및 response
+		userAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid)
+		output, err := h.svc.Token.GenerateAuthToken(ctx, userAuthTokenInput)
+		if err != nil {
+			log.Println("[UserAuthAndDeviceCheck] 인증 실패 3")
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+			return
+		}
+
+		res := userAuthService.UserAuthServiceResponse{
+			RefreshToken:    output.RefreshToken,
+			RefreshTokenExp: output.RefreshTokenExp,
+			AccessToken:     output.AccessToken,
+		}
+		response.SendSuccess(c, res)
+		return
 
 	} else {
 		// 인증 실패.
+		log.Println("[UserAuthAndDeviceCheck] 인증 실패 4")
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
-
-	// res.AccessToken = deviceRegistCheckOutput.AccessToken
-	// 	res.RefreshToken:    deviceRegistCheckOutput.RefreshToken,
-	// 	res.DeviceChallenge: deviceRegistCheckOutput.DeviceRegistChallenge,
-	// 	res.RefreshTokenExp: deviceRegistCheckOutput.RefreshTokenExp,
-	// }
-
-	response.SendSuccess(c, res)
 }

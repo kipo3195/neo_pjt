@@ -21,9 +21,10 @@ import (
 )
 
 type tokenUsecase struct {
-	repo    repository.TokenRepository
-	storage storage.AuthTokenStorage
-	jwtCfg  *config.JWTConfig
+	repo     repository.TokenRepository
+	storage  storage.AuthTokenStorage
+	jwtCfg   *config.JWTConfig
+	tokenCfg config.TokenHashConfig
 }
 
 type TokenUsecase interface {
@@ -32,11 +33,12 @@ type TokenUsecase interface {
 	GenerateAuthToken(ctx context.Context, in input.GenerateAuthTokenInput) (output.GenerateAuthTokenOutput, error)
 }
 
-func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig, storage storage.AuthTokenStorage) TokenUsecase {
+func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig, tokenCfg config.TokenHashConfig, storage storage.AuthTokenStorage) TokenUsecase {
 	return &tokenUsecase{
-		repo:    repo,
-		jwtCfg:  jwtCfg,
-		storage: storage,
+		repo:     repo,
+		jwtCfg:   jwtCfg,
+		tokenCfg: tokenCfg,
+		storage:  storage,
 	}
 }
 
@@ -156,8 +158,9 @@ func (r *tokenUsecase) GenerateAppToken(body token.GenerateAppTokenRequestBody) 
 	}, nil
 }
 
-func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.UserAuthTokenInput) (output.UserAuthTokenOutput, error) {
+func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.GenerateAuthTokenInput) (output.GenerateAuthTokenOutput, error) {
 
+	// 이미 발급된 AT, RT가 있을 경우에는 신규 생성하지 않는다.
 	entity := entity.MakeGenerateAuthTokenEntity(in.Id, in.Uuid)
 
 	at := r.storage.GetAccessToken(entity.Id, entity.Uuid)
@@ -165,29 +168,40 @@ func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.UserAuthT
 	rtExp := r.storage.GetRefreshTokenExp(entity.Id, entity.Uuid)
 
 	if at == "" || rt == "" || rtExp == "" {
-		log.Printf("[GetDeviceRegistState] id : %s at, rt 신규 발급..", entity.Id)
+		log.Printf("[GenerateAuthToken] id : %s at, rt 신규 발급..", entity.Id)
 
-		at, _, err = generateJWT(entity.Id, entity.Uuid, 30, []byte(r.accessHash), true)
+		// at 생성
+		at, _, err := generateJWT(entity.Id, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
 		if err != nil {
 			return output.GenerateAuthTokenOutput{}, err
 		}
+
+		// rt 생성
+		rt, rtExp, err = generateJWT(entity.Id, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_REFRESH_TOKEN), []byte(r.tokenCfg.RefreshTokenHash), false)
+		if err != nil {
+			return output.GenerateAuthTokenOutput{}, err
+		}
+
+		// DB 저장.
+		err = r.repo.PutAuthToken(ctx, entity.Id, entity.Uuid, at, rt, rtExp)
+		if err != nil {
+			return output.GenerateAuthTokenOutput{}, err
+		}
+
+		// 메모리 저장. 추후 redis저장으로 전환
 		r.storage.PutAccessToken(entity.Id, entity.Uuid, at)
-
-		rt, rtExp, err = generateJWT(entity.Id, entity.Uuid, 60, []byte(r.refreshHash), false)
-		if err != nil {
-			return output.GenerateAuthTokenOutput{}, err
-		}
 		r.storage.PutRefreshToken(entity.Id, entity.Uuid, rt)
 		r.storage.PutRefreshTokenExp(entity.Id, entity.Uuid, rtExp)
 
-		// DB 저장.
-		err := r.repo.PutAuthToken(ctx, entity.Id, entity.Uuid, at, rt, rtExp)
-		if err != nil {
-			return output.GenerateAuthTokenOutput{}, err
-		}
 	}
 
 	log.Printf("[GenerateAuthToken] id : %s \n at : %s \n rt : %s", entity.Id, at, rt)
 
-	return nil, nil
+	output := output.GenerateAuthTokenOutput{
+		RefreshToken:    rt,
+		AccessToken:     at,
+		RefreshTokenExp: rtExp,
+	}
+
+	return output, nil
 }

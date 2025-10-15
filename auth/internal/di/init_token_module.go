@@ -18,7 +18,7 @@ type TokenModule struct {
 func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig, storage storage.AuthTokenStorage) *TokenModule {
 
 	repo := repository.NewTokenRepository(db)
-	usecase := usecase.NewTokenUsecase(repo, sfg.GetJWTConfig(), storage)
+	usecase := usecase.NewTokenUsecase(repo, sfg.GetJWTConfig(), sfg.TokenConfig, storage)
 	handler := handler.NewTokenHandler(usecase)
 
 	return &TokenModule{

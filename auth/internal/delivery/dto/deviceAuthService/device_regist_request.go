@@ -1,6 +1,6 @@
-package input
+package deviceAuthService
 
-type DeviceRegistInput struct {
+type DeviceRegistRequest struct {
 	Id        string `json:"id"`
 	Uuid      string `json:"uuid"`
 	ModelName string `json:"modelName"`

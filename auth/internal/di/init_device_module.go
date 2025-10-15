@@ -14,10 +14,10 @@ type DeviceModule struct {
 	Usecase usecase.DeviceUsecase
 }
 
-func InitDeviceModule(db *gorm.DB, deviceStorage storage.DeviceStorage, authTokenStorage storage.AuthTokenStorage, accessHash string, refreshHash string) DeviceModule {
+func InitDeviceModule(db *gorm.DB, deviceStorage storage.DeviceStorage, accessHash string, refreshHash string) DeviceModule {
 
 	repo := repository.NewDeviceRepository(db)
-	usecase := usecase.NewDeviceUsecase(repo, deviceStorage, authTokenStorage, accessHash, refreshHash)
+	usecase := usecase.NewDeviceUsecase(repo, deviceStorage, accessHash, refreshHash)
 	handler := handler.NewDeviceHandler(usecase)
 	return DeviceModule{
 		Handler: handler,

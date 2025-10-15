@@ -19,8 +19,8 @@ func SetCertificationRoutes(parent *gin.RouterGroup, handler *handler.Certificat
 
 func SetTokenRoutes(parent *gin.RouterGroup, handler *handler.TokenHandler) {
 
-	client := parent.Group("/client/v1/token")
-	client.POST("/re-issue-at", handler.AccessTokenRefresh)
+	//client := parent.Group("/client/v1/token")
+	//client.POST("/re-issue-at", handler.AccessTokenRefresh)
 
 	// 20250929 만약, 추후 at, rt refresh 로직이 들어간다면.. 메모리 로딩 - authTokenStorage도 refresh 필수.
 	server := parent.Group("/server/v1/token")
@@ -44,7 +44,7 @@ func SetUserAuthServiceRoutes(parent *gin.RouterGroup, handler *handler.UserAuth
 	client.POST("/", handler.UserAuthAndDeviceCheck)
 }
 
-func SetDeviceRoutes(parent *gin.RouterGroup, handler *handler.DeviceHandler) {
+func SetUserAuthDeviceServiceRoutes(parent *gin.RouterGroup, handler *handler.DeviceAuthServiceHandler) {
 	client := parent.Group("/client/v1/device")
 	client.POST("/regist", handler.DeviceRegist)
 }
