@@ -12,6 +12,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 )
 
 type TokenHandler struct {
@@ -89,5 +90,78 @@ func (h *TokenHandler) AppTokenValidation(c *gin.Context) {
 }
 
 func (h *TokenHandler) AppTokenRefresh(c *gin.Context) {
+
+}
+
+func (h *TokenHandler) AccessTokenReIssue(c *gin.Context) {
+
+	ctx := c.Request.Context()
+
+	// 인증 토큰에서 요청 사용자의 hash 정보 추출
+	id := c.Value(consts.USER_ID)
+	userId, ok := id.(string)
+	if !ok {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F008, consts.AUTH_F008_MSG)
+		return
+	}
+
+	log.Println("[AccessTokenReIssue] userId : ", userId)
+
+	var req token.AccessTokenReIssueRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	appTokenValidationInput := adapter.MakeAppTokenValidationInput(req.AppToken, "", "appToken", req.Uuid)
+	result, err := h.usecase.AppTokenValidation(appTokenValidationInput, ctx)
+
+	if err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F002, consts.AUTH_F002_MSG)
+		return
+	}
+
+	if result {
+		checkRefreshTokenInput := adapter.MakeCheckRefreshTokenInput(userId, req.Uuid, req.RefreshToken)
+		result, err := h.usecase.CheckRefreshToken(checkRefreshTokenInput, ctx)
+
+		if err != nil {
+			// 시간 파싱 에러
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+
+		if result {
+			// AT 갱신 처리
+			reIssueAccessTokenInput := adapter.MakeReIssueAccessTokenInput(userId, req.Uuid)
+			at, err := h.usecase.ReIssueAccessToken(reIssueAccessTokenInput, ctx)
+			if err != nil {
+				// at 생성 에러
+				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+				return
+			}
+
+			log.Println("userId : ", userId, " reissued accessToken : ", at)
+			res := token.AccessTokenReIssueResponse{
+				AccessToken: at,
+			}
+			response.SendSuccess(c, res)
+
+		} else {
+			// 시간 지남 처리
+			// device 재등록 처리API 호출 하도록
+		}
+
+	} else {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
 
 }

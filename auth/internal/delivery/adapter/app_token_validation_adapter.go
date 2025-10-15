@@ -13,3 +13,19 @@ func MakeAppTokenValidationInput(appToken string, token string, tokenType string
 		Uuid:      uuid,
 	}
 }
+
+func MakeCheckRefreshTokenInput(userId string, uuid string, refreshToken string) input.CheckRefreshTokenInput {
+
+	return input.CheckRefreshTokenInput{
+		Uuid:         uuid,
+		RefreshToken: refreshToken,
+		UserId:       userId,
+	}
+}
+
+func MakeReIssueAccessTokenInput(userId string, uuid string) input.ReIssueAccessTokenInput {
+	return input.ReIssueAccessTokenInput{
+		UserId: userId,
+		Uuid:   uuid,
+	}
+}

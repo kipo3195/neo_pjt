@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -31,6 +32,8 @@ type TokenUsecase interface {
 	AppTokenValidation(in input.AppTokenValidationInput, ctx context.Context) (bool, error)
 	GenerateAppToken(body token.GenerateAppTokenRequestBody) (*token.GenerateAppTokenResponseDTO, error)
 	GenerateAuthToken(ctx context.Context, in input.GenerateAuthTokenInput) (output.GenerateAuthTokenOutput, error)
+	CheckRefreshToken(in input.CheckRefreshTokenInput, ctx context.Context) (bool, error)
+	ReIssueAccessToken(in input.ReIssueAccessTokenInput, ctx context.Context) (string, error)
 }
 
 func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig, tokenCfg config.TokenHashConfig, storage storage.AuthTokenStorage) TokenUsecase {
@@ -204,4 +207,43 @@ func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.GenerateA
 	}
 
 	return output, nil
+}
+
+func (r *tokenUsecase) CheckRefreshToken(in input.CheckRefreshTokenInput, ctx context.Context) (bool, error) {
+
+	entity := entity.MakeCheckRefreshTokenEntity(in.UserId, in.Uuid, in.RefreshToken)
+
+	rtExpDate := r.storage.GetRefreshTokenExp(entity.UserId, entity.Uuid)
+
+	log.Println("[CheckRefreshToken] userId : ", entity.UserId, "expDate : ", rtExpDate)
+
+	expTime, err := time.Parse(time.RFC3339, rtExpDate)
+	if err != nil {
+		fmt.Println("시간 파싱 오류:", err)
+		return false, err
+	}
+
+	now := time.Now()
+
+	if now.After(expTime) {
+		// 시간 지남
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
+func (r *tokenUsecase) ReIssueAccessToken(in input.ReIssueAccessTokenInput, ctx context.Context) (string, error) {
+
+	entity := entity.MakeReIssueAccessTokenEntity(in.UserId, in.Uuid)
+
+	// at 생성
+	at, _, err := generateJWT(entity.UserId, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
+	if err != nil {
+		return "", err
+	}
+
+	r.storage.PutAccessToken(entity.UserId, entity.Uuid, at)
+
+	return at, nil
 }
