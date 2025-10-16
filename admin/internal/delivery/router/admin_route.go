@@ -6,14 +6,35 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
-	r := gin.Default()
-	return r, r.Group("/" + serviceName)
+type adminRouter struct {
+	R      *gin.Engine
+	parent *gin.RouterGroup
 }
 
-func SetOrgDeptUserRoutes(parent *gin.RouterGroup, handler *handler.OrgDeptUserHandler) {
+type AdminRouter interface {
+	SetOrgDeptUserRoutes(handler *handler.OrgDeptUserHandler)
+	SetOrgDeptRoutes(handler *handler.OrgDeptHandler)
+	SetOrgFileRoutes(handler *handler.OrgFileHandler)
+	SetSkinRoutes(handler *handler.SkinImgHandler)
+	GetEngine() *gin.Engine
+}
 
-	client := parent.Group("/client/v1/org/dept/user")
+func NewAdminRouter(serviceName string) AdminRouter {
+	r := gin.Default()
+	parent := r.Group("/" + serviceName)
+	return &adminRouter{
+		R:      r,
+		parent: parent,
+	}
+}
+
+func (r *adminRouter) GetEngine() *gin.Engine {
+	return r.R
+}
+
+func (r *adminRouter) SetOrgDeptUserRoutes(handler *handler.OrgDeptUserHandler) {
+
+	client := r.parent.Group("/client/v1/org/dept/user")
 	client.GET("/", handler.GetDeptUser) // 전체 조회 (특정 조회도 필요하다면? )
 	client.POST("/", handler.RegistDeptUser)
 	client.PUT("/", handler.UpdateDeptUser)
@@ -21,9 +42,9 @@ func SetOrgDeptUserRoutes(parent *gin.RouterGroup, handler *handler.OrgDeptUserH
 
 }
 
-func SetOrgDeptRoutes(parent *gin.RouterGroup, handler *handler.OrgDeptHandler) {
+func (r *adminRouter) SetOrgDeptRoutes(handler *handler.OrgDeptHandler) {
 
-	client := parent.Group("/client/v1/org/dept")
+	client := r.parent.Group("/client/v1/org/dept")
 	client.GET("/", handler.GetDept) // 전체 조회 (특정 조회도 필요하다면? )
 	client.POST("/", handler.RegisterDept)
 	client.PUT("/", handler.UpdateDept)
@@ -31,17 +52,17 @@ func SetOrgDeptRoutes(parent *gin.RouterGroup, handler *handler.OrgDeptHandler) 
 
 }
 
-func SetOrgFileRoutes(parent *gin.RouterGroup, handler *handler.OrgFileHandler) {
+func (r *adminRouter) SetOrgFileRoutes(handler *handler.OrgFileHandler) {
 
-	client := parent.Group("/client/v1/org/file")
+	client := r.parent.Group("/client/v1/org/file")
 	client.POST("/", handler.CreateOrgFile)
 	client.GET("/", handler.GetOrgFile)
 
 }
 
-func SetSkinRoutes(parent *gin.RouterGroup, handler *handler.SkinImgHandler) {
+func (r *adminRouter) SetSkinRoutes(handler *handler.SkinImgHandler) {
 
-	client := parent.Group("/client/v1/skinImg")
+	client := r.parent.Group("/client/v1/skinImg")
 	client.POST("/", handler.CreateSkinImg)
 
 }

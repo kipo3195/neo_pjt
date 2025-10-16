@@ -6,14 +6,32 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
-	r := gin.Default()
-	return r, r.Group("/" + serviceName)
+type coreRouter struct {
+	R      *gin.Engine
+	parent *gin.RouterGroup
 }
 
-func SetAppValidationRoute(parent *gin.RouterGroup, handler *handler.AppValidationHandler) {
+type CoreRouter interface {
+	SetAppValidationRoute(handler *handler.AppValidationHandler)
+	GetEngine() *gin.Engine
+}
 
-	client := parent.Group("/client/v1/app-validation")
+func NewCoreRouter(serviceName string) CoreRouter {
+	r := gin.Default()
+	parent := r.Group("/" + serviceName)
+	return &coreRouter{
+		R:      r,
+		parent: parent,
+	}
+}
+
+func (r *coreRouter) GetEngine() *gin.Engine {
+	return r.R
+}
+
+func (r *coreRouter) SetAppValidationRoute(handler *handler.AppValidationHandler) {
+
+	client := r.parent.Group("/client/v1/app-validation")
 	client.POST("/validate", handler.ValidateApp)
 
 }

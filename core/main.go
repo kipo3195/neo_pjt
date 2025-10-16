@@ -33,19 +33,19 @@ func InitServer() *http.Server {
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-	r, baseGroup := router.SetDefaultRoutes("core")
+	router := router.NewCoreRouter("core")
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
 	appValidationHandler := di.InitAppValidationHandler(db, sfg, serverInfoStorage)
-	router.SetAppValidationRoute(baseGroup, appValidationHandler.Handler)
+	router.SetAppValidationRoute(appValidationHandler.Handler)
 
 	// ---- Orchestrator Init -----
 
 	// HTTP 서버 설정 및 반환
 	return &http.Server{
 		Addr:    ":8085",
-		Handler: r,
+		Handler: router.GetEngine(),
 	}
 }

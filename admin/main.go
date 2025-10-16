@@ -30,29 +30,29 @@ func InitServer() *http.Server {
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-	r, baseGroup := router.SetDefaultRoutes("admin")
+	router := router.NewAdminRouter("admin")
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// 스킨 이미지
 	skinImgModule := di.InitSkinImgModule(db)
-	router.SetSkinRoutes(baseGroup, skinImgModule.Handler)
+	router.SetSkinRoutes(skinImgModule.Handler)
 
 	// 조직도 파일
 	orgFileModule := di.InitOrgFileModule(db)
-	router.SetOrgFileRoutes(baseGroup, orgFileModule.Handler)
+	router.SetOrgFileRoutes(orgFileModule.Handler)
 
 	// 부서에 사용자 추가
 	orgDeptUserModule := di.InitOrgDeptUserModule(db)
-	router.SetOrgDeptUserRoutes(baseGroup, orgDeptUserModule.Handler)
+	router.SetOrgDeptUserRoutes(orgDeptUserModule.Handler)
 
 	// 부서 추가
 	orgDeptModule := di.InitOrgDeptModule(db)
-	router.SetOrgDeptRoutes(baseGroup, orgDeptModule.Handler)
+	router.SetOrgDeptRoutes(orgDeptModule.Handler)
 
 	return &http.Server{
 		Addr:    ":8089",
-		Handler: r,
+		Handler: router.GetEngine(),
 	}
 
 }

@@ -54,31 +54,31 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-	r, baseGroup := router.SetDefaultRoutes("common")
+	router := router.NewCommonRouter("common")
 
 	skinModule := di.InitSkinModule(db, skinStorage)
-	router.SetSkinRoutes(baseGroup, skinModule.Handler)
+	router.SetSkinRoutes(skinModule.Handler)
 
 	appTokenModule := di.InitAppTokenModule(db)
-	router.SetAppTokenRoutes(baseGroup, appTokenModule.Handler)
+	router.SetAppTokenRoutes(appTokenModule.Handler)
 
 	configurationModule := di.InitConfigurationModule(db, configHashStorage)
-	router.SetConfigurationRoutes(baseGroup, configurationModule.Handler)
+	router.SetConfigurationRoutes(configurationModule.Handler)
 
 	userModule := di.InitUserModule(db, userStorage)
-	router.SetUserRoutes(baseGroup, userModule.Handler)
+	router.SetUserRoutes(userModule.Handler)
 
 	worksInfoModule := di.InitWorksInfoModule(db)
 
 	// ---- Service Init -----
 	appValidationHandler := di.InitAppValidationServiceModule(nil, skinModule.Usecase, configurationModule.Usecase)
-	router.SetInitAppValidtaionRoutes(baseGroup, appValidationHandler)
+	router.SetInitAppValidtaionRoutes(appValidationHandler)
 
 	deviceInitHandler := di.InitDeviceInitHandler(worksInfoModule.Usecase, skinModule.Usecase, configurationModule.Usecase, appTokenModule.Usecase)
-	router.SetDeviceRoutes(baseGroup, deviceInitHandler)
+	router.SetDeviceRoutes(deviceInitHandler)
 
 	return &http.Server{
 		Addr:    ":8086",
-		Handler: r,
+		Handler: router.GetEngine(),
 	}
 }
