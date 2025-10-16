@@ -157,6 +157,7 @@ func (h *TokenHandler) AccessTokenReIssue(c *gin.Context) {
 		} else {
 			// 시간 지남 처리
 			// device 재등록 처리API 호출 하도록
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F009, consts.AUTH_F009_MSG)
 		}
 
 	} else {

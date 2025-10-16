@@ -47,7 +47,7 @@ func (r *tokenRepository) GetValidationAppToken(entity entity.AppTokenValidation
 
 	var validation model.IssuedAppToken
 
-	log.Println("클라이언트가 전달한 토큰 : ", entity.Token)
+	log.Println("클라이언트가 전달한 토큰 : ", entity.AppToken)
 
 	result := r.db.Where("uuid = ?", entity.Uuid).Order("seq DESC").First(&validation)
 
@@ -59,7 +59,7 @@ func (r *tokenRepository) GetValidationAppToken(entity entity.AppTokenValidation
 		return false, result.Error
 	} else {
 		serverToken := validation.AppToken
-		if serverToken == entity.Token {
+		if serverToken == entity.AppToken {
 			// 토큰 일치
 			return true, nil
 		} else {

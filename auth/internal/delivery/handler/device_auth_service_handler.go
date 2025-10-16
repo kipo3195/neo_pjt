@@ -38,10 +38,11 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 		return
 	}
 
-	deviceRegistInput := adapter.MakeDeviceRegistCheckInput(req.Id, req.Uuid)
+	deviceRegistInput := adapter.MakeDeviceRegistCheckInput(req.Id, req.Uuid, req.Challenge)
 	deviceRegResult, err := h.svc.Device.DeviceRegistCheck(ctx, deviceRegistInput)
+
 	if err != nil {
-		// 등록에 따라 다르게 처리 필요
+		// 등록에 따라 다르게 처리 필요 TODO
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		// 이미 등록됨
 		return

@@ -2,11 +2,12 @@ package adapter
 
 import "auth/internal/application/usecase/input"
 
-func MakeDeviceRegistCheckInput(id string, uuid string) input.DeviceRegistInput {
+func MakeDeviceRegistCheckInput(id string, uuid string, challenge string) input.DeviceRegistInput {
 
 	return input.DeviceRegistInput{
-		Id:   id,
-		Uuid: uuid,
+		Id:        id,
+		Uuid:      uuid,
+		Challenge: challenge,
 	}
 }
 

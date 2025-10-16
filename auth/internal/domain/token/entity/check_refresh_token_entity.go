@@ -6,7 +6,7 @@ type CheckRefreshTokenEntity struct {
 	Uuid         string
 }
 
-func MakeCheckRefreshTokenEntity(userId string, rt string, uuid string) CheckRefreshTokenEntity {
+func MakeCheckRefreshTokenEntity(userId string, uuid string, rt string) CheckRefreshTokenEntity {
 	return CheckRefreshTokenEntity{
 		UserId:       userId,
 		RefreshToken: rt,

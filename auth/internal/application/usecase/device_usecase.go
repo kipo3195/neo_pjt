@@ -8,6 +8,7 @@ import (
 	"auth/internal/domain/device/repository"
 	"auth/internal/infrastructure/storage"
 	"context"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -109,16 +110,18 @@ func (r *deviceUsecase) DeviceRegistCheck(ctx context.Context, input input.Devic
 
 	// challenge 체크
 	svChallenge := r.deviceStorage.GetDeviceChallenge(entity.Id, entity.Uuid)
-
+	log.Println("svChallenge : ", svChallenge)
 	if svChallenge == "" {
 		return false, consts.ErrDeviceChallengeExpired
 	}
 
+	log.Println("clientChallenge : ", entity.Challenge)
 	if svChallenge != entity.Challenge {
 		return false, consts.ErrDeviceChallengeMismatch
 	}
 
 	err := r.repo.PutDevice(ctx, entity)
+	log.Println("err : ", err)
 
 	if err != nil {
 		return false, err

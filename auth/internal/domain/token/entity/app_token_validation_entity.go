@@ -1,13 +1,15 @@
 package entity
 
 type AppTokenValidationEntity struct {
-	Uuid  string `json:"uuid"`
-	Token string `json:"token"`
+	Uuid     string `json:"uuid"`
+	AppToken string `json:"appToken"`
+	Token    string `json:"token"`
 }
 
-func NewAppTokenValidationEntity(uuid string, token string) AppTokenValidationEntity {
+func NewAppTokenValidationEntity(uuid string, appToken string, token string) AppTokenValidationEntity {
 	return AppTokenValidationEntity{
-		Uuid:  uuid,
-		Token: token,
+		Uuid:     uuid,
+		AppToken: appToken,
+		Token:    token,
 	}
 }

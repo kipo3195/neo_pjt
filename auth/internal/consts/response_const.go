@@ -21,8 +21,11 @@ const (
 	AUTH_F006_MSG = "Unregistered salt."
 
 	AUTH_F007     = "AUTH_007"
-	AUTH_F007_MSG = "Auth Challenge expired."
+	AUTH_F007_MSG = "Auth challenge expired."
 
 	AUTH_F008     = "AUTH_008"
-	AUTH_F008_MSG = "User hash invalid. check user Auth Info."
+	AUTH_F008_MSG = "User hash invalid. check access token info."
+
+	AUTH_F009     = "AUTH_009"
+	AUTH_F009_MSG = "Refresh token expired."
 )

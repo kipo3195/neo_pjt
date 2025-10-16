@@ -50,33 +50,33 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-	r, baseGroup := router.SetDefaultRoutes("auth")
+	router := router.NewAuthRouter("auth", sfg.TokenConfig)
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
 	// 이런 구조로 변경할것.
 	certificationModule := di.InitCertificationModule(db, sfg)
-	router.SetCertificationRoutes(baseGroup, certificationModule.Handler)
+	router.SetCertificationRoutes(certificationModule.Handler)
 
 	tokenModule := di.InitTokenModule(db, sfg, authTokenStorage)
-	router.SetTokenRoutes(baseGroup, tokenModule.Handler)
+	router.SetTokenRoutes(tokenModule.Handler)
 
 	userAuthModule := di.InitUserAuthModule(db, userAuthStorage)
-	router.SetUserAuthRoutes(baseGroup, userAuthModule.Handler)
+	router.SetUserAuthRoutes(userAuthModule.Handler)
 
 	deviceModule := di.InitDeviceModule(db, deviceStorage, sfg.TokenConfig.AccessTokenHash, sfg.TokenConfig.RefreshTokenHash)
 	//router.SetDeviceRoutes(baseGroup, deviceModule.Handler)
 
 	// ---- Service Handler Init ----
 	userAuthServiceModule := di.InitUserAuthServiceModule(userAuthModule.Usecase, deviceModule.Usecase, tokenModule.Usecase)
-	router.SetUserAuthServiceRoutes(baseGroup, userAuthServiceModule)
+	router.SetUserAuthServiceRoutes(userAuthServiceModule)
 
 	userDeviceAuthServiceModule := di.InitDeviceAuthServiceModule(tokenModule.Usecase, deviceModule.Usecase)
-	router.SetUserAuthDeviceServiceRoutes(baseGroup, userDeviceAuthServiceModule)
+	router.SetUserAuthDeviceServiceRoutes(userDeviceAuthServiceModule)
 
 	return &http.Server{
 		Addr:    ":8087",
-		Handler: r,
+		Handler: router.GetEngine(),
 	}
 }

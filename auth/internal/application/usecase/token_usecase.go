@@ -50,11 +50,11 @@ func (r *tokenUsecase) AppTokenValidation(in input.AppTokenValidationInput, ctx 
 	// 결과 데이터를 미리 정의함.
 	var flag bool
 	var err error
-
-	entity := entity.NewAppTokenValidationEntity(in.Uuid, in.Token)
-
+	var token string
+	entity := entity.NewAppTokenValidationEntity(in.Uuid, in.AppToken, in.Token)
 	if in.TokenType == "appToken" {
 		flag, err = r.repo.GetValidationAppToken(entity)
+		token = in.AppToken
 	} else if in.TokenType == "accessToken" {
 		// accessToken은 DB에 저장하여 관리하지 않으므로 만료 여부만 체크.
 		// 아래 appTokenValidationCheck 로직...
@@ -73,7 +73,7 @@ func (r *tokenUsecase) AppTokenValidation(in input.AppTokenValidationInput, ctx 
 	}
 
 	// 토큰 만료 점검
-	err = appTokenValidationCheck(entity.Token)
+	err = appTokenValidationCheck(token)
 
 	if err != nil {
 		// 만료 에러 확인
@@ -178,19 +178,16 @@ func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.GenerateA
 		if err != nil {
 			return output.GenerateAuthTokenOutput{}, err
 		}
-
 		// rt 생성
 		rt, rtExp, err = generateJWT(entity.Id, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_REFRESH_TOKEN), []byte(r.tokenCfg.RefreshTokenHash), false)
 		if err != nil {
 			return output.GenerateAuthTokenOutput{}, err
 		}
-
 		// DB 저장.
 		err = r.repo.PutAuthToken(ctx, entity.Id, entity.Uuid, at, rt, rtExp)
 		if err != nil {
 			return output.GenerateAuthTokenOutput{}, err
 		}
-
 		// 메모리 저장. 추후 redis저장으로 전환
 		r.storage.PutAccessToken(entity.Id, entity.Uuid, at)
 		r.storage.PutRefreshToken(entity.Id, entity.Uuid, rt)
@@ -198,7 +195,7 @@ func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.GenerateA
 
 	}
 
-	log.Printf("[GenerateAuthToken] id : %s \n at : %s \n rt : %s", entity.Id, at, rt)
+	log.Printf("[GenerateAuthToken] id : %s \n at : %s \n rt : %s \n rtExp : %s", entity.Id, at, rt, rtExp)
 
 	output := output.GenerateAuthTokenOutput{
 		RefreshToken:    rt,
