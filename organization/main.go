@@ -35,26 +35,26 @@ func InitServer() *http.Server {
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-	r, baseGroup := router.SetDefaultRoutes("org")
+	router := router.NewOrgRoute("org")
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
 	departmentModule := di.InitDepartmentModule(db)
-	router.SetDepartmentRoutes(baseGroup, departmentModule.Handler, sfg.TokenConfig)
+	router.SetDepartmentRoutes(departmentModule.Handler, sfg.TokenConfig)
 
 	orgModule := di.InitOrgModule(db, orgStorage)
-	router.SetOrgRoute(baseGroup, orgModule.Handler, sfg.TokenConfig)
+	router.SetOrgRoute(orgModule.Handler, sfg.TokenConfig)
 
 	userModule := di.InitUserModule(db)
-	router.SetUserRoute(baseGroup, userModule.Handler, sfg.TokenConfig)
+	router.SetUserRoute(userModule.Handler, sfg.TokenConfig)
 
 	// ---- Orchestrator Init -----
 	dummyDataInitServiceModule := di.InitDummyDataServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
-	router.SetDummyDataServiceRoute(baseGroup, dummyDataInitServiceModule)
+	router.SetDummyDataServiceRoute(dummyDataInitServiceModule)
 
 	return &http.Server{
 		Addr:    ":8088",
-		Handler: r,
+		Handler: router.GetEngine(),
 	}
 }

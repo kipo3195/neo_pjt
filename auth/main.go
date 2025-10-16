@@ -1,12 +1,12 @@
 package main
 
 import (
+	"auth/internal/delivery/router"
 	"auth/internal/di"
 	"auth/internal/infrastructure/config"
 	"auth/internal/infrastructure/loader"
 	"auth/internal/infrastructure/migration"
 	"auth/internal/infrastructure/storage"
-	router "auth/internal/router"
 	"context"
 	"log"
 	"net/http"

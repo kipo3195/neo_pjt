@@ -8,17 +8,40 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetDefaultRoutes(serviceName string) (*gin.Engine, *gin.RouterGroup) {
-	r := gin.Default()
-	return r, r.Group("/" + serviceName)
+type orgRouter struct {
+	R      *gin.Engine
+	parent *gin.RouterGroup
 }
 
-func SetDepartmentRoutes(parent *gin.RouterGroup, handler *handler.DepartmentHandler, tokenConfig config.TokenHashConfig) {
-	clientApi := parent.Group("/client/v1/department")
+type OrgRouter interface {
+	SetDepartmentRoutes(handler *handler.DepartmentHandler, tokenConfig config.TokenHashConfig)
+	SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.TokenHashConfig)
+	SetUserRoute(handler *handler.UserHandler, tokenConfig config.TokenHashConfig)
+	SetDummyDataServiceRoute(handler *handler.DummyDataServiceHandler)
+	GetEngine() *gin.Engine
+}
+
+func NewOrgRoute(serviceName string) OrgRouter {
+
+	r := gin.Default()
+	parent := r.Group("/" + serviceName)
+
+	return &orgRouter{
+		R:      r,
+		parent: parent,
+	}
+}
+
+func (r *orgRouter) GetEngine() *gin.Engine {
+	return r.R
+}
+
+func (r *orgRouter) SetDepartmentRoutes(handler *handler.DepartmentHandler, tokenConfig config.TokenHashConfig) {
+	clientApi := r.parent.Group("/client/v1/department")
 	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
 	clientApi.GET("/", handler.GetDept) //
 
-	serverApi := parent.Group("/server/v1/department")
+	serverApi := r.parent.Group("/server/v1/department")
 	serverApi.Use(middleware.ServerAuthMiddleware())
 	serverApi.POST("/", handler.CreateDept)
 	serverApi.DELETE("/", handler.DeleteDept)
@@ -27,21 +50,21 @@ func SetDepartmentRoutes(parent *gin.RouterGroup, handler *handler.DepartmentHan
 
 }
 
-func SetOrgRoute(parent *gin.RouterGroup, handler *handler.OrgHandler, tokenConfig config.TokenHashConfig) {
+func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.TokenHashConfig) {
 
-	clientApi := parent.Group("/client/v1/org")
+	clientApi := r.parent.Group("/client/v1/org")
 	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
 	clientApi.GET("/hash", handler.GetOrgHash)
 	clientApi.GET("/data", handler.GetOrgData)
 
-	serverApi := parent.Group("/server/v1/org")
+	serverApi := r.parent.Group("/server/v1/org")
 	//serverApi.Use(middleware.ServerAuthMiddleware())
 	serverApi.POST("/file", handler.CreateOrgFile)
 
 }
 
-func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler, tokenConfig config.TokenHashConfig) {
-	clientApi := parent.Group("/client/v1/user")
+func (r *orgRouter) SetUserRoute(handler *handler.UserHandler, tokenConfig config.TokenHashConfig) {
+	clientApi := r.parent.Group("/client/v1/user")
 
 	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
 	clientApi.GET("/my-info", handler.GetMyInfo)
@@ -49,14 +72,14 @@ func SetUserRoute(parent *gin.RouterGroup, handler *handler.UserHandler, tokenCo
 }
 
 // 더미데이터 생성 Service /////////////////////////////
-func SetDummyDataServiceRoute(parent *gin.RouterGroup, handler *handler.DummyDataServiceHandler) {
+func (r *orgRouter) SetDummyDataServiceRoute(handler *handler.DummyDataServiceHandler) {
 
-	user := parent.Group("/test/v1/user")
+	user := r.parent.Group("/test/v1/user")
 	user.POST("/init/service-user/", handler.InitServiceUser)
 	user.POST("/init/user-detail/", handler.InitUserDetail)
 	user.POST("/init/user-multi-lang", handler.InitUserMultiLang)
 
-	department := parent.Group("/test/v1/department")
+	department := r.parent.Group("/test/v1/department")
 	department.POST("/init/works-dept", handler.InitWorksDept)
 	department.POST("/init/works-dept-multi-lang", handler.InitWorksDeptMultiLang)
 	department.POST("/init/works-dept-user", handler.InitWorksDeptUser)
