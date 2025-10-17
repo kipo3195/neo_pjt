@@ -19,3 +19,22 @@ func MakeDeviceRegistCheckInput(id string, uuid string, challenge string) input.
 // 	}
 
 // }
+
+func MakeRemoveDeviceChallengeInput(id string, uuid string) input.RemoveDeviceChallengeInput {
+
+	return input.RemoveDeviceChallengeInput{
+		Id:   id,
+		Uuid: uuid,
+	}
+}
+
+func MakeUpdateDeviceInfoInput(id string, uuid string, modelName string, version string) input.UpdateDeviceInfoInput {
+
+	return input.UpdateDeviceInfoInput{
+		Id:        id,
+		Uuid:      uuid,
+		ModelName: modelName,
+		Version:   version,
+	}
+
+}

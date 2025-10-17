@@ -66,7 +66,7 @@ func InitServer() *http.Server {
 	router.SetUserAuthRoutes(userAuthModule.Handler)
 
 	deviceModule := di.InitDeviceModule(db, deviceStorage, sfg.TokenConfig.AccessTokenHash, sfg.TokenConfig.RefreshTokenHash)
-	//router.SetDeviceRoutes(baseGroup, deviceModule.Handler)
+	//router.SetDeviceRoutes(deviceModule.Handler)
 
 	// ---- Service Handler Init ----
 	userAuthServiceModule := di.InitUserAuthServiceModule(userAuthModule.Usecase, deviceModule.Usecase, tokenModule.Usecase)

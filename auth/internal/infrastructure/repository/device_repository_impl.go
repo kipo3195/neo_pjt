@@ -29,6 +29,7 @@ func (r *deviceRepository) CheckDeviceRegist(ctx context.Context, entity entity.
 	log.Printf("디바이스 등록 조회 id : %s, uuid : %s \n", entity.Id, entity.Uuid)
 
 	result := r.db.Where("uuid = ? and id = ?", entity.Uuid, entity.Id).First(&deviceRegistHis)
+
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		log.Println("[CheckDeviceRegist] result record = 0")
 		return false, consts.ErrDeviceNotRegist
@@ -36,8 +37,13 @@ func (r *deviceRepository) CheckDeviceRegist(ctx context.Context, entity entity.
 		log.Println("[CheckDeviceRegist] DB error")
 		return false, consts.ErrDB
 	} else {
-		log.Println("[CheckDeviceRegist] 등록된 device")
-		return true, nil
+		if result.RowsAffected > 0 {
+			// 반드시 재등록 API에서만 로깅되어야함. 20251017 auth/client/v1/device/refresh
+			log.Println("[CheckDeviceRegist] 등록된 device ")
+			return true, nil
+		} else {
+			return false, consts.ErrServerError
+		}
 	}
 }
 
@@ -92,4 +98,37 @@ func (r *deviceRepository) PutAuthToken(ctx context.Context, id string, uuid str
 	}
 	log.Println("[PutAuthToken] - Commit Success")
 	return nil
+}
+
+func (r *deviceRepository) UpdateDeviceInfo(ctx context.Context, entity entity.DeviceRegistEntity) error {
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	result := tx.Model(&model.DeviceRegistHistory{}).
+		Where("id = ? AND uuid = ?", entity.Id, entity.Uuid).
+		Updates(map[string]interface{}{
+			"model_name": entity.ModelName,
+			"version":    entity.Version,
+		})
+
+	// 존재하지 않는 경우
+	updateCount := result.RowsAffected
+	if updateCount == 0 {
+		return consts.ErrDeviceNotRegist
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[PutAuthToken] - Commit failed")
+		return consts.ErrDB
+	}
+
+	if updateCount > 0 {
+		return nil
+	} else {
+		return consts.ErrServerError
+	}
 }

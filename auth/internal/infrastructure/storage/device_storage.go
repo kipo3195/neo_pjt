@@ -44,4 +44,5 @@ func (r *deviceStorage) PutDeviceChallenge(Id string, uuid string, challenge str
 }
 func (r *deviceStorage) DeleteDeviceChallenge(Id string, uuid string) {
 	delete(r.deviceChallengeMap, Id+":"+uuid)
+	log.Println("DeleteDeviceChallenge Id : ", Id)
 }

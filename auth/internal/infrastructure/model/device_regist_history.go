@@ -8,6 +8,7 @@ type DeviceRegistHistory struct {
 	ModelName string    `gorm:"column:model_name;type:varchar(100);comment:기기 모델명"`
 	Version   string    `gorm:"column:version;type:varchar(100);comment:기기 버전"`
 	CreateAt  time.Time `gorm:"column:create_at;autoCreateTime;comment:DB 저장시간"`
+	UpdateAt  time.Time `gorm:"column:update_at;autoUpdateTime;comment:DB 업데이트 시간"`
 	UseYn     string    `gorm:"column:use_yn;type:varchar(1);default:Y;comment:사용유무"`
 }
 

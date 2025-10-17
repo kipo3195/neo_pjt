@@ -28,4 +28,7 @@ const (
 
 	AUTH_F009     = "AUTH_009"
 	AUTH_F009_MSG = "Refresh token expired."
+
+	AUTH_F010     = "AUTH_010"
+	AUTH_F010_MSG = "Device info not regist."
 )
