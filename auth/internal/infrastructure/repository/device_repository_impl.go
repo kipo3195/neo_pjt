@@ -61,6 +61,11 @@ func (r *deviceRepository) PutDevice(ctx context.Context, entity entity.DeviceRe
 		Version:   entity.Version,
 	}).Error; err != nil {
 		tx.Rollback()
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			log.Println("[PutDevice] - Duplicate entry (gorm.ErrDuplicatedKey)")
+			return consts.ErrDeviceAlreadyRegist
+		}
+		// 별도 DB 에러
 		return err
 	}
 

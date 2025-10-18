@@ -35,4 +35,10 @@ const (
 
 	AUTH_F011     = "AUTH_F011"
 	AUTH_F011_MSG = "RefreshToken auth fail."
+
+	AUTH_F012     = "AUTH_012"
+	AUTH_F012_MSG = "Auth info mismatch."
+
+	AUTH_F013     = "AUTH_013"
+	AUTH_F013_MSG = "Device info already regist."
 )

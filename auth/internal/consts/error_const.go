@@ -37,6 +37,7 @@ var ErrSaltNotRegist = errors.New("salt is not regist")
 var ErrDeviceNotRegist = errors.New("device not regist")
 var ErrDeviceChallengeExpired = errors.New("device challenge expired")
 var ErrDeviceChallengeMismatch = errors.New("device challenge mismatch")
+var ErrDeviceAlreadyRegist = errors.New("device already regist")
 
 // parsing
 var ErrTimeDataParsingError = errors.New("time data parsing error")
