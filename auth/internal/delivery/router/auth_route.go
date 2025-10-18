@@ -2,7 +2,6 @@ package router
 
 import (
 	"auth/internal/delivery/handler"
-	"auth/internal/delivery/middleware"
 	"auth/internal/infrastructure/config"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +14,6 @@ type authRouter struct {
 }
 
 type AuthRouter interface {
-	SetCertificationRoutes(handler *handler.CertificationHandler)
 	SetTokenRoutes(handler *handler.TokenHandler)
 	SetUserAuthRoutes(handler *handler.UserAuthHandler)
 	SetUserAuthServiceRoutes(handler *handler.UserAuthServiceHandler)
@@ -42,15 +40,13 @@ func NewAuthRouter(serviceName string, tokenConfig config.TokenHashConfig) AuthR
 // 	return r, r.Group("/" + serviceName)
 // }
 
-func (r *authRouter) SetCertificationRoutes(handler *handler.CertificationHandler) {
-	client := r.parent.Group("/client/v1/certification")
-	client.POST("/login", handler.Login)
-}
-
 func (r *authRouter) SetTokenRoutes(handler *handler.TokenHandler) {
 
 	client := r.parent.Group("/client/v1/token")
-	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+
+	// AuthWithoutExpMiddleware at의 만료시간은 체크하지않고 사용자 아이디만 파싱처리하기 위함
+	// 20251018 주석 처리한 이유 : AT를 클라이언트에서 읽어버린 경우 대비
+	//client.Use(middleware.AuthWithoutExpMiddleware(r.tokenConfig))
 	client.POST("/re-issue-at", handler.AccessTokenReIssue)
 
 	// 20250929 만약, 추후 at, rt refresh 로직이 들어간다면.. 메모리 로딩 - authTokenStorage도 refresh 필수.

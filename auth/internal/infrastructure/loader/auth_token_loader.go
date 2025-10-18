@@ -33,6 +33,7 @@ func (l *AuthTokenLoader) Load(ctx context.Context) error {
 		log.Printf("auth token loader id : %s, uuid : %s \n", v.Id, v.Uuid)
 		l.storage.PutAccessToken(v.Id, v.Uuid, v.At)
 		l.storage.PutRefreshToken(v.Id, v.Uuid, v.Rt)
+		l.storage.PutRefreshTokenExp(v.Id, v.Uuid, v.RtExp)
 	}
 	return nil
 }

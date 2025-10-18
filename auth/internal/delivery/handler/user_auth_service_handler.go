@@ -81,9 +81,9 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 			return
 		}
 
-		// device는 등록 완료.
+		// device가 등록 완료된 상태일때 실행됨
 		// token 도메인. at, rt 발급 체크 및 response
-		userAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid)
+		userAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid, false)
 		output, err := h.svc.Token.GenerateAuthToken(ctx, userAuthTokenInput)
 		if err != nil {
 			log.Println("[UserAuthAndDeviceCheck] 인증 실패 3")

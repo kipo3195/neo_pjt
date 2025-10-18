@@ -5,8 +5,9 @@ const (
 	AUTH_F001     = "AUTH_F001"
 	AUTH_F001_MSG = "Unregistered uuid."
 
+	// 앱토큰 검증 실패
 	AUTH_F002     = "AUTH_F002"
-	AUTH_F002_MSG = "Token info mismatch."
+	AUTH_F002_MSG = "Invalid App Token."
 
 	AUTH_F003     = "AUTH_F003"
 	AUTH_F003_MSG = "Authentication failed."
@@ -31,4 +32,7 @@ const (
 
 	AUTH_F010     = "AUTH_010"
 	AUTH_F010_MSG = "Device info not regist."
+
+	AUTH_F011     = "AUTH_F011"
+	AUTH_F011_MSG = "RefreshToken auth fail."
 )

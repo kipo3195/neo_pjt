@@ -97,16 +97,6 @@ func (h *TokenHandler) AccessTokenReIssue(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	// 인증 토큰에서 요청 사용자의 hash 정보 추출
-	id := c.Value(consts.USER_ID)
-	userId, ok := id.(string)
-	if !ok {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F008, consts.AUTH_F008_MSG)
-		return
-	}
-
-	log.Println("[AccessTokenReIssue] userId : ", userId)
-
 	var req token.AccessTokenReIssueRequest
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
@@ -121,21 +111,29 @@ func (h *TokenHandler) AccessTokenReIssue(c *gin.Context) {
 		return
 	}
 
+	// appToken 검증
 	appTokenValidationInput := adapter.MakeAppTokenValidationInput(req.AppToken, "", "appToken", req.Uuid)
 	result, err := h.usecase.AppTokenValidation(appTokenValidationInput, ctx)
 
 	if err != nil {
+		// appToken 검증 실패
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F002, consts.AUTH_F002_MSG)
 		return
 	}
 
 	if result {
-		checkRefreshTokenInput := adapter.MakeCheckRefreshTokenInput(userId, req.Uuid, req.RefreshToken)
-		result, err := h.usecase.CheckRefreshToken(checkRefreshTokenInput, ctx)
+		checkRefreshTokenInput := adapter.MakeCheckRefreshTokenInput("", req.Uuid, req.RefreshToken, true)
+		result, userId, err := h.usecase.CheckRefreshTokenWithExp(checkRefreshTokenInput, ctx)
 
 		if err != nil {
-			// 시간 파싱 에러
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+			if err == consts.ErrUserIdDoesNotExist {
+				// uuid : refresh token에 매핑된 사용자 id가 없을때
+				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F011, consts.AUTH_F011_MSG)
+			} else {
+				// 시간 파싱 에러
+				response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+			}
+			return
 		}
 
 		if result {
@@ -144,14 +142,26 @@ func (h *TokenHandler) AccessTokenReIssue(c *gin.Context) {
 			at, err := h.usecase.ReIssueAccessToken(reIssueAccessTokenInput, ctx)
 			if err != nil {
 				// at 생성 에러
-				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+				response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+				return
+			}
+
+			// 메모리 로딩을 위한 DB 업데이트 처리
+			reIssueAccessTokenSavedInput := adapter.MakeReIssueAccessTokenSavedInput(userId, req.Uuid, req.RefreshToken, at)
+			err = h.usecase.ReIssueAccessTokenSaved(ctx, reIssueAccessTokenSavedInput)
+
+			if err != nil {
+				// at 생성 에러
+				response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 				return
 			}
 
 			log.Println("userId : ", userId, " reissued accessToken : ", at)
+
 			res := token.AccessTokenReIssueResponse{
 				AccessToken: at,
 			}
+
 			response.SendSuccess(c, res)
 
 		} else {
@@ -161,7 +171,7 @@ func (h *TokenHandler) AccessTokenReIssue(c *gin.Context) {
 		}
 
 	} else {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
 

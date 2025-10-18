@@ -42,7 +42,7 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	myInfoInput := input.MakeMyInfoInput(myHash)
 	output, err := h.usecase.GetMyInfo(ctx, myInfoInput)
 
-	username := user.UsernameDto{
+	userName := user.UsernameDto{
 		Def: output.Username.Ko, // 수정 필요
 		Ko:  output.Username.Ko,
 		En:  output.Username.En,
@@ -69,14 +69,23 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		})
 	}
 
-	res := user.GetMyInfoResponse{
-		UserHash:     output.UserHash,
+	profile := user.UserProfile{
+		ProfileUrl: output.ProfileUrl,
+		ProfileMsg: output.ProfileMsg,
+	}
+
+	userDetail := user.UserDetail{
+		UserEmail:    output.UserEmail,
 		UserPhoneNum: output.UserPhoneNum,
-		Username:     username,
-		OrgCodes:     nil,
-		ProfileUrl:   output.ProfileUrl,
-		ProfileMsg:   output.ProfileMsg,
-		DeptInfo:     deptInfo,
+	}
+
+	res := user.GetMyInfoResponse{
+		UserHash:   output.UserHash,
+		UserDetail: userDetail,
+		Username:   userName,
+		OrgCode:    nil,
+		Profile:    profile,
+		DeptInfo:   deptInfo,
 	}
 
 	// response.

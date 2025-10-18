@@ -37,6 +37,9 @@ const (
 	E_108     = "E108"
 	E_108_MSG = "Check Client Parameters."
 
+	E_109     = "E109"
+	E_109_MSG = "There is no user mapped to the app token."
+
 	E_500     = "E500"
 	E_500_MSG = "Server Error."
 )

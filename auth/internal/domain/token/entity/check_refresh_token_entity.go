@@ -1,13 +1,13 @@
 package entity
 
-type CheckRefreshTokenEntity struct {
+type RefreshTokenCheckEntity struct {
 	UserId       string
 	RefreshToken string
 	Uuid         string
 }
 
-func MakeCheckRefreshTokenEntity(userId string, uuid string, rt string) CheckRefreshTokenEntity {
-	return CheckRefreshTokenEntity{
+func MakeRefreshTokenCheckEntity(userId string, uuid string, rt string) RefreshTokenCheckEntity {
+	return RefreshTokenCheckEntity{
 		UserId:       userId,
 		RefreshToken: rt,
 		Uuid:         uuid,

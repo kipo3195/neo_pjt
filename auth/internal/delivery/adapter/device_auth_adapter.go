@@ -36,5 +36,11 @@ func MakeUpdateDeviceInfoInput(id string, uuid string, modelName string, version
 		ModelName: modelName,
 		Version:   version,
 	}
+}
 
+func MakeRefreshTokenCheckInput(uuid string, rt string) input.RefreshTokenCheckInput {
+	return input.RefreshTokenCheckInput{
+		Uuid:         uuid,
+		RefreshToken: rt,
+	}
 }

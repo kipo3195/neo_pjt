@@ -42,7 +42,7 @@ func InitServer() *http.Server {
 	defer cancel()
 
 	dataLoader := loader.NewDataLoader()
-	dataLoader.Register(loader.NewAuthTokenLoader(db, authTokenStorage))
+	dataLoader.Register(loader.NewAuthTokenLoader(db, authTokenStorage)) // 인증 토큰 정보 DB에서 업로드
 	//dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage))
 
 	if err := dataLoader.LoadAllData(ctx); err != nil {
@@ -56,9 +56,6 @@ func InitServer() *http.Server {
 
 	// ---- Domain Handler Init -----
 	// 이런 구조로 변경할것.
-	certificationModule := di.InitCertificationModule(db, sfg)
-	router.SetCertificationRoutes(certificationModule.Handler)
-
 	tokenModule := di.InitTokenModule(db, sfg, authTokenStorage)
 	router.SetTokenRoutes(tokenModule.Handler)
 

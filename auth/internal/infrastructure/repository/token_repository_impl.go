@@ -27,6 +27,7 @@ func TokenMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.IssuedAppToken{})
 	db.AutoMigrate(&model.IssuedAuthTokenHistory{})
 	db.AutoMigrate(&model.AuthTokenInfo{})
+	db.AutoMigrate(&model.DeviceRegistHistory{})
 }
 
 func (r *tokenRepository) PutIssuedAppToken(token *shared.AppTokenEntity) (bool, error) {
@@ -110,10 +111,11 @@ func ToAuthTokenEntities(histories []model.IssuedAuthTokenHistory) []entity.Auth
 
 func ToAuthTokenEntity(h model.IssuedAuthTokenHistory) entity.AuthTokenEntity {
 	return entity.AuthTokenEntity{
-		Id:   h.Id,
-		Uuid: h.Uuid,
-		At:   h.AccessToken,
-		Rt:   h.RefreshToken,
+		Id:    h.Id,
+		Uuid:  h.Uuid,
+		At:    h.AccessToken,
+		Rt:    h.RefreshToken,
+		RtExp: h.RefreshTokenExp,
 	}
 }
 
@@ -176,4 +178,66 @@ func (r *tokenRepository) PutAuthToken(ctx context.Context, id string, uuid stri
 	}
 	log.Println("[PutAuthToken] - Commit Success")
 	return nil
+}
+
+func (r *tokenRepository) UpdateReIssueAccessTokenInfo(ctx context.Context, entity entity.ReIssueAccessTokenSavedEntity) error {
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	result := tx.Model(&model.IssuedAuthTokenHistory{}).
+		Where("id = ? AND uuid = ? AND refresh_token = ?", entity.UserId, entity.Uuid, entity.Rt).
+		Updates(map[string]interface{}{
+			"access_token": entity.At,
+		})
+
+	// 존재하지 않는 경우
+	updateCount := result.RowsAffected
+	if updateCount == 0 {
+		return consts.ErrDeviceNotRegist
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[UpdateReIssueAccessTokenInfo] - Commit failed")
+		return consts.ErrDB
+	}
+
+	if updateCount > 0 {
+		return nil
+	} else {
+		log.Printf("[UpdateReIssueAccessTokenInfo] id :  %s, at : %s 업데이트 되지 않음. \n", entity.UserId, entity.At)
+		return consts.ErrServerError
+	}
+
+}
+
+func (r *tokenRepository) GetUserIdWithRtAndUuid(ctx context.Context, entity entity.RefreshTokenCheckEntity) (string, error) {
+
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return "", tx.Error
+	}
+
+	var userId string
+	err := tx.Model(&model.IssuedAuthTokenHistory{}).
+		Select("id").
+		Where("uuid = ? AND refresh_token = ?", entity.Uuid, entity.RefreshToken).
+		Scan(&userId).Error
+
+	if err != nil {
+		tx.Rollback()
+		return "", err
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[GetUserIdWithRtAndUuid] - Commit failed")
+		return "", consts.ErrDB
+	}
+
+	return userId, nil
 }

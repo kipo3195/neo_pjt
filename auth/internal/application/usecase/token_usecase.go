@@ -32,8 +32,10 @@ type TokenUsecase interface {
 	AppTokenValidation(in input.AppTokenValidationInput, ctx context.Context) (bool, error)
 	GenerateAppToken(body token.GenerateAppTokenRequestBody) (*token.GenerateAppTokenResponseDTO, error)
 	GenerateAuthToken(ctx context.Context, in input.GenerateAuthTokenInput) (output.GenerateAuthTokenOutput, error)
-	CheckRefreshToken(in input.CheckRefreshTokenInput, ctx context.Context) (bool, error)
+	CheckRefreshTokenWithExp(in input.RefreshTokenCheckInput, ctx context.Context) (bool, string, error)
+	CheckRefreshToken(in input.RefreshTokenCheckInput, ctx context.Context) (string, error)
 	ReIssueAccessToken(in input.ReIssueAccessTokenInput, ctx context.Context) (string, error)
+	ReIssueAccessTokenSaved(ctx context.Context, in input.ReIssueAccessTokenSavedInput) error
 }
 
 func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig, tokenCfg config.TokenHashConfig, storage storage.AuthTokenStorage) TokenUsecase {
@@ -163,18 +165,20 @@ func (r *tokenUsecase) GenerateAppToken(body token.GenerateAppTokenRequestBody) 
 
 func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.GenerateAuthTokenInput) (output.GenerateAuthTokenOutput, error) {
 
-	// 이미 발급된 AT, RT가 있을 경우에는 신규 생성하지 않는다.
 	entity := entity.MakeGenerateAuthTokenEntity(in.Id, in.Uuid)
 
 	at := r.storage.GetAccessToken(entity.Id, entity.Uuid)
 	rt := r.storage.GetRefreshToken(entity.Id, entity.Uuid)
 	rtExp := r.storage.GetRefreshTokenExp(entity.Id, entity.Uuid)
 
-	if at == "" || rt == "" || rtExp == "" {
+	var err error
+
+	// 무조건 재발급인 경우를 우선 체크함.
+	if in.Force || at == "" || rt == "" || rtExp == "" {
 		log.Printf("[GenerateAuthToken] id : %s at, rt 신규 발급..", entity.Id)
 
 		// at 생성
-		at, _, err := generateJWT(entity.Id, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
+		at, _, err = generateJWT(entity.Id, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
 		if err != nil {
 			return output.GenerateAuthTokenOutput{}, err
 		}
@@ -206,27 +210,41 @@ func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.GenerateA
 	return output, nil
 }
 
-func (r *tokenUsecase) CheckRefreshToken(in input.CheckRefreshTokenInput, ctx context.Context) (bool, error) {
+func (r *tokenUsecase) CheckRefreshTokenWithExp(in input.RefreshTokenCheckInput, ctx context.Context) (bool, string, error) {
 
-	entity := entity.MakeCheckRefreshTokenEntity(in.UserId, in.Uuid, in.RefreshToken)
+	entity := entity.MakeRefreshTokenCheckEntity(in.UserId, in.Uuid, in.RefreshToken)
+
+	if in.WithoutId {
+		// uuid를 통해 userId를 가져옴.
+		temp, err := r.repo.GetUserIdWithRtAndUuid(ctx, entity)
+		if err != nil {
+			return false, "", err
+		}
+
+		if temp == "" {
+			return false, "", consts.ErrUserIdDoesNotExist
+		}
+
+		entity.UserId = temp
+	}
 
 	rtExpDate := r.storage.GetRefreshTokenExp(entity.UserId, entity.Uuid)
 
-	log.Println("[CheckRefreshToken] userId : ", entity.UserId, "expDate : ", rtExpDate)
+	log.Println("[CheckRefreshTokenWithExp] userId : ", entity.UserId, "expDate : ", rtExpDate)
 
 	expTime, err := time.Parse(time.RFC3339, rtExpDate)
 	if err != nil {
 		fmt.Println("시간 파싱 오류:", err)
-		return false, err
+		return false, "", consts.ErrTimeDataParsingError
 	}
 
 	now := time.Now()
 
 	if now.After(expTime) {
 		// 시간 지남
-		return false, nil
+		return false, entity.UserId, nil
 	} else {
-		return true, nil
+		return true, entity.UserId, nil
 	}
 }
 
@@ -243,4 +261,34 @@ func (r *tokenUsecase) ReIssueAccessToken(in input.ReIssueAccessTokenInput, ctx 
 	r.storage.PutAccessToken(entity.UserId, entity.Uuid, at)
 
 	return at, nil
+}
+
+func (r *tokenUsecase) ReIssueAccessTokenSaved(ctx context.Context, in input.ReIssueAccessTokenSavedInput) error {
+
+	entity := entity.MakeReIssueAccessTokenSavedEntity(in.UserId, in.Uuid, in.Rt, in.At)
+	return r.repo.UpdateReIssueAccessTokenInfo(ctx, entity)
+}
+
+func (r *tokenUsecase) CheckRefreshToken(in input.RefreshTokenCheckInput, ctx context.Context) (string, error) {
+
+	entity := entity.MakeRefreshTokenCheckEntity(in.UserId, in.Uuid, in.RefreshToken)
+	id, err := r.repo.GetUserIdWithRtAndUuid(ctx, entity)
+
+	if err != nil {
+		return "", err
+	}
+
+	if id == "" {
+		log.Println("[CheckRefreshToken] uuid, rt로 사용자 id 조회 실패")
+		return "", consts.ErrUserIdDoesNotExist
+	}
+
+	latestRt := r.storage.GetRefreshToken(id, entity.Uuid)
+
+	if entity.RefreshToken == latestRt {
+		return id, nil
+	} else {
+		return "", consts.ErrRefreshTokenAuthError
+	}
+
 }

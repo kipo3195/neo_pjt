@@ -96,9 +96,9 @@ func (r *authTokenStorage) GetTokenExpInfo(tokenType string) int {
 
 	if !exists {
 		if tokenType == consts.DEVICE_ACCESSS_TOKEN {
-			return 30
-		} else if tokenType == consts.DEVICE_REFRESH_TOKEN {
 			return 60
+		} else if tokenType == consts.DEVICE_REFRESH_TOKEN {
+			return 30
 		}
 	}
 	return exp

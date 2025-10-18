@@ -44,6 +44,7 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 
 	// 등록된 device 인지 체크 - 신규 인증이라면 값이 없이 ErrDeviceNotRegist, 별도 DB 에러라면 그대로 리턴
 	refresh, err := r.repo.CheckDeviceRegist(ctx, entity)
+
 	if err != nil {
 
 		// 등록되지 않았을때 challenge 발급
@@ -62,7 +63,7 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 		// 만료 되었을 수 있으므로 재발급함.
 		challenge := generateChallenge(entity.Id, entity.Uuid)
 		r.deviceStorage.PutDeviceChallenge(entity.Id, entity.Uuid, challenge)
-		return challenge, err
+		return challenge, nil
 	} else {
 		return "", consts.ErrServerError
 	}

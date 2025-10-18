@@ -52,7 +52,7 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 
 	if deviceRegResult {
 		// 등록 성공
-		generateAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid)
+		generateAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid, true)
 		output, err := h.svc.Token.GenerateAuthToken(ctx, generateAuthTokenInput)
 		if err != nil {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
@@ -93,20 +93,36 @@ func (h *DeviceAuthServiceHandler) DeviceRefresh(c *gin.Context) {
 		return
 	}
 
-	// rt 만료 체크
+	// 가장 최신의 rt로 요청했는지 점검
+	refreshTokenCheckInput := adapter.MakeRefreshTokenCheckInput(req.Uuid, req.RefreshToken)
+	id, err := h.svc.Token.CheckRefreshToken(refreshTokenCheckInput, ctx)
+
+	if err != nil {
+		if err == consts.ErrUserIdDoesNotExist {
+			// uuid : refresh token에 매핑된 사용자 id가 없을때
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, commonConsts.E_109, commonConsts.E_109_MSG)
+		} else if err == consts.ErrRefreshTokenAuthError {
+			// 가장 최신의 RT로 요청하지 않음.
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F011, consts.AUTH_F011_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+		return
+	}
 
 	// device 등록 점검 (재발급 받을 수 있는지)
-	deviceRegistInput := adapter.MakeDeviceRegistStateInput(req.Id, req.Uuid)
+	deviceRegistInput := adapter.MakeDeviceRegistStateInput(id, req.Uuid)
 	challenge, err := h.svc.Device.GetDeviceRegistState(ctx, deviceRegistInput)
 
-	log.Println("[DeviceRefresh] id : ", req.Id, ", new challenge : ", challenge)
+	log.Println("[DeviceRefresh] id : ", id, ", new challenge : ", challenge)
 
 	if err != nil {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
+
 	// device 정보 업데이트
-	updateDeviceInfoInput := adapter.MakeUpdateDeviceInfoInput(req.Id, req.Uuid, req.ModelName, req.Version)
+	updateDeviceInfoInput := adapter.MakeUpdateDeviceInfoInput(id, req.Uuid, req.ModelName, req.Version)
 	err = h.svc.Device.UpdateDeviceInfo(ctx, updateDeviceInfoInput)
 
 	if err != nil {
@@ -114,13 +130,13 @@ func (h *DeviceAuthServiceHandler) DeviceRefresh(c *gin.Context) {
 			// 디바이스 등록되있지도 않은데 재발급 요청함
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F010, consts.AUTH_F010_MSG)
 		} else {
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}
 		return
 	}
 
-	// at, rt 신규 생성
-	generateAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid)
+	// at, rt 신규 생성 - 무조건 신규 발급. 만료되었을 가능성이 높으니..
+	generateAuthTokenInput := input.MakeGenerateAuthTokenInput(id, req.Uuid, true)
 	output, err := h.svc.Token.GenerateAuthToken(ctx, generateAuthTokenInput)
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
@@ -134,7 +150,7 @@ func (h *DeviceAuthServiceHandler) DeviceRefresh(c *gin.Context) {
 	}
 
 	// 발급 받았던 challenge 삭제
-	removeDeviceChallengeInput := adapter.MakeRemoveDeviceChallengeInput(req.Id, req.Uuid)
+	removeDeviceChallengeInput := adapter.MakeRemoveDeviceChallengeInput(id, req.Uuid)
 	h.svc.Device.RemoveDeviceChallenge(ctx, removeDeviceChallengeInput)
 
 	response.SendSuccess(c, res)

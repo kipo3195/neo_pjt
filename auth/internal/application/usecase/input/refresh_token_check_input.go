@@ -1,7 +1,8 @@
 package input
 
-type CheckRefreshTokenInput struct {
+type RefreshTokenCheckInput struct {
 	UserId       string
 	Uuid         string
 	RefreshToken string
+	WithoutId    bool
 }
