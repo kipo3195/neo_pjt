@@ -2,6 +2,7 @@ package handler
 
 import (
 	"org/internal/application/usecase"
+	"org/internal/delivery/adapter"
 	"org/internal/delivery/dto/department"
 	commonConsts "org/pkg/consts"
 
@@ -34,7 +35,8 @@ func (h *DepartmentHandler) CreateDept(c *gin.Context) {
 	}
 
 	// usecase 호출
-	data, err := h.usecase.CreateDept(ctx, req)
+	input := adapter.CreateDeptInput(req)
+	data, err := h.usecase.CreateDept(ctx, input)
 
 	if err == nil {
 		// http status code 200

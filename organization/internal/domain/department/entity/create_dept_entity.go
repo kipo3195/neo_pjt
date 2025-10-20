@@ -12,3 +12,19 @@ type CreateDeptEntity struct {
 	ViLang         string `json:"vi"`
 	Header         string `json:"header"`
 }
+
+func MakeCreateDeptEntity(deptCode string, deptOrg string, parentDeptCode string, ko string, en string, jp string, ru string, vi string, zh string, header string) CreateDeptEntity {
+	return CreateDeptEntity{
+		DeptOrg:        deptOrg,
+		DeptCode:       deptCode,
+		ParentDeptCode: parentDeptCode,
+		KoLang:         ko,
+		EnLang:         en,
+		JpLang:         jp,
+		RuLang:         ru,
+		ViLang:         vi,
+		ZhLang:         zh,
+		Header:         header,
+	}
+
+}

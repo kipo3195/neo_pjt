@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"org/internal/application/usecase"
-	"org/internal/application/usecase/input"
 	"org/internal/consts"
 	"org/internal/delivery/adapter"
 	"org/internal/delivery/dto/user"
@@ -42,7 +41,7 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	log.Println("[GetMyInfo] myHash : ", myHash)
 
 	// dto 생성
-	myInfoInput := input.MakeMyInfoInput(myHash)
+	myInfoInput := adapter.MakeMyInfoInput(myHash)
 	output, err := h.usecase.GetMyInfo(ctx, myInfoInput)
 
 	userName := user.UsernameDto{

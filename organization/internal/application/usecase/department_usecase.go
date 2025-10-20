@@ -17,7 +17,7 @@ type departmentUsecase struct {
 }
 
 type DepartmentUsecase interface {
-	CreateDept(ctx context.Context, requestDTO department.CreateDeptRequest) (interface{}, error)
+	CreateDept(ctx context.Context, input input.CreateDeptInput) (interface{}, error)
 
 	DeleteDept(ctx context.Context, req department.DeleteDeptRequest) (interface{}, error)
 
@@ -38,24 +38,10 @@ func NewDepartmentUsecase(repository repository.DepartmentRepository) Department
 	}
 }
 
-func (r *departmentUsecase) CreateDept(ctx context.Context, req department.CreateDeptRequest) (interface{}, error) {
-	return r.repository.PutDept(ctx, toCreateDepartmentEntity(req))
-}
+func (r *departmentUsecase) CreateDept(ctx context.Context, in input.CreateDeptInput) (interface{}, error) {
 
-func toCreateDepartmentEntity(requestDTO department.CreateDeptRequest) entity.CreateDeptEntity {
-
-	return entity.CreateDeptEntity{
-		DeptCode:       requestDTO.DeptCode,
-		DeptOrg:        requestDTO.DeptOrg,
-		ParentDeptCode: requestDTO.ParentDeptCode,
-		KoLang:         requestDTO.KoLang,
-		EnLang:         requestDTO.EnLang,
-		JpLang:         requestDTO.JpLang,
-		ZhLang:         requestDTO.ZhLang,
-		RuLang:         requestDTO.RuLang,
-		ViLang:         requestDTO.ViLang,
-		Header:         requestDTO.Header,
-	}
+	entity := entity.MakeCreateDeptEntity(in.DeptCode, in.DeptOrg, in.ParentDeptCode, in.KoLang, in.EnLang, in.JpLang, in.RuLang, in.ViLang, in.ZhLang, in.Header)
+	return r.repository.PutDept(ctx, entity)
 }
 
 func (r *departmentUsecase) DeleteDeptUser(ctx context.Context, req department.DeleteDeptUserRequest) (interface{}, error) {
