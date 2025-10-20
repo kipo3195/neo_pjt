@@ -25,6 +25,7 @@ type UserUsecase interface {
 	CreateUserDetail(ctx context.Context, input input.CreateUserDetailInput) error
 	CreateUserMultiLang(ctx context.Context, input input.CreateUserMultiLangInput) error
 	GetServiceUsers(ctx context.Context, org string) ([]output.ServiceUsersOutput, error)
+	GetUserInfo(ctx context.Context, input input.GetUserInfoInput) ([]output.MyInfoOutput, error)
 }
 
 func NewUserUsecase(repository repository.UserRepository) UserUsecase {
@@ -43,6 +44,19 @@ func (r *userUsecase) GetMyInfo(ctx context.Context, input input.MyInfoInput) (o
 	}
 	output := output.MakeMyInfoOutput(myInfo)
 	return output, nil
+}
+
+func (r *userUsecase) GetUserInfo(ctx context.Context, input input.GetUserInfoInput) ([]output.MyInfoOutput, error) {
+
+	entity := entity.MakeUserInfoEntity(input.UserIds)
+	userInfo, err := r.repository.GetUserInfo(ctx, entity)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// 같은 usecase의 output 호출 가능
+	return output.MakeUserInfoOutput(userInfo), nil
 }
 
 func (r *userUsecase) CreateServiceUser(ctx context.Context, input input.CreateServiceUserInput) error {

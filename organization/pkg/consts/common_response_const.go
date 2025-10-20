@@ -18,13 +18,13 @@ const (
 
 	// body 데이터가 잘못되었을때
 	E_103     = "E103"
-	E_103_MSG = "Data invalid."
+	E_103_MSG = "Data Invalid."
 
 	E_104     = "E104"
 	E_104_MSG = "Header invalid."
 
 	E_105     = "E105"
-	E_105_MSG = "Token format invalid."
+	E_105_MSG = "Token Format Invalid"
 
 	E_106     = "E106"
 	E_106_MSG = "Unauthorized."

@@ -3,6 +3,7 @@ package model
 type MyDetailInfo struct {
 	UserHash     string `gorm:"column:user_hash"`
 	UserPhoneNum string `gorm:"column:user_phone_num"`
+	UserEmail    string `gorm:"column:user_email"`
 	DefLang      string `gorm:"column:def_lang"`
 	KoLang       string `gorm:"column:ko_lang"`
 	EnLang       string `gorm:"column:en_lang"`

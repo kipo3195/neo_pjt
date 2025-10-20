@@ -1,6 +1,7 @@
 package model
 
 type DeptInfo struct {
+	UserHash string `gorm:"column:user_hash"`
 	DeptOrg  string `gorm:"column:dept_org"`
 	DeptCode string `gorm:"column:dept_code"`
 	DefLang  string `gorm:"column:def_lang"`

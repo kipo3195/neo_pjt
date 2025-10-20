@@ -16,13 +16,13 @@ const (
 	E_102_MSG = "sql exception."
 
 	E_103     = "E103"
-	E_103_MSG = "data invalid."
+	E_103_MSG = "data Invalid."
 
 	E_104     = "E104"
 	E_104_MSG = "header invalid."
 
 	E_105     = "E105"
-	E_105_MSG = "Token format invalid."
+	E_105_MSG = "Token Format Invalid"
 
 	E_106     = "E106"
 	E_106_MSG = "Unauthorized."
@@ -31,7 +31,7 @@ const (
 	E_107_MSG = "Token expired."
 
 	E_108     = "E108"
-	E_108_MSG = "Check client parameters."
+	E_108_MSG = "Check Client Parameters."
 
 	E_500     = "E500"
 	E_500_MSG = "Server error."

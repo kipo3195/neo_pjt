@@ -150,6 +150,137 @@ func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []entity.DeptInfoEntity {
 	return deptEntity
 }
 
+func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.UserInfoEntity) ([]entity.MyInfoEntity, error) {
+
+	users := entity.UserIds
+
+	var detailInfo []model.MyDetailInfo
+	var deptInfo []model.DeptInfo
+
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	// 첫 번째 쿼리: 사용자 상세 정보
+	err := tx.Raw(`
+	SELECT 
+		su.user_hash,
+		ud.user_phone_num,
+		ud.user_email,
+		wuml.ko_lang,
+		wuml.en_lang,
+		wuml.zh_lang,
+		wuml.jp_lang,
+		wuml.ru_lang,
+		wuml.vi_lang,
+		up.profile_url,
+		up.profile_msg
+	FROM service_users AS su
+	JOIN user_detail AS ud 
+		ON su.user_hash = ud.user_hash
+	JOIN works_user_multi_lang AS wuml 
+		ON su.user_hash = wuml.user_hash
+	LEFT JOIN user_profile AS up
+		ON su.user_hash = up.user_hash	
+	WHERE su.user_id IN (?) 
+		AND su.use_yn = 'Y'`, users).Scan(&detailInfo).Error
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// 두 번째 쿼리: 부서 정보
+	err = tx.Raw(
+		`SELECT 
+			wdml.dept_org,
+			wdml.dept_code,
+			wdml.def_lang,
+			wdml.ko_lang,
+			wdml.en_lang,
+			wdml.jp_lang,
+			wdml.zh_lang,
+			wdml.ru_lang,
+			wdml.vi_lang,
+			wd.header,
+			a.user_hash
+		FROM works_dept AS wd 
+		JOIN works_dept_multi_lang AS wdml 
+			ON wd.dept_code = wdml.dept_code 
+		JOIN (
+			SELECT wdu.dept_code, su.user_hash FROM service_users AS su 
+			JOIN works_dept_user AS wdu 
+				ON su.user_hash = wdu.user_hash 
+			WHERE su.use_yn = 'Y' AND su.user_id IN (?) ) AS a 
+			ON wdml.dept_code = a.dept_code`, users).Scan(&deptInfo).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// 트랜잭션 커밋
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	// 두 쿼리로 나눠서 가져오고, 맵(map) 기반으로 조합
+	return toUserInfoEntity(detailInfo, deptInfo)
+}
+
+func toUserInfoEntity(detailInfo []model.MyDetailInfo, deptInfo []model.DeptInfo) ([]entity.MyInfoEntity, error) {
+
+	// user id 기준으로 map  생성
+	userMap := make(map[string]*entity.MyInfoEntity)
+
+	// 사용자 기본 정보 세팅 key는 user_hash
+	for _, d := range detailInfo {
+		userMap[d.UserHash] = &entity.MyInfoEntity{
+			UserHash:     d.UserHash,
+			UserPhoneNum: d.UserPhoneNum,
+			UserEmail:    d.UserEmail,
+			Username: entity.UserNameEntity{
+				Ko: d.KoLang,
+				En: d.EnLang,
+				Jp: d.JpLang,
+				Zh: d.ZhLang,
+				Ru: d.RuLang,
+				Vi: d.ViLang,
+			},
+			ProfileUrl: d.ProfileUrl,
+			ProfileMsg: d.ProfileMsg,
+			DeptInfo:   []entity.DeptInfoEntity{},
+		}
+	}
+
+	// 부서 정보 추가 (겸직 포함)
+	for _, dept := range deptInfo {
+		if user, exist := userMap[dept.UserHash]; exist {
+			user.DeptInfo = append(user.DeptInfo, entity.DeptInfoEntity{
+				DeptCode: dept.DeptCode,
+				DeptOrg:  dept.DeptOrg,
+				Header:   dept.Header,
+				KoLang:   dept.KoLang,
+				EnLang:   dept.EnLang,
+				JpLang:   dept.JpLang,
+				ZhLang:   dept.ZhLang,
+				RuLang:   dept.RuLang,
+				ViLang:   dept.ViLang,
+			})
+		}
+	}
+
+	// 결과 슬라이스로 반환
+	var result []entity.MyInfoEntity
+
+	for _, v := range userMap {
+		result = append(result, *v)
+	}
+
+	return result, nil
+}
+
 func (r *userRepositoryImpl) CreateServiceUser(ctx context.Context, entities []entity.ServiceUserEntity) error {
 
 	// entity → model 변환

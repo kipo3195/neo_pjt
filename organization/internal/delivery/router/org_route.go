@@ -68,7 +68,7 @@ func (r *orgRouter) SetUserRoute(handler *handler.UserHandler, tokenConfig confi
 
 	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
 	clientApi.GET("/my-info", handler.GetMyInfo)
-	clientApi.GET("/info", handler.GetUserInfo)
+	clientApi.POST("/info", handler.GetUserInfo)
 }
 
 // 더미데이터 생성 Service /////////////////////////////
