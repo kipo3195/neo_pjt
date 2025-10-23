@@ -88,5 +88,11 @@ func (r *commonRouter) SetDeviceRoutes(handler *handler.DeviceHandler) {
 }
 
 func (r *commonRouter) SetProfileRoutes(handler *handler.ProfileHandler) {
+	client := r.parent.Group("client/v1/profile")
+	client.Use(middleware.AuthMiddleware())
+	client.PUT("/img", handler.UploadProfileImg)
+	client.DELETE("/img", handler.DeleteProfileImg) // 기본 이미지로 변경
+
+	client.POST("/msg", handler.RegistProfileMsg)
 
 }
