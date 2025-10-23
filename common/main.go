@@ -33,6 +33,7 @@ func InitServer() *http.Server {
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
 	userStorage := storage.NewUserStorage()
+	profileStorage := storage.NewServerProfileStorage("") // 추후 s3 storage로 전환
 
 	// deps := dependencies.Dependency{
 	// 	DB:                db,
@@ -67,6 +68,9 @@ func InitServer() *http.Server {
 
 	userModule := di.InitUserModule(db, userStorage)
 	router.SetUserRoutes(userModule.Handler)
+
+	profileModule := di.InitProfileModule(db, profileStorage)
+	router.SetProfileRoutes(profileModule.Handler)
 
 	worksInfoModule := di.InitWorksInfoModule(db)
 
