@@ -12,6 +12,7 @@ import (
 type ServerConfig struct {
 	dbConfig    *DBConfig
 	AutoMigrate bool
+	TokenConfig TokenHashConfig
 }
 
 type DBConfig struct {
@@ -21,6 +22,11 @@ type DBConfig struct {
 	Pw          string
 	Database    string
 	AutoMigrate bool
+}
+
+type TokenHashConfig struct {
+	AccessTokenHash  string
+	RefreshTokenHash string
 }
 
 func isLocal() bool {
@@ -39,10 +45,12 @@ func NewServerConfig() *ServerConfig {
 	// DB 설정
 	dbConfig := initDBConfig()
 	autoMigrate := initAutoMigrate()
+	tokenConfig := initTokenHash()
 
 	return &ServerConfig{
 		dbConfig:    dbConfig,
 		AutoMigrate: autoMigrate,
+		TokenConfig: tokenConfig,
 	}
 }
 
@@ -63,6 +71,15 @@ func initAutoMigrate() bool {
 		return true
 	} else {
 		return false
+	}
+}
+
+func initTokenHash() TokenHashConfig {
+	accessTokenHash := os.Getenv("ACCESS_TOKEN_HASH")
+	refreshTokenHash := os.Getenv("REFRESH_TOKEN_HASH")
+	return TokenHashConfig{
+		AccessTokenHash:  accessTokenHash,
+		RefreshTokenHash: refreshTokenHash,
 	}
 }
 

@@ -1,11 +1,15 @@
 package response
 
 import (
+	"bytes"
 	consts "common/pkg/consts"
 	"common/pkg/dto"
 	"fmt"
 	"io"
+	"mime"
+	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,11 +37,11 @@ func SendSuccess[T any](c *gin.Context, t T) {
 		Result: consts.SUCCESS,
 		Data:   t,
 	}
-	c.AbortWithStatusJSON(200, res) // 200 고정
+	c.AbortWithStatusJSON(http.StatusOK, res) // 200 고정
 }
 
 // 바이트 배열 전송 (메모리에 있는 파일을 전송)
-func SendFileStream(c *gin.Context, f *os.File, downloadName string, contentType string) {
+func SendFileDownload(c *gin.Context, f *os.File, downloadName string, contentType string) {
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
@@ -45,7 +49,27 @@ func SendFileStream(c *gin.Context, f *os.File, downloadName string, contentType
 	c.Header("Content-Description", "File Transfer")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", downloadName))
 	c.Header("Content-Type", contentType)
-	c.Status(200)
+	c.Status(http.StatusOK)
 
 	_, _ = io.Copy(c.Writer, f)
+}
+
+func SendFileStream(c *gin.Context, data []byte, filename string, contentType string) {
+	if contentType == "" {
+		ext := filepath.Ext(filename)
+		contentType = mime.TypeByExtension(ext)
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+	}
+
+	c.Header("Content-Description", "File Stream")
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=%q", filename))
+	c.Header("Content-Type", contentType)
+	c.Header("Cache-Control", "public, max-age=86400")
+
+	c.Status(http.StatusOK)
+	reader := bytes.NewReader(data)
+	_, _ = io.Copy(c.Writer, reader)
+
 }

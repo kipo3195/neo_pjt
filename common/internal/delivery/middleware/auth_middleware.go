@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"common/internal/consts"
+	"common/internal/delivery/middleware/claims"
+	"common/internal/infrastructure/config"
 	commonConsts "common/pkg/consts"
 	"common/pkg/response"
 	"errors"
@@ -20,9 +22,9 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-var jwtSecretKey = []byte("neo-test-secret-key")
+// 토큰 생성시 사용한 key와 동일해야함.
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(tokenConfig config.TokenHashConfig) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -35,7 +37,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// 토큰 검증
-		_, err = verifyJWT(tokenStr)
+		id, err := verifyJWT(tokenStr, tokenConfig)
 		if err != nil {
 			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
@@ -48,6 +50,9 @@ func AuthMiddleware() gin.HandlerFunc {
 			}
 			return
 		}
+
+		// handler에서 값을 꺼낼 수 있게 하려면
+		c.Set(consts.USER_ID, id)
 
 		// 정상 처리 = 검증 성공 → 다음 핸들러 호출
 		c.Next()
@@ -67,23 +72,26 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 	return parts[1], nil
 }
 
-func verifyJWT(tokenStr string) (string, error) {
+func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
+	log.Println("111 tokenHash : ", tokenHash)
 
-	token, err := parser.ParseWithClaims(tokenStr, JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := parser.ParseWithClaims(tokenStr, &claims.DeviceJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return jwtSecretKey, nil
+		return []byte(tokenHash.AccessTokenHash), nil
 	})
+
+	log.Println("222")
 
 	if err != nil {
 		return "", fmt.Errorf("token parsing failed: %w", err)
 	}
 
 	// 유효성 체크
-	parsedClaims, ok := token.Claims.(JWTClaims) // ← 여기서도 JWTClaims로
+	parsedClaims, ok := token.Claims.(*claims.DeviceJWTClaims) // ← 여기서도 JWTClaims로
 	if !ok || !token.Valid {
 		return "", consts.ErrInvalidClaims
 	}
@@ -93,5 +101,7 @@ func verifyJWT(tokenStr string) (string, error) {
 		return "", consts.ErrTokenExpired
 	}
 
-	return parsedClaims.UserHash, nil
+	log.Println("토큰 검증 완료 verifyJWT id : ", parsedClaims.Id)
+
+	return parsedClaims.Id, nil
 }

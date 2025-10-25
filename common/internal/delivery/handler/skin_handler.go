@@ -51,7 +51,7 @@ func (h *SkinHandler) GetSkinImage(c *gin.Context) {
 		return
 	}
 
-	response.SendFileStream(c, file, "", "")
+	response.SendFileDownload(c, file, "", "")
 }
 
 func (h *SkinHandler) PutSkinImg(c *gin.Context) {

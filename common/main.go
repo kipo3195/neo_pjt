@@ -33,6 +33,7 @@ func InitServer() *http.Server {
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
 	userStorage := storage.NewUserStorage()
+	profileCacheStorage := storage.NewProfileCacheStorage()
 	profileStorage := storage.NewServerProfileStorage("") // 추후 s3 storage로 전환
 
 	// deps := dependencies.Dependency{
@@ -55,7 +56,7 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-	router := router.NewCommonRouter("common")
+	router := router.NewCommonRouter("common", sfg.TokenConfig)
 
 	skinModule := di.InitSkinModule(db, skinStorage)
 	router.SetSkinRoutes(skinModule.Handler)
@@ -69,7 +70,7 @@ func InitServer() *http.Server {
 	userModule := di.InitUserModule(db, userStorage)
 	router.SetUserRoutes(userModule.Handler)
 
-	profileModule := di.InitProfileModule(db, profileStorage)
+	profileModule := di.InitProfileModule(db, profileStorage, profileCacheStorage)
 	router.SetProfileRoutes(profileModule.Handler)
 
 	worksInfoModule := di.InitWorksInfoModule(db)

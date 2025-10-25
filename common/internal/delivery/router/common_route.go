@@ -3,13 +3,15 @@ package router
 import (
 	"common/internal/delivery/handler"
 	"common/internal/delivery/middleware"
+	"common/internal/infrastructure/config"
 
 	"github.com/gin-gonic/gin"
 )
 
 type commonRouter struct {
-	R      *gin.Engine
-	parent *gin.RouterGroup
+	R           *gin.Engine
+	parent      *gin.RouterGroup
+	tokenConfig config.TokenHashConfig
 }
 
 type CommonRouter interface {
@@ -24,12 +26,13 @@ type CommonRouter interface {
 	GetEngine() *gin.Engine
 }
 
-func NewCommonRouter(serviceName string) CommonRouter {
+func NewCommonRouter(serviceName string, tokenConfig config.TokenHashConfig) CommonRouter {
 	r := gin.Default()
 	parent := r.Group("/" + serviceName)
 	return &commonRouter{
-		R:      r,
-		parent: parent,
+		R:           r,
+		parent:      parent,
+		tokenConfig: tokenConfig,
 	}
 }
 
@@ -48,14 +51,14 @@ func (r *commonRouter) SetAppValidationRoutes(handler *handler.AppValidationServ
 func (r *commonRouter) SetAppTokenRoutes(handler *handler.AppTokenHandler) {
 
 	client := r.parent.Group("/client/v1/app-token")
-	client.Use(middleware.AuthMiddleware()) // JWT 적용
+	//client.Use(middleware.AuthMiddleware(r.tokenConfig)) // JWT 적용
 	client.POST("/refresh", handler.AppTokenRefresh)
 
 }
 
 func (r *commonRouter) SetSkinRoutes(handler *handler.SkinHandler) {
 	client := r.parent.Group("/client/v1/skin-img")
-	client.Use(middleware.AuthMiddleware()) // JWT 적용
+	client.Use(middleware.AuthMiddleware(r.tokenConfig)) // JWT 적용
 	client.GET("/", handler.GetSkinImage)
 
 	server := r.parent.Group("/server/v1/skin-img")
@@ -70,27 +73,27 @@ func (r *commonRouter) SetConfigurationRoutes(handlers *handler.ConfigurationHan
 }
 
 func (r *commonRouter) SetUserRoutes(handler *handler.UserHandler) {
-	client := r.parent.Group("client/v1/user/register")
+	client := r.parent.Group("/client/v1/user/register")
 	client.POST("/", handler.UserRegister)
 	client.GET("/challenge", handler.GetUserRegisterChallenge)
 
 }
 
 func (r *commonRouter) SetInitAppValidtaionRoutes(handler *handler.AppValidationServiceHandler) {
-	client := r.parent.Group("client/v1/app-validation")
-	client.Use(middleware.AuthMiddleware())
+	client := r.parent.Group("/client/v1/app-validation")
 	client.GET("/", handler.GetAppValidation)
 }
 
 func (r *commonRouter) SetDeviceRoutes(handler *handler.DeviceHandler) {
-	server := r.parent.Group("server/v1/device-init")
+	server := r.parent.Group("/server/v1/device-init")
 	server.POST("/", handler.DeviceInit)
 }
 
 func (r *commonRouter) SetProfileRoutes(handler *handler.ProfileHandler) {
-	client := r.parent.Group("client/v1/profile")
-	client.Use(middleware.AuthMiddleware())
-	client.PUT("/img", handler.UploadProfileImg)
+	client := r.parent.Group("/client/v1/profile")
+	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+	client.POST("/img", handler.UploadProfileImg)
+	client.GET("/img", handler.GetProfileImg)
 	client.DELETE("/img", handler.DeleteProfileImg) // 기본 이미지로 변경
 
 	client.POST("/msg", handler.RegistProfileMsg)

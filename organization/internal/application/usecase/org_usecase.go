@@ -114,7 +114,7 @@ func (r *orgUsecase) CreateOrgFile(ctx context.Context, req org.CreateOrgFileReq
 		}
 
 		// 저장시간 생성 = 파일 명
-		fileName := util.GetNow()
+		fileName := util.GetNow() + ".json"
 		fmt.Printf("org %s file name: %s\n", org, fileName)
 
 		orgEntity := parseOrgTree(orgTree)

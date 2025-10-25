@@ -12,4 +12,16 @@ const (
 
 	COMMON_F004     = "COMMON_F004"
 	COMMON_F004_MSG = "Refresh Token Expired."
+
+	COMMON_PROFILE_F001     = "COMMON_PROFILE_F001"
+	COMMON_PROFILE_F001_MSG = "Profile image size exceeded."
+
+	COMMON_PROFILE_F002     = "COMMON_PROFILE_F002"
+	COMMON_PROFILE_F002_MSG = "Profile image file extention error."
+
+	COMMON_PROFILE_F003     = "COMMON_PROFILE_F003"
+	COMMON_PROFILE_F003_MSG = "Profile image save error."
+
+	COMMON_PROFILE_F004     = "COMMON_PROFILE_F004"
+	COMMON_PROFILE_F004_MSG = "Profile image db save error."
 )

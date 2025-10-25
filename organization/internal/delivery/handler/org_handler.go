@@ -8,6 +8,7 @@ import (
 	"org/internal/delivery/dto/org"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -81,8 +82,13 @@ func (h *OrgHandler) GetOrgData(c *gin.Context) {
 		// // 전송 헤더의 순서가 영향을 미침 - 파일명 적용이 안됨.
 		// w.WriteHeader(http.StatusOK)
 
+		// "." 기준으로 나누기
+		parts := strings.SplitN(fileName, ".", 2) // 최대 2개만 분리
+		// 앞부분만 사용
+		date := parts[0]
+
 		c.Header("Content-Type", "application/octet-stream")
-		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, orgCode+"_"+fileName+".zip"))
+		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, orgCode+"_"+date+".zip"))
 		c.Data(http.StatusOK, "application/octet-stream", data.([]byte))
 
 		// interface{} → *os.File 로 변환
