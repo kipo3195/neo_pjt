@@ -2,7 +2,6 @@ package handler
 
 import (
 	"auth/internal/application/orchestrator"
-	"auth/internal/application/usecase/input"
 	"auth/internal/consts"
 	"auth/internal/delivery/adapter"
 	"auth/internal/delivery/dto/deviceAuthService"
@@ -67,7 +66,7 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 
 	if deviceRegResult {
 		// 등록 성공
-		generateAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid, true)
+		generateAuthTokenInput := adapter.MakeGenerateAuthTokenInput(req.Id, req.Uuid, true)
 		output, err := h.svc.Token.GenerateAuthToken(ctx, generateAuthTokenInput)
 		if err != nil {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
@@ -150,7 +149,7 @@ func (h *DeviceAuthServiceHandler) DeviceRefresh(c *gin.Context) {
 	}
 
 	// at, rt 신규 생성 - 무조건 신규 발급. 만료되었을 가능성이 높으니..
-	generateAuthTokenInput := input.MakeGenerateAuthTokenInput(id, req.Uuid, true)
+	generateAuthTokenInput := adapter.MakeGenerateAuthTokenInput(id, req.Uuid, true)
 	output, err := h.svc.Token.GenerateAuthToken(ctx, generateAuthTokenInput)
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)

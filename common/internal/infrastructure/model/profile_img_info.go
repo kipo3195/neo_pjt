@@ -9,6 +9,8 @@ type ProfileImgInfo struct {
 	ProfileImgSavedPath string    `gorm:"column:save_path;type:varchar(300);comment:이미지 저장 경로 정보"`
 	ProfileImgSize      int64     `gorm:"column:size;type:int(11);comment:이미지 사이즈"`
 	CreateAt            time.Time `gorm:"column:create_at;autoCreateTime;comment:DB 저장시간"`
+	UseYn               string    `gorm:"column:use_yn;type:varchar(1);default:Y;comment:사용 유무"`
+	UpdateAt            time.Time `gorm:"column:update_at;autoUpdateTime;comment:DB 삭제 시간"`
 }
 
 func (ProfileImgInfo) TableName() string {

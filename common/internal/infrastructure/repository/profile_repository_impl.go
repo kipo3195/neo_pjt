@@ -54,3 +54,34 @@ func (r *profileRepositoryImpl) PutUserProfileImgInfo(ctx context.Context, entit
 
 	return nil
 }
+
+func (r *profileRepositoryImpl) DeleteUserProfileImgInfo(ctx context.Context, userId string, fileName string) error {
+
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	result := tx.Model(&model.ProfileImgInfo{}).
+		Where("id = ? AND save_name = ?", userId, fileName).
+		Updates(map[string]interface{}{
+			"use_yn": "N",
+		})
+
+	// 존재하지 않는 경우
+	updateCount := result.RowsAffected
+	if updateCount == 0 {
+		return consts.ErrProfileImgDBDeleteError
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[DeleteUserProfileImgInfo] - Commit failed")
+		return err
+	}
+
+	log.Println("[DeleteUserProfileImgInfo] - Commit Success")
+	return nil
+
+}

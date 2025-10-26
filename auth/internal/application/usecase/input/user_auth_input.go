@@ -5,11 +5,3 @@ type UserAuthInput struct {
 	Fv   string
 	Uuid string
 }
-
-func MakeUserAuthInput(id string, fv string, uuid string) UserAuthInput {
-	return UserAuthInput{
-		Id:   id,
-		Fv:   fv,
-		Uuid: uuid,
-	}
-}

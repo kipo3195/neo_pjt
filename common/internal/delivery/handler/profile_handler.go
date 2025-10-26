@@ -2,14 +2,13 @@ package handler
 
 import (
 	"common/internal/application/usecase"
-	"common/internal/application/usecase/input"
 	"common/internal/consts"
+	"common/internal/delivery/adapter"
 	"common/internal/delivery/dto/profile"
 	"common/internal/delivery/util"
 	commonConsts "common/pkg/consts"
 	"common/pkg/response"
 	"io"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -28,14 +27,12 @@ func NewProfileHandler(usecase usecase.ProfileUsecase) *ProfileHandler {
 func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
-	log.Println("111")
 	userId := util.GetUserIdByAccessToken(c)
 	if userId == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
 		return
 	}
 
-	log.Println("2222")
 	// 파일 데이터 추출
 	fileInfo, err := c.FormFile("profile_img")
 	if err != nil {
@@ -44,7 +41,6 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 		return
 	}
 
-	log.Println("333")
 	// 파일 처리 []byte -> dto
 	file, err := fileInfo.Open()
 	defer file.Close()
@@ -52,23 +48,21 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
-	log.Println("4444")
 
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
-	log.Println("5555")
 	req := profile.ProfileUploadRequest{
 		ProfileImg:     &fileBytes,
 		ProfileImgSize: fileInfo.Size,
 		ProfileImgName: fileInfo.Filename,
 	}
-	log.Println("6666")
-	input := input.MakeProfileUploadInput(req.ProfileImg, req.ProfileImgSize, req.ProfileImgName, userId)
+
+	input := adapter.MakeProfileUploadInput(req.ProfileImg, req.ProfileImgSize, req.ProfileImgName, userId)
 	err = h.usecase.ProfileImgUpload(ctx, input)
-	log.Println("7777")
+
 	if err != nil {
 		if err == consts.ErrFileSizeExceeded {
 			// 사이즈 에러
@@ -88,14 +82,13 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 	} else {
 		response.SendSuccess(c, "")
 	}
-
 }
 
 func (h *ProfileHandler) GetProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	userId := c.Query("userId")
+	userId := c.Query(consts.USER_ID)
 	if userId == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
 		return
@@ -112,7 +105,7 @@ func (h *ProfileHandler) GetProfileImg(c *gin.Context) {
 		return
 	}
 
-	getProfileImgInput := input.MakeGetProfileImgInput(req.UserId)
+	getProfileImgInput := adapter.MakeGetProfileImgInput(req.UserId)
 	output, err := h.usecase.GetProfileImg(ctx, getProfileImgInput)
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
@@ -124,6 +117,40 @@ func (h *ProfileHandler) GetProfileImg(c *gin.Context) {
 
 func (h *ProfileHandler) DeleteProfileImg(c *gin.Context) {
 
+	ctx := c.Request.Context()
+
+	userId := util.GetUserIdByAccessToken(c)
+	if userId == "" {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	req := profile.DeleteProfileImgRequest{
+		UserId: userId,
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	deleteProfileImgInput := adapter.MakeDeleteProfileImgInput(req.UserId)
+	err := h.usecase.DeleteProfileImg(ctx, deleteProfileImgInput)
+
+	if err != nil {
+
+		if err == consts.ErrProfileImgNotRegist || err == consts.ErrProfileImgDBDeleteError {
+			// 메모리, 서버에 없음
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_PROFILE_F005, consts.COMMON_PROFILE_F005_MSG)
+		} else {
+			// server error
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+		return
+	}
+
+	response.SendSuccess(c, "")
 }
 
 func (h *ProfileHandler) RegistProfileMsg(c *gin.Context) {

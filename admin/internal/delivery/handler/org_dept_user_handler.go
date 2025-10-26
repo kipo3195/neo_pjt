@@ -2,12 +2,11 @@ package handler
 
 import (
 	"admin/internal/application/usecase"
-	"admin/internal/application/usecase/input"
+	"admin/internal/delivery/adapter"
 	"admin/internal/delivery/dto/orgDeptUser"
 	"admin/pkg/consts"
-	"encoding/json"
-
 	response "admin/pkg/response"
+	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -43,7 +42,7 @@ func (h *OrgDeptUserHandler) RegistDeptUser(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeRegistDeptUserInput(req.UserHash, req.DeptCode, req.DeptOrg, req.PositionCode, req.RoleCode, req.IsConcurrentPosition)
+	input := adapter.MakeRegistDeptUserInput(req.UserHash, req.DeptCode, req.DeptOrg, req.PositionCode, req.RoleCode, req.IsConcurrentPosition)
 
 	// usecase 호출
 	_, err := h.usecase.RegistDeptUser(ctx, input)
@@ -76,7 +75,7 @@ func (h *OrgDeptUserHandler) DeleteDeptUser(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeDeleteDeptUserInput(req.UserHash, req.DeptCode, req.DeptOrg)
+	input := adapter.MakeDeleteDeptUserInput(req.UserHash, req.DeptCode, req.DeptOrg)
 
 	// usecase 호출
 	_, err := h.usecase.DeleteDeptUser(ctx, input)

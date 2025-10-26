@@ -2,12 +2,11 @@ package handler
 
 import (
 	"admin/internal/application/usecase"
-	"admin/internal/application/usecase/input"
+	"admin/internal/delivery/adapter"
 	"admin/internal/delivery/dto/orgFile"
+	commonConsts "admin/pkg/consts"
 	response "admin/pkg/response"
 	"encoding/json"
-
-	commonConsts "admin/pkg/consts"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -45,7 +44,7 @@ func (h *OrgFileHandler) CreateOrgFile(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeCreateOrgFileInput(req.OrgCode)
+	input := adapter.MakeCreateOrgFileInput(req.OrgCode)
 
 	// usecase 호출
 	_, err := h.usecase.CreateOrgFile(ctx, input)

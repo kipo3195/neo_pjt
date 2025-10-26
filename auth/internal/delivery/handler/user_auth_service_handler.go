@@ -2,7 +2,6 @@ package handler
 
 import (
 	"auth/internal/application/orchestrator"
-	"auth/internal/application/usecase/input"
 	"auth/internal/consts"
 	commonConsts "auth/pkg/consts"
 	response "auth/pkg/response"
@@ -43,7 +42,7 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 	}
 
 	// 인증 도메인
-	userAuthInput := input.MakeUserAuthInput(req.Id, req.Fv, req.Uuid)
+	userAuthInput := adapter.MakeUserAuthInput(req.Id, req.Fv, req.Uuid)
 	userAuthResult, err := h.svc.UserAuth.GetUserAuth(ctx, userAuthInput)
 
 	if err != nil {
@@ -83,7 +82,7 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 
 		// device가 등록 완료된 상태일때 실행됨
 		// token 도메인. at, rt 발급 체크 및 response
-		userAuthTokenInput := input.MakeGenerateAuthTokenInput(req.Id, req.Uuid, false)
+		userAuthTokenInput := adapter.MakeGenerateAuthTokenInput(req.Id, req.Uuid, false)
 		output, err := h.svc.Token.GenerateAuthToken(ctx, userAuthTokenInput)
 		if err != nil {
 			log.Println("[UserAuthAndDeviceCheck] 인증 실패 3")

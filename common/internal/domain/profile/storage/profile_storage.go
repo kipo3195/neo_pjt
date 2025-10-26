@@ -7,4 +7,5 @@ import (
 type ProfileStorage interface {
 	Upload(ctx context.Context, profileImg []byte, fileHash string) (string, string, error)
 	GetProfileUrl(ctx context.Context, fileName string) ([]byte, error)
+	DeleteImg(ctx context.Context, fileName string) error
 }

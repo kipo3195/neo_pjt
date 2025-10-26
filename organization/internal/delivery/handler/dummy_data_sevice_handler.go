@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"org/internal/application/orchestrator"
-	"org/internal/application/usecase/input"
+	"org/internal/delivery/adapter"
 	"org/internal/delivery/dto/dummy"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
@@ -39,7 +39,7 @@ func (h *DummyDataServiceHandler) InitServiceUser(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeCreateServiceUserInput(req.UserCount, req.Keyword)
+	input := adapter.MakeCreateServiceUserInput(req.UserCount, req.Keyword)
 	err := h.svc.User.CreateServiceUser(ctx, input)
 
 	if err != nil {
@@ -68,7 +68,7 @@ func (h *DummyDataServiceHandler) InitUserDetail(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeCreateUserDetailInput(req.Keyword, req.Type)
+	input := adapter.MakeCreateUserDetailInput(req.Keyword, req.Type)
 	err := h.svc.User.CreateUserDetail(ctx, input)
 
 	if err != nil {
@@ -97,7 +97,7 @@ func (h *DummyDataServiceHandler) InitUserMultiLang(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeUserMultiLangInput(req.Keyword)
+	input := adapter.MakeUserMultiLangInput(req.Keyword)
 	err := h.svc.User.CreateUserMultiLang(ctx, input)
 
 	if err != nil {
@@ -125,7 +125,7 @@ func (h *DummyDataServiceHandler) InitWorksDept(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeWorksDeptInput(req.Org, req.MaxDepth, req.DeptCount)
+	input := adapter.MakeWorksDeptInput(req.Org, req.MaxDepth, req.DeptCount)
 	err := h.svc.Department.CreateWorksDept(ctx, input)
 
 	if err != nil {
@@ -154,7 +154,7 @@ func (h *DummyDataServiceHandler) InitWorksDeptMultiLang(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeCreateWorksDeptMultiLangInput(req.Org)
+	input := adapter.MakeCreateWorksDeptMultiLangInput(req.Org)
 	err := h.svc.Department.CreateWorksDeptMultiLang(ctx, input)
 
 	if err != nil {
@@ -183,7 +183,7 @@ func (h *DummyDataServiceHandler) InitWorksDeptUser(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeCreateWorksDeptUserInput(req.Org)
+	input := adapter.MakeCreateWorksDeptUserInput(req.Org)
 
 	output, err := h.svc.User.GetServiceUsers(ctx, input.Org)
 

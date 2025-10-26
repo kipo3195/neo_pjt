@@ -2,7 +2,7 @@ package handler
 
 import (
 	"admin/internal/application/usecase"
-	"admin/internal/application/usecase/input"
+	"admin/internal/delivery/adapter"
 	"admin/internal/delivery/dto/orgDept"
 	"admin/pkg/consts"
 	"encoding/json"
@@ -44,7 +44,7 @@ func (h *OrgDeptHandler) RegisterDept(c *gin.Context) {
 	}
 
 	// 필요시 result 값 response status로 분기 처리
-	input := input.MakeRegisterDeptInput(req)
+	input := adapter.MakeRegisterDeptInput(req)
 	_, err := h.usecase.RegisterDept(ctx, input)
 
 	if err != nil {
@@ -82,7 +82,7 @@ func (h *OrgDeptHandler) DeleteDept(c *gin.Context) {
 		return
 	}
 
-	input := input.MakeDeleteDeptInput(req.DeptOrg, req.DeptCode)
+	input := adapter.MakeDeleteDeptInput(req.DeptOrg, req.DeptCode)
 
 	// usecase 호출
 	_, err := h.usecase.DeleteDept(ctx, input)

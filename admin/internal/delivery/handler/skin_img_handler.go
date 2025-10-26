@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"admin/internal/application/usecase"
-	"admin/internal/application/usecase/input"
 	"admin/internal/consts"
+	"admin/internal/delivery/adapter"
 	"admin/internal/delivery/dto/skinImg"
 	commonConsts "admin/pkg/consts"
 	response "admin/pkg/response"
@@ -69,7 +69,7 @@ func (h *SkinImgHandler) CreateSkinImg(c *gin.Context) {
 		FileName: fileInfo.Filename,
 	}
 
-	input := input.MakeCreateSkinImgInput(req.SkinType, req.File, req.FileSize, req.FileName)
+	input := adapter.MakeCreateSkinImgInput(req.SkinType, req.File, req.FileSize, req.FileName)
 	err = h.usecase.CreateSkinImg(ctx, input)
 
 	log.Println("admin 서비스 스킨 이미지 업로드에 대한 response : ", err)

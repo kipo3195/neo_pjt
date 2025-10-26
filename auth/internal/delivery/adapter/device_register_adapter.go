@@ -1,6 +1,9 @@
 package adapter
 
-import "auth/internal/application/usecase/input"
+import (
+	"auth/internal/application/usecase/input"
+	"auth/internal/application/usecase/output"
+)
 
 func MakeDeviceRegistInput(id string, uuid string, modelName string, version string, challenge string) input.DeviceRegistInput {
 
@@ -10,5 +13,13 @@ func MakeDeviceRegistInput(id string, uuid string, modelName string, version str
 		ModelName: modelName,
 		Version:   version,
 		Challenge: challenge,
+	}
+}
+
+func MakeDeviceRegistOutput(at string, rt string, rtExp string) output.DeviceRegistOutput {
+	return output.DeviceRegistOutput{
+		AccessToken:     at,
+		RefreshToken:    rt,
+		RefreshTokenExp: rtExp,
 	}
 }

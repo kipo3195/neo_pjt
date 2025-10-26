@@ -26,3 +26,5 @@ var ErrRefreshTokenAuthExpired = errors.New("refresh token expired")
 
 var ErrProfileImgSaveError = errors.New("profile image save error")
 var ErrProfileImgDBSaveError = errors.New("profile image db save error")
+var ErrProfileImgNotRegist = errors.New("profile image not regist")
+var ErrProfileImgDBDeleteError = errors.New("profile image db delete error")

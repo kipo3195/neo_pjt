@@ -25,6 +25,7 @@ type profileUsecase struct {
 type ProfileUsecase interface {
 	ProfileImgUpload(ctx context.Context, in input.ProfileImgInput) error
 	GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error)
+	DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error
 }
 
 func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage) ProfileUsecase {
@@ -63,6 +64,22 @@ func (u profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileIm
 		log.Printf("[ProfileImgUpload] %s file save error. \n", entity.UserId)
 		return consts.ErrProfileImgSaveError
 	}
+
+	// 기존 프로필 삭제 로직 시작
+	oldProfileName := u.profileCacheStorage.GetProfileName(entity.UserId)
+	log.Println("[ProfileImgUpload] old Profile : ", oldProfileName)
+	if oldProfileName != "" {
+		// 이후 channel 로직으로 변경하기 (병렬처리)
+		err = u.profileStorage.DeleteImg(ctx, oldProfileName)
+		if err == nil {
+			err = u.repository.DeleteUserProfileImgInfo(ctx, entity.UserId, oldProfileName)
+			if err == consts.ErrProfileImgDBDeleteError || err == nil {
+				u.profileCacheStorage.DeleteProfileName(entity.UserId, oldProfileName)
+				log.Println("[ProfileImgUpload] old Profile delete success.")
+			}
+		}
+	}
+	// 기존 프로필 삭제 로직 끝
 
 	entity.ProfileImgSavedPath = saveFilePath
 	entity.ProfileImgHash = profileImgHash
@@ -103,4 +120,32 @@ func (u profileUsecase) GetProfileImg(ctx context.Context, in input.GetProfileIm
 	output := output.MakeGetProfileImgOutput(file, profileName)
 
 	return output, nil
+}
+
+func (u profileUsecase) DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error {
+
+	entity := entity.MakeDeleteProfileImgEntity(in.UserId)
+	profileName := u.profileCacheStorage.GetProfileName(entity.UserId)
+	log.Println("[DeleteProfileImg] old Profile : ", profileName)
+	if profileName == "" {
+		// 프로필 이미지 등록되지 않은 사용자
+		return consts.ErrProfileImgNotRegist
+	}
+
+	err := u.repository.DeleteUserProfileImgInfo(ctx, entity.UserId, profileName)
+
+	if err == consts.ErrProfileImgDBDeleteError || err == nil {
+		// 서버 경로 파일 삭제
+		// 이후 channel 로직으로 변경하기 (병렬처리)
+		err = u.profileStorage.DeleteImg(ctx, profileName)
+		if err == nil {
+			// DB에는 없지만 메모리에는 있는 case -> 삭제처리함.
+			u.profileCacheStorage.DeleteProfileName(entity.UserId, profileName)
+			log.Printf("[DeleteProfileImg] old Profile : %s delete success. \n", profileName)
+		} else {
+			// DB 삭제 실패, 파일 삭제 실패
+			log.Println(err)
+		}
+	}
+	return err
 }

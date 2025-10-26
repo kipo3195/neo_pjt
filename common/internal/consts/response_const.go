@@ -24,4 +24,7 @@ const (
 
 	COMMON_PROFILE_F004     = "COMMON_PROFILE_F004"
 	COMMON_PROFILE_F004_MSG = "Profile image db save error."
+
+	COMMON_PROFILE_F005     = "COMMON_PROFILE_F005"
+	COMMON_PROFILE_F005_MSG = "Profile image not regist."
 )

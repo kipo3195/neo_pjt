@@ -2,8 +2,6 @@ package handler
 
 import (
 	"auth/internal/application/usecase"
-	"auth/internal/application/usecase/input"
-	"auth/internal/application/usecase/output"
 	"auth/internal/consts"
 	commonConsts "auth/pkg/consts"
 	response "auth/pkg/response"
@@ -11,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 
+	"auth/internal/delivery/adapter"
 	"auth/internal/delivery/dto/userAuth"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +44,7 @@ func (h UserAuthHandler) GenerateAuthChallenge(c *gin.Context) {
 		return
 	}
 
-	userAuthChallengeInput := input.MakeUserAuthChallengeInput(req.Id, req.Uuid)
+	userAuthChallengeInput := adapter.MakeUserAuthChallengeInput(req.Id, req.Uuid)
 	temp, err := h.usecase.GenerateUserAuthChallenge(ctx, userAuthChallengeInput)
 
 	if err != nil {
@@ -57,7 +56,7 @@ func (h UserAuthHandler) GenerateAuthChallenge(c *gin.Context) {
 		return
 	}
 
-	userAuthChallengeOutput := output.MakeUserAuthChallengeOutput(temp.Challenge, temp.Salt)
+	userAuthChallengeOutput := adapter.MakeUserAuthChallengeOutput(temp.Challenge, temp.Salt)
 
 	res := userAuth.UserAuthChallengeResponse{
 		Challenge: userAuthChallengeOutput.Challenge,
@@ -86,7 +85,7 @@ func (h UserAuthHandler) GetUserAuth(c *gin.Context) {
 		return
 	}
 
-	userAuthInput := input.MakeUserAuthInput(req.Id, req.Fv, req.Uuid)
+	userAuthInput := adapter.MakeUserAuthInput(req.Id, req.Fv, req.Uuid)
 	userAuthOutput, err := h.usecase.GetUserAuth(ctx, userAuthInput)
 
 	if err != nil {
@@ -122,7 +121,7 @@ func (h UserAuthHandler) UserAuthInfoRegister(c *gin.Context) {
 		return
 	}
 
-	userAuthRegisterInput := input.MakeUserAuthRegisterInput(req.Id, req.Salt, req.AuthHash, req.UserHash)
+	userAuthRegisterInput := adapter.MakeUserAuthRegisterInput(req.Id, req.Salt, req.AuthHash, req.UserHash)
 	userAuthRegisterOutput := h.usecase.PutUserAuth(ctx, userAuthRegisterInput)
 
 	response.SendSuccess(c, userAuthRegisterOutput)

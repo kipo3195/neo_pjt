@@ -100,3 +100,21 @@ func (s *ServerProfileStorage) GetProfileUrl(ctx context.Context, fileName strin
 	log.Printf("[profile - load] 프로필 이미지 로드 완료: %s", filePath)
 	return fileData, nil
 }
+
+func (s *ServerProfileStorage) DeleteImg(ctx context.Context, fileName string) error {
+
+	saveDir := "./user_profile/"
+	filePath := filepath.Join(saveDir, fileName)
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("파일이 존재하지 않습니다: %s", fileName)
+	}
+
+	// 파일 삭제
+	if err := os.Remove(filePath); err != nil {
+		return fmt.Errorf("파일 삭제 중 오류가 발생했습니다: %w", err)
+	}
+
+	log.Printf("[DeleteImg] fileName : %s delete success.", fileName)
+	return nil
+}

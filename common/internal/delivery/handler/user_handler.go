@@ -2,11 +2,11 @@ package handler
 
 import (
 	"common/internal/application/usecase"
-	"common/internal/application/usecase/input"
 	commonConsts "common/pkg/consts"
 	"common/pkg/response"
 	"encoding/json"
 
+	"common/internal/delivery/adapter"
 	"common/internal/delivery/dto/user"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +34,7 @@ func (h *UserHandler) UserRegister(c *gin.Context) {
 		return
 	}
 
-	userRegisterInput := input.MakeUserRegisterInput(req.Id, req.Salt, req.Fv)
+	userRegisterInput := adapter.MakeUserRegisterInput(req.Id, req.Salt, req.Fv)
 	userRegisterOutput := h.usecase.UserRegister(ctx, userRegisterInput)
 
 	if userRegisterOutput == "code1" {
@@ -60,7 +60,7 @@ func (h *UserHandler) GetUserRegisterChallenge(c *gin.Context) {
 		return
 	}
 
-	userRegisterChallengeInput := input.MakeUserRegisterChallengeInput(req.Id, req.Salt)
+	userRegisterChallengeInput := adapter.MakeUserRegisterChallengeInput(req.Id, req.Salt)
 
 	userRegisterChallengeOutput := h.usecase.GenerateUserChallenge(ctx, userRegisterChallengeInput)
 

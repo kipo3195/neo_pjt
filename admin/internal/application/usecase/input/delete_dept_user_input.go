@@ -5,12 +5,3 @@ type DeleteDeptUserInput struct {
 	DeptCode string
 	DeptOrg  string
 }
-
-func MakeDeleteDeptUserInput(userHash string, deptCode string, deptOrg string) DeleteDeptUserInput {
-
-	return DeleteDeptUserInput{
-		UserHash: userHash,
-		DeptCode: deptCode,
-		DeptOrg:  deptOrg,
-	}
-}

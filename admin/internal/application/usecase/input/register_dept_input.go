@@ -1,7 +1,5 @@
 package input
 
-import "admin/internal/delivery/dto/orgDept"
-
 type RegisterDeptInput struct {
 	DeptCode       string `json:"deptCode" validate:"required"`
 	DeptOrg        string `json:"deptOrg" validate:"required"`
@@ -13,19 +11,4 @@ type RegisterDeptInput struct {
 	RuLang         string `json:"ru"`
 	ViLang         string `json:"vi"`
 	Header         string `json:"header"` // 부서장
-}
-
-func MakeRegisterDeptInput(req orgDept.RegisterDeptRequest) RegisterDeptInput {
-	return RegisterDeptInput{
-		DeptCode:       req.DeptCode,
-		DeptOrg:        req.DeptOrg,
-		ParentDeptCode: req.ParentDeptCode,
-		KoLang:         req.KoLang,
-		EnLang:         req.EnLang,
-		JpLang:         req.JpLang,
-		ZhLang:         req.ZhLang,
-		RuLang:         req.RuLang,
-		ViLang:         req.ViLang,
-		Header:         req.Header,
-	}
 }
