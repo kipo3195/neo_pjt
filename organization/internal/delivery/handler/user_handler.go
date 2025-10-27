@@ -85,7 +85,7 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		UserHash:   output.UserHash,
 		UserDetail: userDetail,
 		Username:   userName,
-		OrgCode:    nil,
+		OrgCode:    output.OrgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
 		Profile:    profile,
 		DeptInfo:   deptInfo,
 	}

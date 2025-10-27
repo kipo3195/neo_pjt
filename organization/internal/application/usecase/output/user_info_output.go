@@ -18,7 +18,7 @@ func MakeUserInfoOutput(en []entity.MyInfoEntity) []MyInfoOutput {
 			Vi:  en[i].Username.Vi,
 		}
 
-		deptInfo := makeDeptInfoOutput(en[i].DeptInfo)
+		deptInfo, orgCodes := makeDeptInfoOutput(en[i].DeptInfo)
 
 		output = append(output, MyInfoOutput{
 			UserHash:     en[i].UserHash,
@@ -28,6 +28,7 @@ func MakeUserInfoOutput(en []entity.MyInfoEntity) []MyInfoOutput {
 			DeptInfo:     deptInfo,
 			ProfileUrl:   en[i].ProfileUrl,
 			ProfileMsg:   en[i].ProfileMsg,
+			OrgCodes:     orgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
 		})
 	}
 	return output
