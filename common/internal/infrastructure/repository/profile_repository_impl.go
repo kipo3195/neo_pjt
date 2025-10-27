@@ -85,3 +85,32 @@ func (r *profileRepositoryImpl) DeleteUserProfileImgInfo(ctx context.Context, us
 	return nil
 
 }
+
+func (r *profileRepositoryImpl) RollbackDeleteUserProfileImgInfo(ctx context.Context, userId string, fileName string) error {
+	// 트랜잭션 시작
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// 다시 use yn을 Y로 만들어버림.
+	result := tx.Model(&model.ProfileImgInfo{}).
+		Where("id = ? AND save_name = ?", userId, fileName).
+		Updates(map[string]interface{}{
+			"use_yn": "Y",
+		})
+
+	// 존재하지 않는 경우
+	updateCount := result.RowsAffected
+	if updateCount == 0 {
+		return consts.ErrProfileImgDBRoleBackError
+	}
+
+	// 트랜잭션 종료
+	if err := tx.Commit().Error; err != nil {
+		log.Println("[RollbackDeleteUserProfileImgInfo] - Commit failed")
+		return err
+	}
+	log.Println("[RollbackDeleteUserProfileImgInfo] - Commit success")
+	return nil
+}

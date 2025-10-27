@@ -139,7 +139,6 @@ func (h *ProfileHandler) DeleteProfileImg(c *gin.Context) {
 	err := h.usecase.DeleteProfileImg(ctx, deleteProfileImgInput)
 
 	if err != nil {
-
 		if err == consts.ErrProfileImgNotRegist || err == consts.ErrProfileImgDBDeleteError {
 			// 메모리, 서버에 없음
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_PROFILE_F005, consts.COMMON_PROFILE_F005_MSG)

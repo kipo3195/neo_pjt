@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"common/internal/consts"
 	"context"
 	"fmt"
 	"image"
@@ -106,13 +107,14 @@ func (s *ServerProfileStorage) DeleteImg(ctx context.Context, fileName string) e
 	saveDir := "./user_profile/"
 	filePath := filepath.Join(saveDir, fileName)
 
+	// 존재하지 않는 파일
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return fmt.Errorf("파일이 존재하지 않습니다: %s", fileName)
+		return consts.ErrProfileImgNotExist
 	}
 
 	// 파일 삭제
 	if err := os.Remove(filePath); err != nil {
-		return fmt.Errorf("파일 삭제 중 오류가 발생했습니다: %w", err)
+		return consts.ErrProfileImgRemoveError
 	}
 
 	log.Printf("[DeleteImg] fileName : %s delete success.", fileName)
