@@ -26,17 +26,18 @@ type ProfileUsecase interface {
 	ProfileImgUpload(ctx context.Context, in input.ProfileImgInput) error
 	GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error)
 	DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error
+	RegistProfileMsg(ctx context.Context, in input.RegistProfileMsgInput) error
 }
 
 func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage) ProfileUsecase {
-	return profileUsecase{
+	return &profileUsecase{
 		repository:          repository,
 		profileStorage:      profileStorage,
 		profileCacheStorage: profileCacheStorage,
 	}
 }
 
-func (u profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileImgInput) error {
+func (u *profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileImgInput) error {
 
 	entity := entity.MakeProfileImgEntity(in.ProfileImg, in.ProfileImgSize, in.ProfileImgName, in.UserId)
 
@@ -132,7 +133,7 @@ func GenerateUserProfileHash(userId string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (u profileUsecase) GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error) {
+func (u *profileUsecase) GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error) {
 
 	entity := entity.MakeGetProfileImgEntity(in.UserId)
 
@@ -149,7 +150,7 @@ func (u profileUsecase) GetProfileImg(ctx context.Context, in input.GetProfileIm
 	return output, nil
 }
 
-func (u profileUsecase) DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error {
+func (u *profileUsecase) DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error {
 
 	entity := entity.MakeDeleteProfileImgEntity(in.UserId)
 	profileName := u.profileCacheStorage.GetProfileName(entity.UserId)
@@ -188,4 +189,15 @@ func (u profileUsecase) DeleteProfileImg(ctx context.Context, in input.DeletePro
 	}
 
 	return err
+}
+
+func (u *profileUsecase) RegistProfileMsg(ctx context.Context, in input.RegistProfileMsgInput) error {
+
+	entity.MakePutProfileMsgEntity(in.UserId, in.Msg)
+
+	// 1. common service에서 처리하는 방안
+	// 2. common -> org server to server로 처리하는 방안
+
+	return nil
+
 }

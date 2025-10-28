@@ -8,6 +8,7 @@ import (
 	"common/internal/delivery/util"
 	commonConsts "common/pkg/consts"
 	"common/pkg/response"
+	"encoding/json"
 	"io"
 
 	"github.com/gin-gonic/gin"
@@ -153,5 +154,34 @@ func (h *ProfileHandler) DeleteProfileImg(c *gin.Context) {
 }
 
 func (h *ProfileHandler) RegistProfileMsg(c *gin.Context) {
+
+	ctx := c.Request.Context()
+
+	userId := util.GetUserIdByAccessToken(c)
+	if userId == "" {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	var req profile.RegistProfileMsgRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	input := adapter.MakeRegistProfileMsgInput(userId, req.Msg)
+	err := h.usecase.RegistProfileMsg(ctx, input)
+	if err != nil {
+		// error 타입에 따른 분기처리 TODO
+	} else {
+		response.SendSuccess(c, "")
+	}
 
 }
