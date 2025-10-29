@@ -48,16 +48,12 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 			wuml.zh_lang,
 			wuml.jp_lang,
 			wuml.ru_lang,
-			wuml.vi_lang,
-			up.profile_url,
-			up.profile_msg
+			wuml.vi_lang
 		FROM service_users AS su
 		JOIN user_detail AS ud 
 			ON su.user_hash = ud.user_hash
 		JOIN works_user_multi_lang AS wuml 
 			ON su.user_hash = wuml.user_hash
-		LEFT JOIN user_profile AS up
-			ON su.user_hash = up.user_hash	
 		WHERE su.user_id = ? AND su.use_yn = 'Y'`,
 		en.MyHash).Scan(&myDetailInfo).Error
 	if err != nil {
@@ -123,8 +119,6 @@ func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo
 		UserHash:     myDetailInfo.UserHash,
 		UserPhoneNum: myDetailInfo.UserPhoneNum,
 		Username:     userName,
-		ProfileUrl:   myDetailInfo.ProfileUrl,
-		ProfileMsg:   myDetailInfo.ProfileMsg,
 		DeptInfo:     deptInfoEntity,
 	}
 }
@@ -174,16 +168,12 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 		wuml.zh_lang,
 		wuml.jp_lang,
 		wuml.ru_lang,
-		wuml.vi_lang,
-		up.profile_url,
-		up.profile_msg
+		wuml.vi_lang
 	FROM service_users AS su
 	JOIN user_detail AS ud 
 		ON su.user_hash = ud.user_hash
 	JOIN works_user_multi_lang AS wuml 
 		ON su.user_hash = wuml.user_hash
-	LEFT JOIN user_profile AS up
-		ON su.user_hash = up.user_hash	
 	WHERE su.user_id IN (?) 
 		AND su.use_yn = 'Y'`, users).Scan(&detailInfo).Error
 
@@ -248,9 +238,7 @@ func toUserInfoEntity(detailInfo []model.MyDetailInfo, deptInfo []model.DeptInfo
 				Ru: d.RuLang,
 				Vi: d.ViLang,
 			},
-			ProfileUrl: d.ProfileUrl,
-			ProfileMsg: d.ProfileMsg,
-			DeptInfo:   []entity.DeptInfoEntity{},
+			DeptInfo: []entity.DeptInfoEntity{},
 		}
 	}
 

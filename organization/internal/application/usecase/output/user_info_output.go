@@ -26,8 +26,6 @@ func MakeUserInfoOutput(en []entity.MyInfoEntity) []MyInfoOutput {
 			Username:     username,
 			UserEmail:    en[i].UserEmail,
 			DeptInfo:     deptInfo,
-			ProfileUrl:   en[i].ProfileUrl,
-			ProfileMsg:   en[i].ProfileMsg,
 			OrgCodes:     orgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
 		})
 	}

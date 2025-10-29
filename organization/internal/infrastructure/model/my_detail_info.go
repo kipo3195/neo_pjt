@@ -11,6 +11,4 @@ type MyDetailInfo struct {
 	JpLang       string `gorm:"column:jp_lang"`
 	RuLang       string `gorm:"column:ru_lang"`
 	ViLang       string `gorm:"column:vi_lang"`
-	ProfileUrl   string `gorm:"column:profile_url"`
-	ProfileMsg   string `gorm:"column:profile_msg"`
 }

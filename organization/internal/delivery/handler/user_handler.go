@@ -71,11 +71,6 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		})
 	}
 
-	profile := user.UserProfile{
-		ProfileUrl: output.ProfileUrl,
-		ProfileMsg: output.ProfileMsg,
-	}
-
 	userDetail := user.UserDetail{
 		UserEmail:    output.UserEmail,
 		UserPhoneNum: output.UserPhoneNum,
@@ -86,7 +81,6 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		UserDetail: userDetail,
 		Username:   userName,
 		OrgCode:    output.OrgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
-		Profile:    profile,
 		DeptInfo:   deptInfo,
 	}
 
@@ -147,11 +141,6 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 			Vi:  output[i].Username.Vi,
 		}
 
-		profile := user.UserProfile{
-			ProfileUrl: output[i].ProfileUrl,
-			ProfileMsg: output[i].ProfileMsg,
-		}
-
 		var deptInfo []user.DeptInfoDto
 
 		for _, temp := range output[i].DeptInfo {
@@ -173,7 +162,6 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 			UserHash:   output[i].UserHash,
 			UserDetail: userDetail,
 			Username:   userName,
-			Profile:    profile,
 			OrgCode:    output[i].OrgCodes,
 			DeptInfo:   deptInfo,
 		}
