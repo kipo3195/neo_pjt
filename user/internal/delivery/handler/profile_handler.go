@@ -28,7 +28,9 @@ func NewProfileHandler(usecase usecase.ProfileUsecase) *ProfileHandler {
 func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
-	userId := util.GetUserIdByAccessToken(c)
+	// 테스트 용이므로 수정 주석 제거 필수.
+	// userId := util.GetUserIdByAccessToken(c)
+	userId := c.GetHeader("User-Id")
 	if userId == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
 		return
