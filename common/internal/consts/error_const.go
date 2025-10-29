@@ -23,11 +23,3 @@ var ErrRefreshTokenAuthInvalid = errors.New("refresh token auth invalid")
 
 // 앱 토큰 재발급 API에서 refreshToken이 만료되었을때
 var ErrRefreshTokenAuthExpired = errors.New("refresh token expired")
-
-var ErrProfileImgSaveError = errors.New("profile image save error")
-var ErrProfileImgDBSaveError = errors.New("profile image db save error")
-var ErrProfileImgNotRegist = errors.New("profile image not regist")
-var ErrProfileImgDBDeleteError = errors.New("profile image db delete error")
-var ErrProfileImgDBRoleBackError = errors.New("profile image db rollback error")
-var ErrProfileImgNotExist = errors.New("profile image not exist")
-var ErrProfileImgRemoveError = errors.New("profile image remove error")

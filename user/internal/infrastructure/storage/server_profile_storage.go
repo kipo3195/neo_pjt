@@ -2,13 +2,13 @@ package storage
 
 import (
 	"bytes"
-	"common/internal/consts"
 	"context"
 	"fmt"
 	"image"
 	"log"
 	"os"
 	"path/filepath"
+	"user/internal/consts"
 
 	"github.com/disintegration/imaging"
 )
@@ -87,7 +87,7 @@ func (s *ServerProfileStorage) GetProfileUrl(ctx context.Context, fileName strin
 	// 1. 파일 존재 여부 확인
 	log.Printf("[profile - load] 프로필 이미지 존재 여부 확인 %s", fileName)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("파일이 존재하지 않습니다: %s", fileName)
+		return nil, consts.ErrProfileImgNotRegist
 	}
 
 	// 2. 파일 읽기

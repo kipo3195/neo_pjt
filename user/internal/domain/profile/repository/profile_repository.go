@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"common/internal/domain/profile/entity"
 	"context"
+	"user/internal/domain/profile/entity"
 
 	"gorm.io/gorm"
 )

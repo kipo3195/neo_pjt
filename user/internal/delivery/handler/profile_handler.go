@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"common/internal/application/usecase"
-	"common/internal/consts"
-	"common/internal/delivery/adapter"
-	"common/internal/delivery/dto/profile"
-	"common/internal/delivery/util"
-	commonConsts "common/pkg/consts"
-	"common/pkg/response"
 	"encoding/json"
 	"io"
+	"user/internal/application/usecase"
+	"user/internal/consts"
+	"user/internal/delivery/adapter"
+	"user/internal/delivery/dto/profile"
+	"user/internal/delivery/util"
+	commonConsts "user/pkg/consts"
+	"user/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -67,16 +67,16 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 	if err != nil {
 		if err == consts.ErrFileSizeExceeded {
 			// 사이즈 에러
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_PROFILE_F001, consts.COMMON_PROFILE_F001_MSG)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.USER_PROFILE_F001, consts.USER_PROFILE_F001_MSG)
 		} else if err == consts.ErrFileExtentionDetect {
 			// 확장자 에러
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_PROFILE_F002, consts.COMMON_PROFILE_F002_MSG)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.USER_PROFILE_F002, consts.USER_PROFILE_F002_MSG)
 		} else if err == consts.ErrProfileImgSaveError {
 			// 서버 저장에러
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_PROFILE_F003, consts.COMMON_PROFILE_F003_MSG)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.USER_PROFILE_F003, consts.USER_PROFILE_F003_MSG)
 		} else if err == consts.ErrProfileImgDBSaveError {
 			// DB 저장 에러
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_PROFILE_F004, consts.COMMON_PROFILE_F004_MSG)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.USER_PROFILE_F004, consts.USER_PROFILE_F004_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}
@@ -109,7 +109,11 @@ func (h *ProfileHandler) GetProfileImg(c *gin.Context) {
 	getProfileImgInput := adapter.MakeGetProfileImgInput(req.UserId)
 	output, err := h.usecase.GetProfileImg(ctx, getProfileImgInput)
 	if err != nil {
-		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		if err == consts.ErrProfileImgNotRegist {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, consts.USER_PROFILE_F005, consts.USER_PROFILE_F005_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
 	} else {
 		response.SendFileStream(c, output.ProfileImg, output.ProfileImgName, "")
 	}
@@ -142,7 +146,7 @@ func (h *ProfileHandler) DeleteProfileImg(c *gin.Context) {
 	if err != nil {
 		if err == consts.ErrProfileImgNotRegist || err == consts.ErrProfileImgDBDeleteError {
 			// 메모리, 서버에 없음
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.COMMON_PROFILE_F005, consts.COMMON_PROFILE_F005_MSG)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.USER_PROFILE_F005, consts.USER_PROFILE_F005_MSG)
 		} else {
 			// server error
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)

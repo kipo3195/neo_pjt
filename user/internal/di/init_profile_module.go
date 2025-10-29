@@ -1,12 +1,12 @@
 package di
 
 import (
-	"common/internal/application/usecase"
-	"common/internal/delivery/handler"
-	domainStorage "common/internal/domain/profile/storage"
+	"user/internal/application/usecase"
+	"user/internal/delivery/handler"
+	domainStorage "user/internal/domain/profile/storage"
 
-	"common/internal/infrastructure/repository"
-	"common/internal/infrastructure/storage"
+	"user/internal/infrastructure/repository"
+	"user/internal/infrastructure/storage"
 
 	"gorm.io/gorm"
 )

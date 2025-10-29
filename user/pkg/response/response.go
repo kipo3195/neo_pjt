@@ -1,9 +1,12 @@
 package response
 
 import (
+	"bytes"
 	"fmt"
 	"io"
-	"os"
+	"mime"
+	"net/http"
+	"path/filepath"
 	"user/pkg/consts"
 	"user/pkg/dto"
 
@@ -37,15 +40,22 @@ func SendSuccess[T any](c *gin.Context, t T) {
 }
 
 // 바이트 배열 전송 (메모리에 있는 파일을 전송)
-func SendFileStream(c *gin.Context, f *os.File, downloadName string, contentType string) {
+func SendFileStream(c *gin.Context, data []byte, filename string, contentType string) {
 	if contentType == "" {
-		contentType = "application/octet-stream"
+		ext := filepath.Ext(filename)
+		contentType = mime.TypeByExtension(ext)
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
 	}
 
-	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", downloadName))
+	c.Header("Content-Description", "File Stream")
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=%q", filename))
 	c.Header("Content-Type", contentType)
-	c.Status(200)
+	c.Header("Cache-Control", "public, max-age=86400")
 
-	_, _ = io.Copy(c.Writer, f)
+	c.Status(http.StatusOK)
+	reader := bytes.NewReader(data)
+	_, _ = io.Copy(c.Writer, reader)
+
 }

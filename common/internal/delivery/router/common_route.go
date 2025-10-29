@@ -22,7 +22,6 @@ type CommonRouter interface {
 	SetUserRoutes(handler *handler.UserHandler)
 	SetInitAppValidtaionRoutes(handler *handler.AppValidationServiceHandler)
 	SetDeviceRoutes(handler *handler.DeviceHandler)
-	SetProfileRoutes(handler *handler.ProfileHandler)
 	GetEngine() *gin.Engine
 }
 
@@ -87,15 +86,4 @@ func (r *commonRouter) SetInitAppValidtaionRoutes(handler *handler.AppValidation
 func (r *commonRouter) SetDeviceRoutes(handler *handler.DeviceHandler) {
 	server := r.parent.Group("/server/v1/device-init")
 	server.POST("/", handler.DeviceInit)
-}
-
-func (r *commonRouter) SetProfileRoutes(handler *handler.ProfileHandler) {
-	client := r.parent.Group("/client/v1/profile")
-	client.Use(middleware.AuthMiddleware(r.tokenConfig))
-	client.POST("/img", handler.UploadProfileImg)
-	client.GET("/img", handler.GetProfileImg)
-	client.DELETE("/img", handler.DeleteProfileImg) // 기본 이미지로 변경
-
-	client.POST("/msg", handler.RegistProfileMsg)
-
 }

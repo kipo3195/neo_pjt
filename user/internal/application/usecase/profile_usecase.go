@@ -1,19 +1,19 @@
 package usecase
 
 import (
-	"common/internal/application/usecase/input"
-	"common/internal/application/usecase/output"
-	"common/internal/application/util"
-	"common/internal/consts"
-	"common/internal/domain/profile/entity"
-	"common/internal/domain/profile/repository"
-	domainStorage "common/internal/domain/profile/storage"
-	"common/internal/infrastructure/storage"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"log"
 	"time"
+	"user/internal/application/usecase/input"
+	"user/internal/application/usecase/output"
+	"user/internal/application/util"
+	"user/internal/consts"
+	"user/internal/domain/profile/entity"
+	"user/internal/domain/profile/repository"
+	domainStorage "user/internal/domain/profile/storage"
+	"user/internal/infrastructure/storage"
 )
 
 type profileUsecase struct {
@@ -67,33 +67,36 @@ func (u *profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileI
 	}
 
 	// 기존 프로필 삭제 로직 시작
-
 	oldProfileName := u.profileCacheStorage.GetProfileName(entity.UserId)
 	// DB 조회
-	err = u.repository.DeleteUserProfileImgInfo(ctx, entity.UserId, oldProfileName)
-	// 메모리에는 있는데 DB에 없음 -> 정상적이지 않은 파일로 간주
-	if err == consts.ErrProfileImgDBDeleteError {
-		// 서버 경로 파일 삭제
-		u.profileStorage.DeleteImg(ctx, oldProfileName)
+	if oldProfileName != "" {
+		log.Println("[ProfileImgUpload] 기존 프로필 이미지 삭제 프로세스 시작")
+		err = u.repository.DeleteUserProfileImgInfo(ctx, entity.UserId, oldProfileName)
+		// 메모리에는 있는데 DB에 없음 -> 정상적이지 않은 파일로 간주
+		if err == consts.ErrProfileImgDBDeleteError {
+			// 서버 경로 파일 삭제
+			u.profileStorage.DeleteImg(ctx, oldProfileName)
 
-		// 메모리 삭제
-		u.profileCacheStorage.DeleteProfileName(entity.UserId, oldProfileName)
-
-		// DB 처리 완료됨
-	} else if err == nil {
-		// 서버 경로 파일 삭제
-		err = u.profileStorage.DeleteImg(ctx, oldProfileName)
-
-		// 삭제 에러 발생함
-		if err == consts.ErrProfileImgRemoveError {
-			// DB roll back, 메모리 삭제 X
-			log.Println("[ProfileImgUpload] 기존 프로필 이미지 삭제 불가.. 여기가 쌓이면 문제 생김")
-			u.repository.RollbackDeleteUserProfileImgInfo(ctx, entity.UserId, oldProfileName)
-		} else {
-			// 정상적으로 삭제됨
-			// 파일이 존재하지 않든, 삭제하다 실패하든 상관없이 메모리 삭제 처리
+			// 메모리 삭제
 			u.profileCacheStorage.DeleteProfileName(entity.UserId, oldProfileName)
+
+			// DB 처리 완료됨
+		} else if err == nil {
+			// 서버 경로 파일 삭제
+			err = u.profileStorage.DeleteImg(ctx, oldProfileName)
+
+			// 삭제 에러 발생함
+			if err == consts.ErrProfileImgRemoveError {
+				// DB roll back, 메모리 삭제 X
+				log.Println("[ProfileImgUpload] 기존 프로필 이미지 삭제 불가.. 여기가 쌓이면 문제 생김")
+				u.repository.RollbackDeleteUserProfileImgInfo(ctx, entity.UserId, oldProfileName)
+			} else {
+				// 정상적으로 삭제됨
+				// 파일이 존재하지 않든, 삭제하다 실패하든 상관없이 메모리 삭제 처리
+				u.profileCacheStorage.DeleteProfileName(entity.UserId, oldProfileName)
+			}
 		}
+		log.Println("[ProfileImgUpload] 기존 프로필 이미지 삭제 프로세스 종료")
 	}
 
 	// log.Println("[ProfileImgUpload] old Profile : ", oldProfileName)
@@ -138,6 +141,11 @@ func (u *profileUsecase) GetProfileImg(ctx context.Context, in input.GetProfileI
 	entity := entity.MakeGetProfileImgEntity(in.UserId)
 
 	profileName := u.profileCacheStorage.GetProfileName(entity.UserId)
+
+	if profileName == "" {
+		// 메모리에 없음 = 실제 파일 없음.
+		return output.GetProfileImgOutput{}, consts.ErrProfileImgNotRegist
+	}
 
 	file, err := u.profileStorage.GetProfileUrl(ctx, profileName)
 
@@ -194,9 +202,6 @@ func (u *profileUsecase) DeleteProfileImg(ctx context.Context, in input.DeletePr
 func (u *profileUsecase) RegistProfileMsg(ctx context.Context, in input.RegistProfileMsgInput) error {
 
 	entity.MakePutProfileMsgEntity(in.UserId, in.Msg)
-
-	// 1. common service에서 처리하는 방안
-	// 2. common -> org server to server로 처리하는 방안
 
 	return nil
 

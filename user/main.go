@@ -4,7 +4,10 @@ import (
 	"log"
 	"net/http"
 	"user/internal/delivery/router"
+	"user/internal/di"
 	"user/internal/infrastructure/config"
+	"user/internal/infrastructure/migration"
+	"user/internal/infrastructure/storage"
 )
 
 func main() {
@@ -19,11 +22,17 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 
 	// ---- DB Connect -----
-	_ = config.ConnectDatabase(sfg)
+	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
+	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
 
 	// ---- Storage Init -----
+	profileCacheStorage := storage.NewProfileCacheStorage()
+	profileStorage := storage.NewServerProfileStorage("") // 추후 s3 storage로 전환
 
 	// ---- Data Loader -----
 
@@ -35,6 +44,8 @@ func InitServer() *http.Server {
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
+	profileModule := di.InitProfileModule(db, profileStorage, profileCacheStorage)
+	router.SetProfileRoutes(profileModule.Handler)
 
 	// ---- Service Handler Init ----
 

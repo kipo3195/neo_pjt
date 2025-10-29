@@ -10,5 +10,4 @@ func RunAll(db *gorm.DB) {
 	repository.SkinMigrate(db)
 	repository.WorksInfoMigrate(db)
 	repository.ConfigurationMigrate(db)
-	repository.ProfileMigrate(db)
 }
