@@ -140,7 +140,7 @@ func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []entity.DeptInfoEntity {
 
 func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.UserInfoEntity) ([]entity.MyInfoEntity, error) {
 
-	users := entity.UserIds
+	users := entity.Userhashs
 
 	var detailInfo []model.MyDetailInfo
 	var deptInfo []model.DeptInfo
@@ -164,7 +164,7 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 	FROM service_users AS su
 	JOIN works_user_multi_lang AS wuml 
 		ON su.user_hash = wuml.user_hash
-	WHERE su.user_id IN (?) 
+	WHERE su.user_hash IN (?) 
 		AND su.use_yn = 'Y'`, users).Scan(&detailInfo).Error
 
 	if err != nil {
@@ -193,7 +193,7 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 			SELECT wdu.dept_code, su.user_hash FROM service_users AS su 
 			JOIN works_dept_user AS wdu 
 				ON su.user_hash = wdu.user_hash 
-			WHERE su.use_yn = 'Y' AND su.user_id IN (?) ) AS a 
+			WHERE su.use_yn = 'Y' AND su.user_hash IN (?) ) AS a 
 			ON wdml.dept_code = a.dept_code`, users).Scan(&deptInfo).Error
 	if err != nil {
 		tx.Rollback()

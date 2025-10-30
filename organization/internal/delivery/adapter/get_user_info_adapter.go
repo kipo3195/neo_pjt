@@ -4,9 +4,9 @@ import (
 	"org/internal/application/usecase/input"
 )
 
-func MakeGetUserInfoInput(userIds []string) input.GetUserInfoInput {
+func MakeGetUserInfoInput(userHashs []string) input.GetUserInfoInput {
 
 	return input.GetUserInfoInput{
-		UserIds: userIds,
+		UserHashs: userHashs,
 	}
 }

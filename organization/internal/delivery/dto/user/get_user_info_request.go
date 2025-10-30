@@ -1,5 +1,5 @@
 package user
 
 type GetUserInfoRequest struct {
-	UserIds []string `json:"userIds" validate:"required"`
+	UserHashs []string `json:"userHashs" validate:"required"`
 }

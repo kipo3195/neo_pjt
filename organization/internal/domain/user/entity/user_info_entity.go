@@ -1,11 +1,11 @@
 package entity
 
 type UserInfoEntity struct {
-	UserIds []string
+	Userhashs []string
 }
 
-func MakeUserInfoEntity(userIds []string) UserInfoEntity {
+func MakeUserInfoEntity(userHashs []string) UserInfoEntity {
 	return UserInfoEntity{
-		UserIds: userIds,
+		Userhashs: userHashs,
 	}
 }

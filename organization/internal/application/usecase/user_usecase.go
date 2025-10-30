@@ -48,7 +48,7 @@ func (r *userUsecase) GetMyInfo(ctx context.Context, input input.MyInfoInput) (o
 
 func (r *userUsecase) GetUserInfo(ctx context.Context, input input.GetUserInfoInput) ([]output.MyInfoOutput, error) {
 
-	entity := entity.MakeUserInfoEntity(input.UserIds)
+	entity := entity.MakeUserInfoEntity(input.UserHashs)
 	userInfo, err := r.repository.GetUserInfo(ctx, entity)
 
 	if err != nil {

@@ -109,7 +109,7 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 		return
 	}
 
-	input := adapter.MakeGetUserInfoInput(req.UserIds)
+	input := adapter.MakeGetUserInfoInput(req.UserHashs)
 	output, err := h.usecase.GetUserInfo(ctx, input)
 
 	if err != nil {
