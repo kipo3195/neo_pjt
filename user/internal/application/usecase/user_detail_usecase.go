@@ -26,7 +26,6 @@ func NewUserDatailUsecase(repository repository.UserDetailRepository) UserDetail
 func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input input.GetUserDetailInfoInput) (output.GetUserDetailInfoOutput, error) {
 
 	entity := entity.MakeGetUserDetailInfoEntity(input.UserHashs)
-
 	userInfos, err := u.repository.GetUserInfoDetailInfo(ctx, entity)
 
 	if err != nil {

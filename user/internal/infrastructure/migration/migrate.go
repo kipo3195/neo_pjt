@@ -7,6 +7,7 @@ import (
 )
 
 func RunAll(db *gorm.DB) {
+	repository.ServiceUsersMigrate(db)
 	repository.ProfileMigrate(db)
 	repository.UserDetailMigrate(db)
 }

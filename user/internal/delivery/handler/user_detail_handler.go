@@ -46,15 +46,21 @@ func (h *UserDetailHandler) GetUserDetailInfo(c *gin.Context) {
 
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
 	}
 
 	var res userDetail.GetUserDetailInfoResponse
+	res.DetailInfos = make([]userDetail.UserDetail, 0) // 빈 배열을 추가해주면 null은 아님.
+
 	for i := 0; i < len(output.UserInfos); i++ {
 
 		temp := userDetail.UserDetail{
-			UserEmail: output.UserInfos[i].UserEmail,
+			UserHash:     output.UserInfos[i].UserHash,
+			UserEmail:    output.UserInfos[i].UserEmail,
+			UserPhoneNum: output.UserInfos[i].UserPhoneNum,
+			ProfileMsg:   "",
 		}
-		res.UserDetails = append(res.UserDetails, temp)
+		res.DetailInfos = append(res.DetailInfos, temp)
 	}
 	// dto 배열을 response할건지 구조체로 배열을 감싼 걸 response 할건지?
 	// 20251030

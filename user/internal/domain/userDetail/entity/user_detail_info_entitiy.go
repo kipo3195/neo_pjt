@@ -1,5 +1,7 @@
 package entity
 
 type UserDetailInfoEntity struct {
-	UserEmail string
+	UserHash     string
+	UserEmail    string
+	UserPhoneNum string
 }

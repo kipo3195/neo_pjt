@@ -1,5 +1,5 @@
 package userDetail
 
 type GetUserDetailInfoResponse struct {
-	UserDetails []UserDetail
+	DetailInfos []UserDetail `json:"detailInfos"`
 }
