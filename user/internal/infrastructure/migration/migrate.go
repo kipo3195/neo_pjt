@@ -8,4 +8,5 @@ import (
 
 func RunAll(db *gorm.DB) {
 	repository.ProfileMigrate(db)
+	repository.UserDetailMigrate(db)
 }

@@ -71,17 +71,11 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		})
 	}
 
-	userDetail := user.UserDetail{
-		UserEmail:    output.UserEmail,
-		UserPhoneNum: output.UserPhoneNum,
-	}
-
 	res := user.GetMyInfoResponse{
-		UserHash:   output.UserHash,
-		UserDetail: userDetail,
-		Username:   userName,
-		OrgCode:    output.OrgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
-		DeptInfo:   deptInfo,
+		UserHash: output.UserHash,
+		Username: userName,
+		OrgCode:  output.OrgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
+		DeptInfo: deptInfo,
 	}
 
 	// response.
@@ -126,11 +120,6 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 	var res []user.GetUserInfoResponse
 	for i := 0; i < len(output); i++ {
 
-		userDetail := user.UserDetail{
-			UserEmail:    output[i].UserEmail,
-			UserPhoneNum: output[i].UserPhoneNum,
-		}
-
 		userName := user.UsernameDto{
 			Def: output[i].Username.Ko,
 			Ko:  output[i].Username.Ko,
@@ -159,11 +148,10 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 		}
 
 		temp := user.GetUserInfoResponse{
-			UserHash:   output[i].UserHash,
-			UserDetail: userDetail,
-			Username:   userName,
-			OrgCode:    output[i].OrgCodes,
-			DeptInfo:   deptInfo,
+			UserHash: output[i].UserHash,
+			Username: userName,
+			OrgCode:  output[i].OrgCodes,
+			DeptInfo: deptInfo,
 		}
 		res = append(res, temp)
 	}

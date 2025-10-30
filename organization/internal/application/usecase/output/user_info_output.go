@@ -21,12 +21,10 @@ func MakeUserInfoOutput(en []entity.MyInfoEntity) []MyInfoOutput {
 		deptInfo, orgCodes := makeDeptInfoOutput(en[i].DeptInfo)
 
 		output = append(output, MyInfoOutput{
-			UserHash:     en[i].UserHash,
-			UserPhoneNum: en[i].UserPhoneNum,
-			Username:     username,
-			UserEmail:    en[i].UserEmail,
-			DeptInfo:     deptInfo,
-			OrgCodes:     orgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
+			UserHash: en[i].UserHash,
+			Username: username,
+			DeptInfo: deptInfo,
+			OrgCodes: orgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
 		})
 	}
 	return output

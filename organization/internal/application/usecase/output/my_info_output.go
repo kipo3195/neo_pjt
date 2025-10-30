@@ -5,12 +5,10 @@ import (
 )
 
 type MyInfoOutput struct {
-	UserHash     string           `json:"userHash"`
-	UserEmail    string           `json:"userEmail"`
-	UserPhoneNum string           `json:"userPhoneNum"`
-	Username     UsernameOutput   `json:"userName"`
-	OrgCodes     []string         `json:"orgCodes"`
-	DeptInfo     []DeptInfoOutput `json:"deptInfo"`
+	UserHash string           `json:"userHash"`
+	Username UsernameOutput   `json:"userName"`
+	OrgCodes []string         `json:"orgCodes"`
+	DeptInfo []DeptInfoOutput `json:"deptInfo"`
 }
 
 func MakeMyInfoOutput(entity entity.MyInfoEntity) MyInfoOutput {
@@ -28,12 +26,10 @@ func MakeMyInfoOutput(entity entity.MyInfoEntity) MyInfoOutput {
 	deptInfo, orgCodes := makeDeptInfoOutput(entity.DeptInfo)
 
 	return MyInfoOutput{
-		UserHash:     entity.UserHash,
-		UserPhoneNum: entity.UserPhoneNum,
-		Username:     username,
-		UserEmail:    entity.UserEmail,
-		DeptInfo:     deptInfo,
-		OrgCodes:     orgCodes,
+		UserHash: entity.UserHash,
+		Username: username,
+		DeptInfo: deptInfo,
+		OrgCodes: orgCodes,
 	}
 }
 

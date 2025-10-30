@@ -76,7 +76,7 @@ func (r *orgRouter) SetDummyDataServiceRoute(handler *handler.DummyDataServiceHa
 
 	user := r.parent.Group("/test/v1/user")
 	user.POST("/init/service-user/", handler.InitServiceUser)
-	user.POST("/init/user-detail/", handler.InitUserDetail)
+	//user.POST("/init/user-detail/", handler.InitUserDetail)
 	user.POST("/init/user-multi-lang", handler.InitUserMultiLang)
 
 	department := r.parent.Group("/test/v1/department")

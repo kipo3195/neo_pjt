@@ -22,7 +22,6 @@ func NewUserRepository(db *gorm.DB) repository.UserRepository {
 }
 
 func UserMigrate(db *gorm.DB) {
-	db.AutoMigrate(&model.UserDetail{})
 	db.AutoMigrate(&model.UserGrade{})
 	db.AutoMigrate(&model.UserProfile{})
 }
@@ -41,8 +40,6 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 	err := tx.Raw(
 		`SELECT 
 			su.user_hash,
-			ud.user_phone_num,
-			ud.user_email,
 			wuml.ko_lang,
 			wuml.en_lang,
 			wuml.zh_lang,
@@ -50,8 +47,6 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 			wuml.ru_lang,
 			wuml.vi_lang
 		FROM service_users AS su
-		JOIN user_detail AS ud 
-			ON su.user_hash = ud.user_hash
 		JOIN works_user_multi_lang AS wuml 
 			ON su.user_hash = wuml.user_hash
 		WHERE su.user_id = ? AND su.use_yn = 'Y'`,
@@ -116,10 +111,9 @@ func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo
 
 	// 내 정보
 	return entity.MyInfoEntity{
-		UserHash:     myDetailInfo.UserHash,
-		UserPhoneNum: myDetailInfo.UserPhoneNum,
-		Username:     userName,
-		DeptInfo:     deptInfoEntity,
+		UserHash: myDetailInfo.UserHash,
+		Username: userName,
+		DeptInfo: deptInfoEntity,
 	}
 }
 
@@ -161,8 +155,6 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 	err := tx.Raw(`
 	SELECT 
 		su.user_hash,
-		ud.user_phone_num,
-		ud.user_email,
 		wuml.ko_lang,
 		wuml.en_lang,
 		wuml.zh_lang,
@@ -170,8 +162,6 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 		wuml.ru_lang,
 		wuml.vi_lang
 	FROM service_users AS su
-	JOIN user_detail AS ud 
-		ON su.user_hash = ud.user_hash
 	JOIN works_user_multi_lang AS wuml 
 		ON su.user_hash = wuml.user_hash
 	WHERE su.user_id IN (?) 
@@ -227,9 +217,7 @@ func toUserInfoEntity(detailInfo []model.MyDetailInfo, deptInfo []model.DeptInfo
 	// 사용자 기본 정보 세팅 key는 user_hash
 	for _, d := range detailInfo {
 		userMap[d.UserHash] = &entity.MyInfoEntity{
-			UserHash:     d.UserHash,
-			UserPhoneNum: d.UserPhoneNum,
-			UserEmail:    d.UserEmail,
+			UserHash: d.UserHash,
 			Username: entity.UserNameEntity{
 				Ko: d.KoLang,
 				En: d.EnLang,
@@ -311,30 +299,30 @@ func (r *userRepositoryImpl) GetServiceUsers(ctx context.Context, keyword string
 	return entities, nil
 }
 
-func (r *userRepositoryImpl) CreateUserDetail(ctx context.Context, entities []entity.UserDetailEntity) error {
+// func (r *userRepositoryImpl) CreateUserDetail(ctx context.Context, entities []entity.UserDetailEntity) error {
 
-	// entity → model 변환
-	var models []model.UserDetail
-	for _, e := range entities {
-		models = append(models, model.UserDetail{
-			UserHash:     e.UserHash,
-			UserPhoneNum: e.UserPhoneNum,
-			UserEmail:    e.UserEmail, // entity에 이메일이 있다면
-		})
-	}
+// 	// entity → model 변환
+// 	var models []model.UserDetail
+// 	for _, e := range entities {
+// 		models = append(models, model.UserDetail{
+// 			UserHash:     e.UserHash,
+// 			UserPhoneNum: e.UserPhoneNum,
+// 			UserEmail:    e.UserEmail, // entity에 이메일이 있다면
+// 		})
+// 	}
 
-	tx := r.db.WithContext(ctx)
+// 	tx := r.db.WithContext(ctx)
 
-	// Upsert: 이미 존재하면 update, 없으면 insert
-	if err := tx.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "user_hash"}},                               // PK 기준
-		DoUpdates: clause.AssignmentColumns([]string{"user_phone_num", "user_email"}), // update할 컬럼
-	}).Create(&models).Error; err != nil {
-		return err
-	}
+// 	// Upsert: 이미 존재하면 update, 없으면 insert
+// 	if err := tx.Clauses(clause.OnConflict{
+// 		Columns:   []clause.Column{{Name: "user_hash"}},                               // PK 기준
+// 		DoUpdates: clause.AssignmentColumns([]string{"user_phone_num", "user_email"}), // update할 컬럼
+// 	}).Create(&models).Error; err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (r *userRepositoryImpl) CreateUserMultiLang(ctx context.Context, e entity.UserMultiLangEntity) error {
 
