@@ -22,10 +22,11 @@ import (
 )
 
 type tokenUsecase struct {
-	repo     repository.TokenRepository
-	storage  storage.AuthTokenStorage
-	jwtCfg   *config.JWTConfig
-	tokenCfg config.TokenHashConfig
+	repo               repository.TokenRepository
+	storage            storage.AuthTokenStorage
+	serviceUserStorage storage.ServiceUserStorage
+	jwtCfg             *config.JWTConfig
+	tokenCfg           config.TokenHashConfig
 }
 
 type TokenUsecase interface {
@@ -38,12 +39,13 @@ type TokenUsecase interface {
 	ReIssueAccessTokenSaved(ctx context.Context, in input.ReIssueAccessTokenSavedInput) error
 }
 
-func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig, tokenCfg config.TokenHashConfig, storage storage.AuthTokenStorage) TokenUsecase {
+func NewTokenUsecase(repo repository.TokenRepository, jwtCfg *config.JWTConfig, tokenCfg config.TokenHashConfig, storage storage.AuthTokenStorage, serviceUserStorage storage.ServiceUserStorage) TokenUsecase {
 	return &tokenUsecase{
-		repo:     repo,
-		jwtCfg:   jwtCfg,
-		tokenCfg: tokenCfg,
-		storage:  storage,
+		repo:               repo,
+		jwtCfg:             jwtCfg,
+		tokenCfg:           tokenCfg,
+		storage:            storage,
+		serviceUserStorage: serviceUserStorage,
 	}
 }
 
@@ -175,15 +177,18 @@ func (r *tokenUsecase) GenerateAuthToken(ctx context.Context, in input.GenerateA
 
 	// 무조건 재발급인 경우를 우선 체크함.
 	if in.Force || at == "" || rt == "" || rtExp == "" {
+
 		log.Printf("[GenerateAuthToken] id : %s at, rt 신규 발급..", entity.Id)
 
+		hash := r.serviceUserStorage.GetUserHash(entity.Id)
+
 		// at 생성
-		at, _, err = generateJWT(entity.Id, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
+		at, _, err = generateJWT(entity.Id, entity.Uuid, hash, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
 		if err != nil {
 			return output.GenerateAuthTokenOutput{}, err
 		}
 		// rt 생성
-		rt, rtExp, err = generateJWT(entity.Id, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_REFRESH_TOKEN), []byte(r.tokenCfg.RefreshTokenHash), false)
+		rt, rtExp, err = generateJWT(entity.Id, entity.Uuid, hash, r.storage.GetTokenExpInfo(consts.DEVICE_REFRESH_TOKEN), []byte(r.tokenCfg.RefreshTokenHash), false)
 		if err != nil {
 			return output.GenerateAuthTokenOutput{}, err
 		}
@@ -252,8 +257,10 @@ func (r *tokenUsecase) ReIssueAccessToken(in input.ReIssueAccessTokenInput, ctx 
 
 	entity := entity.MakeReIssueAccessTokenEntity(in.UserId, in.Uuid)
 
+	hash := r.serviceUserStorage.GetUserHash(in.UserId)
+
 	// at 생성
-	at, _, err := generateJWT(entity.UserId, entity.Uuid, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
+	at, _, err := generateJWT(entity.UserId, entity.Uuid, hash, r.storage.GetTokenExpInfo(consts.DEVICE_ACCESSS_TOKEN), []byte(r.tokenCfg.AccessTokenHash), true)
 	if err != nil {
 		return "", err
 	}

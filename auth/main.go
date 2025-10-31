@@ -33,6 +33,7 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Storage Init -----
+	serviceUserStorage := storage.NewServiceUserStorage()
 	userAuthStorage := storage.NewUserAuthStorage()
 	deviceStorage := storage.NewDeviceStorage()
 	authTokenStorage := storage.NewAuthTokenStorage()
@@ -43,6 +44,7 @@ func InitServer() *http.Server {
 
 	dataLoader := loader.NewDataLoader()
 	dataLoader.Register(loader.NewAuthTokenLoader(db, authTokenStorage)) // 인증 토큰 정보 DB에서 업로드
+	dataLoader.Register(loader.NewServiceUserLoader(db, serviceUserStorage))
 	//dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage))
 
 	if err := dataLoader.LoadAllData(ctx); err != nil {
@@ -56,7 +58,7 @@ func InitServer() *http.Server {
 
 	// ---- Domain Handler Init -----
 	// 이런 구조로 변경할것.
-	tokenModule := di.InitTokenModule(db, sfg, authTokenStorage)
+	tokenModule := di.InitTokenModule(db, sfg, authTokenStorage, serviceUserStorage)
 	router.SetTokenRoutes(tokenModule.Handler)
 
 	userAuthModule := di.InitUserAuthModule(db, userAuthStorage)

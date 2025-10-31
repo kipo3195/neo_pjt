@@ -5,5 +5,6 @@ const (
 	SKIN          = "skin"
 	CONFIG        = "config"
 
-	USER_ID = "userId"
+	USER_ID   = "userId"
+	USER_HASH = "userHash"
 )

@@ -37,7 +37,7 @@ func AuthMiddleware(tokenConfig config.TokenHashConfig) gin.HandlerFunc {
 		}
 
 		// 토큰 검증
-		id, err := verifyJWT(tokenStr, tokenConfig)
+		id, hash, err := verifyJWT(tokenStr, tokenConfig)
 		if err != nil {
 			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
@@ -53,6 +53,7 @@ func AuthMiddleware(tokenConfig config.TokenHashConfig) gin.HandlerFunc {
 
 		// handler에서 값을 꺼낼 수 있게 하려면
 		c.Set(consts.USER_ID, id)
+		c.Set(consts.USER_HASH, hash)
 
 		// 정상 처리 = 검증 성공 → 다음 핸들러 호출
 		c.Next()
@@ -72,7 +73,7 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 	return parts[1], nil
 }
 
-func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, error) {
+func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
 	log.Println("111 tokenHash : ", tokenHash)
@@ -87,21 +88,21 @@ func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, error
 	log.Println("222")
 
 	if err != nil {
-		return "", fmt.Errorf("token parsing failed: %w", err)
+		return "", "", fmt.Errorf("token parsing failed: %w", err)
 	}
 
 	// 유효성 체크
 	parsedClaims, ok := token.Claims.(*claims.DeviceJWTClaims) // ← 여기서도 JWTClaims로
 	if !ok || !token.Valid {
-		return "", consts.ErrInvalidClaims
+		return "", "", consts.ErrInvalidClaims
 	}
 
 	// 만료 시간 검증
 	if parsedClaims.ExpiresAt != nil && parsedClaims.ExpiresAt.Time.Before(time.Now()) {
-		return "", consts.ErrTokenExpired
+		return "", "", consts.ErrTokenExpired
 	}
 
 	log.Println("토큰 검증 완료 verifyJWT id : ", parsedClaims.Id)
 
-	return parsedClaims.Id, nil
+	return parsedClaims.Id, parsedClaims.Hash, nil
 }

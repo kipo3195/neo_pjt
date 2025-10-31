@@ -69,7 +69,7 @@ func (r *deviceUsecase) GetDeviceRegistState(ctx context.Context, input input.De
 	}
 }
 
-func generateJWT(id string, uuid string, exp int, jwtKey []byte, accessFlag bool) (string, string, error) {
+func generateJWT(id string, uuid string, hash string, exp int, jwtKey []byte, accessFlag bool) (string, string, error) {
 	// 현재 기준 시간
 	now := time.Now()
 	// issuer
@@ -82,6 +82,7 @@ func generateJWT(id string, uuid string, exp int, jwtKey []byte, accessFlag bool
 		accessClaims := &claims.DeviceJWTClaims{
 			Id:   id,
 			Uuid: uuid,
+			Hash: hash,
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(expTime),
 				IssuedAt:  jwt.NewNumericDate(time.Now()),

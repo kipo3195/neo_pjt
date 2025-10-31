@@ -15,10 +15,10 @@ type TokenModule struct {
 	Usecase usecase.TokenUsecase
 }
 
-func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig, storage storage.AuthTokenStorage) *TokenModule {
+func InitTokenModule(db *gorm.DB, sfg *config.ServerConfig, storage storage.AuthTokenStorage, serviceUserStorage storage.ServiceUserStorage) *TokenModule {
 
 	repo := repository.NewTokenRepository(db)
-	usecase := usecase.NewTokenUsecase(repo, sfg.GetJWTConfig(), sfg.TokenConfig, storage)
+	usecase := usecase.NewTokenUsecase(repo, sfg.GetJWTConfig(), sfg.TokenConfig, storage, serviceUserStorage)
 	handler := handler.NewTokenHandler(usecase)
 
 	return &TokenModule{
