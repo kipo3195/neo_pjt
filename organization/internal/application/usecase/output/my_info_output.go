@@ -43,16 +43,17 @@ func makeDeptInfoOutput(deptInfos []entity.DeptInfoEntity) ([]DeptInfoOutput, []
 	for _, deptInfo := range deptInfos {
 
 		deptInfoOutput = append(deptInfoOutput, DeptInfoOutput{
-			DeptOrg:  deptInfo.DeptOrg,
-			DeptCode: deptInfo.DeptCode,
-			DefLang:  deptInfo.DefLang,
-			KoLang:   deptInfo.KoLang,
-			EnLang:   deptInfo.EnLang,
-			JpLang:   deptInfo.JpLang,
-			ZhLang:   deptInfo.ZhLang,
-			ViLang:   deptInfo.ViLang,
-			RuLang:   deptInfo.RuLang,
-			Header:   deptInfo.Header,
+			DeptOrg:     deptInfo.DeptOrg,
+			DeptCode:    deptInfo.DeptCode,
+			DefLang:     deptInfo.DefLang,
+			KoLang:      deptInfo.KoLang,
+			EnLang:      deptInfo.EnLang,
+			JpLang:      deptInfo.JpLang,
+			ZhLang:      deptInfo.ZhLang,
+			ViLang:      deptInfo.ViLang,
+			RuLang:      deptInfo.RuLang,
+			Header:      deptInfo.Header,
+			Description: deptInfo.Description,
 		})
 
 		// DeptOrg가 orgCodes에 이미 존재하는지 체크

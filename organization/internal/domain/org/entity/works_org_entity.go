@@ -13,5 +13,7 @@ type WorksOrg struct {
 	UpdateHash     string `json:"updateHash"`
 	Kind           string `json:"kind"` // 추가
 	UserHash       string `json:"userHash"`
+	UserId         string `json:"userId"`
 	Header         string `json:"header"`
+	Description    string `json:"description"`
 }

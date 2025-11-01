@@ -146,7 +146,9 @@ func convertWorksOrgToEntity(models []model.WorksOrg) []entity.WorksOrg {
 			UpdateHash:     m.UpdateHash,
 			Kind:           m.Kind,
 			UserHash:       m.UserHash,
+			UserId:         m.UserId,
 			Header:         m.Header,
+			Description:    m.Description,
 		}
 		entities = append(entities, entity)
 	}

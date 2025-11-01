@@ -49,7 +49,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 		FROM service_users AS su
 		JOIN works_user_multi_lang AS wuml 
 			ON su.user_hash = wuml.user_hash
-		WHERE su.user_id = ? AND su.use_yn = 'Y'`,
+		WHERE su.user_hash = ? AND su.use_yn = 'Y'`,
 		en.MyHash).Scan(&myDetailInfo).Error
 	if err != nil {
 		tx.Rollback()
@@ -68,7 +68,8 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 			wdml.zh_lang,
 			wdml.ru_lang,
 			wdml.vi_lang,
-			wd.header
+			wd.header,
+			wd.description
 		FROM works_dept AS wd 
 		JOIN works_dept_multi_lang AS wdml 
 			ON wd.dept_code = wdml.dept_code 
@@ -76,7 +77,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 			SELECT wdu.dept_code FROM service_users AS su 
 			JOIN works_dept_user AS wdu 
 				ON su.user_hash = wdu.user_hash 
-			WHERE su.use_yn = 'Y' AND su.user_id = ?) AS a 
+			WHERE su.use_yn = 'Y' AND su.user_hash = ?) AS a 
 			ON wdml.dept_code = a.dept_code`,
 		en.MyHash).Scan(&myDeptInfo).Error
 	if err != nil {
@@ -123,16 +124,17 @@ func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []entity.DeptInfoEntity {
 
 	for _, dept := range myDeptInfo {
 		deptEntity = append(deptEntity, entity.DeptInfoEntity{
-			DeptOrg:  dept.DeptOrg,
-			DeptCode: dept.DeptOrg,
-			DefLang:  dept.DefLang,
-			KoLang:   dept.KoLang,
-			EnLang:   dept.EnLang,
-			JpLang:   dept.JpLang,
-			ZhLang:   dept.ZhLang,
-			ViLang:   dept.ViLang,
-			RuLang:   dept.RuLang,
-			Header:   dept.Header,
+			DeptOrg:     dept.DeptOrg,
+			DeptCode:    dept.DeptOrg,
+			DefLang:     dept.DefLang,
+			KoLang:      dept.KoLang,
+			EnLang:      dept.EnLang,
+			JpLang:      dept.JpLang,
+			ZhLang:      dept.ZhLang,
+			ViLang:      dept.ViLang,
+			RuLang:      dept.RuLang,
+			Header:      dept.Header,
+			Description: dept.Description,
 		})
 	}
 	return deptEntity
@@ -185,6 +187,7 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 			wdml.ru_lang,
 			wdml.vi_lang,
 			wd.header,
+			wd.description,
 			a.user_hash
 		FROM works_dept AS wd 
 		JOIN works_dept_multi_lang AS wdml 
@@ -234,15 +237,16 @@ func toUserInfoEntity(detailInfo []model.MyDetailInfo, deptInfo []model.DeptInfo
 	for _, dept := range deptInfo {
 		if user, exist := userMap[dept.UserHash]; exist {
 			user.DeptInfo = append(user.DeptInfo, entity.DeptInfoEntity{
-				DeptCode: dept.DeptCode,
-				DeptOrg:  dept.DeptOrg,
-				Header:   dept.Header,
-				KoLang:   dept.KoLang,
-				EnLang:   dept.EnLang,
-				JpLang:   dept.JpLang,
-				ZhLang:   dept.ZhLang,
-				RuLang:   dept.RuLang,
-				ViLang:   dept.ViLang,
+				DeptCode:    dept.DeptCode,
+				DeptOrg:     dept.DeptOrg,
+				Header:      dept.Header,
+				KoLang:      dept.KoLang,
+				EnLang:      dept.EnLang,
+				JpLang:      dept.JpLang,
+				ZhLang:      dept.ZhLang,
+				RuLang:      dept.RuLang,
+				ViLang:      dept.ViLang,
+				Description: dept.Description,
 			})
 		}
 	}

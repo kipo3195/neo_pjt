@@ -1,6 +1,6 @@
 package userDetail
 
-type UserDetail struct {
+type UserDetailInfo struct {
 	UserHash     string `json:"userHash"`
 	UserEmail    string `json:"userEmail"`
 	UserPhoneNum string `json:"userPhoneNum"`

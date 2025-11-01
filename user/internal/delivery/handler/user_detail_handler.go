@@ -54,17 +54,18 @@ func (h *UserDetailHandler) GetMyDetailInfo(c *gin.Context) {
 		return
 	}
 
-	res := make([]userDetail.GetUserDetailInfoResponse, 0) // 빈 배열을 추가해주면 null은 아님.
+	var res userDetail.GetUserDetailInfoResponse
+	res.DetailInfos = make([]userDetail.UserDetailInfo, 0) // 빈 배열을 추가해주면 null은 아님.
 
 	for i := 0; i < len(output.UserInfos); i++ {
 
-		temp := userDetail.GetUserDetailInfoResponse{
+		temp := userDetail.UserDetailInfo{
 			UserHash:     output.UserInfos[i].UserHash,
 			UserEmail:    output.UserInfos[i].UserEmail,
 			UserPhoneNum: output.UserInfos[i].UserPhoneNum,
 			ProfileMsg:   "",
 		}
-		res = append(res, temp)
+		res.DetailInfos = append(res.DetailInfos, temp)
 	}
 	// dto 배열을 response할건지 구조체로 배열을 감싼 걸 response 할건지?
 	// 20251030
@@ -100,17 +101,18 @@ func (h *UserDetailHandler) GetUserDetailInfo(c *gin.Context) {
 		return
 	}
 
-	res := make([]userDetail.GetUserDetailInfoResponse, 0) // 빈 배열을 추가해주면 null은 아님.
+	var res userDetail.GetUserDetailInfoResponse
+	res.DetailInfos = make([]userDetail.UserDetailInfo, 0) // 빈 배열을 추가해주면 null은 아님.
 
 	for i := 0; i < len(output.UserInfos); i++ {
 
-		temp := userDetail.GetUserDetailInfoResponse{
+		temp := userDetail.UserDetailInfo{
 			UserHash:     output.UserInfos[i].UserHash,
 			UserEmail:    output.UserInfos[i].UserEmail,
 			UserPhoneNum: output.UserInfos[i].UserPhoneNum,
 			ProfileMsg:   "",
 		}
-		res = append(res, temp)
+		res.DetailInfos = append(res.DetailInfos, temp)
 	}
 	// dto 배열을 response할건지 구조체로 배열을 감싼 걸 response 할건지?
 	// 20251030

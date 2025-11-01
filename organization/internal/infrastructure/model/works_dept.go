@@ -9,6 +9,7 @@ type WorksDept struct {
 	DeptCreateDate  time.Time `gorm:"column:dept_create_date;default:CURRENT_TIMESTAMP;comment:등록일"`
 	UpdateHash      string    `gorm:"column:update_hash;type:varchar(30);comment:해시 정보"`
 	Header          string    `gorm:"column:header;type:varchar(30);comment:부서 장"`
+	Description     string    `gorm:"column:description;type:varchar(400);comment:부서 설명"`
 	UseYn           string    `gorm:"column:use_yn;type:varchar(1);default:Y;comment:사용 여부"`
 }
 

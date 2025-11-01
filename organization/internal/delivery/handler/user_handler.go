@@ -31,8 +31,8 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 인증 토큰에서 요청 사용자의 hash 정보 추출
-	id := c.Value(consts.USER_ID)
-	myHash, ok := id.(string)
+	hash := c.Value(consts.USER_HASH)
+	myHash, ok := hash.(string)
 	if !ok {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
 		return
@@ -58,16 +58,17 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 
 	for _, temp := range output.DeptInfo {
 		deptInfo = append(deptInfo, user.DeptInfoDto{
-			DeptOrg:  temp.DeptOrg,
-			DeptCode: temp.DeptCode,
-			DefLang:  temp.DefLang,
-			KoLang:   temp.KoLang,
-			EnLang:   temp.EnLang,
-			JpLang:   temp.JpLang,
-			ZhLang:   temp.ZhLang,
-			ViLang:   temp.ViLang,
-			RuLang:   temp.RuLang,
-			Header:   temp.Header,
+			DeptOrg:     temp.DeptOrg,
+			DeptCode:    temp.DeptCode,
+			DefLang:     temp.DefLang,
+			KoLang:      temp.KoLang,
+			EnLang:      temp.EnLang,
+			JpLang:      temp.JpLang,
+			ZhLang:      temp.ZhLang,
+			ViLang:      temp.ViLang,
+			RuLang:      temp.RuLang,
+			Header:      temp.Header,
+			Description: temp.Description,
 		})
 	}
 
@@ -117,7 +118,8 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 		return
 	}
 
-	var res []user.GetUserInfoResponse
+	var res user.GetUserInfoResponse
+	res.DetailInfos = make([]user.DetailInfo, 0)
 	for i := 0; i < len(output); i++ {
 
 		userName := user.UsernameDto{
@@ -134,26 +136,27 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 
 		for _, temp := range output[i].DeptInfo {
 			deptInfo = append(deptInfo, user.DeptInfoDto{
-				DeptOrg:  temp.DeptOrg,
-				DeptCode: temp.DeptCode,
-				DefLang:  temp.DefLang,
-				KoLang:   temp.KoLang,
-				EnLang:   temp.EnLang,
-				JpLang:   temp.JpLang,
-				ZhLang:   temp.ZhLang,
-				ViLang:   temp.ViLang,
-				RuLang:   temp.RuLang,
-				Header:   temp.Header,
+				DeptOrg:     temp.DeptOrg,
+				DeptCode:    temp.DeptCode,
+				DefLang:     temp.DefLang,
+				KoLang:      temp.KoLang,
+				EnLang:      temp.EnLang,
+				JpLang:      temp.JpLang,
+				ZhLang:      temp.ZhLang,
+				ViLang:      temp.ViLang,
+				RuLang:      temp.RuLang,
+				Header:      temp.Header,
+				Description: temp.Description,
 			})
 		}
 
-		temp := user.GetUserInfoResponse{
+		temp := user.DetailInfo{
 			UserHash: output[i].UserHash,
 			Username: userName,
 			OrgCode:  output[i].OrgCodes,
 			DeptInfo: deptInfo,
 		}
-		res = append(res, temp)
+		res.DetailInfos = append(res.DetailInfos, temp)
 	}
 
 	response.SendSuccess(c, res)

@@ -198,8 +198,10 @@ func parseOrgTree(orgTree []entity.WorksOrg) *entity.OrgEntity {
 			ParentDeptCode: org.ParentDeptCode,
 			Name:           name,
 			Kind:           org.Kind,
-			Id:             org.UserHash,
+			UserHash:       org.UserHash,
+			UserId:         org.UserId,
 			Header:         org.Header,
+			Description:    org.Description,
 		}
 
 		if org.ParentDeptCode == "root" {
@@ -225,15 +227,32 @@ func buildOrgTree(flatList []entity.OrgInfo, parentCode string) []entity.OrgTree
 			// 재귀적으로 하위 부서를 구성
 			sub := buildOrgTree(flatList, org.DeptCode)
 
-			tree = append(tree, entity.OrgTreeInfo{
-				DeptCode:       org.DeptCode,
-				ParentDeptCode: org.ParentDeptCode,
-				Name:           org.Name,
-				SubDept:        sub,
-				Kind:           org.Kind,
-				Id:             org.Id,
-				Header:         org.Header,
-			})
+			// 사실 이렇게 구분해서 init하지 않아도 entity.OrgTreeInfo 내부에서 omitempty처리하면 response시 보이지 않음.
+			if org.Kind == "0" {
+				// 부서
+				tree = append(tree, entity.OrgTreeInfo{
+					DeptCode:       org.DeptCode,
+					ParentDeptCode: org.ParentDeptCode,
+					Name:           org.Name,
+					SubDept:        sub,
+					Kind:           org.Kind,
+					UserHash:       org.UserHash,
+					Description:    org.Description,
+				})
+
+				// 사용자
+			} else if org.Kind == "1" {
+				tree = append(tree, entity.OrgTreeInfo{
+					ParentDeptCode: org.ParentDeptCode,
+					Name:           org.Name,
+					SubDept:        sub,
+					Kind:           org.Kind,
+					UserHash:       org.UserHash,
+					UserId:         org.UserId,
+					Header:         org.Header,
+				})
+			}
+
 		}
 	}
 

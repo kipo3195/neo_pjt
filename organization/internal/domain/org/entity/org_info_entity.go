@@ -7,7 +7,9 @@ type OrgInfo struct {
 	ParentDeptCode string                  `json:"parentDeptCode"`
 	Name           sharedEntity.NameEntity `json:"name"`
 	//UpdateHash     string     `json:"updateHash"`
-	Kind   string `json:"kind"`
-	Id     string `json:"id"`
-	Header string `json:"header,omitempty"`
+	Kind        string `json:"kind"`
+	UserHash    string `json:"userHash,omitempty"`
+	UserId      string `json:"userId,omitempty"`
+	Header      string `json:"header,omitempty"`
+	Description string `json:"description,omitempty"`
 }
