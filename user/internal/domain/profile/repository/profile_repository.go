@@ -15,4 +15,5 @@ type ProfileRepository interface {
 	PutUserProfileImgInfo(ctx context.Context, entity entity.ProfileImgEntity) error
 	DeleteUserProfileImgInfo(ctx context.Context, userId string, fileName string) error
 	RollbackDeleteUserProfileImgInfo(ctx context.Context, userId string, fileName string) error
+	GetProfileInfo(ctx context.Context, entity entity.GetProfileInfoEntity) (map[string]entity.GetProfileInfoResultEntity, error)
 }

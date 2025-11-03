@@ -30,6 +30,7 @@ func (r *profileRepositoryImpl) PutUserProfileImgInfo(ctx context.Context, entit
 
 	err := r.db.WithContext(ctx).Create(&model.ProfileImgInfo{
 		Id:                  entity.UserId,
+		UserHash:            entity.UserHash,
 		ProfileImgHash:      entity.ProfileImgHash,
 		ProfileImgSavedName: entity.ProfileImgSavedName,
 		ProfileImgSavedPath: entity.ProfileImgSavedPath,
@@ -87,4 +88,35 @@ func (r *profileRepositoryImpl) RollbackDeleteUserProfileImgInfo(ctx context.Con
 
 	log.Println("[RollbackDeleteUserProfileImgInfo] - Update success")
 	return nil
+}
+
+func (r *profileRepositoryImpl) GetProfileInfo(ctx context.Context, en entity.GetProfileInfoEntity) (map[string]entity.GetProfileInfoResultEntity, error) {
+
+	var model []model.ProfileImgInfo
+
+	err := r.db.Table("profile_img_info AS p1").
+		Select("p1.user_hash, p1.img_hash, p1.save_name, p1.save_path, p1.size, p1.create_at, p1.use_yn").
+		Where("p1.user_hash IN ?", en.UserHash).
+		Where("p1.create_at = (?)",
+			r.db.Table("profile_img_info AS p2").
+				Select("MAX(p2.create_at)").
+				Where("p2.user_hash = p1.user_hash"),
+		).
+		Scan(&model).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	temp := make(map[string]entity.GetProfileInfoResultEntity)
+
+	for i := 0; i < len(model); i++ {
+		e := entity.GetProfileInfoResultEntity{
+			UserHash:    model[i].UserHash,
+			ProfileHash: model[i].ProfileImgHash,
+		}
+		temp[model[i].UserHash] = e
+	}
+
+	return temp, nil
 }

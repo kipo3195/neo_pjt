@@ -27,6 +27,7 @@ type ProfileUsecase interface {
 	GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error)
 	DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error
 	RegistProfileMsg(ctx context.Context, in input.RegistProfileMsgInput) error
+	GetProfileInfo(ctx context.Context, in input.GetProfileInfoInput) (output.GetProfileInfoOutput, error)
 }
 
 func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage) ProfileUsecase {
@@ -39,7 +40,7 @@ func NewProfileUsecase(repository repository.ProfileRepository, profileStorage d
 
 func (u *profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileImgInput) error {
 
-	entity := entity.MakeProfileImgEntity(in.ProfileImg, in.ProfileImgSize, in.ProfileImgName, in.UserId)
+	entity := entity.MakeProfileImgEntity(in.ProfileImg, in.ProfileImgSize, in.ProfileImgName, in.UserId, in.UserHash)
 
 	// 사이즈 체크
 	sizeCheck := util.CheckProfileImgSize(entity.ProfileImgSize)
@@ -99,17 +100,6 @@ func (u *profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileI
 		log.Println("[ProfileImgUpload] 기존 프로필 이미지 삭제 프로세스 종료")
 	}
 
-	// log.Println("[ProfileImgUpload] old Profile : ", oldProfileName)
-	// if oldProfileName != "" {
-	// 	err = u.profileStorage.DeleteImg(ctx, oldProfileName)
-	// 	if err == nil {
-	// 		err = u.repository.DeleteUserProfileImgInfo(ctx, entity.UserId, oldProfileName)
-	// 		if err == consts.ErrProfileImgDBDeleteError || err == nil {
-	// 			u.profileCacheStorage.DeleteProfileName(entity.UserId, oldProfileName)
-	// 			log.Println("[ProfileImgUpload] old Profile delete success.")
-	// 		}
-	// 	}
-	// }
 	// 기존 프로필 삭제 로직 끝
 
 	entity.ProfileImgSavedPath = saveFilePath
@@ -205,4 +195,18 @@ func (u *profileUsecase) RegistProfileMsg(ctx context.Context, in input.RegistPr
 
 	return nil
 
+}
+
+func (u *profileUsecase) GetProfileInfo(ctx context.Context, in input.GetProfileInfoInput) (output.GetProfileInfoOutput, error) {
+
+	entity := entity.MakeGetProfileInfoEntity(in.UserHashs)
+	profileInfo, err := u.repository.GetProfileInfo(ctx, entity)
+
+	if err != nil {
+		return output.GetProfileInfoOutput{}, err
+	}
+
+	return output.GetProfileInfoOutput{
+		ResultMap: profileInfo,
+	}, nil
 }

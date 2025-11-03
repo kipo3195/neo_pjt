@@ -4,6 +4,7 @@ import "time"
 
 type ProfileImgInfo struct {
 	Id                  string    `gorm:"column:id;type:varchar(100);primaryKey;comment:사용자 계정"`
+	UserHash            string    `gorm:"column:user_hash;type:varchar(100);comment:사용자 hash 정보"`
 	ProfileImgHash      string    `gorm:"column:img_hash;type:varchar(100);primaryKey;comment:이미지 hash 정보"`
 	ProfileImgSavedName string    `gorm:"column:save_name;type:varchar(100);comment:이미지 이미지 명칭 정보"`
 	ProfileImgSavedPath string    `gorm:"column:save_path;type:varchar(300);comment:이미지 저장 경로 정보"`

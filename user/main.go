@@ -51,6 +51,9 @@ func InitServer() *http.Server {
 	router.SetUserDetailRoutes(userDetailModule.Handler)
 
 	// ---- Service Handler Init ----
+	userInfoServiceModule := di.InitUserInfoServiceModule(profileModule.Usecase, userDetailModule.Usecase)
+	router.SetUserInfoServiceRoutes(userInfoServiceModule)
+
 	return &http.Server{
 		Addr:    ":8084",
 		Handler: router.GetEngine(),

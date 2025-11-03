@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 	"user/internal/domain/userDetail/entity"
 	"user/internal/domain/userDetail/repository"
 	"user/internal/infrastructure/model"
@@ -25,28 +26,28 @@ func UserDetailMigrate(db *gorm.DB) {
 
 func (r *userDetailRepositoryImpl) GetUserInfoDetailInfo(ctx context.Context, en entity.GetUserDetailInfoEntity) ([]entity.UserDetailInfoEntity, error) {
 
-	var userDetailModel []model.UserDetail
+	var userDetailEntities []entity.UserDetailInfoEntity
 
 	// DB 조회
 	if err := r.db.
 		Table("user_detail AS a").
 		Joins("JOIN service_users AS b ON a.user_hash = b.user_hash").
 		Where("b.user_hash IN ?", en.UserHashs).
-		Find(&userDetailModel).Error; err != nil {
+		Scan(&userDetailEntities).Error; err != nil {
 		return nil, err
 	}
 
+	log.Println("여기 ")
 	// 모델 → 엔티티 변환
-	var userDetailEntities []entity.UserDetailInfoEntity
-	for _, m := range userDetailModel {
-		userDetailEntities = append(userDetailEntities, entity.UserDetailInfoEntity{
-			UserHash:     m.UserHash,
-			UserEmail:    m.UserEmail,
-			UserPhoneNum: m.UserPhoneNum,
-			// 필요한 필드만 매핑
-			// 많아지면 github.com/jinzhu/copier 고려?
-		})
-	}
+	// for _, m := range userDetailEntities {
+	// 	userDetailEntities = append(userDetailEntities, entity.UserDetailInfoEntity{
+	// 		UserHash:     m.UserHash,
+	// 		UserEmail:    m.UserEmail,
+	// 		UserPhoneNum: m.UserPhoneNum,
+	// 		// 필요한 필드만 매핑
+	// 		// 많아지면 github.com/jinzhu/copier 고려?
+	// 	})
+	// }
 
 	return userDetailEntities, nil
 }

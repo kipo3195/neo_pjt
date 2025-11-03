@@ -5,4 +5,5 @@ type ProfileImgInput struct {
 	ProfileImgSize int64
 	ProfileImgName string
 	UserId         string
+	UserHash       string
 }

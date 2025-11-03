@@ -16,3 +16,13 @@ func GetUserIdByAccessToken(c *gin.Context) string {
 		return userId
 	}
 }
+func GetUserHashByAccessToken(c *gin.Context) string {
+
+	temp := c.Value(consts.USER_HASH)
+	userHash, ok := temp.(string)
+	if !ok {
+		return ""
+	} else {
+		return userHash
+	}
+}

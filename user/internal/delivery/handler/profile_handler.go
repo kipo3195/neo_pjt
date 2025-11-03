@@ -29,12 +29,13 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	// 테스트 용이므로 수정 주석 제거 필수.
-	// userId := util.GetUserIdByAccessToken(c)
-	userId := c.GetHeader("User-Id")
-	if userId == "" {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
-		return
-	}
+	userHash := util.GetUserIdByAccessToken(c)
+	userId := util.GetUserIdByAccessToken(c)
+	// userId := c.GetHeader("User-Id")
+	// if userId == "" {
+	// 	response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+	// 	return
+	// }
 
 	// 파일 데이터 추출
 	fileInfo, err := c.FormFile("profile_img")
@@ -63,7 +64,7 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 		ProfileImgName: fileInfo.Filename,
 	}
 
-	input := adapter.MakeProfileUploadInput(req.ProfileImg, req.ProfileImgSize, req.ProfileImgName, userId)
+	input := adapter.MakeProfileUploadInput(req.ProfileImg, req.ProfileImgSize, req.ProfileImgName, userId, userHash)
 	err = h.usecase.ProfileImgUpload(ctx, input)
 
 	if err != nil {
