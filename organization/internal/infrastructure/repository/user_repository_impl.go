@@ -69,17 +69,31 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 			wdml.ru_lang,
 			wdml.vi_lang,
 			wd.header,
-			wd.description
+			wd.description,
+			a.r_kr_lang, a.r_en_lang, a.r_zh_lang, a.r_jp_lang,
+			a.p_kr_lang, a.p_en_lang, a.p_zh_lang, a.p_jp_lang
 		FROM works_dept AS wd 
 		JOIN works_dept_multi_lang AS wdml 
 			ON wd.dept_code = wdml.dept_code 
 		JOIN (
-			SELECT wdu.dept_code FROM service_users AS su 
+			SELECT wdu.dept_code, 
+				rml.kr_lang as r_kr_lang, 
+				rml.en_lang as r_en_lang, 
+				rml.zh_lang as r_zh_lang,
+				rml.jp_lang as r_jp_lang,
+				pml.kr_lang as p_kr_lang,
+				pml.en_lang as p_en_lang,
+				pml.zh_lang as p_zh_lang,
+				pml.jp_lang as p_jp_lang
+			FROM service_users AS su 
 			JOIN works_dept_user AS wdu 
 				ON su.user_hash = wdu.user_hash 
-			WHERE su.use_yn = 'Y' AND su.user_hash = ?) AS a 
-			ON wdml.dept_code = a.dept_code`,
-		en.MyHash).Scan(&myDeptInfo).Error
+			LEFT JOIN role_multi_lang as rml
+				on wdu.role_code = rml.role_code
+			LEFT JOIN position_multi_lang as pml
+				on wdu.position_code = pml.position_code
+			WHERE su.use_yn = 'Y' AND su.user_hash = ? ) AS a 
+			ON wdml.dept_code = a.dept_code`, en.MyHash).Scan(&myDeptInfo).Error
 	if err != nil {
 		tx.Rollback()
 		return entity.MyInfoEntity{}, err
@@ -123,18 +137,39 @@ func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []entity.DeptInfoEntity {
 	var deptEntity []entity.DeptInfoEntity
 
 	for _, dept := range myDeptInfo {
+
+		roleName := entity.RoleNameEntity{
+			KoLang: dept.RKrLang,
+			EnLang: dept.RKrLang,
+			ZhLang: dept.RKrLang,
+			JpLang: dept.RKrLang,
+		}
+
+		positionName := entity.PositionNameEntity{
+			KoLang: dept.PKrLang,
+			EnLang: dept.PEnLang,
+			ZhLang: dept.PZhLang,
+			JpLang: dept.PJpLang,
+		}
+
+		deptName := entity.DeptNameEntity{
+			DefLang: dept.DefLang,
+			KoLang:  dept.KoLang,
+			EnLang:  dept.EnLang,
+			JpLang:  dept.JpLang,
+			ZhLang:  dept.ZhLang,
+			ViLang:  dept.ViLang,
+			RuLang:  dept.RuLang,
+		}
+
 		deptEntity = append(deptEntity, entity.DeptInfoEntity{
-			DeptOrg:     dept.DeptOrg,
-			DeptCode:    dept.DeptOrg,
-			DefLang:     dept.DefLang,
-			KoLang:      dept.KoLang,
-			EnLang:      dept.EnLang,
-			JpLang:      dept.JpLang,
-			ZhLang:      dept.ZhLang,
-			ViLang:      dept.ViLang,
-			RuLang:      dept.RuLang,
-			Header:      dept.Header,
-			Description: dept.Description,
+			DeptOrg:      dept.DeptOrg,
+			DeptCode:     dept.DeptOrg,
+			DeptName:     deptName,
+			Header:       dept.Header,
+			Description:  dept.Description,
+			RoleName:     roleName,
+			PositionName: positionName,
 		})
 	}
 	return deptEntity
@@ -188,15 +223,31 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 			wdml.vi_lang,
 			wd.header,
 			wd.description,
+			a.r_kr_lang, a.r_en_lang, a.r_zh_lang, a.r_jp_lang,
+			a.p_kr_lang, a.p_en_lang, a.p_zh_lang, a.p_jp_lang,
 			a.user_hash
 		FROM works_dept AS wd 
 		JOIN works_dept_multi_lang AS wdml 
 			ON wd.dept_code = wdml.dept_code 
 		JOIN (
-			SELECT wdu.dept_code, su.user_hash FROM service_users AS su 
+			SELECT wdu.dept_code, 
+			 su.user_hash,
+				rml.kr_lang as r_kr_lang, 
+				rml.en_lang as r_en_lang, 
+				rml.zh_lang as r_zh_lang,
+				rml.jp_lang as r_jp_lang,
+				pml.kr_lang as p_kr_lang,
+				pml.en_lang as p_en_lang,
+				pml.zh_lang as p_zh_lang,
+				pml.jp_lang as p_jp_lang
+			FROM service_users AS su 
 			JOIN works_dept_user AS wdu 
 				ON su.user_hash = wdu.user_hash 
-			WHERE su.use_yn = 'Y' AND su.user_hash IN (?) ) AS a 
+			LEFT JOIN role_multi_lang as rml
+				on wdu.role_code = rml.role_code
+			LEFT JOIN position_multi_lang as pml
+				on wdu.position_code = pml.position_code
+			WHERE su.use_yn = 'Y' AND su.user_hash IN (?)) AS a 
 			ON wdml.dept_code = a.dept_code`, users).Scan(&deptInfo).Error
 	if err != nil {
 		tx.Rollback()
@@ -235,18 +286,39 @@ func toUserInfoEntity(detailInfo []model.MyDetailInfo, deptInfo []model.DeptInfo
 
 	// 부서 정보 추가 (겸직 포함)
 	for _, dept := range deptInfo {
+
+		roleName := entity.RoleNameEntity{
+			KoLang: dept.RKrLang,
+			EnLang: dept.REnLang,
+			ZhLang: dept.RZhLang,
+			JpLang: dept.RJpLang,
+		}
+
+		positionName := entity.PositionNameEntity{
+			KoLang: dept.PKrLang,
+			EnLang: dept.PEnLang,
+			ZhLang: dept.PZhLang,
+			JpLang: dept.PJpLang,
+		}
+
+		deptName := entity.DeptNameEntity{
+			KoLang: dept.KoLang,
+			EnLang: dept.EnLang,
+			JpLang: dept.JpLang,
+			ZhLang: dept.ZhLang,
+			RuLang: dept.RuLang,
+			ViLang: dept.ViLang,
+		}
+
 		if user, exist := userMap[dept.UserHash]; exist {
 			user.DeptInfo = append(user.DeptInfo, entity.DeptInfoEntity{
-				DeptCode:    dept.DeptCode,
-				DeptOrg:     dept.DeptOrg,
-				Header:      dept.Header,
-				KoLang:      dept.KoLang,
-				EnLang:      dept.EnLang,
-				JpLang:      dept.JpLang,
-				ZhLang:      dept.ZhLang,
-				RuLang:      dept.RuLang,
-				ViLang:      dept.ViLang,
-				Description: dept.Description,
+				DeptCode:     dept.DeptCode,
+				DeptOrg:      dept.DeptOrg,
+				Header:       dept.Header,
+				Description:  dept.Description,
+				DeptName:     deptName,
+				RoleName:     roleName,
+				PositionName: positionName,
 			})
 		}
 	}

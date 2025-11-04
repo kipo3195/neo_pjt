@@ -41,19 +41,38 @@ func makeDeptInfoOutput(deptInfos []entity.DeptInfoEntity) ([]DeptInfoOutput, []
 	var uniqueOrgs []string
 
 	for _, deptInfo := range deptInfos {
+		roleNameOutput := RoleNameOutput{
+			KoLang: deptInfo.RoleName.KoLang,
+			EnLang: deptInfo.RoleName.EnLang,
+			JpLang: deptInfo.RoleName.JpLang,
+			ZhLang: deptInfo.RoleName.ZhLang,
+		}
+
+		positionNameOutput := PositionNameOutput{
+			KoLang: deptInfo.PositionName.KoLang,
+			EnLang: deptInfo.PositionName.EnLang,
+			JpLang: deptInfo.PositionName.JpLang,
+			ZhLang: deptInfo.PositionName.ZhLang,
+		}
+
+		deptNameOutput := DeptNameOutput{
+			DefLang: deptInfo.DeptName.DefLang,
+			KoLang:  deptInfo.DeptName.KoLang,
+			EnLang:  deptInfo.DeptName.EnLang,
+			JpLang:  deptInfo.DeptName.JpLang,
+			ZhLang:  deptInfo.DeptName.ZhLang,
+			ViLang:  deptInfo.DeptName.ViLang,
+			RuLang:  deptInfo.DeptName.RuLang,
+		}
 
 		deptInfoOutput = append(deptInfoOutput, DeptInfoOutput{
-			DeptOrg:     deptInfo.DeptOrg,
-			DeptCode:    deptInfo.DeptCode,
-			DefLang:     deptInfo.DefLang,
-			KoLang:      deptInfo.KoLang,
-			EnLang:      deptInfo.EnLang,
-			JpLang:      deptInfo.JpLang,
-			ZhLang:      deptInfo.ZhLang,
-			ViLang:      deptInfo.ViLang,
-			RuLang:      deptInfo.RuLang,
-			Header:      deptInfo.Header,
-			Description: deptInfo.Description,
+			DeptOrg:      deptInfo.DeptOrg,
+			DeptCode:     deptInfo.DeptCode,
+			DeptName:     deptNameOutput,
+			Header:       deptInfo.Header,
+			Description:  deptInfo.Description,
+			RoleName:     roleNameOutput,
+			PositionName: positionNameOutput,
 		})
 
 		// DeptOrg가 orgCodes에 이미 존재하는지 체크

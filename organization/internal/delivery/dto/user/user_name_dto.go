@@ -1,6 +1,6 @@
 package user
 
-type UsernameDto struct {
+type UserNameDto struct {
 	Def string `json:"def"`
 	Ko  string `json:"ko"`
 	En  string `json:"en"`

@@ -44,7 +44,7 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	myInfoInput := adapter.MakeMyInfoInput(myHash)
 	output, err := h.usecase.GetMyInfo(ctx, myInfoInput)
 
-	userName := user.UsernameDto{
+	userName := user.UserNameDto{
 		Def: output.Username.Ko, // 수정 필요
 		Ko:  output.Username.Ko,
 		En:  output.Username.En,
@@ -57,18 +57,38 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	var deptInfo []user.DeptInfoDto
 
 	for _, temp := range output.DeptInfo {
+
+		positionName := user.PositionNameDto{
+			Ko: temp.PositionName.KoLang,
+			En: temp.PositionName.EnLang,
+			Zh: temp.PositionName.ZhLang,
+			Jp: temp.PositionName.JpLang,
+		}
+		roleName := user.RoleNameDto{
+			Ko: temp.RoleName.KoLang,
+			En: temp.RoleName.EnLang,
+			Zh: temp.RoleName.ZhLang,
+			Jp: temp.RoleName.JpLang,
+		}
+
+		deptName := user.DeptNameDto{
+			Def: temp.DeptName.DefLang,
+			Ko:  temp.DeptName.KoLang,
+			En:  temp.DeptName.EnLang,
+			Jp:  temp.DeptName.JpLang,
+			Zh:  temp.DeptName.ZhLang,
+			Vi:  temp.DeptName.ViLang,
+			Ru:  temp.DeptName.RuLang,
+		}
+
 		deptInfo = append(deptInfo, user.DeptInfoDto{
-			DeptOrg:     temp.DeptOrg,
-			DeptCode:    temp.DeptCode,
-			DefLang:     temp.DefLang,
-			KoLang:      temp.KoLang,
-			EnLang:      temp.EnLang,
-			JpLang:      temp.JpLang,
-			ZhLang:      temp.ZhLang,
-			ViLang:      temp.ViLang,
-			RuLang:      temp.RuLang,
-			Header:      temp.Header,
-			Description: temp.Description,
+			DeptOrg:      temp.DeptOrg,
+			DeptCode:     temp.DeptCode,
+			DeptName:     deptName,
+			Header:       temp.Header,
+			Description:  temp.Description,
+			PositionName: positionName,
+			RoleName:     roleName,
 		})
 	}
 
@@ -122,7 +142,7 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 	res.DetailInfos = make([]user.DetailInfo, 0)
 	for i := 0; i < len(output); i++ {
 
-		userName := user.UsernameDto{
+		userName := user.UserNameDto{
 			Def: output[i].Username.Ko,
 			Ko:  output[i].Username.Ko,
 			En:  output[i].Username.En,
@@ -135,24 +155,44 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 		var deptInfo []user.DeptInfoDto
 
 		for _, temp := range output[i].DeptInfo {
+
+			positionName := user.PositionNameDto{
+				Ko: temp.PositionName.KoLang,
+				En: temp.PositionName.EnLang,
+				Zh: temp.PositionName.ZhLang,
+				Jp: temp.PositionName.JpLang,
+			}
+			roleName := user.RoleNameDto{
+				Ko: temp.RoleName.KoLang,
+				En: temp.RoleName.EnLang,
+				Zh: temp.RoleName.ZhLang,
+				Jp: temp.RoleName.JpLang,
+			}
+
+			deptName := user.DeptNameDto{
+				Def: temp.DeptName.DefLang,
+				Ko:  temp.DeptName.KoLang,
+				En:  temp.DeptName.EnLang,
+				Jp:  temp.DeptName.JpLang,
+				Zh:  temp.DeptName.ZhLang,
+				Vi:  temp.DeptName.ViLang,
+				Ru:  temp.DeptName.RuLang,
+			}
+
 			deptInfo = append(deptInfo, user.DeptInfoDto{
-				DeptOrg:     temp.DeptOrg,
-				DeptCode:    temp.DeptCode,
-				DefLang:     temp.DefLang,
-				KoLang:      temp.KoLang,
-				EnLang:      temp.EnLang,
-				JpLang:      temp.JpLang,
-				ZhLang:      temp.ZhLang,
-				ViLang:      temp.ViLang,
-				RuLang:      temp.RuLang,
-				Header:      temp.Header,
-				Description: temp.Description,
+				DeptOrg:      temp.DeptOrg,
+				DeptCode:     temp.DeptCode,
+				DeptName:     deptName,
+				Header:       temp.Header,
+				Description:  temp.Description,
+				PositionName: positionName,
+				RoleName:     roleName,
 			})
 		}
 
 		temp := user.DetailInfo{
 			UserHash: output[i].UserHash,
-			Username: userName,
+			UserName: userName,
 			OrgCode:  output[i].OrgCodes,
 			DeptInfo: deptInfo,
 		}
