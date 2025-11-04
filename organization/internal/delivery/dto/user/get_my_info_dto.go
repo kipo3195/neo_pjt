@@ -1,14 +1,5 @@
 package user
 
 type GetMyInfoResponse struct {
-	UserHash string        `json:"userHash"`
-	Username UserNameDto   `json:"userName"`
-	OrgCode  []string      `json:"orgCode"`
-	DeptInfo []DeptInfoDto `json:"deptInfo"`
+	MyInfo DetailInfo `json:"myInfo"`
 }
-
-//userHash
-//userName
-//orgCode 배열
-//profile
-//deptInfo

@@ -92,11 +92,15 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		})
 	}
 
-	res := user.GetMyInfoResponse{
+	myInfo := user.DetailInfo{
 		UserHash: output.UserHash,
-		Username: userName,
+		UserName: userName,
 		OrgCode:  output.OrgCodes, // 어느 부서에도 속하지 않았다면 org code는 알 수 없는 구조
 		DeptInfo: deptInfo,
+	}
+
+	res := user.GetMyInfoResponse{
+		MyInfo: myInfo,
 	}
 
 	// response.
