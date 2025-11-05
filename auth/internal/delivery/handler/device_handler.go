@@ -2,6 +2,13 @@ package handler
 
 import (
 	"auth/internal/application/usecase"
+	"auth/internal/consts"
+	"auth/internal/delivery/adapter"
+	"auth/internal/delivery/dto/device"
+	commonConsts "auth/pkg/consts"
+	response "auth/pkg/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 type DeviceHandler struct {
@@ -12,37 +19,40 @@ func NewDeviceHandler(uc usecase.DeviceUsecase) *DeviceHandler {
 	return &DeviceHandler{usecase: uc}
 }
 
-// func (h DeviceHandler) DeviceRegist(c *gin.Context) {
+func (h *DeviceHandler) GetMyDeviceInfo(c *gin.Context) {
 
-// 	ctx := c.Request.Context()
-// 	var req device.DeviceRegistRequest
+	ctx := c.Request.Context()
 
-// 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
-// 		fmt.Println(err)
-// 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
-// 		return
-// 	}
+	hash := c.Value(consts.USER_HASH)
+	myHash, ok := hash.(string)
+	if !ok {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+		return
+	}
 
-// 	// 필수 데이터 검증
-// 	validate := validator.New()
-// 	if err := validate.Struct(req); err != nil {
-// 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
-// 		return
-// 	}
+	myDeviceInput := adapter.MakeMyDeviceInfoInput(myHash)
+	output, err := h.usecase.GetMyDeviceInfo(ctx, myDeviceInput)
 
-// 	deviceRegistInput := adapter.MakeDeviceRegistInput(req.Id, req.Uuid, req.ModelName, req.Version, req.Challenge)
-// 	deviceRegistOutput, err := h.usecase.DeviceRegist(ctx, deviceRegistInput)
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+	}
 
-// 	if err != nil {
-// 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
-// 		return
-// 	}
+	deviceInfoArr := make([]device.DeviceInfo, 0)
 
-// 	res := device.DeviceRegistResponse{
-// 		AccessToken:     deviceRegistOutput.AccessToken,
-// 		RefreshToken:    deviceRegistOutput.RefreshToken,
-// 		RefreshTokenExp: deviceRegistOutput.RefreshTokenExp,
-// 	}
+	for _, temp := range output {
 
-// 	response.SendSuccess(c, res)
-// }
+		deviceInfo := device.DeviceInfo{
+			Uuid:      temp.Uuid,
+			Version:   temp.Version,
+			ModelName: temp.ModelName,
+			CreateAt:  temp.CreateAt,
+		}
+		deviceInfoArr = append(deviceInfoArr, deviceInfo)
+	}
+
+	res := device.GetMyDeviceInfoResponse{
+		MyDeviceInfo: deviceInfoArr,
+	}
+
+	response.SendSuccess(c, res)
+}

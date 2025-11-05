@@ -2,6 +2,7 @@ package router
 
 import (
 	"auth/internal/delivery/handler"
+	"auth/internal/delivery/middleware"
 	"auth/internal/infrastructure/config"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,7 @@ type AuthRouter interface {
 	SetUserAuthRoutes(handler *handler.UserAuthHandler)
 	SetUserAuthServiceRoutes(handler *handler.UserAuthServiceHandler)
 	SetUserAuthDeviceServiceRoutes(handler *handler.DeviceAuthServiceHandler)
+	SetDeviceRoutes(handler *handler.DeviceHandler)
 	GetEngine() *gin.Engine
 }
 
@@ -75,5 +77,10 @@ func (r *authRouter) SetUserAuthDeviceServiceRoutes(handler *handler.DeviceAuthS
 	client := r.parent.Group("/client/v1/device")
 	client.POST("/regist", handler.DeviceRegist)
 	client.POST("/refresh", handler.DeviceRefresh)
+}
 
+func (r *authRouter) SetDeviceRoutes(handler *handler.DeviceHandler) {
+	client := r.parent.Group("/client/v1/device")
+	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+	client.GET("/my-info", handler.GetMyDeviceInfo)
 }

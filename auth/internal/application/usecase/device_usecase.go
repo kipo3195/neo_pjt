@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"auth/internal/application/usecase/input"
+	"auth/internal/application/usecase/output"
 	"auth/internal/consts"
+	"auth/internal/delivery/adapter"
 	"auth/internal/delivery/middleware/claims"
 	"auth/internal/domain/device/entity"
 	"auth/internal/domain/device/repository"
@@ -26,6 +28,7 @@ type DeviceUsecase interface {
 	DeviceRegistCheck(ctx context.Context, input input.DeviceRegistInput) (bool, error)
 	RemoveDeviceChallenge(ctx context.Context, input input.RemoveDeviceChallengeInput)
 	UpdateDeviceInfo(ctx context.Context, input input.UpdateDeviceInfoInput) error
+	GetMyDeviceInfo(ctx context.Context, input input.MyDeviceInfoInput) ([]output.MyDevcieInfoOutput, error)
 }
 
 func NewDeviceUsecase(repo repository.DeviceRepository, deviceStorage storage.DeviceStorage, accessHash string, refreshHash string) DeviceUsecase {
@@ -154,5 +157,20 @@ func (r *deviceUsecase) UpdateDeviceInfo(ctx context.Context, input input.Update
 
 	entity := entity.MakeDeviceRegistEntity(input.Id, input.Uuid, input.ModelName, input.Version, "")
 	return r.repo.UpdateDeviceInfo(ctx, entity)
+
+}
+
+func (r *deviceUsecase) GetMyDeviceInfo(ctx context.Context, input input.MyDeviceInfoInput) ([]output.MyDevcieInfoOutput, error) {
+
+	entity := entity.MakeGetMyDeviceInfoEntity(input.UserHash)
+	deviceInfo, err := r.repo.SelectMyDeviceList(ctx, entity)
+
+	if err != nil {
+		return nil, err
+	}
+
+	output := adapter.MakeGetMyDeviceInfoOutput(deviceInfo)
+
+	return output, nil
 
 }

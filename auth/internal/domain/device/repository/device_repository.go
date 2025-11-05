@@ -10,4 +10,5 @@ type DeviceRepository interface {
 	PutDevice(ctx context.Context, entity entity.DeviceRegistEntity) error
 	PutAuthToken(ctx context.Context, id string, uuid string, at string, rt string, rtExp string) error
 	UpdateDeviceInfo(ctx context.Context, entity entity.DeviceRegistEntity) error
+	SelectMyDeviceList(ctx context.Context, en entity.GetMyDeviceInfoEntity) ([]entity.MyDeviceInfo, error)
 }

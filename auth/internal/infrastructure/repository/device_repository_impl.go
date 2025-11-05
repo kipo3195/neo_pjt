@@ -137,3 +137,38 @@ func (r *deviceRepository) UpdateDeviceInfo(ctx context.Context, entity entity.D
 		return consts.ErrServerError
 	}
 }
+
+func (r *deviceRepository) SelectMyDeviceList(ctx context.Context, en entity.GetMyDeviceInfoEntity) ([]entity.MyDeviceInfo, error) {
+
+	var deviceInfoModel []model.DeviceInfo
+
+	err := r.db.Raw(
+		`select 
+				uuid, model_name, version, a.create_at 
+			from 
+				device_regist_history as a 
+			join 
+				service_users as b 
+			on 
+				a.id = b.user_id  
+			where 
+				b.user_hash = ? `, en.UserHash).Scan(&deviceInfoModel).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]entity.MyDeviceInfo, 0)
+	for _, temp := range deviceInfoModel {
+
+		entity := entity.MyDeviceInfo{
+			Uuid:      temp.Uuid,
+			ModelName: temp.ModelName,
+			Version:   temp.Version,
+			CreateAt:  temp.CreateAt,
+		}
+		result = append(result, entity)
+	}
+
+	return result, nil
+}
