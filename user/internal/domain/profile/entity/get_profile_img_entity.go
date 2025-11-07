@@ -1,11 +1,11 @@
 package entity
 
 type GetProfileImgEntity struct {
-	UserId string
+	UserHash string
 }
 
-func MakeGetProfileImgEntity(userId string) GetProfileImgEntity {
+func MakeGetProfileImgEntity(userHash string) GetProfileImgEntity {
 	return GetProfileImgEntity{
-		UserId: userId,
+		UserHash: userHash,
 	}
 }

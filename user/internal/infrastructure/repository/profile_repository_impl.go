@@ -29,8 +29,8 @@ func ProfileMigrate(db *gorm.DB) {
 func (r *profileRepositoryImpl) PutUserProfileImgInfo(ctx context.Context, entity entity.ProfileImgEntity) error {
 
 	err := r.db.WithContext(ctx).Create(&model.ProfileImgInfo{
-		Id:                  entity.UserId,
 		UserHash:            entity.UserHash,
+		UserId:              entity.UserId,
 		ProfileImgHash:      entity.ProfileImgHash,
 		ProfileImgSavedName: entity.ProfileImgSavedName,
 		ProfileImgSavedPath: entity.ProfileImgSavedPath,
@@ -46,12 +46,12 @@ func (r *profileRepositoryImpl) PutUserProfileImgInfo(ctx context.Context, entit
 	return nil
 }
 
-func (r *profileRepositoryImpl) DeleteUserProfileImgInfo(ctx context.Context, userId string, fileName string) error {
+func (r *profileRepositoryImpl) DeleteUserProfileImgInfo(ctx context.Context, userHash string, fileName string) error {
 
 	// 단일 UPDATE (트랜잭션 불필요)
 	result := r.db.WithContext(ctx).
 		Model(&model.ProfileImgInfo{}).
-		Where("id = ? AND save_name = ?", userId, fileName).
+		Where("user_hash = ? AND save_name = ?", userHash, fileName).
 		Update("use_yn", "N")
 
 	if result.Error != nil {
@@ -60,7 +60,7 @@ func (r *profileRepositoryImpl) DeleteUserProfileImgInfo(ctx context.Context, us
 	}
 
 	if result.RowsAffected == 0 {
-		log.Printf("[DeleteUserProfileImgInfo] - No rows affected for id=%s, fileName=%s\n", userId, fileName)
+		log.Printf("[DeleteUserProfileImgInfo] - No rows affected for userhash=%s, fileName=%s\n", userHash, fileName)
 		return consts.ErrProfileImgDBDeleteError
 	}
 
@@ -69,11 +69,11 @@ func (r *profileRepositoryImpl) DeleteUserProfileImgInfo(ctx context.Context, us
 
 }
 
-func (r *profileRepositoryImpl) RollbackDeleteUserProfileImgInfo(ctx context.Context, userId string, fileName string) error {
+func (r *profileRepositoryImpl) RollbackDeleteUserProfileImgInfo(ctx context.Context, userHash string, fileName string) error {
 	// 단일 UPDATE (트랜잭션 불필요)
 	result := r.db.WithContext(ctx).
 		Model(&model.ProfileImgInfo{}).
-		Where("id = ? AND save_name = ?", userId, fileName).
+		Where("user_hash = ? AND save_name = ?", userHash, fileName).
 		Update("use_yn", "Y")
 
 	if result.Error != nil {
@@ -82,7 +82,7 @@ func (r *profileRepositoryImpl) RollbackDeleteUserProfileImgInfo(ctx context.Con
 	}
 
 	if result.RowsAffected == 0 {
-		log.Printf("[RollbackDeleteUserProfileImgInfo] - No rows affected for id=%s, fileName=%s\n", userId, fileName)
+		log.Printf("[RollbackDeleteUserProfileImgInfo] - No rows affected for userhash=%s, fileName=%s\n", userHash, fileName)
 		return consts.ErrProfileImgDBRoleBackError
 	}
 

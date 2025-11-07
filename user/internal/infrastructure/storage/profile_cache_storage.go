@@ -24,11 +24,11 @@ func NewProfileCacheStorage() ProfileCacheStorage {
 	}
 }
 
-func (r *profileCacheStorage) PutProfileName(userId string, savedName string) {
+func (r *profileCacheStorage) PutProfileName(userHash string, savedName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.profileNameMap[userId] = savedName
-	log.Printf("PutProfilePath : %s save success. \n", userId)
+	r.profileNameMap[userHash] = savedName
+	log.Printf("PutProfilePath : %s save success. \n", userHash)
 }
 
 func (r *profileCacheStorage) GetProfileName(userId string) string {

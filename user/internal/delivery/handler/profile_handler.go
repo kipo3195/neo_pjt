@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"user/internal/application/usecase"
 	"user/internal/consts"
 	"user/internal/delivery/adapter"
@@ -28,14 +29,20 @@ func NewProfileHandler(usecase usecase.ProfileUsecase) *ProfileHandler {
 func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
-	// 테스트 용이므로 수정 주석 제거 필수.
-	userHash := util.GetUserIdByAccessToken(c)
+
+	// 운영 반영시 아래 주석제거
+	// userHash := util.GetUserIdByAccessToken(c)
 	userId := util.GetUserIdByAccessToken(c)
-	// userId := c.GetHeader("User-Id")
-	// if userId == "" {
-	// 	response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
-	// 	return
-	// }
+
+	// 테스트 용
+	userHash := c.GetHeader("User-Hash")
+	if userHash == "" {
+		//response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+		userHash = util.GetUserIdByAccessToken(c)
+	}
+	// 테스트용 끝
+
+	log.Print("userHash : ", userHash)
 
 	// 파일 데이터 추출
 	fileInfo, err := c.FormFile("profile_img")
@@ -92,14 +99,11 @@ func (h *ProfileHandler) GetProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	userId := c.Query(consts.USER_ID)
-	if userId == "" {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
-		return
-	}
+	var req profile.GetProfileImgRequest
 
-	req := profile.GetProfileImgRequest{
-		UserId: userId,
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
 	}
 
 	// 필수 데이터 검증
@@ -109,7 +113,7 @@ func (h *ProfileHandler) GetProfileImg(c *gin.Context) {
 		return
 	}
 
-	getProfileImgInput := adapter.MakeGetProfileImgInput(req.UserId)
+	getProfileImgInput := adapter.MakeGetProfileImgInput(req.UserHash)
 	output, err := h.usecase.GetProfileImg(ctx, getProfileImgInput)
 	if err != nil {
 		if err == consts.ErrProfileImgNotRegist {
