@@ -3,11 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"log"
-	"message/broker"
-	consts "message/consts"
-	dto "message/dto/common"
-	"message/usecases"
 	"net/http"
+	"notificator/internal/consts"
+	"notificator/internal/infrastructure/broker"
 
 	"github.com/gorilla/websocket"
 )

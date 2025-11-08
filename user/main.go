@@ -25,7 +25,6 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
-	// ---- DB Migration -----
 	if sfg.AutoMigrate {
 		migration.RunAll(db)
 	}

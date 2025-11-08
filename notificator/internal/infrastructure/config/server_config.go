@@ -2,8 +2,7 @@ package config
 
 import (
 	"log"
-	"message/broker"
-	"message/models"
+	"notificator/internal/infrastructure/broker"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -78,8 +77,6 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	if err != nil {
 		log.Fatal("Failed to connect to database!")
 	}
-
-	db.AutoMigrate(&models.ChatMessage{})
 
 	log.Println("Message Database Connected !")
 	return db

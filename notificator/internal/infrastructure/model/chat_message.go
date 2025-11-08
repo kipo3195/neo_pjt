@@ -1,4 +1,4 @@
-package models
+package model
 
 type ChatMessage struct {
 	Linekey  string `json:"line_key"`

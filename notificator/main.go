@@ -2,12 +2,8 @@ package main
 
 import (
 	"log"
-	"message/config"
-	"message/handlers"
-	"message/repositories"
-	"message/routes"
-	"message/usecases"
 	"net/http"
+	"notificator/internal/infrastructure/config"
 )
 
 func main() {
@@ -23,17 +19,26 @@ func main() {
 
 func InitServer() *http.Server {
 
-	// 서버 설정 읽기
+	// ---- Server Config Init -----
 	sfg := config.NewServerConfig()
-	// DB nil일 경우 처리 필요
+
+	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
-	// 메시지 브로커, nil일 경우 처리 필요.
+
+	// ---- Message Broker init ----
 	mb := config.ConnectMessageBroker(sfg)
 
-	// TODO
-	// authRepo, authUC
-	// noteRepo, noteUC
-	// messageHandler에 주입.
+	// ---- DB Migration -----
+
+	// ---- Storage Init -----
+
+	// ---- Data Loader -----
+
+	// ---- Router Init -----
+
+	// ---- Domain Handler Init -----
+
+	// ---- Service Handler Init ----
 
 	if db != nil && mb != nil {
 
