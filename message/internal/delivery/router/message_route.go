@@ -1,27 +1,41 @@
 package router
 
 import (
+	"message/internal/delivery/handler"
+	"message/internal/delivery/middleware"
+	"message/internal/infrastructure/config"
+
 	"github.com/gin-gonic/gin"
 )
 
 type messageRouter struct {
-	R      *gin.Engine
-	parent *gin.RouterGroup
+	tokenConfig config.TokenHashConfig
+	R           *gin.Engine
+	parent      *gin.RouterGroup
 }
 
 type MessageRouter interface {
 	GetEngine() *gin.Engine
+	SetLineKeyRoutes(handler *handler.LineKeyHandler)
 }
 
 func (r *messageRouter) GetEngine() *gin.Engine {
 	return r.R
 }
 
-func NewMessageRouter(serviceName string) MessageRouter {
+func NewMessageRouter(serviceName string, tokenConfig config.TokenHashConfig) MessageRouter {
 	r := gin.Default()
 	parent := r.Group("/" + serviceName)
 	return &messageRouter{
-		parent: parent,
-		R:      r,
+		parent:      parent,
+		R:           r,
+		tokenConfig: tokenConfig,
 	}
+}
+
+func (r *messageRouter) SetLineKeyRoutes(handler *handler.LineKeyHandler) {
+
+	client := r.parent.Group("/client/v1/line-key")
+	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+	client.GET("/", handler.GetLineKey)
 }

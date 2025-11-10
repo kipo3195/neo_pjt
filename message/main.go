@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"message/internal/delivery/router"
+	"message/internal/di"
 	"message/internal/infrastructure/config"
 	"message/internal/infrastructure/migration"
 	"net/http"
@@ -23,7 +24,6 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
-	// ---- DB Migration -----
 	if sfg.AutoMigrate {
 		migration.RunAll(db)
 	}
@@ -37,9 +37,11 @@ func InitServer() *http.Server {
 	// ---- Router Init -----
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
-	router := router.NewMessageRouter("message")
+	router := router.NewMessageRouter("message", sfg.TokenConfig)
 
 	// ---- Domain Handler Init -----
+	lineKeyModule := di.InitLineKeyModule(db)
+	router.SetLineKeyRoutes(lineKeyModule.Handler)
 
 	return &http.Server{
 		Addr:    ":8083",
