@@ -61,7 +61,7 @@ func (r *userRouter) SetUserDetailRoutes(handler *handler.UserDetailHandler) {
 }
 
 func (r *userRouter) SetUserInfoServiceRoutes(handler *handler.UserInfoServiceHandler) {
-	client := r.parent.Group("/client/v1/info")
+	client := r.parent.Group("/client/v1/detail")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
 	client.GET("/my", handler.GetMyDetailInfo)      // 내 정보 조회
 	client.POST("/user", handler.GetUserDetailInfo) // 정보 조회
