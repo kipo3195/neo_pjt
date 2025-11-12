@@ -28,6 +28,9 @@ func InitServer() *http.Server {
 		migration.RunAll(db)
 	}
 
+	// ---- Message Broker init ----
+	mb := config.ConnectMessageBroker(sfg)
+
 	// ---- Storage Init -----
 
 	// ---- Data Loader -----
@@ -42,6 +45,12 @@ func InitServer() *http.Server {
 	// ---- Domain Handler Init -----
 	lineKeyModule := di.InitLineKeyModule(db)
 	router.SetLineKeyRoutes(lineKeyModule.Handler)
+
+	chatModule := di.InitChatModule(db, mb)
+	router.SetChatRoutes(chatModule.Handler)
+
+	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase)
+	router.SetChatServiceRoutes(chatServiceModule)
 
 	return &http.Server{
 		Addr:    ":8083",

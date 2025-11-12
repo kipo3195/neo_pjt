@@ -1,5 +1,5 @@
 package notificatorService
 
 type NotificatorConnectRequest struct {
-	Type string
+	Type string `json:"type"`
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"notificator/internal/application/orchestrator"
 	"notificator/internal/consts"
+	"notificator/internal/delivery/dto/chat"
 	"notificator/internal/delivery/dto/notificatorService"
 
 	"github.com/gorilla/websocket"
@@ -43,7 +44,7 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Notificator service Read msg error:", err)
-			return
+			break
 		}
 
 		// type 파싱
@@ -60,6 +61,10 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		case consts.AUTH:
 
 		case consts.CHAT:
+			var chatMessage chat.ChatMessage
+			if err := json.Unmarshal(msg, &chatMessage); err == nil {
+				h.svc.Chat.SubscribeChat(chatMessage, conn)
+			}
 
 		case consts.NOTE:
 
@@ -69,6 +74,7 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		}
 
 	}
+
 	log.Println("Notificator service websocket close ")
 
 }

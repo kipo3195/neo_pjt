@@ -17,6 +17,8 @@ type messageRouter struct {
 type MessageRouter interface {
 	GetEngine() *gin.Engine
 	SetLineKeyRoutes(handler *handler.LineKeyHandler)
+	SetChatRoutes(handler *handler.ChatHandler)
+	SetChatServiceRoutes(handler *handler.ChatServiceHandler)
 }
 
 func (r *messageRouter) GetEngine() *gin.Engine {
@@ -38,4 +40,14 @@ func (r *messageRouter) SetLineKeyRoutes(handler *handler.LineKeyHandler) {
 	client := r.parent.Group("/client/v1/line-key")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
 	client.GET("/", handler.GetLineKey)
+}
+
+func (r *messageRouter) SetChatRoutes(handler *handler.ChatHandler) {
+
+}
+
+func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler) {
+
+	client := r.parent.Group("/client/v1/chat")
+	client.POST("/", handler.SendChat)
 }

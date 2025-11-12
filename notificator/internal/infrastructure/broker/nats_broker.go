@@ -1,8 +1,10 @@
 package broker
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -10,9 +12,10 @@ import (
 )
 
 type NatsBroker struct {
-	Conn      *nats.Conn
+	Nc        *nats.Conn
 	mu        sync.RWMutex         // 명시적으로 초기화하지 않아도 자동으로 초기화됩니다.
 	ChatRooms map[string]*ChatRoom // 일반 채팅용 채널 관리용 map
+	ChatUsers map[string]*ChatUser // 일반 채팅용 채널 관리용 map
 }
 
 // 추후 entity로 변경
@@ -96,5 +99,50 @@ func (mb *NatsBroker) PublishToChatRoom(roomId string, data []byte) error {
 	default:
 		fmt.Printf("room %s channel is full", roomId)
 		return errors.New("room channel is full") // fan-out 병목 가능성 알림
+	}
+}
+
+func (mb *NatsBroker) SubscribeChat(userHash string, conn *websocket.Conn) {
+	mb.mu.Lock()
+	defer mb.mu.Unlock()
+
+	// 기존 구독 존재 확인
+	user, exists := mb.ChatUsers[userHash]
+	if !exists {
+		user = &ChatUser{
+			ch:   make(chan BrokerMessage, 100),
+			conn: conn,
+		}
+		mb.ChatUsers[userHash] = user
+
+		// fan-out goroutine (1개 유저만 상대하므로 단순)
+		go func(r *ChatUser, hash string) {
+			for msg := range r.ch {
+				if r.conn != nil {
+					_ = r.conn.WriteMessage(websocket.TextMessage, msg.Data())
+				}
+			}
+		}(user, userHash)
+
+		// NATS 구독 (userHash 전용)
+		subject := fmt.Sprintf("chat.%s", userHash)
+		_, err := mb.Nc.Subscribe(subject, func(m *nats.Msg) {
+			var bm BrokerMessage
+			if err := json.Unmarshal(m.Data, &bm); err == nil {
+				select {
+				case user.ch <- bm:
+				default:
+					log.Printf("[%s] channel full, dropping message", user)
+				}
+			}
+		})
+		if err != nil {
+			log.Println("NATS subscribe error:", err)
+		}
+
+		log.Printf("User %s subscribed to %s", userHash, subject)
+	} else {
+		// 이미 존재하면 conn 갱신 (재접속 등)
+		user.conn = conn
 	}
 }

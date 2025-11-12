@@ -102,7 +102,7 @@ func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
 			return nil
 		}
 		return &broker.NatsBroker{
-			Conn:      nc,
+			Nc:        nc,
 			ChatRooms: make(map[string]*broker.ChatRoom),
 		}
 	case KAFKA:

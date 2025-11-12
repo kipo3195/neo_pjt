@@ -12,6 +12,7 @@ import (
 
 type LineKeyModule struct {
 	Handler *handler.LineKeyHandler
+	Usecase usecase.LineKeyUsecase
 }
 
 func InitLineKeyModule(db *gorm.DB) *LineKeyModule {
@@ -30,5 +31,6 @@ func InitLineKeyModule(db *gorm.DB) *LineKeyModule {
 
 	return &LineKeyModule{
 		Handler: handler,
+		Usecase: usecase,
 	}
 }

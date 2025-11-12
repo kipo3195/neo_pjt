@@ -1,8 +1,11 @@
 package usecase
 
 import (
+	"notificator/internal/delivery/dto/chat"
 	"notificator/internal/domain/chat/repository"
 	"notificator/internal/infrastructure/broker"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -19,6 +22,7 @@ type ChatUsecase interface {
 	// handleJoinRoom(payload map[string]interface{}, conn *websocket.Conn)
 	// handleJoinRoomCancle(payload map[string]interface{})
 	// handleSendMessage(userId string, payload map[string]interface{})
+	SubscribeChat(chatMessage chat.ChatMessage, conn *websocket.Conn)
 }
 
 func NewChatUsecase(repo repository.ChatRepository, mb broker.Broker) ChatUsecase {
@@ -26,6 +30,13 @@ func NewChatUsecase(repo repository.ChatRepository, mb broker.Broker) ChatUsecas
 		repo: repo,
 		mb:   mb,
 	}
+}
+
+func (u *chatUsecase) SubscribeChat(chatMessage chat.ChatMessage, conn *websocket.Conn) {
+
+	// chat + 사용자 hash으로 구독
+	u.mb.SubscribeChat(chatMessage.UserHash, conn)
+
 }
 
 // func (r *chatUsecase) HandleChat(conn *websocket.Conn, data map[string]interface{}) {

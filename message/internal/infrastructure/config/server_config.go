@@ -2,10 +2,12 @@ package config
 
 import (
 	"log"
+	"message/internal/infrastructure/broker"
 	"os"
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"github.com/nats-io/nats.go"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -15,11 +17,16 @@ type ServerConfig struct {
 	jwtConfig   *JWTConfig // jwt를 소문자로 정의했으므로 외부에서 접근할 수 없음 = 그래서 GetJWTConfig 메소드를 만들어서 외부에서 사용 할 수 있게함.
 	AutoMigrate bool
 	TokenConfig TokenHashConfig
+	mbConfig    *MessageBrokerConfig
 }
 
 type TokenHashConfig struct {
 	AccessTokenHash  string
 	RefreshTokenHash string
+}
+
+type MessageBrokerConfig struct {
+	Mb string
 }
 
 type DBConfig struct {
@@ -138,3 +145,31 @@ func initAutoMigrate() bool {
 		return false
 	}
 }
+
+func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
+
+	// 메시지 브로커 분기처리
+	switch sfg.mbConfig.Mb {
+	case NATS:
+		nc, err := nats.Connect(nats.DefaultURL)
+		if err != nil {
+			log.Println("Failed to connect to NATS:", err)
+			return nil
+		}
+		return &broker.NatsBroker{
+			Nc:        nc,
+			ChatUsers: make(map[string]*broker.ChatUser),
+		}
+	case KAFKA:
+		log.Println("kafka is not available.")
+	case RABBITMQ:
+		log.Println("RabbitMQ is not available.")
+	}
+	return nil
+}
+
+const (
+	NATS     = "NATS"
+	KAFKA    = "KAFKA"
+	RABBITMQ = "RABBITMQ"
+)
