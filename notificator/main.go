@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	router "notificator/internal/delivery/router"
+	"notificator/internal/di"
 	"notificator/internal/infrastructure/config"
 )
 
@@ -35,30 +37,36 @@ func InitServer() *http.Server {
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
+	router := router.NewNotificatorRouter("notificator")
 
 	// ---- Domain Handler Init -----
+	chatModule := di.InitChatModule(db, mb)
+
+	noteModule := di.InitNoteModule(db, mb)
 
 	// ---- Service Handler Init ----
+	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase)
+	router.SetNotificatorServiceRoutes(notificatorServiceModule)
 
-	if db != nil && mb != nil {
-
-		chatRepo := repositories.NewChatRepository(db)
-		chatUC := usecases.NewChatUsecase(chatRepo, mb)
-
-		authRepo := repositories.NewAuthRepository(db)
-		authUC := usecases.NewAuthUsecase(authRepo)
-
-		noteRepo := repositories.NewNoteRepository(db)
-		noteUC := usecases.NewNoteUsecase(noteRepo)
-
-		messageHandler := handlers.NewMessageHandler(chatUC, authUC, noteUC, mb)
-		router := routes.SetupRoutes(messageHandler)
-
-		return &http.Server{
-			Addr:    ":8087",
-			Handler: router,
-		}
-	} else {
-		return nil
+	return &http.Server{
+		Addr:    ":8087",
+		Handler: router.R,
 	}
+	// if db != nil && mb != nil {
+
+	// 	chatRepo := repository.NewChatRepository(db)
+	// 	chatUC := usecase.NewChatUsecase(chatRepo, mb)
+
+	// 	authRepo := repository.NewAuthRepository(db)
+	// 	authUC := usecase.NewAuthUsecase(authRepo)
+
+	// 	noteRepo := repository.NewNoteRepository(db)
+	// 	noteUC := usecase.NewNoteUsecase(noteRepo)
+
+	// 	messageHandler := handler.NewMessageHandler(chatUC, authUC, noteUC, mb)
+	// 	router := usecase.SetupRoutes(messageHandler)
+
+	// } else {
+	// 	return nil
+	// }
 }
