@@ -1,7 +1,7 @@
 package broker
 
 type Broker interface {
-	PublishToChatUser(userHash string, data string) error
+	//PublishToChatUser(userHash string, data string) error
 }
 
 type Subscription interface {

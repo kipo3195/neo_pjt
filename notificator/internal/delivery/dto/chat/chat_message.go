@@ -4,5 +4,6 @@ type ChatMessage struct {
 	Type         string   `json:"type"`
 	SendUserHash string   `json:"sendUserHash"`
 	Contents     string   `json:"contents"`
+	LineKey      string   `json:"lineKey"`
 	DestUserHash []string `json:"destUserHash"`
 }

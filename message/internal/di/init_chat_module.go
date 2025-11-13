@@ -3,9 +3,9 @@ package di
 import (
 	"message/internal/application/usecase"
 	"message/internal/delivery/handler"
-	"message/internal/infrastructure/broker"
 	"message/internal/infrastructure/repository"
 
+	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
 )
 
@@ -14,9 +14,9 @@ type ChatModule struct {
 	Usecase usecase.ChatUsecase
 }
 
-func InitChatModule(db *gorm.DB, mb broker.Broker) *ChatModule {
+func InitChatModule(db *gorm.DB, connector *nats.Conn) *ChatModule {
 	repository := repository.NewChatRepository(db)
-	usecase := usecase.NewChatUsecase(repository, mb)
+	usecase := usecase.NewChatUsecase(repository, connector)
 	handler := handler.NewChatHandler(usecase)
 
 	return &ChatModule{

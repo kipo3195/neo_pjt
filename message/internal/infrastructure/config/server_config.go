@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"message/internal/infrastructure/broker"
 	"os"
 	"strconv"
 
@@ -146,26 +145,28 @@ func initAutoMigrate() bool {
 	}
 }
 
-func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
+func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
 
 	// 메시지 브로커 분기처리
-	switch sfg.mbConfig.Mb {
-	case NATS:
-		nc, err := nats.Connect(nats.DefaultURL)
-		if err != nil {
-			log.Println("Failed to connect to NATS:", err)
-			return nil
-		}
-		return &broker.NatsBroker{
-			Nc:        nc,
-			ChatUsers: make(map[string]*broker.ChatUser),
-		}
-	case KAFKA:
-		log.Println("kafka is not available.")
-	case RABBITMQ:
-		log.Println("RabbitMQ is not available.")
+	// switch sfg.mbConfig.Mb {
+	// case NATS:
+	nc, err := nats.Connect(nats.DefaultURL)
+
+	if err != nil {
+		log.Println("Failed to connect to NATS:", err)
+		return nil
 	}
-	return nil
+	return nc
+	// 	return &broker.NatsBroker{
+	// 		Nc:        nc,
+	// 		ChatUsers: make(map[string]*broker.ChatUser),
+	// 	}
+	// case KAFKA:
+	// 	log.Println("kafka is not available.")
+	// case RABBITMQ:
+	// 	log.Println("RabbitMQ is not available.")
+	// }
+	// return nil
 }
 
 const (
