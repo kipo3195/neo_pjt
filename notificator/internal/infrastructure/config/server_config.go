@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"notificator/internal/infrastructure/broker"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -91,24 +90,27 @@ func initMBConfig() *MessageBrokerConfig {
 	}
 }
 
-func ConnectMessageBroker(sfg *ServerConfig) broker.Broker {
+func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
+	//broker.Broker {
 
 	// 메시지 브로커 분기처리
-	switch sfg.mbConfig.Mb {
-	case NATS:
-		nc, err := nats.Connect(nats.DefaultURL)
-		if err != nil {
-			log.Println("Failed to connect to NATS:", err)
-			return nil
-		}
-		return &broker.NatsBroker{
-			Nc:        nc,
-			ChatRooms: make(map[string]*broker.ChatRoom),
-		}
-	case KAFKA:
-		log.Println("kafka is not available.")
-	case RABBITMQ:
-		log.Println("RabbitMQ is not available.")
+	// switch sfg.mbConfig.Mb {
+	// case NATS:
+
+	connector, err := nats.Connect(nats.DefaultURL)
+	if err != nil {
+		log.Println("Failed to connect to NATS:", err)
+		return nil
 	}
-	return nil
+
+	return connector
+	// return &broker.NatsBroker{
+	// 	Connector: connector,
+	// }
+	// case KAFKA:
+	// 	log.Println("kafka is not available.")
+	// case RABBITMQ:
+	// 	log.Println("RabbitMQ is not available.")
+	// }
+	//	return nil
 }

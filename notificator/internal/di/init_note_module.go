@@ -1,7 +1,6 @@
 package di
 
 import (
-	"notificator/internal/infrastructure/broker"
 	"notificator/internal/infrastructure/repository"
 
 	"notificator/internal/application/usecase"
@@ -13,10 +12,10 @@ type NoteModule struct {
 	Usecase usecase.NoteUsecase
 }
 
-func InitNoteModule(db *gorm.DB, mb broker.Broker) *NoteModule {
+func InitNoteModule(db *gorm.DB) *NoteModule {
 
 	repo := repository.NewNoteRepository(db)
-	usecase := usecase.NewNoteUsecase(repo, mb)
+	usecase := usecase.NewNoteUsecase(repo)
 
 	return &NoteModule{
 		Usecase: usecase,
