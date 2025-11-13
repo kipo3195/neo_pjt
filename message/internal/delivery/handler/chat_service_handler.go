@@ -34,7 +34,7 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		return
 	}
 
-	input := adapter.MakeSendChatInput(lineKey, req.Contents)
+	input := adapter.MakeSendChatInput(lineKey, req.Contents, req.DestIds)
 
 	r.svc.Chat.SendChat(ctx, input)
 

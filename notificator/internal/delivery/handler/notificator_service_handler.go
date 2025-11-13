@@ -61,7 +61,7 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		case consts.AUTH:
 
 		case consts.CHAT:
-			var chatMessage chat.ChatMessage
+			var chatMessage chat.ChatConnect
 			if err := json.Unmarshal(msg, &chatMessage); err == nil {
 				h.svc.Chat.SubscribeChat(chatMessage, conn)
 			}

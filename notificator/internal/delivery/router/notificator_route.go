@@ -1,6 +1,7 @@
 package router
 
 import (
+	"net/http"
 	"notificator/internal/delivery/handler"
 
 	"github.com/gorilla/mux"
@@ -15,6 +16,8 @@ type NotificatorRouter interface {
 }
 
 func (r *notificatorRouter) SetNotificatorServiceRoutes(handler *handler.NotificatorServiceHandler) {
+
+	http.HandleFunc("/ws/notificator", handler.NotificatorConnect)
 
 }
 

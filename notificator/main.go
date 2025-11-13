@@ -7,6 +7,7 @@ import (
 	router "notificator/internal/delivery/router"
 	"notificator/internal/di"
 	"notificator/internal/infrastructure/config"
+	"notificator/internal/infrastructure/storage"
 )
 
 func main() {
@@ -31,6 +32,7 @@ func InitServer() *http.Server {
 	// ---- DB Migration -----
 
 	// ---- Storage Init -----
+	chatUserStorage := storage.NewChatUserStorage()
 
 	// ---- Data Loader -----
 
@@ -38,13 +40,13 @@ func InitServer() *http.Server {
 	router := router.NewNotificatorRouter("notificator")
 
 	// ---- Domain Handler Init -----
-	chatModule := di.InitChatModule(db)
+	chatModule := di.InitChatModule(db, chatUserStorage)
 
-	//noteModule := di.InitNoteModule(db)
+	noteModule := di.InitNoteModule(db)
 
 	// ---- Service Handler Init ----
-	// notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase)
-	// router.SetNotificatorServiceRoutes(notificatorServiceModule)
+	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase)
+	router.SetNotificatorServiceRoutes(notificatorServiceModule)
 
 	// ---- Message Broker init ----
 	mb := config.ConnectMessageBroker(sfg)
