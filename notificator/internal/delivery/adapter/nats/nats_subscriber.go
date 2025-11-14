@@ -41,7 +41,7 @@ func (s *NatsSubscriber) Subscribe(ctx context.Context) error {
 	return nil
 }
 
-// 구독
+// 구독, goroutine을 동한 처리 변경
 func (s *NatsSubscriber) StartSubscribe(kind string) error {
 
 	sub, err := s.conn.SubscribeSync("chat.message")
@@ -49,23 +49,29 @@ func (s *NatsSubscriber) StartSubscribe(kind string) error {
 		log.Fatal(err)
 	}
 
-	for {
-		msg, err := sub.NextMsg(time.Hour * 24) // 거의 무한 블로킹
-		if err != nil {
-			log.Println("NATS receive error:", err)
-			continue
-		}
+	go func() {
+		for {
+			msg, err := sub.NextMsg(time.Hour * 24)
+			if err != nil {
+				log.Println("NATS receive error:", err)
+				continue
+			}
 
-		log.Println("Received raw message:", string(msg.Data))
-		var data chat.ChatMessage
-		if err := json.Unmarshal(msg.Data, &data); err != nil {
-			log.Printf("invalid message: %v", err)
-			continue
-		}
+			log.Println("Received raw message:", string(msg.Data))
 
-		input := adapter.MakeChatMessageInput(
-			data.Type, data.SendUserHash, data.Contents, data.LineKey, data.DestUsers,
-		)
-		s.chatUsecase.RecvChatMessage(context.Background(), input)
-	}
+			var data chat.ChatMessage
+			if err := json.Unmarshal(msg.Data, &data); err != nil {
+				log.Printf("invalid message: %v", err)
+				continue
+			}
+
+			input := adapter.MakeChatMessageInput(
+				data.Type, data.SendUserHash, data.Contents, data.LineKey, data.DestUsers,
+			)
+
+			// chat 메시지 처리
+			s.chatUsecase.RecvChatMessage(context.Background(), input)
+		}
+	}()
+	return nil
 }
