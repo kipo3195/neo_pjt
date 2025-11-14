@@ -1,7 +1,8 @@
 package input
 
 type SendChatInput struct {
-	LineKey   string
-	Contents  string
-	DestUsers []string
+	SendUserHash string
+	LineKey      string
+	Contents     string
+	DestUsers    []string
 }

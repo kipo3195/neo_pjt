@@ -52,13 +52,11 @@ func InitServer() *http.Server {
 	mb := config.ConnectMessageBroker(sfg)
 
 	// ---- Message Broker Subscribe ----
-	// 이 로직도 어떻게 처리 안되나?
 	conn := mb
-	//defer conn.Close()
 	sub := natsBrocker.NewNatsSubscriber(conn, chatModule.Usecase)
 
 	// nats subscribe - 단순 for문 처리시 블로킹, 별도의 go 루틴으로 분리 필수.
-	sub.StartSubscribe("chat.message")
+	sub.AddSubscribe("chat.message")
 
 	return &http.Server{
 		Addr:    ":8082",

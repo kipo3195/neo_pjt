@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"message/internal/application/usecase/input"
+	"message/internal/consts"
 	"message/internal/domain/chat/entity"
 	"message/internal/domain/chat/repository"
 
@@ -17,7 +18,7 @@ type chatUsecase struct {
 }
 
 type ChatUsecase interface {
-	SendChat(ctx context.Context, in input.SendChatInput) (string, error)
+	SendChat(ctx context.Context, in input.SendChatInput) error
 }
 
 func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn) ChatUsecase {
@@ -27,21 +28,21 @@ func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn) 
 	}
 }
 
-func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) (string, error) {
+func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) error {
 
-	entity := entity.MakeSendChatEntity("", "", in.Contents, in.LineKey, in.DestUsers)
+	entity := entity.MakeSendChatEntity("", in.SendUserHash, in.Contents, in.LineKey, in.DestUsers)
 	data, err := json.Marshal(entity) // 🔹 struct → []byte(JSON)
 	if err != nil {
 		log.Fatal(err)
-		return "", err
+		return err
 	}
 
 	// 채팅 발송
 	err = u.connector.Publish("chat.message", data)
 	if err != nil {
 		log.Fatal("NATS publish failed:", err)
-		return "", err
+		return consts.ErrPublishToMessageBrokerError
 	}
 
-	return in.LineKey, nil
+	return nil
 }

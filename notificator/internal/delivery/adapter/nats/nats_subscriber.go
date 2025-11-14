@@ -42,12 +42,14 @@ func (s *NatsSubscriber) Subscribe(ctx context.Context) error {
 }
 
 // 구독, goroutine을 동한 처리 변경
-func (s *NatsSubscriber) StartSubscribe(kind string) error {
+func (s *NatsSubscriber) AddSubscribe(kind string) error {
 
-	sub, err := s.conn.SubscribeSync("chat.message")
+	sub, err := s.conn.SubscribeSync(kind)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// 이후 kind에 따른 분기처리 필요
 
 	go func() {
 		for {
@@ -57,7 +59,7 @@ func (s *NatsSubscriber) StartSubscribe(kind string) error {
 				continue
 			}
 
-			log.Println("Received raw message:", string(msg.Data))
+			log.Println("Received chat message:", string(msg.Data))
 
 			var data chat.ChatMessage
 			if err := json.Unmarshal(msg.Data, &data); err != nil {
@@ -69,7 +71,7 @@ func (s *NatsSubscriber) StartSubscribe(kind string) error {
 				data.Type, data.SendUserHash, data.Contents, data.LineKey, data.DestUsers,
 			)
 
-			// chat 메시지 처리
+			// chat 메시지 -> 클라이언트
 			s.chatUsecase.RecvChatMessage(context.Background(), input)
 		}
 	}()

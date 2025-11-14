@@ -6,6 +6,7 @@ import (
 	"notificator/internal/application/usecase/input"
 	"notificator/internal/delivery/dto/chat"
 
+	"notificator/internal/domain/chat/entity"
 	"notificator/internal/infrastructure/storage"
 
 	"github.com/gorilla/websocket"
@@ -42,22 +43,19 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 
 	// 수신자 Hash 정보를 통해 websocket 객체를 storage에서 찾은 다음,
 	// 해당 websocket에 write
-	msg := map[string]string{
-		"type":    in.Type,
-		"from":    in.SendUserHash,
-		"content": in.Contents,
-		"lineKey": in.LineKey,
-	}
+
+	en := entity.MakeRecvChatMessageEntity(in.Type, in.LineKey, in.Contents, in.SendUserHash)
 
 	for i := 0; i < len(in.DestUserHash); i++ {
 
+		// 수신자의 웹소켓 connection 객체 조회
 		conn := u.chatUserStorage.GetChatConnect(in.DestUserHash[i])
 
 		if conn == nil {
 			continue
 		}
 
-		if err := conn.WriteJSON(msg); err != nil {
+		if err := conn.WriteJSON(en); err != nil {
 			log.Printf("websocket write error to %s: %v", in.DestUserHash[i], err)
 			conn.Close()
 			u.chatUserStorage.RemoveChatConnect(in.DestUserHash[i])
