@@ -34,8 +34,20 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		return
 	}
 
-	input := adapter.MakeSendChatInput(lineKey, req.Contents, req.DestIds)
+	input := adapter.MakeSendChatInput(lineKey, req.Contents, req.DestUsers)
 
-	r.svc.Chat.SendChat(ctx, input)
+	// 여기서 뽑아내는게 맞나?
+	lineKey, err := r.svc.Chat.SendChat(ctx, input)
+
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
+
+	res := chatService.SendChatResponse{
+		LineKey: lineKey,
+	}
+
+	response.SendSuccess(c, res)
 
 }

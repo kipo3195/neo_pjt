@@ -5,16 +5,16 @@ type SendChatEntity struct {
 	SendUserHash string   `json:"sendUserHash"`
 	Contents     string   `json:"contents"`
 	LineKey      string   `json:"lineKey"`
-	DestUserHash []string `json:"destUserHash"`
+	DestUsers    []string `json:"destUsers"`
 }
 
-func MakeSendChatEntity(t string, sendUserHash string, contents string, linekey string, destUserHash []string) SendChatEntity {
+func MakeSendChatEntity(t string, sendUserHash string, contents string, linekey string, destUsers []string) SendChatEntity {
 
 	return SendChatEntity{
 		Type:         t,
 		SendUserHash: sendUserHash,
 		Contents:     contents,
 		LineKey:      linekey,
-		DestUserHash: destUserHash,
+		DestUsers:    destUsers,
 	}
 }

@@ -64,7 +64,7 @@ func (s *NatsSubscriber) StartSubscribe(kind string) error {
 		}
 
 		input := adapter.MakeChatMessageInput(
-			data.Type, data.SendUserHash, data.Contents, data.LineKey, data.DestUserHash,
+			data.Type, data.SendUserHash, data.Contents, data.LineKey, data.DestUsers,
 		)
 		s.chatUsecase.RecvChatMessage(context.Background(), input)
 	}

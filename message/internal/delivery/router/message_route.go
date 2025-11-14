@@ -50,4 +50,5 @@ func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler
 
 	client := r.parent.Group("/client/v1/chat")
 	client.POST("/", handler.SendChat)
+
 }
