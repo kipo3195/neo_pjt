@@ -1,13 +1,13 @@
 package entity
 
 type PutProfileMsgEntity struct {
-	UserId string
-	Msg    string
+	UserHash   string
+	ProfileMsg string
 }
 
-func MakePutProfileMsgEntity(userId string, msg string) PutProfileMsgEntity {
+func MakePutProfileMsgEntity(userHash string, profileMsg string) PutProfileMsgEntity {
 	return PutProfileMsgEntity{
-		UserId: userId,
-		Msg:    msg,
+		UserHash:   userHash,
+		ProfileMsg: profileMsg,
 	}
 }

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"org/internal/application/usecase"
-	"org/internal/consts"
 	"org/internal/delivery/adapter"
 	"org/internal/delivery/dto/user"
+	"org/internal/delivery/util"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
 
@@ -31,9 +31,8 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 인증 토큰에서 요청 사용자의 hash 정보 추출
-	hash := c.Value(consts.USER_HASH)
-	myHash, ok := hash.(string)
-	if !ok {
+	myHash := util.GetUserHashByAccessToken(c)
+	if myHash == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
 		return
 	}

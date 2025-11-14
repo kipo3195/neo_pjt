@@ -10,6 +10,7 @@ import (
 	"user/internal/application/usecase/output"
 	"user/internal/application/util"
 	"user/internal/consts"
+	"user/internal/delivery/adapter"
 	"user/internal/domain/profile/entity"
 	"user/internal/domain/profile/repository"
 	domainStorage "user/internal/domain/profile/storage"
@@ -28,6 +29,7 @@ type ProfileUsecase interface {
 	DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error
 	RegistProfileMsg(ctx context.Context, in input.RegistProfileMsgInput) error
 	GetProfileInfo(ctx context.Context, in input.GetProfileInfoInput) (output.GetProfileInfoOutput, error)
+	GetProfileMsg(ctx context.Context, in input.GetProfileMsgInput) (output.GetProfileMsgOutput, error)
 }
 
 func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage) ProfileUsecase {
@@ -195,9 +197,8 @@ func (u *profileUsecase) DeleteProfileImg(ctx context.Context, in input.DeletePr
 
 func (u *profileUsecase) RegistProfileMsg(ctx context.Context, in input.RegistProfileMsgInput) error {
 
-	entity.MakePutProfileMsgEntity(in.UserId, in.Msg)
-
-	return nil
+	entity := entity.MakePutProfileMsgEntity(in.UserHash, in.ProfileMsg)
+	return u.repository.PutProfileMsg(ctx, entity)
 
 }
 
@@ -213,4 +214,18 @@ func (u *profileUsecase) GetProfileInfo(ctx context.Context, in input.GetProfile
 	return output.GetProfileInfoOutput{
 		ResultMap: profileInfo,
 	}, nil
+}
+
+func (u *profileUsecase) GetProfileMsg(ctx context.Context, in input.GetProfileMsgInput) (output.GetProfileMsgOutput, error) {
+
+	entity := entity.MakeGetProfileMsgEntity(in.UserHashs)
+	result, err := u.repository.GetProfileMsg(ctx, entity)
+
+	if err != nil {
+		return output.GetProfileMsgOutput{}, err
+	}
+
+	output := adapter.MakeGetProfileMsgOutput(result)
+
+	return output, nil
 }

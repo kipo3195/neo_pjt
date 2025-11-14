@@ -43,7 +43,8 @@ func (r *userRouter) SetProfileRoutes(handler *handler.ProfileHandler) {
 	client.POST("/img", handler.GetProfileImg)
 	client.DELETE("/img", handler.DeleteProfileImg) // 기본 이미지로 변경
 
-	client.POST("/msg", handler.RegistProfileMsg)
+	client.POST("/msg/regist", handler.RegistProfileMsg)
+	client.POST("/msg", handler.GetProfileMsg)
 }
 
 func (r *userRouter) SetUserDetailRoutes(handler *handler.UserDetailHandler) {

@@ -168,8 +168,8 @@ func (h *ProfileHandler) RegistProfileMsg(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	userId := util.GetUserIdByAccessToken(c)
-	if userId == "" {
+	userHash := util.GetUserHashByAccessToken(c)
+	if userHash == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
 		return
 	}
@@ -187,12 +187,57 @@ func (h *ProfileHandler) RegistProfileMsg(c *gin.Context) {
 		return
 	}
 
-	input := adapter.MakeRegistProfileMsgInput(userId, req.Msg)
+	input := adapter.MakeRegistProfileMsgInput(userHash, req.ProfileMsg)
 	err := h.usecase.RegistProfileMsg(ctx, input)
+
 	if err != nil {
-		// error 타입에 따른 분기처리 TODO
+		// server error
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+
 	} else {
 		response.SendSuccess(c, "")
 	}
+
+}
+
+func (h *ProfileHandler) GetProfileMsg(c *gin.Context) {
+
+	ctx := c.Request.Context()
+
+	var req profile.GetProfileMsgRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	input := adapter.MakeGetProfileMsgInput(req.UserHashs)
+	output, err := h.usecase.GetProfileMsg(ctx, input)
+
+	res := profile.GetProfileMsgResponse{
+		ProfileMsgInfos: []profile.ProfileMsgInfo{}, // 여기서 빈 배열 초기화
+	}
+
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	} else {
+
+		for i := 0; i < len(output.ProfileMsg); i++ {
+			profileMsgInfo := profile.ProfileMsgInfo{
+				UserHash:   output.ProfileMsg[i].UserHash,
+				ProfileMsg: output.ProfileMsg[i].ProfileMsg,
+			}
+			res.ProfileMsgInfos = append(res.ProfileMsgInfos, profileMsgInfo)
+		}
+	}
+
+	response.SendSuccess(c, res)
 
 }

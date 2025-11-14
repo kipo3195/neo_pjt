@@ -77,7 +77,8 @@ func (h *UserInfoServiceHandler) GetMyDetailInfo(c *gin.Context) {
 		profileInfoEntity := profileOutput.ResultMap[detailOutput.UserInfos[i].UserHash]
 
 		profile := userInfoService.UserProfile{
-			ProlfileHash: profileInfoEntity.ProfileHash,
+			ProlfileHash: profileInfoEntity.ProfileImgHash,
+			ProfileMsg:   profileInfoEntity.ProfileMsg,
 		}
 
 		info := userInfoService.UserInfo{
@@ -132,7 +133,9 @@ func (h *UserInfoServiceHandler) GetUserDetailInfo(c *gin.Context) {
 	}
 
 	// 사용자 상세 정보로 기반한 response 구성
-	var res userInfoService.GetUserInfoServiceResponse
+	res := userInfoService.GetUserInfoServiceResponse{
+		UserInfo: []userInfoService.UserInfo{},
+	}
 
 	for i := 0; i < len(detailOutput.UserInfos); i++ {
 
@@ -146,7 +149,8 @@ func (h *UserInfoServiceHandler) GetUserDetailInfo(c *gin.Context) {
 		profileInfoEntity := profileOutput.ResultMap[detailOutput.UserInfos[i].UserHash]
 
 		profile := userInfoService.UserProfile{
-			ProlfileHash: profileInfoEntity.ProfileHash,
+			ProlfileHash: profileInfoEntity.ProfileImgHash,
+			ProfileMsg:   profileInfoEntity.ProfileMsg,
 		}
 
 		info := userInfoService.UserInfo{
