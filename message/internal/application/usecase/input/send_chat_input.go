@@ -4,5 +4,5 @@ type SendChatInput struct {
 	SendUserHash string
 	LineKey      string
 	Contents     string
-	DestUsers    []string
+	RecvUserHash []string
 }

@@ -43,6 +43,10 @@ func InitServer() *http.Server {
 	router := router.NewMessageRouter("message", sfg.TokenConfig)
 
 	// ---- Domain Handler Init -----
+
+	noteModule := di.InitNoteModule(db, mb)
+	router.SetNoteRoutes(noteModule.Handler)
+
 	lineKeyModule := di.InitLineKeyModule(db)
 	router.SetLineKeyRoutes(lineKeyModule.Handler)
 

@@ -1,9 +1,10 @@
 package input
 
-type ChatMessageInput struct {
+type NoteMessageInput struct {
 	Type         string   `json:"type"`
 	SendUserHash string   `json:"sendUserHash"`
 	Contents     string   `json:"contents"`
-	LineKey      string   `json:"lineKey"`
+	NoteKey      string   `json:"noteKey"`
 	RecvUserHash []string `json:"recvUserHash"`
+	RefeUserHash []string `json:"refeUserHash"`
 }

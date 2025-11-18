@@ -30,7 +30,7 @@ func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn) 
 
 func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) error {
 
-	entity := entity.MakeSendChatEntity("", in.SendUserHash, in.Contents, in.LineKey, in.DestUsers)
+	entity := entity.MakeSendChatEntity("", in.SendUserHash, in.Contents, in.LineKey, in.RecvUserHash)
 	data, err := json.Marshal(entity) // 🔹 struct → []byte(JSON)
 	if err != nil {
 		log.Fatal(err)

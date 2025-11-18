@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"notificator/internal/application/usecase"
-	"notificator/internal/delivery/adapter"
-	"notificator/internal/delivery/dto/chat"
+	"notificator/internal/application/usecase/input"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -15,11 +14,12 @@ import (
 type NatsSubscriber struct {
 	conn        *nats.Conn
 	chatUsecase usecase.ChatUsecase
+	noteUsecase usecase.NoteUsecase
 	handler     func(data []byte) error
 }
 
-func NewNatsSubscriber(nc *nats.Conn, chatUsecase usecase.ChatUsecase) *NatsSubscriber {
-	return &NatsSubscriber{conn: nc, chatUsecase: chatUsecase}
+func NewNatsSubscriber(nc *nats.Conn, chatUsecase usecase.ChatUsecase, noteUsecase usecase.NoteUsecase) *NatsSubscriber {
+	return &NatsSubscriber{conn: nc, chatUsecase: chatUsecase, noteUsecase: noteUsecase}
 }
 
 // 구독 후 메시지 수신
@@ -59,20 +59,27 @@ func (s *NatsSubscriber) AddSubscribe(kind string) error {
 				continue
 			}
 
-			log.Println("Received chat message:", string(msg.Data))
+			log.Println("[Notificator] kind : "+kind+" Received message:", string(msg.Data))
 
-			var data chat.ChatMessage
-			if err := json.Unmarshal(msg.Data, &data); err != nil {
-				log.Printf("invalid message: %v", err)
-				continue
+			switch kind {
+			case "chat.message":
+
+				var input input.ChatMessageInput
+				if err := json.Unmarshal(msg.Data, &input); err != nil {
+					log.Printf("invalid message: %v", err)
+					continue
+				}
+				// chat 메시지 -> 클라이언트
+				s.chatUsecase.RecvChatMessage(context.Background(), input)
+			case "note.message":
+				var input input.NoteMessageInput
+				if err := json.Unmarshal(msg.Data, &input); err != nil {
+					log.Printf("invalid message: %v", err)
+					continue
+				}
+				s.noteUsecase.RecvChatMessage(context.Background(), input)
 			}
 
-			input := adapter.MakeChatMessageInput(
-				data.Type, data.SendUserHash, data.Contents, data.LineKey, data.DestUsers,
-			)
-
-			// chat 메시지 -> 클라이언트
-			s.chatUsecase.RecvChatMessage(context.Background(), input)
 		}
 	}()
 	return nil

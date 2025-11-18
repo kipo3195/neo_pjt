@@ -33,6 +33,7 @@ func InitServer() *http.Server {
 
 	// ---- Storage Init -----
 	chatUserStorage := storage.NewChatUserStorage()
+	noteUserStorage := storage.NewNoteUserStorage()
 
 	// ---- Data Loader -----
 
@@ -42,7 +43,7 @@ func InitServer() *http.Server {
 	// ---- Domain Handler Init -----
 	chatModule := di.InitChatModule(db, chatUserStorage)
 
-	noteModule := di.InitNoteModule(db)
+	noteModule := di.InitNoteModule(db, noteUserStorage)
 
 	// ---- Service Handler Init ----
 	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase)
@@ -53,10 +54,11 @@ func InitServer() *http.Server {
 
 	// ---- Message Broker Subscribe ----
 	conn := mb
-	sub := natsBrocker.NewNatsSubscriber(conn, chatModule.Usecase)
+	sub := natsBrocker.NewNatsSubscriber(conn, chatModule.Usecase, noteModule.Usecase)
 
 	// nats subscribe - 단순 for문 처리시 블로킹, 별도의 go 루틴으로 분리 필수.
 	sub.AddSubscribe("chat.message")
+	sub.AddSubscribe("note.message")
 
 	return &http.Server{
 		Addr:    ":8082",

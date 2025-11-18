@@ -1,6 +1,6 @@
 package chatService
 
 type SendChatRequest struct {
-	Contents  string   `json:"contents"`
-	DestUsers []string `json:"destUsers"`
+	Contents     string   `json:"contents"`
+	RecvUserHash []string `json:"recvUserHash"`
 }

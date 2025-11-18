@@ -12,9 +12,9 @@ type LineKeyHandler struct {
 	usecase usecase.LineKeyUsecase
 }
 
-func NewLineKeyHandler(uc usecase.LineKeyUsecase) *LineKeyHandler {
+func NewLineKeyHandler(usecase usecase.LineKeyUsecase) *LineKeyHandler {
 	return &LineKeyHandler{
-		usecase: uc,
+		usecase: usecase,
 	}
 }
 

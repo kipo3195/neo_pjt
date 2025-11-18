@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	"notificator/internal/application/orchestrator"
+	"notificator/internal/application/usecase/input"
 	"notificator/internal/consts"
-	"notificator/internal/delivery/dto/chat"
 	"notificator/internal/delivery/dto/notificatorService"
 
 	"github.com/gorilla/websocket"
@@ -61,12 +61,18 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		case consts.AUTH:
 
 		case consts.CHAT:
-			var chatMessage chat.ChatConnect
-			if err := json.Unmarshal(msg, &chatMessage); err == nil {
-				h.svc.Chat.SubscribeChat(chatMessage, conn)
+			var input input.ChatConnectInput
+			if err := json.Unmarshal(msg, &input); err == nil {
+				h.svc.Chat.SubscribeChat(input, conn)
+				log.Println("Notificator service chat subscribe success.")
 			}
 
 		case consts.NOTE:
+			var input input.NoteConnectInput
+			if err := json.Unmarshal(msg, &input); err == nil {
+				h.svc.Note.SubscribeNote(input, conn)
+				log.Println("Notificator service note subscribe success.")
+			}
 
 		default:
 			log.Println("unknown message type:", req.Type)

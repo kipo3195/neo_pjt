@@ -2,28 +2,27 @@ package handler
 
 import (
 	"encoding/json"
-	"message/internal/application/orchestrator"
+	"message/internal/application/usecase"
 	"message/internal/consts"
 	"message/internal/delivery/adapter"
-	"message/internal/delivery/dto/chatService"
+	"message/internal/delivery/dto/note"
 	commonConsts "message/pkg/consts"
 	response "message/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ChatServiceHandler struct {
-	svc *orchestrator.ChatService
+type NoteHandler struct {
+	usecase usecase.NoteUsecase
 }
 
-func NewChatServiceHandler(svc *orchestrator.ChatService) *ChatServiceHandler {
-	return &ChatServiceHandler{
-		svc: svc,
+func NewNoteHandler(usecase usecase.NoteUsecase) *NoteHandler {
+	return &NoteHandler{
+		usecase: usecase,
 	}
 }
 
-func (r *ChatServiceHandler) SendChat(c *gin.Context) {
-
+func (r *NoteHandler) SendNote(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 사용자 정보 파싱
@@ -34,19 +33,15 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		return
 	}
 
-	// 라인키 조회
-	lineKey := r.svc.LineKey.GetLineKey(ctx)
-
-	var req chatService.SendChatRequest
+	var req note.SendNoteRequest
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_104, commonConsts.E_104_MSG)
 		return
 	}
 
-	// Message Broker에 publish
-	input := adapter.MakeSendChatInput(sendUserHash, lineKey, req.Contents, req.RecvUserHash)
-	err := r.svc.Chat.SendChat(ctx, input)
+	input := adapter.MakeSendNoteInput(sendUserHash, req.NoteKey, req.Contents, req.Type, req.RecvUserHash, req.RefeUserHash)
+	err := r.usecase.SendNote(ctx, input)
 
 	if err != nil {
 		if err == consts.ErrPublishToMessageBrokerError {
@@ -57,8 +52,6 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		return
 	}
 
-	res := chatService.SendChatResponse{
-		LineKey: lineKey,
-	}
-	response.SendSuccess(c, res)
+	response.SendSuccess(c, "")
+
 }

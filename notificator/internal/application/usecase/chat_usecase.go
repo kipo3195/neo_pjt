@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"notificator/internal/application/usecase/input"
-	"notificator/internal/delivery/dto/chat"
 
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/infrastructure/storage"
@@ -22,7 +21,7 @@ type chatUsecase struct {
 }
 
 type ChatUsecase interface {
-	SubscribeChat(chatMessage chat.ChatConnect, conn *websocket.Conn)
+	SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn)
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput)
 }
 
@@ -32,10 +31,12 @@ func NewChatUsecase(chatUserStorage storage.ChatUserStorage) ChatUsecase {
 	}
 }
 
-func (u *chatUsecase) SubscribeChat(chatMessage chat.ChatConnect, conn *websocket.Conn) {
+func (u *chatUsecase) SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn) {
+
+	entity := entity.MakeSubscribeChatEntity(in.UserHash)
 
 	// 메모리에 사용자 정보 등록
-	u.chatUserStorage.PutChatConnect(chatMessage.UserHash, conn)
+	u.chatUserStorage.PutChatConnect(entity.UserHash, conn)
 }
 
 func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageInput) {
@@ -46,19 +47,19 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 
 	en := entity.MakeRecvChatMessageEntity(in.Type, in.LineKey, in.Contents, in.SendUserHash)
 
-	for i := 0; i < len(in.DestUserHash); i++ {
+	for i := 0; i < len(in.RecvUserHash); i++ {
 
 		// 수신자의 웹소켓 connection 객체 조회
-		conn := u.chatUserStorage.GetChatConnect(in.DestUserHash[i])
+		conn := u.chatUserStorage.GetChatConnect(in.RecvUserHash[i])
 
 		if conn == nil {
 			continue
 		}
 
 		if err := conn.WriteJSON(en); err != nil {
-			log.Printf("websocket write error to %s: %v", in.DestUserHash[i], err)
+			log.Printf("websocket write error to %s: %v", in.RecvUserHash[i], err)
 			conn.Close()
-			u.chatUserStorage.RemoveChatConnect(in.DestUserHash[i])
+			u.chatUserStorage.RemoveChatConnect(in.RecvUserHash[i])
 		}
 	}
 
