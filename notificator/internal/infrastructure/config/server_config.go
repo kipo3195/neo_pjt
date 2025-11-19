@@ -17,8 +17,14 @@ const (
 )
 
 type ServerConfig struct {
-	dbConfig *DBConfig
-	mbConfig *MessageBrokerConfig
+	dbConfig    *DBConfig
+	mbConfig    *MessageBrokerConfig
+	TokenConfig TokenHashConfig
+}
+
+type TokenHashConfig struct {
+	AccessTokenHash  string
+	RefreshTokenHash string
 }
 
 type DBConfig struct {
@@ -48,10 +54,12 @@ func NewServerConfig() *ServerConfig {
 	// DB 설정
 	dbConfig := initDBConfig()
 	mbConfig := initMBConfig()
+	tokenConfig := initTokenHash()
 
 	return &ServerConfig{
-		dbConfig: dbConfig,
-		mbConfig: mbConfig,
+		dbConfig:    dbConfig,
+		mbConfig:    mbConfig,
+		TokenConfig: tokenConfig,
 	}
 }
 
@@ -87,6 +95,15 @@ func initMBConfig() *MessageBrokerConfig {
 
 	return &MessageBrokerConfig{
 		Mb: mb,
+	}
+}
+
+func initTokenHash() TokenHashConfig {
+	accessTokenHash := os.Getenv("ACCESS_TOKEN_HASH")
+	refreshTokenHash := os.Getenv("REFRESH_TOKEN_HASH")
+	return TokenHashConfig{
+		AccessTokenHash:  accessTokenHash,
+		RefreshTokenHash: refreshTokenHash,
 	}
 }
 

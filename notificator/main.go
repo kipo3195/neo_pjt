@@ -38,7 +38,7 @@ func InitServer() *http.Server {
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-	router := router.NewNotificatorRouter("notificator")
+	router := router.NewNotificatorRouter("notificator", sfg.TokenConfig)
 
 	// ---- Domain Handler Init -----
 	chatModule := di.InitChatModule(db, chatUserStorage)

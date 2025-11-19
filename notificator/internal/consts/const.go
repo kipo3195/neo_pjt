@@ -1,9 +1,10 @@
 package consts
 
 const (
-	RoomId  = "roomId"
-	UserId  = "userId"
-	Content = "content"
+	RoomId    = "roomId"
+	USER_ID   = "userId"
+	USER_HASH = "userHash"
+	Content   = "content"
 
 	JoinRoom       = "joinRoom"
 	JoinRoomCancle = "joinRoomCancle"

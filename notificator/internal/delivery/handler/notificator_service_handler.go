@@ -39,6 +39,11 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 
 	defer conn.Close()
 
+	userId := r.Context().Value(consts.USER_ID)
+	userHash := r.Context().Value(consts.USER_HASH)
+
+	log.Println("Notificator service connect success! userId : ", userId, ", userHash :", userHash)
+
 	for {
 		// 메시지는 반복해서 수신, ReadMessage는 블로킹 함수
 		_, msg, err := conn.ReadMessage()

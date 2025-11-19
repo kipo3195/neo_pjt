@@ -6,10 +6,10 @@ const (
 	ERROR   = "error"
 )
 const (
-	BAD_REQUEST  = 400
-	SERVER_ERROR = 500
+	BAD_REQUEST        = 400
+	SERVER_ERROR       = 500
+	StatusUnauthorized = 401
 )
-
 const (
 	// ERROR Code
 	E_101     = "E101"
