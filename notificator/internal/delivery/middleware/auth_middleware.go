@@ -46,6 +46,12 @@ func AuthMiddleware(next http.HandlerFunc, tokenConfig config.TokenHashConfig) h
 			return
 		}
 
+		if id == "" || hash == "" {
+			log.Println("사용자 인증 정보 누락")
+			response.SendError(w, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+			return
+		}
+
 		// context 저장
 		ctx := context.WithValue(r.Context(), consts.USER_ID, id)
 		ctx = context.WithValue(ctx, consts.USER_HASH, hash)

@@ -8,6 +8,8 @@ import (
 	"notificator/internal/application/usecase/input"
 	"notificator/internal/consts"
 	"notificator/internal/delivery/dto/notificatorService"
+	commonConsts "notificator/pkg/consts"
+	"notificator/pkg/response"
 
 	"github.com/gorilla/websocket"
 )
@@ -34,6 +36,8 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 
 	if err != nil {
 		log.Println("Notificator service WebSocket upgrade error:", err)
+		// 웹소켓 업그레이드 에러
+		response.SendErrorWs(conn, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
 
@@ -43,6 +47,12 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	userHash := r.Context().Value(consts.USER_HASH)
 
 	log.Println("Notificator service connect success! userId : ", userId, ", userHash :", userHash)
+
+	res := notificatorService.NotificatorConnectResponse{
+		UserHash: userHash.(string),
+	}
+	// 연결 성공에 대한 response
+	response.SendSuccess(conn, res)
 
 	for {
 		// 메시지는 반복해서 수신, ReadMessage는 블로킹 함수
@@ -84,8 +94,9 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 			return
 		}
 
+		// 연결 종료 로직 추가 필요
+
 	}
 
-	log.Println("Notificator service websocket close ")
-
+	log.Println("Notificator service websocket close. ")
 }
