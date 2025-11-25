@@ -1,11 +1,20 @@
 package di
 
-import "auth/internal/application/usecase"
+import (
+	"auth/internal/application/usecase"
+	"auth/internal/infrastructure/repository"
+)
 
 type OtpModule struct {
 	Usecase usecase.OtpUsecase
 }
 
 func InitOtpModule() OtpModule {
-	return OtpModule{}
+
+	repo := repository.NewOtpApiRepository()
+	usecase := usecase.NewOtpUsecase(repo)
+
+	return OtpModule{
+		Usecase: usecase,
+	}
 }
