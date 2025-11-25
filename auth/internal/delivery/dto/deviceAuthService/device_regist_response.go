@@ -5,4 +5,6 @@ type DeviceRegistResponse struct {
 	RefreshToken    string `json:"refreshToken"`
 	RefreshTokenExp string `json:"refreshTokenExp"`
 	DeviceChallenge string `json:"deviceChallenge"`
+	ChKeyRegDate    string `json:"chKeyRegDate"`
+	NoKeyRegDate    string `json:"noKeyRegDate"`
 }

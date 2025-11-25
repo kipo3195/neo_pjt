@@ -39,6 +39,16 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 		return
 	}
 
+	// 20251125 채팅, 쪽지 내용 암호화 공개키 암호화 처리 후 저장 (chKey, noKey)
+	// message service API 호출
+	otpKeyRegistInput := adapter.MakeOtpKeyRegistInput(req.Id, req.Uuid, req.ChKey, req.NoKey)
+	otpKeyRegistResult, err := h.svc.Otp.OtpKeyRegist(ctx, otpKeyRegistInput)
+
+	if err != nil {
+
+		return
+	}
+
 	// 디바이스 정보 등록 체크
 	deviceRegistInput := adapter.MakeDeviceRegistCheckInput(req.Id, req.Uuid, req.Challenge)
 	deviceRegResult, err := h.svc.Device.DeviceRegistCheck(ctx, deviceRegistInput)
@@ -81,6 +91,8 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 			RefreshToken:    output.RefreshToken,
 			RefreshTokenExp: output.RefreshTokenExp,
 			AccessToken:     output.AccessToken,
+			ChKeyRegDate:    otpKeyRegistResult.ChKeyRegDate,
+			NoKeyRegDate:    otpKeyRegistResult.NoKeyRegDate,
 		}
 
 		response.SendSuccess(c, res)

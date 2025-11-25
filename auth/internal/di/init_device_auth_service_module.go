@@ -6,7 +6,7 @@ import (
 	"auth/internal/delivery/handler"
 )
 
-func InitDeviceAuthServiceModule(token usecase.TokenUsecase, device usecase.DeviceUsecase) *handler.DeviceAuthServiceHandler {
-	service := orchestrator.NewDeviceAuthService(token, device)
+func InitDeviceAuthServiceModule(token usecase.TokenUsecase, device usecase.DeviceUsecase, otp usecase.OtpUsecase) *handler.DeviceAuthServiceHandler {
+	service := orchestrator.NewDeviceAuthService(token, device, otp)
 	return handler.NewDeviceAuthServiceHandler(service)
 }
