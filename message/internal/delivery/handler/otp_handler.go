@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"message/internal/application/usecase"
 	"message/internal/delivery/adapter"
 	"message/internal/delivery/dto/otp"
@@ -36,9 +37,14 @@ func (h *OtpHandler) OtpKeyRegist(c *gin.Context) {
 	output, err := h.usecase.OtpKeyRegist(ctx, input)
 
 	if err != nil {
+		log.Println("OtpKeyRegist err : ", err)
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
 
-	response.SendSuccess(c, output)
+	res := otp.OtpKeyRegistResponse{
+		RegDate: output.RegDate,
+	}
+
+	response.SendSuccess(c, res)
 }

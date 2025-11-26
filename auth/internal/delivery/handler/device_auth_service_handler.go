@@ -94,8 +94,7 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 			RefreshToken:    output.RefreshToken,
 			RefreshTokenExp: output.RefreshTokenExp,
 			AccessToken:     output.AccessToken,
-			ChKeyRegDate:    otpKeyRegistResult.ChKeyRegDate,
-			NoKeyRegDate:    otpKeyRegistResult.NoKeyRegDate,
+			OtpRegDate:      otpKeyRegistResult.OtpRegDate,
 		}
 
 		response.SendSuccess(c, res)

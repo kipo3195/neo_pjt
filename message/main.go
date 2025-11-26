@@ -6,6 +6,7 @@ import (
 	"message/internal/di"
 	"message/internal/infrastructure/config"
 	"message/internal/infrastructure/migration"
+	"message/internal/infrastructure/storage"
 	"net/http"
 )
 
@@ -32,7 +33,7 @@ func InitServer() *http.Server {
 	mb := config.ConnectMessageBroker(sfg)
 
 	// ---- Storage Init -----
-
+	otpStorage := storage.NewOtpStorage()
 	// ---- Data Loader -----
 
 	//dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage))
@@ -53,7 +54,7 @@ func InitServer() *http.Server {
 	chatModule := di.InitChatModule(db, mb)
 	router.SetChatRoutes(chatModule.Handler)
 
-	otpModule := di.InitOtpModule(db)
+	otpModule := di.InitOtpModule(db, otpStorage)
 	router.SetOtpRoutes(otpModule.Handler)
 
 	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase)

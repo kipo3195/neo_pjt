@@ -12,3 +12,7 @@ var ErrRefreshTokenAuthError = errors.New("refreshToken authentication failed")
 
 // chat
 var ErrPublishToMessageBrokerError = errors.New("publish to message broker failed")
+
+// otp
+var ErrFailedToDecodePEMBlock = errors.New("failed to decode PEM block")
+var ErrFailedToParsePublicKey = errors.New("failed to parse public key")
