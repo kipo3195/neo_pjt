@@ -2,9 +2,9 @@ package repository
 
 import (
 	"auth/internal/consts"
-	"auth/internal/delivery/dto/otp"
 	"auth/internal/domain/otp/entity"
 	"auth/internal/domain/otp/repository"
+	"auth/internal/infrastructure/dto/otp"
 	"auth/pkg/dto"
 	"bytes"
 	"context"
