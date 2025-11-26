@@ -41,4 +41,7 @@ const (
 
 	AUTH_F013     = "AUTH_013"
 	AUTH_F013_MSG = "Device info already regist."
+
+	AUTH_F014     = "AUTH_014"
+	AUTH_F014_MSG = "Otp key regist fail."
 )

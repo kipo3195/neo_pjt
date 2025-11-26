@@ -67,7 +67,7 @@ func InitServer() *http.Server {
 	deviceModule := di.InitDeviceModule(db, deviceStorage, sfg.TokenConfig.AccessTokenHash, sfg.TokenConfig.RefreshTokenHash)
 	router.SetDeviceRoutes(deviceModule.Handler)
 
-	otpModule := di.InitOtpModule()
+	otpModule := di.InitOtpModule(sfg.Domain)
 
 	// ---- Service Handler Init ----
 	userAuthServiceModule := di.InitUserAuthServiceModule(userAuthModule.Usecase, deviceModule.Usecase, tokenModule.Usecase)

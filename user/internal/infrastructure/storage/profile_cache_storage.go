@@ -31,11 +31,11 @@ func (r *profileCacheStorage) PutProfileName(userHash string, savedName string) 
 	log.Printf("PutProfilePath : %s save success. \n", userHash)
 }
 
-func (r *profileCacheStorage) GetProfileName(userId string) string {
+func (r *profileCacheStorage) GetProfileName(userHash string) string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	savedPath, exists := r.profileNameMap[userId]
+	savedPath, exists := r.profileNameMap[userHash]
 	if !exists {
 		return ""
 	} else {

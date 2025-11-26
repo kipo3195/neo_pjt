@@ -30,19 +30,20 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	// 운영 반영시 아래 주석제거
-	// userHash := util.GetUserIdByAccessToken(c)
-	userId := util.GetUserIdByAccessToken(c)
+	userHash := util.GetUserIdByAccessToken(c)
+	userId := util.GetUserHashByAccessToken(c)
 
-	// 테스트 용
-	userHash := c.GetHeader("User-Hash")
-	if userHash == "" {
+	// 테스트 용 -> 다른 사람꺼 등록가능
+	headerUserHash := c.GetHeader("User-Hash")
+	if headerUserHash != "" {
 		//response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
-		userHash = util.GetUserIdByAccessToken(c)
+		userHash = headerUserHash
+		userId = "TEST_USER_ID"
 	}
-	// 테스트용 끝
+	// 테스트용 끝 -> 이후 제거될 코드
 
 	log.Print("userHash : ", userHash)
+	log.Print("userId : ", userId)
 
 	// 파일 데이터 추출
 	fileInfo, err := c.FormFile("profile_img")

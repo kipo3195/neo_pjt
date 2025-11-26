@@ -40,12 +40,13 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 	}
 
 	// 20251125 채팅, 쪽지 내용 암호화 공개키 암호화 처리 후 저장 (chKey, noKey)
-	// message service API 호출
+	// message service API 호출, id:uuid:upsert 처리
 	otpKeyRegistInput := adapter.MakeOtpKeyRegistInput(req.Id, req.Uuid, req.ChKey, req.NoKey)
 	otpKeyRegistResult, err := h.svc.Otp.OtpKeyRegist(ctx, otpKeyRegistInput)
 
 	if err != nil {
-
+		log.Println("[DeviceRegist] OtpKeyRegist error : ", err)
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F014, consts.AUTH_F014_MSG)
 		return
 	}
 
@@ -54,6 +55,7 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 	deviceRegResult, err := h.svc.Device.DeviceRegistCheck(ctx, deviceRegistInput)
 
 	if err != nil {
+		log.Println("[DeviceRegist] DeviceRegistCheck error : ", err)
 		// 등록에 따라 다르게 처리 필요 TODO challege 만료
 		if err == consts.ErrDeviceChallengeExpired {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F007, consts.AUTH_F007_MSG)
@@ -79,6 +81,7 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 		generateAuthTokenInput := adapter.MakeGenerateAuthTokenInput(req.Id, req.Uuid, true)
 		output, err := h.svc.Token.GenerateAuthToken(ctx, generateAuthTokenInput)
 		if err != nil {
+			log.Println("[DeviceRegist] GenerateAuthToken error : ", err)
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 			return
 		}

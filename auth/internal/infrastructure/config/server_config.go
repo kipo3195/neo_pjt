@@ -11,6 +11,7 @@ import (
 )
 
 type ServerConfig struct {
+	Domain      string
 	dbConfig    *DBConfig
 	jwtConfig   *JWTConfig // jwt를 소문자로 정의했으므로 외부에서 접근할 수 없음 = 그래서 GetJWTConfig 메소드를 만들어서 외부에서 사용 할 수 있게함.
 	AutoMigrate bool
@@ -57,6 +58,8 @@ func NewServerConfig() *ServerConfig {
 
 	autoMigrate := initAutoMigrate()
 
+	domain := initDomain()
+
 	tokenConfig := initTokenHash()
 
 	return &ServerConfig{
@@ -64,6 +67,7 @@ func NewServerConfig() *ServerConfig {
 		jwtConfig:   jwtConfig,
 		AutoMigrate: autoMigrate,
 		TokenConfig: tokenConfig,
+		Domain:      domain,
 	}
 }
 func initDBConfig() *DBConfig {
@@ -75,6 +79,10 @@ func initDBConfig() *DBConfig {
 
 	return &DBConfig{
 		Host: host, Id: id, Pw: pw, Port: port, Database: database}
+}
+
+func initDomain() string {
+	return os.Getenv("DOMAIN")
 }
 
 func initTokenHash() TokenHashConfig {

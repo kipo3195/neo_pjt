@@ -41,3 +41,6 @@ var ErrDeviceAlreadyRegist = errors.New("device already regist")
 
 // parsing
 var ErrTimeDataParsingError = errors.New("time data parsing error")
+
+// http status
+var ErrHttpStatusError = errors.New("http status is not ok")

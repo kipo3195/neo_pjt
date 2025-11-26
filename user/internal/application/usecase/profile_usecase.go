@@ -134,7 +134,7 @@ func GenerateUserProfileHash(userId string) string {
 
 func (u *profileUsecase) GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error) {
 
-	entity := entity.MakeGetProfileImgEntity(in.UserId)
+	entity := entity.MakeGetProfileImgEntity(in.UserHash)
 
 	profileName := u.profileCacheStorage.GetProfileName(entity.UserHash)
 

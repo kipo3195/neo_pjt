@@ -9,9 +9,9 @@ type OtpModule struct {
 	Usecase usecase.OtpUsecase
 }
 
-func InitOtpModule() OtpModule {
+func InitOtpModule(domain string) OtpModule {
 
-	repo := repository.NewOtpApiRepository()
+	repo := repository.NewOtpApiRepository(domain)
 	usecase := usecase.NewOtpUsecase(repo)
 
 	return OtpModule{
