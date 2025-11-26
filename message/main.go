@@ -53,6 +53,9 @@ func InitServer() *http.Server {
 	chatModule := di.InitChatModule(db, mb)
 	router.SetChatRoutes(chatModule.Handler)
 
+	otpModule := di.InitOtpModule(db)
+	router.SetOtpRoutes(otpModule.Handler)
+
 	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase)
 	router.SetChatServiceRoutes(chatServiceModule)
 

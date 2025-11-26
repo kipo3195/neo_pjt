@@ -20,6 +20,7 @@ type MessageRouter interface {
 	SetChatRoutes(handler *handler.ChatHandler)
 	SetChatServiceRoutes(handler *handler.ChatServiceHandler)
 	SetNoteRoutes(handler *handler.NoteHandler)
+	SetOtpRoutes(handler *handler.OtpHandler)
 }
 
 func (r *messageRouter) GetEngine() *gin.Engine {
@@ -61,4 +62,10 @@ func (r *messageRouter) SetNoteRoutes(handler *handler.NoteHandler) {
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
 	client.POST("/", handler.SendNote)
 
+}
+
+func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
+
+	server := r.parent.Group("/server/v1/otp")
+	server.POST("/regist", handler.OtpKeyRegist)
 }
