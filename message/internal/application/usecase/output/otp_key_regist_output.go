@@ -1,5 +1,6 @@
 package output
 
 type OtpKeyregistOutput struct {
-	RegDate string
+	OtpRegDate   string
+	SvKeyVersion string
 }

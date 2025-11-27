@@ -1,5 +1,6 @@
 package otp
 
 type OtpKeyRegistResponse struct {
-	RegDate string `json:"regDate"`
+	OtpRegDate   string `json:"otpRegDate"`
+	SvKeyVersion string `json:"svKeyVersion"`
 }

@@ -43,7 +43,8 @@ func (h *OtpHandler) OtpKeyRegist(c *gin.Context) {
 	}
 
 	res := otp.OtpKeyRegistResponse{
-		RegDate: output.RegDate,
+		OtpRegDate:   output.OtpRegDate,
+		SvKeyVersion: output.SvKeyVersion,
 	}
 
 	response.SendSuccess(c, res)

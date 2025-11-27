@@ -82,6 +82,7 @@ func (r *otpApiRepositoryImpl) OtpKeyRegistInMessage(ctx context.Context, en ent
 	// dto -> entity
 	// adapter에서 처리하지 하는 것이 오버엔지니어링이라고 판단함.
 	return entity.OtpKeyRegistResultEntity{
-		OtpRegDate: result.Data.OtpRegDate,
+		OtpRegDate:   result.Data.OtpRegDate,
+		SvKeyVersion: result.Data.SvKeyVersion,
 	}, nil
 }

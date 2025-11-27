@@ -41,6 +41,7 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 
 	// 20251125 채팅, 쪽지 내용 암호화 공개키 암호화 처리 후 저장 (chKey, noKey)
 	// message service API 호출, id:uuid:upsert 처리
+	// 추후 평문 저장 고객사에 대응하기 위한 조건문 추가 필요. (굳이 호출할 필요없을때)
 	otpKeyRegistInput := adapter.MakeOtpKeyRegistInput(req.Id, req.Uuid, req.ChKey, req.NoKey)
 	otpKeyRegistResult, err := h.svc.Otp.OtpKeyRegist(ctx, otpKeyRegistInput)
 
@@ -95,6 +96,7 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 			RefreshTokenExp: output.RefreshTokenExp,
 			AccessToken:     output.AccessToken,
 			OtpRegDate:      otpKeyRegistResult.OtpRegDate,
+			SvKeyVersion:    otpKeyRegistResult.SvKeyVersion,
 		}
 
 		response.SendSuccess(c, res)

@@ -14,8 +14,9 @@ func MakeOtpKeyRegistInput(id, uuid, chKey, noKey string) input.OtpKeyRegistInpu
 	}
 }
 
-func MakeOtpKeyRegistOutput(regDate string) output.OtpKeyregistOutput {
+func MakeOtpKeyRegistOutput(otpRegDate string, serverKeyVersion string) output.OtpKeyregistOutput {
 	return output.OtpKeyregistOutput{
-		RegDate: regDate,
+		OtpRegDate:   otpRegDate,
+		SvKeyVersion: serverKeyVersion,
 	}
 }

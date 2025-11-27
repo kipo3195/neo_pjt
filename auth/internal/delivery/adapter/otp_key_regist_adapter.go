@@ -17,6 +17,7 @@ func MakeOtpKeyRegistInput(id string, uuid string, chKey string, noKey string) i
 
 func MakeOtpKeyRegistOutput(entity entity.OtpKeyRegistResultEntity) output.OtpKeyRegistOutput {
 	return output.OtpKeyRegistOutput{
-		OtpRegDate: entity.OtpRegDate,
+		OtpRegDate:   entity.OtpRegDate,
+		SvKeyVersion: entity.SvKeyVersion,
 	}
 }

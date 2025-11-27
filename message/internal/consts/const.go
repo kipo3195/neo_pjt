@@ -6,4 +6,7 @@ const (
 	YYYYMMDDHHMSS = "20060102150405"
 	USER_ID       = "userId"
 	USER_HASH     = "userHash"
+
+	CHAT = "chat"
+	NOTE = "note"
 )
