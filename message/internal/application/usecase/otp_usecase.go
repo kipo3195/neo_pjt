@@ -166,14 +166,27 @@ func (u *otpUsecase) GetMyOtpInfo(ctx context.Context, input input.MyOtpInfoInpu
 					}
 				} else {
 					u.otpStorage.SaveOtpKeyStorage(ctx, en.UserId, en.Uuid, temp)
-					chatTemp.SvKeyVersion = temp.SvKeyVersion
-					chatTemp.Kind = temp.Kind
-					chatTemp.OtpKey = temp.OtpKey
-					chatTemp.OtpRegDate = temp.OtpRegDate
+
+					chatKey := output.MyOtpInfoOutput{
+						Version:    temp.SvKeyVersion,
+						KeyType:    temp.Kind,
+						Key:        temp.OtpKey,
+						OtpRegDate: temp.OtpRegDate,
+					}
+
+					result = append(result, chatKey)
 				}
 			} else {
 				log.Printf("[GetMyOtpInfo] %s GetMyOtpInfoStorage check server key regist.\n", en.VersionType)
 			}
+		} else {
+			noteKey := output.MyOtpInfoOutput{
+				Version:    chatTemp.SvKeyVersion,
+				KeyType:    chatTemp.Kind,
+				Key:        chatTemp.OtpKey,
+				OtpRegDate: chatTemp.OtpRegDate,
+			}
+			result = append(result, noteKey)
 		}
 
 		noteTemp, err := u.otpStorage.GetMyOtpInfoStorage(ctx, en, u.svNoKeyVersion, consts.NOTE)
@@ -189,31 +202,27 @@ func (u *otpUsecase) GetMyOtpInfo(ctx context.Context, input input.MyOtpInfoInpu
 					}
 				} else {
 					u.otpStorage.SaveOtpKeyStorage(ctx, en.UserId, en.Uuid, temp)
-					noteTemp.SvKeyVersion = temp.SvKeyVersion
-					noteTemp.Kind = temp.Kind
-					noteTemp.OtpKey = temp.OtpKey
-					noteTemp.OtpRegDate = temp.OtpRegDate
+					noteKey := output.MyOtpInfoOutput{
+						Version:    temp.SvKeyVersion,
+						KeyType:    temp.Kind,
+						Key:        temp.OtpKey,
+						OtpRegDate: temp.OtpRegDate,
+					}
+
+					result = append(result, noteKey)
 				}
 			} else {
 				log.Printf("[GetMyOtpInfo] %s GetMyOtpInfoStorage check server key regist.\n", en.VersionType)
 			}
+		} else {
+			noteKey := output.MyOtpInfoOutput{
+				Version:    noteTemp.SvKeyVersion,
+				KeyType:    noteTemp.Kind,
+				Key:        noteTemp.OtpKey,
+				OtpRegDate: noteTemp.OtpRegDate,
+			}
+			result = append(result, noteKey)
 		}
-
-		noteKey := output.MyOtpInfoOutput{
-			Version:    noteTemp.SvKeyVersion,
-			KeyType:    noteTemp.Kind,
-			Key:        noteTemp.OtpKey,
-			OtpRegDate: noteTemp.OtpRegDate,
-		}
-
-		chatKey := output.MyOtpInfoOutput{
-			Version:    chatTemp.SvKeyVersion,
-			KeyType:    chatTemp.Kind,
-			Key:        chatTemp.OtpKey,
-			OtpRegDate: chatTemp.OtpRegDate,
-		}
-
-		result = append(result, noteKey, chatKey)
 
 	} else if en.VersionType == consts.VERSION_TYPE_SPECIFIC {
 		// 특정 버전 - DB 조회 TODO

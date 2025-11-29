@@ -89,7 +89,9 @@ func (h *OtpHandler) GetMyOtpInfo(c *gin.Context) {
 		return
 	}
 
-	res := otp.MyOtpInfoResponse{}
+	res := otp.MyOtpInfoResponse{
+		MyOtpInfo: make([]otp.MyOtpInfo, 0), // ← 값 없어도 빈 배열 [] 보장
+	}
 
 	for _, info := range output {
 		myOtpInfo := otp.MyOtpInfo{
@@ -100,7 +102,5 @@ func (h *OtpHandler) GetMyOtpInfo(c *gin.Context) {
 		}
 		res.MyOtpInfo = append(res.MyOtpInfo, myOtpInfo)
 	}
-
 	response.SendSuccess(c, res)
-
 }
