@@ -25,7 +25,18 @@ func NewOtpUsecase(repo repository.OtpApiRepository) OtpUsecase {
 
 func (r *otpUsecase) OtpKeyRegist(ctx context.Context, input input.OtpKeyRegistInput) (output.OtpKeyRegistOutput, error) {
 
-	entity := entity.MakeOtpKeyRegistEntity(input.Id, input.Uuid, input.ChKey, input.NoKey)
+	// 기존 entity에서 Make 함수를 만들던 로직은 의존성 방향의 규칙을 깨는 일이므로 X
+	devicePubKeyEntity := make([]entity.DevicePubKeyEntity, 0)
+
+	for i := 0; i < len(input.DevicePubKey); i++ {
+		e := entity.DevicePubKeyEntity{
+			Kind: input.DevicePubKey[i].Kind,
+			Key:  input.DevicePubKey[i].Key,
+		}
+		devicePubKeyEntity = append(devicePubKeyEntity, e)
+	}
+
+	entity := entity.MakeOtpKeyRegistEntity(input.Id, input.Uuid, devicePubKeyEntity)
 	result, err := r.repo.OtpKeyRegistInMessage(ctx, entity)
 
 	if err != nil {

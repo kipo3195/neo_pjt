@@ -70,5 +70,5 @@ func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 
 	client := r.parent.Group("/client/v1/otp")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
-	client.POST("/my", handler.GetMyOtpInfo)
+	client.POST("/info", handler.GetMyOtpInfo)
 }

@@ -41,14 +41,23 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 
 	// 20251125 채팅, 쪽지 내용 암호화 공개키 암호화 처리 후 저장 (chKey, noKey)
 	// message service API 호출, id:uuid:upsert 처리
-	// 추후 평문 저장 고객사에 대응하기 위한 조건문 추가 필요. (굳이 호출할 필요없을때)
-	otpKeyRegistInput := adapter.MakeOtpKeyRegistInput(req.Id, req.Uuid, req.ChKey, req.NoKey)
-	otpKeyRegistResult, err := h.svc.Otp.OtpKeyRegist(ctx, otpKeyRegistInput)
+	var otpInfo *deviceAuthService.DeviceOtp
+	if len(req.DevicePubKey) > 0 { // nil slice에서 len()은 0이 맞다
 
-	if err != nil {
-		log.Println("[DeviceRegist] OtpKeyRegist error : ", err)
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F014, consts.AUTH_F014_MSG)
-		return
+		otpKeyRegistInput := adapter.MakeOtpKeyRegistInput(req.Id, req.Uuid, req.DevicePubKey)
+		otpOutput, err := h.svc.Otp.OtpKeyRegist(ctx, otpKeyRegistInput)
+
+		if err != nil {
+			log.Println("[DeviceRegist] OtpKeyRegist error : ", err)
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.AUTH_F014, consts.AUTH_F014_MSG)
+			return
+		}
+		// otpInfo 초기화
+		otpInfo = &deviceAuthService.DeviceOtp{
+			OtpRegDate:       otpOutput.OtpRegDate,
+			SvChatKeyVersion: otpOutput.SvChatKeyVersion,
+			SvNoteKeyVersion: otpOutput.SvNoteKeyVersion,
+		}
 	}
 
 	// 디바이스 정보 등록 체크
@@ -91,14 +100,16 @@ func (h *DeviceAuthServiceHandler) DeviceRegist(c *gin.Context) {
 		removeDeviceChallengeInput := adapter.MakeRemoveDeviceChallengeInput(req.Id, req.Uuid)
 		h.svc.Device.RemoveDeviceChallenge(ctx, removeDeviceChallengeInput)
 
-		res := deviceAuthService.DeviceRegistResponse{
-			RefreshToken:    output.RefreshToken,
-			RefreshTokenExp: output.RefreshTokenExp,
-			AccessToken:     output.AccessToken,
-			OtpRegDate:      otpKeyRegistResult.OtpRegDate,
-			SvKeyVersion:    otpKeyRegistResult.SvKeyVersion,
-		}
+		res := deviceAuthService.DeviceRegistResponse{}
 
+		res.RefreshToken = output.RefreshToken
+		res.RefreshTokenExp = output.RefreshTokenExp
+		res.AccessToken = output.AccessToken
+
+		// otp 발급 요청시에만 처리함
+		if len(req.DevicePubKey) > 0 {
+			res.OtpInfo = otpInfo
+		}
 		response.SendSuccess(c, res)
 		return
 	}

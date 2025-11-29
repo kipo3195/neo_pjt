@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"log"
-	"message/internal/consts"
 	"message/internal/domain/otp/entity"
 	"message/internal/domain/otp/repository"
 	"message/internal/infrastructure/model"
@@ -28,55 +27,62 @@ func NewOtpApiRepository(db *gorm.DB) repository.OtpRepository {
 
 func (r *otpApiRepositoryImpl) SaveOtpKey(ctx context.Context, entity entity.OTPKeyRegistEntity) error {
 
-	modelEntity := model.OtpKeyRegistHistory{
-		Id:           entity.Id,
-		Uuid:         entity.Uuid,
-		ChatOtpKey:   entity.ChatOtpKey,
-		NoteOtpKey:   entity.NoteOtpKey,
-		RegDate:      entity.OtpRegDate,
-		SvKeyVersion: entity.SvKeyVersion,
+	log.Println("[SaveOtpKey] DB insert")
+	id := entity.Id
+	uuid := entity.Uuid
+
+	for _, info := range entity.OtpKeyInfoEntity {
+
+		// DB row 구조체로 변환
+		row := model.OtpKeyRegistHistory{
+			Id:           id,
+			Uuid:         uuid,
+			OtpKey:       info.OtpKey,
+			Kind:         info.Kind,
+			RegDate:      info.OtpRegDate,
+			SvKeyVersion: info.SvKeyVersion,
+		}
+
+		// Upsert 실행
+		err := r.db.Clauses(
+			clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "id"},
+					{Name: "uuid"},
+					{Name: "sv_key_version"},
+					{Name: "kind"},
+				},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"otp_key",
+					"reg_date",
+				}),
+			},
+		).Create(&row).Error
+
+		if err != nil {
+			return err
+		}
+		log.Printf("[SaveOtpKey] id :%s, uuid :%s, kind :%s insert success. \n ", id, uuid, info.Kind)
 	}
 
-	// Insert, 중복(PK 충돌) 시 ChatOtpKey, NoteOtpKey, RegDate만 update
-	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "id"}, {Name: "uuid"}, {Name: "sv_key_version"}}, // UNIQUE KEY or PRIMARY KEY 기준
-		DoUpdates: clause.Assignments(map[string]interface{}{
-			"chat_otp_key": entity.ChatOtpKey,
-			"note_otp_key": entity.NoteOtpKey,
-			"reg_date":     entity.OtpRegDate,
-		}),
-	}).Create(&modelEntity).Error
-
-	return err
+	return nil
 }
 
-func (r *otpApiRepositoryImpl) GetMyOtpInfoLatest(ctx context.Context, en entity.MyOtpInfoEntity, svVersion string) ([]entity.MyOtpInfoResultEntity, error) {
-	var modelEntities []model.OtpKeyRegistHistory
-	err := r.db.WithContext(ctx).Where("id = ? and uuid = ? and sv_key_version = ?", en.UserId, en.Uuid, svVersion).Find(&modelEntities).Error
+func (r *otpApiRepositoryImpl) GetMyOtpInfo(ctx context.Context, en entity.MyOtpInfoEntity, kind string, svVersion string) (entity.OtpKeyInfoEntity, error) {
+	var modelEntity model.OtpKeyRegistHistory
+
+	err := r.db.WithContext(ctx).Where("id = ? and uuid = ? and kind = ? and sv_key_version = ?", en.UserId, en.Uuid, kind, svVersion).Take(&modelEntity).Error
+
 	if err != nil {
-		return nil, err
-	}
-	if len(modelEntities) == 0 {
-		log.Println("GetMyOtpInfoLatest: no data found")
-		return nil, consts.ErrDBresultNotFound
+		return entity.OtpKeyInfoEntity{}, err
 	}
 
-	modelEntity := modelEntities[0]
-	result := make([]entity.MyOtpInfoResultEntity, 0)
-
-	result = append(result, entity.MyOtpInfoResultEntity{
-		Version:    modelEntity.SvKeyVersion,
-		KeyType:    consts.CHAT,
-		Key:        modelEntity.ChatOtpKey,
-		OtpRegDate: modelEntity.RegDate,
-	})
-
-	result = append(result, entity.MyOtpInfoResultEntity{
-		Version:    modelEntity.SvKeyVersion,
-		KeyType:    consts.NOTE,
-		Key:        modelEntity.NoteOtpKey,
-		OtpRegDate: modelEntity.RegDate,
-	})
+	result := entity.OtpKeyInfoEntity{
+		OtpKey:       modelEntity.OtpKey,
+		Kind:         modelEntity.Kind,
+		OtpRegDate:   modelEntity.RegDate,
+		SvKeyVersion: modelEntity.SvKeyVersion,
+	}
 
 	return result, nil
 }

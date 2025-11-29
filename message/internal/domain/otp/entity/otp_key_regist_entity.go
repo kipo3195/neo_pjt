@@ -1,22 +1,16 @@
 package entity
 
 type OTPKeyRegistEntity struct {
-	Id           string
-	Uuid         string
-	ChKey        string
-	NoKey        string
-	ChatOtpKey   string
-	NoteOtpKey   string
-	OtpRegDate   string
-	SvKeyVersion string
+	Id               string
+	Uuid             string
+	OtpKeyInfoEntity []OtpKeyInfoEntity
 }
 
-func MakeOtpKeyRegistEntity(id, uuid, chKey, noKey string) OTPKeyRegistEntity {
+func MakeOtpKeyRegistEntity(id string, uuid string, otpKeyInfoEntity []OtpKeyInfoEntity) OTPKeyRegistEntity {
 
 	return OTPKeyRegistEntity{
-		Id:    id,
-		Uuid:  uuid,
-		ChKey: chKey,
-		NoKey: noKey,
+		Id:               id,
+		Uuid:             uuid,
+		OtpKeyInfoEntity: otpKeyInfoEntity,
 	}
 }

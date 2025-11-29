@@ -7,5 +7,5 @@ import (
 
 type OtpRepository interface {
 	SaveOtpKey(ctx context.Context, entity entity.OTPKeyRegistEntity) error
-	GetMyOtpInfoLatest(ctx context.Context, entity entity.MyOtpInfoEntity, svVersion string) (en []entity.MyOtpInfoResultEntity, err error)
+	GetMyOtpInfo(ctx context.Context, en entity.MyOtpInfoEntity, kind string, svVersion string) (entity.OtpKeyInfoEntity, error)
 }

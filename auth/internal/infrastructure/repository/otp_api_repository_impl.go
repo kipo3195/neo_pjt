@@ -32,13 +32,22 @@ func (r *otpApiRepositoryImpl) OtpKeyRegistInMessage(ctx context.Context, en ent
 	url := "http://" + r.serverUrl + "/message/server/v1/otp/regist"
 	log.Println("message service 호출! url : ", url)
 
+	devicePubKeyDto := make([]otp.DevicePubKeyDto, 0)
+
+	for i := 0; i < len(en.DevicePubKeyEntity); i++ {
+		d := otp.DevicePubKeyDto{
+			Kind: en.DevicePubKeyEntity[i].Kind,
+			Key:  en.DevicePubKeyEntity[i].Key,
+		}
+		devicePubKeyDto = append(devicePubKeyDto, d)
+	}
+
 	// request dto
 	// adapter에서 처리하지 하는 것이 오버엔지니어링이라고 판단함.
 	body := otp.OtpKeySvRegistRequest{
-		Id:    en.Id,
-		Uuid:  en.Uuid,
-		Chkey: en.ChKey,
-		Nokey: en.NoKey,
+		Id:              en.Id,
+		Uuid:            en.Uuid,
+		DevicePubKeyDto: devicePubKeyDto,
 	}
 
 	// 직렬화
@@ -82,7 +91,8 @@ func (r *otpApiRepositoryImpl) OtpKeyRegistInMessage(ctx context.Context, en ent
 	// dto -> entity
 	// adapter에서 처리하지 하는 것이 오버엔지니어링이라고 판단함.
 	return entity.OtpKeyRegistResultEntity{
-		OtpRegDate:   result.Data.OtpRegDate,
-		SvKeyVersion: result.Data.SvKeyVersion,
+		OtpRegDate:       result.Data.OtpRegDate,
+		SvChatKeyVersion: result.Data.SvChatKeyVersion,
+		SvNoteKeyVersion: result.Data.SvNoteKeyVersion,
 	}, nil
 }

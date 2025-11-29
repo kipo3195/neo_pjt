@@ -49,7 +49,7 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 	fileInfo, err := c.FormFile("profile_img")
 	if err != nil {
 		// 파일
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_104, commonConsts.E_104_MSG)
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 		return
 	}
 

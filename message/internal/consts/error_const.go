@@ -20,3 +20,5 @@ var ErrPublishToMessageBrokerError = errors.New("publish to message broker faile
 var ErrFailedToDecodePEMBlock = errors.New("failed to decode PEM block")
 var ErrFailedToParsePublicKey = errors.New("failed to parse public key")
 var ErrFailedToEncryptOtpKey = errors.New("failed to encrypt OTP key")
+var ErrOtpNotFound = errors.New("failed to otp not found")
+var ErrInvalidOtpType = errors.New("failed to otp type")
