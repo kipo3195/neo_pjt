@@ -9,4 +9,11 @@ const (
 
 	CHAT = "chat"
 	NOTE = "note"
+	DATE = "date"
+)
+
+const (
+	VERSION_TYPE_SPECIFIC = "specific"
+	VERSION_TYPE_LATEST   = "latest"
+	VERSION_TYPE_ALL      = "all"
 )

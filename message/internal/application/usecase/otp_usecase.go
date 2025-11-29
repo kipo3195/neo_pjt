@@ -28,6 +28,7 @@ type otpUsecase struct {
 
 type OtpUsecase interface {
 	OtpKeyRegist(ctx context.Context, input input.OtpKeyRegistInput) (output output.OtpKeyregistOutput, err error)
+	GetMyOtpInfo(ctx context.Context, input input.MyOtpInfoInput) (output []output.MyOtpInfoOutput, err error)
 }
 
 func NewOtpUsecase(repo repository.OtpRepository, storage storage.OtpStorage, svChKey string, svNoKey string, svKeyVersion string) OtpUsecase {
@@ -71,10 +72,9 @@ func (u *otpUsecase) OtpKeyRegist(ctx context.Context, input input.OtpKeyRegistI
 	}
 
 	// 메모리 저장 (storage)
-	err = u.otpStorage.SaveOtpKeyStorage(ctx, entity)
-	if err != nil {
-		return output.OtpKeyregistOutput{}, err
-	}
+	u.otpStorage.SaveOtpKeyStorage(ctx, entity, u.svKeyVersion, consts.CHAT)
+	u.otpStorage.SaveOtpKeyStorage(ctx, entity, u.svKeyVersion, consts.NOTE)
+	u.otpStorage.SaveOtpKeyStorage(ctx, entity, u.svKeyVersion, consts.DATE)
 
 	log.Printf("[OtpKeyRegist] id:%s, regDate:%s, version:%s success.\n", entity.Id, entity.OtpRegDate, u.svKeyVersion)
 
@@ -125,4 +125,87 @@ func makeOtpKey(clientKey string, serverKey string, t string) (string, error) {
 	EncB64 := base64.StdEncoding.EncodeToString(encrypted)
 
 	return EncB64, nil
+}
+
+func (u *otpUsecase) GetMyOtpInfo(ctx context.Context, input input.MyOtpInfoInput) ([]output.MyOtpInfoOutput, error) {
+
+	en := entity.MakeMyOtpInfoEntity(input.UserId, input.VersionType, input.VersionInfo, input.Uuid)
+
+	result := make([]output.MyOtpInfoOutput, 0)
+
+	if en.VersionType == consts.VERSION_TYPE_LATEST {
+		// 최신 버전 - 메모리 부터 조회, 없으면 DB 조회 후 캐싱 처리
+		chKey, err := u.otpStorage.GetMyOtpInfoStorage(ctx, en, u.svKeyVersion, consts.CHAT)
+		if err != nil {
+			log.Println("[GetMyOtpInfo] GetMyOtpInfoStorage chat Key error:", err)
+			return nil, err
+		}
+
+		noKey, err := u.otpStorage.GetMyOtpInfoStorage(ctx, en, u.svKeyVersion, consts.NOTE)
+		if err != nil {
+			log.Println("[GetMyOtpInfo] GetMyOtpInfoStorage chat note error:", err)
+			return nil, err
+		}
+
+		date, err := u.otpStorage.GetMyOtpInfoStorage(ctx, en, u.svKeyVersion, consts.DATE)
+		if err != nil {
+			log.Println("[GetMyOtpInfo] GetMyOtpInfoStorage chat note error:", err)
+			return nil, err
+		}
+
+		if chKey == "" || noKey == "" || date == "" {
+			// 메모리에 없으면 DB 조회
+			log.Printf("[GetMyOtpInfo] userId:%s Latest version not found in memory, check DB.", en.UserId)
+			temp, err := u.repository.GetMyOtpInfoLatest(ctx, en, u.svKeyVersion)
+
+			if err != nil {
+				log.Println("[GetMyOtpInfo] GetMyOtpInfoLatest DB error:", err)
+				return nil, err
+			}
+
+			for _, info := range temp {
+				myOtpInfoOutput := output.MyOtpInfoOutput{
+					Version:    info.Version,
+					KeyType:    info.KeyType,
+					Key:        info.Key,
+					OtpRegDate: info.OtpRegDate,
+				}
+				result = append(result, myOtpInfoOutput)
+
+				temp := entity.MakeOtpKeyRegistEntity(en.UserId, en.Uuid, "", "")
+
+				temp.ChatOtpKey = info.Key
+				temp.NoteOtpKey = info.Key
+				temp.OtpRegDate = info.OtpRegDate
+
+				u.otpStorage.SaveOtpKeyStorage(ctx, temp, u.svKeyVersion, info.KeyType)
+			}
+
+		} else {
+
+			noteKey := output.MyOtpInfoOutput{
+				Version:    u.svKeyVersion,
+				KeyType:    consts.NOTE,
+				Key:        noKey,
+				OtpRegDate: date,
+			}
+
+			chatKey := output.MyOtpInfoOutput{
+				Version:    u.svKeyVersion,
+				KeyType:    consts.CHAT,
+				Key:        chKey,
+				OtpRegDate: date,
+			}
+
+			result = append(result, noteKey, chatKey)
+
+		}
+	} else if en.VersionType == consts.VERSION_TYPE_SPECIFIC {
+		// 특정 버전 - DB 조회 TODO
+
+	} else if en.VersionType == consts.VERSION_TYPE_ALL {
+		// 전체 버전 - DB 조회 TODO
+
+	}
+	return result, nil
 }

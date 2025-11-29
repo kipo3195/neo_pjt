@@ -2,6 +2,9 @@ package consts
 
 import "errors"
 
+// db
+var ErrDBresultNotFound = errors.New("db result not found")
+
 // token
 var ErrTokenParsing = errors.New("token parsing failed")
 var ErrTokenExpired = errors.New("token has expired")

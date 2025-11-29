@@ -36,7 +36,7 @@ func (r *NoteHandler) SendNote(c *gin.Context) {
 	var req note.SendNoteRequest
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_104, commonConsts.E_104_MSG)
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 		return
 	}
 

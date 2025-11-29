@@ -11,9 +11,9 @@ type OTPKeyRegistEntity struct {
 	SvKeyVersion string
 }
 
-func MakeOtpKeyRegistEntity(id, uuid, chKey, noKey string) *OTPKeyRegistEntity {
+func MakeOtpKeyRegistEntity(id, uuid, chKey, noKey string) OTPKeyRegistEntity {
 
-	return &OTPKeyRegistEntity{
+	return OTPKeyRegistEntity{
 		Id:    id,
 		Uuid:  uuid,
 		ChKey: chKey,

@@ -67,4 +67,8 @@ func (r *messageRouter) SetNoteRoutes(handler *handler.NoteHandler) {
 func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 	server := r.parent.Group("/server/v1/otp")
 	server.POST("/regist", handler.OtpKeyRegist)
+
+	client := r.parent.Group("/client/v1/otp")
+	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+	client.POST("/my", handler.GetMyOtpInfo)
 }
