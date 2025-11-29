@@ -1,5 +1,6 @@
 package chatService
 
 type SendChatResponse struct {
-	LineKey string `json:"lineKey"`
+	ChatRoom ChatRoomData `json:"chatRoomData"`
+	ChatLine ChatLineData `json:"chatLineData"`
 }

@@ -36,7 +36,6 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 
 	// 라인키 조회
 	lineKey := r.svc.LineKey.GetLineKey(ctx)
-
 	var req chatService.SendChatRequest
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
@@ -45,20 +44,33 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	// Message Broker에 publish
-	input := adapter.MakeSendChatInput(sendUserHash, lineKey, req.Contents, req.RecvUserHash)
-	err := r.svc.Chat.SendChat(ctx, input)
+	input := adapter.MakeSendChatInput(sendUserHash, req.EventType, lineKey, req.ChatRoom, req.ChatLine)
+	// err := r.svc.Chat.SendChat(ctx, input)
 
-	if err != nil {
-		if err == consts.ErrPublishToMessageBrokerError {
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F001, consts.MESSAGE_F001_MSG)
-		} else {
-			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
-		}
-		return
+	// if err != nil {
+	// 	if err == consts.ErrPublishToMessageBrokerError {
+	// 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F001, consts.MESSAGE_F001_MSG)
+	// 	} else {
+	// 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+	// 	}
+	// 	return
+	// }
+
+	chatRoom := chatService.ChatRoomData{
+		RoomKey:  input.ChatRoom.RoomKey,
+		RoomType: input.ChatRoom.RoomType,
+	}
+
+	chatLine := chatService.ChatLineData{
+		SendUserHash: sendUserHash,
+		LineKey:      lineKey,
+		Contents:     input.ChatLine.Contents,
+		EventType:    input.ChatLine.EventType,
 	}
 
 	res := chatService.SendChatResponse{
-		LineKey: lineKey,
+		ChatRoom: chatRoom,
+		ChatLine: chatLine,
 	}
 	response.SendSuccess(c, res)
 }
