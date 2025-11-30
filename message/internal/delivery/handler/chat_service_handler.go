@@ -45,16 +45,16 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 
 	// Message Broker에 publish
 	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine)
-	// err := r.svc.Chat.SendChat(ctx, input)
+	err := r.svc.Chat.SendChat(ctx, input)
 
-	// if err != nil {
-	// 	if err == consts.ErrPublishToMessageBrokerError {
-	// 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F001, consts.MESSAGE_F001_MSG)
-	// 	} else {
-	// 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
-	// 	}
-	// 	return
-	// }
+	if err != nil {
+		if err == consts.ErrPublishToMessageBrokerError {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F001, consts.MESSAGE_F001_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+		return
+	}
 
 	chatRoom := chatService.ChatRoomData{
 		RoomKey:  input.ChatRoom.RoomKey,
@@ -62,7 +62,7 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	chatLine := chatService.ChatLineData{
-		LineKey:      lineKey,
+		LineKey:      input.ChatLine.LineKey,
 		SendUserHash: input.ChatLine.SendUserHash,
 		Cmd:          input.ChatLine.Cmd,
 		Contents:     input.ChatLine.Contents,

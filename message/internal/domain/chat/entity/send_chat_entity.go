@@ -1,20 +1,18 @@
 package entity
 
 type SendChatEntity struct {
-	Type         string   `json:"type"`
-	SendUserHash string   `json:"sendUserHash"`
-	Contents     string   `json:"contents"`
-	LineKey      string   `json:"lineKey"`
-	RecvUserHash []string `json:"recvUserHash"`
+	EventType      string
+	ChatSession    string
+	ChatLineEntity ChatLineEntity
+	ChatRoomEntity ChatRoomEntity
 }
 
-func MakeSendChatEntity(t string, sendUserHash string, contents string, linekey string, recvUserHash []string) SendChatEntity {
+func MakeSendChatEntity(eventType string, chatSession string, chatLineEntity ChatLineEntity, chatRoomEntity ChatRoomEntity) SendChatEntity {
 
 	return SendChatEntity{
-		Type:         t,
-		SendUserHash: sendUserHash,
-		Contents:     contents,
-		LineKey:      linekey,
-		RecvUserHash: recvUserHash,
+		EventType:      eventType,
+		ChatSession:    chatSession,
+		ChatLineEntity: chatLineEntity,
+		ChatRoomEntity: chatRoomEntity,
 	}
 }

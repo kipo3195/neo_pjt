@@ -34,6 +34,7 @@ func InitServer() *http.Server {
 
 	// ---- Storage Init -----
 	otpStorage := storage.NewOtpStorage()
+	chatRoomStorage := storage.NewChatRoomStorage()
 	// ---- Data Loader -----
 
 	//dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage))
@@ -57,7 +58,10 @@ func InitServer() *http.Server {
 	otpModule := di.InitOtpModule(db, otpStorage)
 	router.SetOtpRoutes(otpModule.Handler)
 
-	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase)
+	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage)
+	router.SetChatRoomRoutes(chatRoomModule.Handler)
+
+	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase, chatRoomModule.Useacse)
 	router.SetChatServiceRoutes(chatServiceModule)
 
 	return &http.Server{
