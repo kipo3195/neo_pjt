@@ -16,7 +16,7 @@ type lineKeyUsecase struct {
 }
 
 type LineKeyUsecase interface {
-	GetLineKey(ctx context.Context) string
+	GetLineKey(ctx context.Context) (string, string)
 }
 
 func NewLineKeyUsecase(repository repository.LineKeyRepository, ulidGen *util.ULIDGenerator) LineKeyUsecase {
@@ -26,13 +26,15 @@ func NewLineKeyUsecase(repository repository.LineKeyRepository, ulidGen *util.UL
 	}
 }
 
-func (u *lineKeyUsecase) GetLineKey(ctx context.Context) string {
+func (u *lineKeyUsecase) GetLineKey(ctx context.Context) (string, string) {
 
 	lineKey := u.ulidGen.New()
 	uid, _ := ulid.Parse(lineKey)
 
-	log.Println("발급된 라인키 : ", lineKey)
-	log.Printf(" 발급된 시간: %v\n", time.UnixMilli(int64(uid.Time())))
+	t := time.UnixMilli(int64(uid.Time())).Format("2006-01-02 15:04:05.000")
 
-	return lineKey
+	log.Println("발급된 라인키 : ", lineKey)
+	log.Printf(" 발급된 시간: %v\n", t)
+
+	return lineKey, t
 }

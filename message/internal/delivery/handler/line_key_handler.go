@@ -22,7 +22,7 @@ func (h *LineKeyHandler) GetLineKey(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	temp := h.usecase.GetLineKey(ctx)
+	temp, _ := h.usecase.GetLineKey(ctx)
 
 	res := lineKey.GetLineKeyResponse{
 		LineKey: temp,

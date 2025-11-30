@@ -34,17 +34,17 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		return
 	}
 
-	// 라인키 조회
-	lineKey := r.svc.LineKey.GetLineKey(ctx)
 	var req chatService.SendChatRequest
-
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
 		return
 	}
 
+	// 라인키 생성
+	lineKey, sendDate := r.svc.LineKey.GetLineKey(ctx)
+
 	// Message Broker에 publish
-	input := adapter.MakeSendChatInput(sendUserHash, req.EventType, lineKey, req.ChatRoom, req.ChatLine)
+	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine)
 	// err := r.svc.Chat.SendChat(ctx, input)
 
 	// if err != nil {
@@ -62,15 +62,18 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	chatLine := chatService.ChatLineData{
-		SendUserHash: sendUserHash,
 		LineKey:      lineKey,
+		SendUserHash: input.ChatLine.SendUserHash,
+		Cmd:          input.ChatLine.Cmd,
 		Contents:     input.ChatLine.Contents,
-		EventType:    input.ChatLine.EventType,
+		SendDate:     input.ChatLine.SendDate,
 	}
 
 	res := chatService.SendChatResponse{
-		ChatRoom: chatRoom,
-		ChatLine: chatLine,
+		ChatRoom:    chatRoom,
+		ChatLine:    chatLine,
+		EventType:   input.EventType,
+		ChatSession: input.ChatSession,
 	}
 	response.SendSuccess(c, res)
 }

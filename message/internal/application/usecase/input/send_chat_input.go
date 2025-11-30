@@ -1,7 +1,8 @@
 package input
 
 type SendChatInput struct {
-	SendUserHash string
-	ChatRoom     ChatRoomInput
-	ChatLine     ChatLineInput
+	ChatRoom    ChatRoomInput
+	ChatLine    ChatLineInput
+	EventType   string
+	ChatSession string
 }

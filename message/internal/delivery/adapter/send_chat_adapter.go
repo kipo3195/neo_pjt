@@ -5,7 +5,7 @@ import (
 	"message/internal/delivery/dto/chatService"
 )
 
-func MakeSendChatInput(sendUserHash string, eventType string, lineKey string, chatRoom chatService.ChatRoomData, chatLine chatService.ChatLineData) input.SendChatInput {
+func MakeSendChatInput(sendUserHash string, lineKey string, sendDate string, eventType string, chatSession string, chatRoom chatService.ChatRoomData, chatLine chatService.ChatLineData) input.SendChatInput {
 
 	room := input.ChatRoomInput{
 		RoomKey:  chatRoom.RoomKey,
@@ -14,13 +14,16 @@ func MakeSendChatInput(sendUserHash string, eventType string, lineKey string, ch
 
 	line := input.ChatLineInput{
 		SendUserHash: sendUserHash,
-		EventType:    eventType,
 		LineKey:      lineKey,
 		Contents:     chatLine.Contents,
+		Cmd:          chatLine.Cmd,
+		SendDate:     sendDate,
 	}
 
 	return input.SendChatInput{
-		ChatRoom: room,
-		ChatLine: line,
+		ChatRoom:    room,
+		ChatLine:    line,
+		ChatSession: chatSession,
+		EventType:   eventType,
 	}
 }

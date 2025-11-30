@@ -4,5 +4,6 @@ type ChatLineData struct {
 	Contents     string `json:"contents"`
 	LineKey      string `json:"lineKey"`
 	SendUserHash string `json:"sendUserHash"`
-	EventType    string `json:"eventType"`
+	Cmd          int    `json:"cmd"`
+	SendDate     string `json:"sendDate"`
 }
