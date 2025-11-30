@@ -2,12 +2,11 @@ package adapter
 
 import "notificator/internal/application/usecase/input"
 
-func MakeChatMessageInput(t string, sendUserhash string, contents string, lineKey string, recvUserHash []string) input.ChatMessageInput {
+func MakeChatMessageInput(eventType string, chatSession string, roomData input.ChatRoomDataInput, lineData input.ChatLineDataInput) input.ChatMessageInput {
 	return input.ChatMessageInput{
-		Type:         t,
-		SendUserHash: sendUserhash,
-		Contents:     contents,
-		LineKey:      lineKey,
-		RecvUserHash: recvUserHash,
+		EventType:    eventType,
+		ChatSession:  chatSession,
+		ChatRoomData: roomData,
+		ChatLineData: lineData,
 	}
 }

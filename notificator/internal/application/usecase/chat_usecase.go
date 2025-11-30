@@ -45,21 +45,29 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 	// 수신자 Hash 정보를 통해 websocket 객체를 storage에서 찾은 다음,
 	// 해당 websocket에 write
 
-	en := entity.MakeRecvChatMessageEntity(in.Type, in.LineKey, in.Contents, in.SendUserHash)
+	chatLineEntity := entity.MakeChatLineEntity(in.ChatLineData.Cmd, in.ChatLineData.Contents, in.ChatLineData.LineKey, in.ChatLineData.SendUserHash, in.ChatLineData.SendDate)
+	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomKey, in.ChatRoomData.RoomType)
+	en := entity.MakeRecvChatMessageEntity(in.EventType, in.ChatSession, chatRoomEntity, chatLineEntity)
 
-	for i := 0; i < len(in.RecvUserHash); i++ {
+	// 어느 영역에서 처리해야할까? 고민..
+
+	// 이후 메모리에서 가져올 수 있도록 처리 필수
+	RecvUserHash := make([]string, 0)
+	RecvUserHash = append(RecvUserHash, "nauryhash", "kipo3195", "cyh8858hash")
+
+	for i := 0; i < len(RecvUserHash); i++ {
 
 		// 수신자의 웹소켓 connection 객체 조회
-		conn := u.chatUserStorage.GetChatConnect(in.RecvUserHash[i])
+		conn := u.chatUserStorage.GetChatConnect(RecvUserHash[i])
 
 		if conn == nil {
 			continue
 		}
 
 		if err := conn.WriteJSON(en); err != nil {
-			log.Printf("websocket write error to %s: %v", in.RecvUserHash[i], err)
+			log.Printf("websocket write error to %s: %v", RecvUserHash[i], err)
 			conn.Close()
-			u.chatUserStorage.RemoveChatConnect(in.RecvUserHash[i])
+			u.chatUserStorage.RemoveChatConnect(RecvUserHash[i])
 		}
 	}
 

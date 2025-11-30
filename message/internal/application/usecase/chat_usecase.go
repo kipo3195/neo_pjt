@@ -35,6 +35,8 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 
 	entity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity)
 
+	log.Println("[SendChat] send entity : ", entity)
+
 	data, err := json.Marshal(entity) // 🔹 struct → []byte(JSON)
 	if err != nil {
 		log.Fatal(err)

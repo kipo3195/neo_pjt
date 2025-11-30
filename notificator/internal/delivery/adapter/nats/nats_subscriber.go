@@ -59,6 +59,7 @@ func (s *NatsSubscriber) AddSubscribe(kind string) error {
 				continue
 			}
 
+			// 수신 데이터 로깅
 			log.Println("[Notificator] kind : "+kind+" Received message:", string(msg.Data))
 
 			switch kind {

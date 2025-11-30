@@ -1,11 +1,11 @@
 package entity
 
 type ChatLineEntity struct {
-	Cmd          int    `json:"cmd"`
-	SendUserHash string `json:"sendUserHash"`
-	LineKey      string `json:"lineKey"`
-	Contents     string `json:"contents"`
-	SendDate     string `json:"sendDate"`
+	Cmd          int
+	Contents     string
+	LineKey      string
+	SendUserHash string
+	SendDate     string
 }
 
 func MakeChatLineEntity(cmd int, contents string, lineKey string, sendUserHash string, sendDate string) ChatLineEntity {
@@ -16,4 +16,5 @@ func MakeChatLineEntity(cmd int, contents string, lineKey string, sendUserHash s
 		SendUserHash: sendUserHash,
 		SendDate:     sendDate,
 	}
+
 }

@@ -1,9 +1,8 @@
 package input
 
 type ChatMessageInput struct {
-	Type         string   `json:"type"`
-	SendUserHash string   `json:"sendUserHash"`
-	Contents     string   `json:"contents"`
-	LineKey      string   `json:"lineKey"`
-	RecvUserHash []string `json:"recvUserHash"`
+	EventType    string            `json:"eventType"`
+	ChatSession  string            `json:"chatSession"`
+	ChatRoomData ChatRoomDataInput `json:"chatRoomData"`
+	ChatLineData ChatLineDataInput `json:"chatLineData"`
 }

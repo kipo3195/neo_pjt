@@ -1,8 +1,8 @@
 package entity
 
 type ChatRoomEntity struct {
-	RoomKey  string
-	RoomType string
+	RoomKey  string `json:"roomKey"`
+	RoomType string `json:"roomType"`
 }
 
 func MakeChatRoomEntity(roomKey string, roomType string) ChatRoomEntity {
