@@ -30,8 +30,11 @@ func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn) 
 
 func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) error {
 
+	// 채팅 라인 entity
 	chatLineEntity := entity.MakeChatLineEntity(in.ChatLine.Cmd, in.ChatLine.Contents, in.ChatLine.LineKey, in.ChatLine.SendUserHash, in.ChatLine.SendDate)
-	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType)
+
+	// 채팅 룸 entity
+	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType, in.ChatRoom.SecretFlag)
 
 	entity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity)
 

@@ -8,8 +8,9 @@ import (
 func MakeSendChatInput(sendUserHash string, lineKey string, sendDate string, eventType string, chatSession string, chatRoom chatService.ChatRoomData, chatLine chatService.ChatLineData) input.SendChatInput {
 
 	room := input.ChatRoomInput{
-		RoomKey:  chatRoom.RoomKey,
-		RoomType: chatRoom.RoomType,
+		RoomKey:    chatRoom.RoomKey,
+		RoomType:   chatRoom.RoomType,
+		SecretFlag: chatRoom.SecretFlag,
 	}
 
 	line := input.ChatLineInput{

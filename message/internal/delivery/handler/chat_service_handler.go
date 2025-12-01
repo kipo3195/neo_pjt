@@ -57,8 +57,9 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	chatRoom := chatService.ChatRoomData{
-		RoomKey:  input.ChatRoom.RoomKey,
-		RoomType: input.ChatRoom.RoomType,
+		RoomKey:    input.ChatRoom.RoomKey,
+		RoomType:   input.ChatRoom.RoomType,
+		SecretFlag: input.ChatRoom.SecretFlag,
 	}
 
 	chatLine := chatService.ChatLineData{

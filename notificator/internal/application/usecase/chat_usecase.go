@@ -46,7 +46,7 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 	// 해당 websocket에 write
 
 	chatLineEntity := entity.MakeChatLineEntity(in.ChatLineData.Cmd, in.ChatLineData.Contents, in.ChatLineData.LineKey, in.ChatLineData.SendUserHash, in.ChatLineData.SendDate)
-	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomKey, in.ChatRoomData.RoomType)
+	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomKey, in.ChatRoomData.RoomType, in.ChatRoomData.SecretFlag)
 	en := entity.MakeRecvChatMessageEntity(in.EventType, in.ChatSession, chatRoomEntity, chatLineEntity)
 
 	// 어느 영역에서 처리해야할까? 고민..

@@ -1,6 +1,7 @@
 package input
 
 type ChatRoomInput struct {
-	RoomKey  string
-	RoomType string
+	RoomKey    string
+	RoomType   string
+	SecretFlag bool
 }
