@@ -1,0 +1,8 @@
+package input
+
+type SendChatInput struct {
+	EventType    string            `json:"eventType"`
+	ChatSession  string            `json:"chatSession"`
+	ChatRoomData ChatRoomDataInput `json:"chatRoomData"`
+	ChatLineData ChatLineDataInput `json:"chatLineData"`
+}

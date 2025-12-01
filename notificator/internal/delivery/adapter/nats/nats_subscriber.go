@@ -6,20 +6,22 @@ import (
 	"log"
 	"notificator/internal/application/usecase"
 	"notificator/internal/application/usecase/input"
+	"notificator/internal/delivery/adapter"
 	"time"
 
 	"github.com/nats-io/nats.go"
 )
 
 type NatsSubscriber struct {
-	conn        *nats.Conn
-	chatUsecase usecase.ChatUsecase
-	noteUsecase usecase.NoteUsecase
-	handler     func(data []byte) error
+	conn                *nats.Conn
+	chatUsecase         usecase.ChatUsecase
+	noteUsecase         usecase.NoteUsecase
+	socketSenderUsecase usecase.SocketSenderUsecase
+	handler             func(data []byte) error
 }
 
-func NewNatsSubscriber(nc *nats.Conn, chatUsecase usecase.ChatUsecase, noteUsecase usecase.NoteUsecase) *NatsSubscriber {
-	return &NatsSubscriber{conn: nc, chatUsecase: chatUsecase, noteUsecase: noteUsecase}
+func NewNatsSubscriber(nc *nats.Conn, chatUsecase usecase.ChatUsecase, noteUsecase usecase.NoteUsecase, socketSendUsecase usecase.SocketSenderUsecase) *NatsSubscriber {
+	return &NatsSubscriber{conn: nc, chatUsecase: chatUsecase, noteUsecase: noteUsecase, socketSenderUsecase: socketSendUsecase}
 }
 
 // 구독 후 메시지 수신
@@ -70,8 +72,13 @@ func (s *NatsSubscriber) AddSubscribe(kind string) error {
 					log.Printf("invalid message: %v", err)
 					continue
 				}
+
 				// chat 메시지 -> 클라이언트
-				s.chatUsecase.RecvChatMessage(context.Background(), input)
+				ctx := context.Background()
+				output := s.chatUsecase.RecvChatMessage(ctx, input)
+				in := adapter.MakeSendChatInput(output.EventType, output.ChatSession, output.ChatRoomData, output.ChatLineData)
+				s.socketSenderUsecase.SendChat(ctx, in)
+
 			case "note.message":
 				var input input.NoteMessageInput
 				if err := json.Unmarshal(msg.Data, &input); err != nil {

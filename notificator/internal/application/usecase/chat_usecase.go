@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"notificator/internal/application/usecase/input"
+	"notificator/internal/application/usecase/output"
+	"notificator/internal/delivery/adapter"
 
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/infrastructure/storage"
@@ -22,7 +24,7 @@ type chatUsecase struct {
 
 type ChatUsecase interface {
 	SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn)
-	RecvChatMessage(ctx context.Context, in input.ChatMessageInput)
+	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
 }
 
 func NewChatUsecase(chatUserStorage storage.ChatUserStorage) ChatUsecase {
@@ -39,36 +41,16 @@ func (u *chatUsecase) SubscribeChat(in input.ChatConnectInput, conn *websocket.C
 	u.chatUserStorage.PutChatConnect(entity.UserHash, conn)
 }
 
-func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageInput) {
+// message broker가 아니더라도, rest api, rabbit mq를 통해 전달받은 데이터도 가공 처리 할 수 있다!
+// 이게바로 클린 아키텍쳐!
+// Input의 형태만 유지하면됨.
+func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput {
 	log.Println("[RecvChatMessage] recv data : ", in)
-
-	// 수신자 Hash 정보를 통해 websocket 객체를 storage에서 찾은 다음,
-	// 해당 websocket에 write
 
 	chatLineEntity := entity.MakeChatLineEntity(in.ChatLineData.Cmd, in.ChatLineData.Contents, in.ChatLineData.LineKey, in.ChatLineData.SendUserHash, in.ChatLineData.SendDate)
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomKey, in.ChatRoomData.RoomType, in.ChatRoomData.SecretFlag)
 	en := entity.MakeRecvChatMessageEntity(in.EventType, in.ChatSession, chatRoomEntity, chatLineEntity)
 
-	// 어느 영역에서 처리해야할까? 고민..
-
-	// 이후 메모리에서 가져올 수 있도록 처리 필수
-	RecvUserHash := make([]string, 0)
-	RecvUserHash = append(RecvUserHash, "nauryhash", "kipo3195", "cyh8858hash")
-
-	for i := 0; i < len(RecvUserHash); i++ {
-
-		// 수신자의 웹소켓 connection 객체 조회
-		conn := u.chatUserStorage.GetChatConnect(RecvUserHash[i])
-
-		if conn == nil {
-			continue
-		}
-
-		if err := conn.WriteJSON(en); err != nil {
-			log.Printf("websocket write error to %s: %v", RecvUserHash[i], err)
-			conn.Close()
-			u.chatUserStorage.RemoveChatConnect(RecvUserHash[i])
-		}
-	}
+	return adapter.MakeChatMessageOutput(en)
 
 }

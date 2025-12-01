@@ -7,6 +7,7 @@ import (
 	router "notificator/internal/delivery/router"
 	"notificator/internal/di"
 	"notificator/internal/infrastructure/config"
+	"notificator/internal/infrastructure/sender"
 	"notificator/internal/infrastructure/storage"
 )
 
@@ -35,6 +36,9 @@ func InitServer() *http.Server {
 	chatUserStorage := storage.NewChatUserStorage()
 	noteUserStorage := storage.NewNoteUserStorage()
 
+	// ---- Websocket sender Init
+	webSocketSender := sender.NewWebSocketSender()
+
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
@@ -45,6 +49,8 @@ func InitServer() *http.Server {
 
 	noteModule := di.InitNoteModule(db, noteUserStorage)
 
+	socketSendModule := di.InitSocketSendModule(webSocketSender, chatUserStorage)
+
 	// ---- Service Handler Init ----
 	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase)
 	router.SetNotificatorServiceRoutes(notificatorServiceModule)
@@ -54,7 +60,7 @@ func InitServer() *http.Server {
 
 	// ---- Message Broker Subscribe ----
 	conn := mb
-	sub := natsBrocker.NewNatsSubscriber(conn, chatModule.Usecase, noteModule.Usecase)
+	sub := natsBrocker.NewNatsSubscriber(conn, chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase)
 
 	// nats subscribe - 단순 for문 처리시 블로킹, 별도의 go 루틴으로 분리 필수.
 	sub.AddSubscribe("chat.message")
