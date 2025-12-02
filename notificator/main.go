@@ -35,6 +35,7 @@ func InitServer() *http.Server {
 	// ---- Storage Init -----
 	chatUserStorage := storage.NewChatUserStorage()
 	noteUserStorage := storage.NewNoteUserStorage()
+	sendConnectionStorage := storage.NewSendConnectionStorage()
 
 	// ---- Websocket sender Init
 	webSocketSender := sender.NewWebSocketSender()
@@ -49,10 +50,10 @@ func InitServer() *http.Server {
 
 	noteModule := di.InitNoteModule(db, noteUserStorage)
 
-	socketSendModule := di.InitSocketSendModule(webSocketSender, chatUserStorage)
+	socketSendModule := di.InitSocketSendModule(webSocketSender, sendConnectionStorage)
 
 	// ---- Service Handler Init ----
-	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase)
+	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase)
 	router.SetNotificatorServiceRoutes(notificatorServiceModule)
 
 	// ---- Message Broker init ----

@@ -35,10 +35,10 @@ func NewChatUsecase(chatUserStorage storage.ChatUserStorage) ChatUsecase {
 
 func (u *chatUsecase) SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn) {
 
-	entity := entity.MakeSubscribeChatEntity(in.UserHash)
+	//entity := entity.MakeSubscribeChatEntity(in.UserHash)
 
 	// 메모리에 사용자 정보 등록
-	u.chatUserStorage.PutChatConnect(entity.UserHash, conn)
+	//u.chatUserStorage.PutChatConnect(entity.UserHash, conn)
 }
 
 // message broker가 아니더라도, rest api, rabbit mq를 통해 전달받은 데이터도 가공 처리 할 수 있다!

@@ -15,7 +15,7 @@ type chatUserStorage struct {
 type ChatUserStorage interface {
 	GetChatConnect(userHash string) *websocket.Conn
 	RemoveChatConnect(userHash string)
-	PutChatConnect(userHash string, conn *websocket.Conn)
+	PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte)
 }
 
 func NewChatUserStorage() ChatUserStorage {
@@ -40,7 +40,7 @@ func (r *chatUserStorage) RemoveChatConnect(userHash string) {
 	}
 	log.Println("[RemoveChatConnect] userHash : ", userHash)
 }
-func (r *chatUserStorage) PutChatConnect(userHash string, conn *websocket.Conn) {
+func (r *chatUserStorage) PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.chatUserConnectMap[userHash] = conn

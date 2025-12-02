@@ -54,6 +54,10 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	// 연결 성공에 대한 response
 	response.SendSuccess(conn, res)
 
+	// 쓰기용 채널 생성 후 메모리 저장, 쓰기 고루틴 시작
+	go h.svc.SocketSender.SaveConnection(conn, userHash.(string))
+
+	// 읽기용
 	for {
 		// 메시지는 반복해서 수신, ReadMessage는 블로킹 함수
 		_, msg, err := conn.ReadMessage()
@@ -75,10 +79,11 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 
 		case consts.AUTH:
 
+		// 채팅, 쪽지 구독이 필요한가?
 		case consts.CHAT:
 			var input input.ChatConnectInput
 			if err := json.Unmarshal(msg, &input); err == nil {
-				h.svc.Chat.SubscribeChat(input, conn)
+				//h.svc.Chat.SubscribeChat(input, conn)
 				log.Println("Notificator service chat subscribe success.")
 			}
 
