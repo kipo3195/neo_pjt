@@ -50,10 +50,12 @@ func InitServer() *http.Server {
 
 	noteModule := di.InitNoteModule(db, noteUserStorage)
 
+	loginModule := di.InitLoginModule(db)
+
 	socketSendModule := di.InitSocketSendModule(webSocketSender, sendConnectionStorage)
 
 	// ---- Service Handler Init ----
-	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase)
+	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase, loginModule.Usecase)
 	router.SetNotificatorServiceRoutes(notificatorServiceModule)
 
 	// ---- Message Broker init ----
@@ -71,21 +73,4 @@ func InitServer() *http.Server {
 		Addr:    ":8082",
 		Handler: router.R,
 	}
-	// if db != nil && mb != nil {
-
-	// 	chatRepo := repository.NewChatRepository(db)
-	// 	chatUC := usecase.NewChatUsecase(chatRepo, mb)
-
-	// 	authRepo := repository.NewAuthRepository(db)
-	// 	authUC := usecase.NewAuthUsecase(authRepo)
-
-	// 	noteRepo := repository.NewNoteRepository(db)
-	// 	noteUC := usecase.NewNoteUsecase(noteRepo)
-
-	// 	messageHandler := handler.NewMessageHandler(chatUC, authUC, noteUC, mb)
-	// 	router := usecase.SetupRoutes(messageHandler)
-
-	// } else {
-	// 	return nil
-	// }
 }

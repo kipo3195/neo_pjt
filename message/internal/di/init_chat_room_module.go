@@ -11,7 +11,7 @@ import (
 
 type chatRoomModule struct {
 	Handler *handler.ChatRoomHandler
-	Useacse usecase.ChatRoomUsecase
+	Usecase usecase.ChatRoomUsecase
 }
 
 func InitChatRoomModule(db *gorm.DB, storage storage.ChatRoomStorage) *chatRoomModule {
@@ -22,6 +22,6 @@ func InitChatRoomModule(db *gorm.DB, storage storage.ChatRoomStorage) *chatRoomM
 
 	return &chatRoomModule{
 		Handler: handler,
-		Useacse: usecase,
+		Usecase: usecase,
 	}
 }

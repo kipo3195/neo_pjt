@@ -61,7 +61,7 @@ func InitServer() *http.Server {
 	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage)
 	router.SetChatRoomRoutes(chatRoomModule.Handler)
 
-	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase, chatRoomModule.Useacse)
+	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase, chatRoomModule.Usecase)
 	router.SetChatServiceRoutes(chatServiceModule)
 
 	return &http.Server{

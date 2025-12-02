@@ -6,9 +6,9 @@ import (
 	"notificator/internal/delivery/handler"
 )
 
-func InitNotificatorServiceModule(chat usecase.ChatUsecase, note usecase.NoteUsecase, socketSender usecase.SocketSenderUsecase) *handler.NotificatorServiceHandler {
+func InitNotificatorServiceModule(chat usecase.ChatUsecase, note usecase.NoteUsecase, socketSender usecase.SocketSenderUsecase, login usecase.LoginUsecase) *handler.NotificatorServiceHandler {
 
-	service := orchestrator.NewNotificatorService(chat, note, socketSender)
+	service := orchestrator.NewNotificatorService(chat, note, socketSender, login)
 	return handler.NewNotificatorServiceHandler(service)
 
 }
