@@ -65,7 +65,6 @@ func InitServer() *http.Server {
 	conn := mb
 	sub := natsBrocker.NewNatsSubscriber(conn, chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase)
 
-	// nats subscribe - 단순 for문 처리시 블로킹, 별도의 go 루틴으로 분리 필수.
 	sub.AddSubscribe("chat.message")
 	sub.AddSubscribe("note.message")
 

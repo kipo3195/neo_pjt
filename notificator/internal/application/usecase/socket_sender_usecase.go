@@ -38,28 +38,19 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 	// 함수 종료시 세션 삭제
 	defer r.sendConnectionStorage.RemoveConnection(userHash)
 
-	for {
-		select {
-		case message, ok := <-entity.Chan:
-			if !ok {
-				// 채널이 닫혔을 경우 (서버 종료 또는 연결 정리)
-				entity.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-				// 소켓 닫혔을때
-				log.Println("[SaveConnection] close connection userHash : ", userHash)
-				return // 하지 않으면 for문 무한 루프
-			}
+	for message := range entity.Chan {
+		// 'ok' 검사가 필요 없습니다. 채널이 닫히면 for 루프는 자동으로 종료됩니다.
 
-			// 이 위치에서 conn.WriteJSON 호출 (단일 고루틴에서만 접근하므로 안전)
-			if err := entity.Conn.WriteJSON(message); err != nil {
-				// 쓰기 오류 발생 시 처리 (예: 연결 끊기)
-				log.Println("[SaveConnection] write error : userHash", userHash)
-				return
-			}
-			// case <- c.ctx.Done(): // Context 종료 신호 처리 (선택 사항)
-			// 	return
+		// 이 위치에서 conn.WriteJSON 호출 (단일 고루틴에서만 접근하므로 안전)
+		if err := entity.Conn.WriteJSON(message); err != nil {
+			// 소켓이 닫혔을때 (클라이언트에서 닫으면, err -> websocket: close sent) 채널을 통해 데이터를 수신하지만, write할때 close send가 발생하므로
+			//  고루틴 종료를 위해 break를 통해 종료 하여 루프를 빠져나가게 한다.
+			log.Printf("[SaveConnection] userHash :%s, error : %s \n", userHash, err)
+			break
 		}
 	}
 
+	// 만약 쓰기 고루틴에서 에러가 발생하여 소켓을 닫을 일이 있다면 여기서 conn을 닫는것도 방법임.
 }
 
 func (r *socketSenderUsecase) SendChat(ctx context.Context, input input.SendChatInput) {

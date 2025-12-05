@@ -54,6 +54,8 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	res := notificatorService.NotificatorConnectResponse{
 		UserHash: userHash.(string),
 	}
+
+	// 이 response가 뒤로 밀릴 가능성 있지 않을까?
 	response.SendSuccess(conn, res)
 
 	// 쓰기 (server -> client) 채널 생성 후 메모리 저장, 쓰기 고루틴 시작
@@ -64,6 +66,7 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		// 메시지는 반복해서 수신, ReadMessage는 블로킹 함수
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
+			// 클라이언트가 끊었을때 websocket: close 1000 (normal)
 			log.Println("Notificator service Read msg error:", err)
 			break
 		}
@@ -113,7 +116,6 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		}
 
 		// 연결 종료 로직 추가 필요
-
 	}
 
 	log.Println("Notificator service websocket close. ")
