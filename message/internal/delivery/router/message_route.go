@@ -76,4 +76,8 @@ func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 
 func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
 
+	client := r.parent.Group("/client/v1/chatRoom")
+	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+	client.POST("/", handler.CreateChatRoom)
+
 }

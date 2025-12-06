@@ -1,4 +1,10 @@
 package repository
 
+import (
+	"context"
+	"message/internal/domain/chatRoom/entity"
+)
+
 type ChatRoomRepository interface {
+	PutChatRoom(ctx context.Context, memberEntity []entity.CreateChatRoomMemberEntity, roomEntity entity.ChatRoomEntity) error
 }

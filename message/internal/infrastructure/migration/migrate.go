@@ -9,4 +9,5 @@ import (
 func RunAll(db *gorm.DB) {
 	repository.ServiceUsersMigrate(db)
 	repository.OtpKeyMigrate(db)
+	repository.ChatRoomMigrate(db)
 }
