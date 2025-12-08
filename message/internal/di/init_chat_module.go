@@ -4,6 +4,7 @@ import (
 	"message/internal/application/usecase"
 	"message/internal/delivery/handler"
 	"message/internal/infrastructure/repository"
+	"message/internal/infrastructure/workerPool"
 
 	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
@@ -15,8 +16,10 @@ type ChatModule struct {
 }
 
 func InitChatModule(db *gorm.DB, connector *nats.Conn) *ChatModule {
+
 	repository := repository.NewChatRepository(db)
-	usecase := usecase.NewChatUsecase(repository, connector)
+	workerPool := workerPool.NewChatWorkerPool(10)
+	usecase := usecase.NewChatUsecase(repository, connector, workerPool)
 	handler := handler.NewChatHandler(usecase)
 
 	return &ChatModule{

@@ -7,6 +7,7 @@ import (
 	"message/internal/application/usecase/input"
 	"message/internal/consts"
 	"message/internal/domain/chat/entity"
+	"message/internal/domain/chat/pool"
 	"message/internal/domain/chat/repository"
 
 	"github.com/nats-io/nats.go"
@@ -15,16 +16,20 @@ import (
 type chatUsecase struct {
 	repository repository.ChatRepository
 	connector  *nats.Conn
+	workerPool pool.ChatPool
 }
 
 type ChatUsecase interface {
 	SendChat(ctx context.Context, in input.SendChatInput) error
 }
 
-func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn) ChatUsecase {
+func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool pool.ChatPool) ChatUsecase {
+
+	// domain layer
 	return &chatUsecase{
 		repository: repository,
 		connector:  connector,
+		workerPool: workerPool,
 	}
 }
 
