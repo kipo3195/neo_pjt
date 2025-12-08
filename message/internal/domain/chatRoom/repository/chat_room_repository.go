@@ -7,4 +7,5 @@ import (
 
 type ChatRoomRepository interface {
 	PutChatRoom(ctx context.Context, memberEntity []entity.CreateChatRoomMemberEntity, roomEntity entity.ChatRoomEntity) error
+	GetChatRoomDetail(ctx context.Context, entity entity.GetChatRoomDetailEntity) ([]entity.ChatRoomDetailEntity, error)
 }
