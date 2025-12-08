@@ -1,5 +1,6 @@
 package chatRoom
 
+// 특정방 조회와 리스트 조회 공통 형식
 type ChatRoomDetail struct {
 	RoomKey     string `json:"roomKey"`
 	Title       string `json:"title"`

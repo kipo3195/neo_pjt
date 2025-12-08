@@ -21,6 +21,7 @@ type chatRoomUsecase struct {
 type ChatRoomUsecase interface {
 	CreateChatRoom(ctx context.Context, input input.CreateChatRoomInput) (string, error)
 	GetChatRoomDetail(ctx context.Context, input input.GetChatRoomDetailInput) ([]output.GetChatRoomDetailOutput, error)
+	GetChatRoomList(ctx context.Context, input input.GetChatRoomListInput) ([]output.GetChatRoomListOutput, error)
 }
 
 func NewChatRoomUsecase(repository repository.ChatRoomRepository, storage storage.ChatRoomStorage) ChatRoomUsecase {
@@ -134,6 +135,48 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 		}
 
 		detail := output.GetChatRoomDetailOutput{
+			ChatRoomDetail: temp,
+			Member:         memberSet,
+		}
+
+		result = append(result, detail)
+	}
+
+	return result, nil
+
+}
+
+func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetChatRoomListInput) ([]output.GetChatRoomListOutput, error) {
+
+	entity := entity.MakeGetChatRoomListEntity(input.ReqUserHash, input.RoomType, input.Hash, input.ReqCount, input.Filter, input.Sorting)
+
+	// filter, sorting에 따른 처리 필요
+
+	list, err := r.repository.GetChatRoomList(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]output.GetChatRoomListOutput, 0)
+	for _, r := range list {
+
+		// member 를 ','로 split하여 리스트 생성
+		memberSet := util.SplitAndMakeSet(r.Member, ",")
+
+		temp := output.ChatRoomDetail{
+			RoomKey:     r.RoomKey,
+			Title:       r.Title,
+			SecretFlag:  r.SecretFlag,
+			Secret:      r.Secret,
+			Description: r.Description,
+			State:       r.State,
+			WorksCode:   r.WorksCode,
+			CreateDate:  r.CreateDate,
+			CreateUser:  r.CreateUser,
+			Hash:        r.Hash,
+		}
+
+		detail := output.GetChatRoomListOutput{
 			ChatRoomDetail: temp,
 			Member:         memberSet,
 		}

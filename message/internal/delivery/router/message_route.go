@@ -80,6 +80,6 @@ func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
 	client.POST("/", handler.CreateChatRoom)
 	client.POST("/detail", handler.GetChatRoomDetail)
-	//client.POST("/list", handler.GetChatRoomList)
+	client.POST("/list", handler.GetChatRoomList)
 
 }

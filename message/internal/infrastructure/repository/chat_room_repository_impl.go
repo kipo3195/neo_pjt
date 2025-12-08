@@ -146,3 +146,35 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 
 	return result, err
 }
+
+func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.GetChatRoomListEntity) ([]entity.ChatRoomDetailEntity, error) {
+
+	var result []entity.ChatRoomDetailEntity
+
+	// 내가 참여중인 방에 한해서 조회 가능하도록 처리함 20251208
+	err := r.db.Raw(`
+		select 
+			AA.*,
+			'' as room_hash,
+			group_concat(DISTINCT BB.member_hash separator ',') as member 
+		from (
+			select 
+				detail.*
+			from chat_room_member as member 
+			left join chat_room as room 
+				on member.room_key = room.room_key
+			left join chat_room_detail as detail 
+				on room.room_key= detail.room_key
+			where 
+				member_hash = ? and room.room_type = ? limit ?) as AA 
+		join chat_room_member as BB on AA.room_key = BB.room_key
+		group by AA.room_key`, en.ReqUserHash, en.RoomType, en.ReqCount).Scan(&result).Error
+
+	if err != nil {
+		log.Println("[GetChatRoomList] DB error :", err)
+		return nil, err
+	}
+
+	return result, err
+
+}
