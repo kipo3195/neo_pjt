@@ -10,6 +10,7 @@ import (
 	"message/internal/domain/chat/job"
 	"message/internal/domain/chat/repository"
 	"message/internal/infrastructure/workerPool"
+	"time"
 
 	"github.com/nats-io/nats.go"
 )
@@ -59,9 +60,15 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	}
 
 	// 🎯 Job 생성 시 상위로부터 받은 Context를 Job에 담습니다.
+	jobCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	job := &job.ChatLineJob{
 		SendChatEntity: entity,
-		Ctx:            ctx, // Context 전달
+		Ctx:            jobCtx,
+		Cancel:         cancel,
+
+		// Context 전달 ※ http의 context 전달시 context canceled 발생.
+		// 백그라운드 처리이므로 실제 http 요청에 대한 context가 아니기 때문
+		// 그러므로 새로운 context 생성하여 전달하고 job의 호출이 끝난 시점에 cancel 호출로 수명 주기 관리
 	}
 
 	u.workerPool.AddTask(job)

@@ -40,4 +40,5 @@ func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity
 	} else {
 		log.Println("[SaveChatLine] - Insert Success")
 	}
+
 }
