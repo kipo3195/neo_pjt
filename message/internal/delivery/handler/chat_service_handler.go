@@ -76,5 +76,6 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		EventType:   input.EventType,
 		ChatSession: input.ChatSession,
 	}
+
 	response.SendSuccess(c, res)
 }

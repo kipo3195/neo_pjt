@@ -7,8 +7,9 @@ import (
 	"message/internal/application/usecase/input"
 	"message/internal/consts"
 	"message/internal/domain/chat/entity"
-	"message/internal/domain/chat/pool"
+	"message/internal/domain/chat/job"
 	"message/internal/domain/chat/repository"
+	"message/internal/infrastructure/workerPool"
 
 	"github.com/nats-io/nats.go"
 )
@@ -16,20 +17,19 @@ import (
 type chatUsecase struct {
 	repository repository.ChatRepository
 	connector  *nats.Conn
-	workerPool pool.ChatPool
+	workerPool workerPool.ChatWorkerPool
 }
 
 type ChatUsecase interface {
 	SendChat(ctx context.Context, in input.SendChatInput) error
 }
 
-func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool pool.ChatPool) ChatUsecase {
-
+func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool) ChatUsecase {
 	// domain layer
 	return &chatUsecase{
 		repository: repository,
 		connector:  connector,
-		workerPool: workerPool,
+		workerPool: workerPool, // Usecase는 ChatWorkerPool이라는 인터페이스에 의존하고, 이 인터페이스의 구현체가 chatWorkerPool 구조체라는 사실을 전혀 알지 못합니다.
 	}
 }
 
@@ -57,6 +57,14 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 		log.Fatal("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError
 	}
+
+	// 🎯 Job 생성 시 상위로부터 받은 Context를 Job에 담습니다.
+	job := &job.ChatLineJob{
+		SendChatEntity: entity,
+		Ctx:            ctx, // Context 전달
+	}
+
+	u.workerPool.AddTask(job)
 
 	return nil
 }

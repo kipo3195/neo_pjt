@@ -11,19 +11,24 @@ import (
 )
 
 type ChatModule struct {
-	Handler *handler.ChatHandler
-	Usecase usecase.ChatUsecase
+	Handler    *handler.ChatHandler
+	Usecase    usecase.ChatUsecase
+	WorkerPool workerPool.ChatWorkerPool
 }
 
 func InitChatModule(db *gorm.DB, connector *nats.Conn) *ChatModule {
 
 	repository := repository.NewChatRepository(db)
-	workerPool := workerPool.NewChatWorkerPool(10)
+
+	// 이 영역에서 구현체를 생성하고 인터페이스 타입으로 Usecase에 주입합니다.
+	workerPool := workerPool.NewChatWorkerPool(10, repository)
+	workerPool.Init()
 	usecase := usecase.NewChatUsecase(repository, connector, workerPool)
 	handler := handler.NewChatHandler(usecase)
 
 	return &ChatModule{
-		Handler: handler,
-		Usecase: usecase,
+		Handler:    handler,
+		Usecase:    usecase,
+		WorkerPool: workerPool,
 	}
 }
