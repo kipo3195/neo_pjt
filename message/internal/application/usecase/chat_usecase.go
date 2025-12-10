@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"message/internal/application/usecase/input"
 	"message/internal/consts"
+	"message/internal/delivery/util"
 	"message/internal/domain/chat/entity"
 	"message/internal/domain/chat/job"
 	"message/internal/domain/chat/repository"
@@ -37,41 +37,47 @@ func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, 
 func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) error {
 
 	// 채팅 라인 entity
-	chatLineEntity := entity.MakeChatLineEntity(in.ChatLine.Cmd, in.ChatLine.Contents, in.ChatLine.LineKey, in.ChatLine.SendUserHash, in.ChatLine.SendDate)
+	chatLineEntity := entity.MakeChatLineEntity(in.ChatLine.Cmd, in.ChatLine.Contents, in.ChatLine.LineKey, in.ChatLine.TargetLineKey, in.ChatLine.SendUserHash, in.ChatLine.SendDate)
 
 	// 채팅 룸 entity
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType, in.ChatRoom.SecretFlag)
 
+	// 채팅 전송용 entity
 	entity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity)
 
 	log.Println("[SendChat] send entity : ", entity)
 
-	data, err := json.Marshal(entity) // 🔹 struct → []byte(JSON)
+	data, err := util.EntityMarshal(entity)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	// 채팅 발송
+	/* 채팅 발송 Message Broker */
 	err = u.connector.Publish("chat.message", data)
 	if err != nil {
 		log.Fatal("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError
 	}
 
-	// 🎯 Job 생성 시 상위로부터 받은 Context를 Job에 담습니다.
+	/* DB 저장 Task */
+	err = addTaskChatLineJob(entity, u.workerPool)
+	return nil
+}
+
+func addTaskChatLineJob(entity entity.SendChatEntity, workerPool workerPool.ChatWorkerPool) error {
+
+	// Context 전달
+	// ※ http의 context 전달시 job 에서 repository 호출하는 DB 처리 프로세스에서 context canceled 발생.
+	// 백그라운드 처리이므로 실제 http 요청에 대한 context가 아니기 때문
+	// 그러므로 새로운 context 생성하여 전달하고 job의 호출이 끝난 시점에 cancel 호출로 수명 주기 관리
+	// 이후 다른 비동기 처리가 추가될때 context 를 밖에서 생성하고 각각의 task에 주입하므로써 하나의 context로 모든 task를 아우를수 있는지 점검해보기
 	jobCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	job := &job.ChatLineJob{
 		SendChatEntity: entity,
 		Ctx:            jobCtx,
 		Cancel:         cancel,
-
-		// Context 전달 ※ http의 context 전달시 context canceled 발생.
-		// 백그라운드 처리이므로 실제 http 요청에 대한 context가 아니기 때문
-		// 그러므로 새로운 context 생성하여 전달하고 job의 호출이 끝난 시점에 cancel 호출로 수명 주기 관리
 	}
-
-	u.workerPool.AddTask(job)
-
+	workerPool.AddTask(job)
 	return nil
 }

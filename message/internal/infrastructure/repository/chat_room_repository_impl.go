@@ -124,16 +124,18 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 	err := r.db.Raw(`
 		select 
 			AA.*,
-			'' as room_hash,
 			group_concat(DISTINCT BB.member_hash separator ',') as member 
 		from (
 			select 
-				detail.*
+				detail.*,
+				line.room_hash
 			from chat_room_member as member 
 			left join chat_room as room 
 				on member.room_key = room.room_key
 			left join chat_room_detail as detail 
 				on room.room_key= detail.room_key
+			left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line 
+				on room.room_key = line.room_key
 			where 
 				member.room_key IN (?) and (member_hash = ? and room.room_type = ?)) as AA 
 		join chat_room_member as BB on AA.room_key = BB.room_key
@@ -155,16 +157,18 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 	err := r.db.Raw(`
 		select 
 			AA.*,
-			'' as room_hash,
 			group_concat(DISTINCT BB.member_hash separator ',') as member 
 		from (
 			select 
-				detail.*
+				detail.*,
+				line.room_hash
 			from chat_room_member as member 
 			left join chat_room as room 
 				on member.room_key = room.room_key
 			left join chat_room_detail as detail 
 				on room.room_key= detail.room_key
+			left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line 
+				on room.room_key = line.room_key
 			where 
 				member_hash = ? and room.room_type = ? limit ?) as AA 
 		join chat_room_member as BB on AA.room_key = BB.room_key

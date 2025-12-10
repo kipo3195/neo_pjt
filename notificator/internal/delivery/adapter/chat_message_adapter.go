@@ -24,11 +24,12 @@ func MakeChatMessageOutput(en entity.ChatMessage) output.ChatMessageOutput {
 	}
 
 	chatLineData := output.ChatLineDataOutput{
-		Cmd:          en.ChatLineData.Cmd,
-		Contents:     en.ChatLineData.Contents,
-		LineKey:      en.ChatLineData.LineKey,
-		SendUserHash: en.ChatLineData.SendUserHash,
-		SendDate:     en.ChatLineData.SendDate,
+		Cmd:           en.ChatLineData.Cmd,
+		Contents:      en.ChatLineData.Contents,
+		LineKey:       en.ChatLineData.LineKey,
+		TargetLineKey: en.ChatLineData.TargetLineKey,
+		SendUserHash:  en.ChatLineData.SendUserHash,
+		SendDate:      en.ChatLineData.SendDate,
 	}
 
 	return output.ChatMessageOutput{

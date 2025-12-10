@@ -14,11 +14,12 @@ func MakeSendChatInput(sendUserHash string, lineKey string, sendDate string, eve
 	}
 
 	line := input.ChatLineInput{
-		SendUserHash: sendUserHash,
-		LineKey:      lineKey,
-		Contents:     chatLine.Contents,
-		Cmd:          chatLine.Cmd,
-		SendDate:     sendDate,
+		SendUserHash:  sendUserHash,
+		LineKey:       lineKey,
+		TargetLineKey: chatLine.TargetLineKey,
+		Contents:      chatLine.Contents,
+		Cmd:           chatLine.Cmd,
+		SendDate:      sendDate,
 	}
 
 	return input.SendChatInput{

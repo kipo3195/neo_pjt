@@ -14,11 +14,12 @@ func MakeSendChatInput(eventType string, chatSession string, roomData output.Cha
 	}
 
 	chatLineDataInput := input.ChatLineDataInput{
-		Cmd:          lineData.Cmd,
-		LineKey:      lineData.LineKey,
-		Contents:     lineData.Contents,
-		SendUserHash: lineData.SendUserHash,
-		SendDate:     lineData.SendDate,
+		Cmd:           lineData.Cmd,
+		LineKey:       lineData.LineKey,
+		TargetLineKey: lineData.TargetLineKey,
+		Contents:      lineData.Contents,
+		SendUserHash:  lineData.SendUserHash,
+		SendDate:      lineData.SendDate,
 	}
 	return input.SendChatInput{
 		EventType:    eventType,

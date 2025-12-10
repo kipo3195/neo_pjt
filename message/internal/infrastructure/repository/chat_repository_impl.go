@@ -27,12 +27,14 @@ func ChatLineEventMigrate(db *gorm.DB) {
 func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity.SendChatEntity) {
 
 	err := r.db.WithContext(ctx).Create(&model.ChatLineEvent{
-		EventType:    sendChatEntity.EventType,
-		Cmd:          sendChatEntity.ChatLineEntity.Cmd,
-		LineKey:      sendChatEntity.ChatLineEntity.LineKey,
-		Contents:     sendChatEntity.ChatLineEntity.Contents,
-		SendUserHash: sendChatEntity.ChatLineEntity.SendUserHash,
-		SendDate:     sendChatEntity.ChatLineEntity.SendDate,
+		EventType:     sendChatEntity.EventType,
+		Cmd:           sendChatEntity.ChatLineEntity.Cmd,
+		RoomKey:       sendChatEntity.ChatRoomEntity.RoomKey,
+		TargetLineKey: sendChatEntity.ChatLineEntity.TargetLineKey,
+		LineKey:       sendChatEntity.ChatLineEntity.LineKey,
+		Contents:      sendChatEntity.ChatLineEntity.Contents,
+		SendUserHash:  sendChatEntity.ChatLineEntity.SendUserHash,
+		SendDate:      sendChatEntity.ChatLineEntity.SendDate,
 	}).Error
 
 	if err != nil {

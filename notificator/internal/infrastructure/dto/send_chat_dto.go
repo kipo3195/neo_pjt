@@ -12,7 +12,7 @@ type SendChatDto struct {
 
 func MakeSendChatDto(t string, eventType string, chatSession string, chatLineData entity.SendChatLineEntity, chatRoomData entity.SendChatRoomEntity) SendChatDto {
 
-	chatLine := MakeChatLineDto(chatLineData.Cmd, chatLineData.Contents, chatLineData.LineKey, chatLineData.SendUserHash, chatLineData.SendDate)
+	chatLine := MakeChatLineDto(chatLineData.Cmd, chatLineData.Contents, chatLineData.LineKey, chatLineData.TargetLineKey, chatLineData.SendUserHash, chatLineData.SendDate)
 
 	chatRoom := MakeChatRoomDto(chatRoomData.RoomType, chatRoomData.RoomKey, chatRoomData.SecretFlag)
 

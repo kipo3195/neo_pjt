@@ -47,7 +47,7 @@ func (u *chatUsecase) SubscribeChat(in input.ChatConnectInput, conn *websocket.C
 func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput {
 	log.Println("[RecvChatMessage] recv data : ", in)
 
-	chatLineEntity := entity.MakeChatLineEntity(in.ChatLineData.Cmd, in.ChatLineData.Contents, in.ChatLineData.LineKey, in.ChatLineData.SendUserHash, in.ChatLineData.SendDate)
+	chatLineEntity := entity.MakeChatLineEntity(in.ChatLineData.Cmd, in.ChatLineData.Contents, in.ChatLineData.LineKey, in.ChatLineData.TargetLineKey, in.ChatLineData.SendUserHash, in.ChatLineData.SendDate)
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomKey, in.ChatRoomData.RoomType, in.ChatRoomData.SecretFlag)
 	en := entity.MakeRecvChatMessageEntity(in.EventType, in.ChatSession, chatRoomEntity, chatLineEntity)
 

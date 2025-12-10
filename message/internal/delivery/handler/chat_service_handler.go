@@ -63,11 +63,12 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	chatLine := chatService.ChatLineData{
-		LineKey:      input.ChatLine.LineKey,
-		SendUserHash: input.ChatLine.SendUserHash,
-		Cmd:          input.ChatLine.Cmd,
-		Contents:     input.ChatLine.Contents,
-		SendDate:     input.ChatLine.SendDate,
+		LineKey:       input.ChatLine.LineKey,
+		SendUserHash:  input.ChatLine.SendUserHash,
+		Cmd:           input.ChatLine.Cmd,
+		Contents:      input.ChatLine.Contents,
+		SendDate:      input.ChatLine.SendDate,
+		TargetLineKey: input.ChatLine.TargetLineKey,
 	}
 
 	res := chatService.SendChatResponse{

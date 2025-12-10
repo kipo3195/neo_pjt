@@ -58,7 +58,6 @@ func (p *chatWorkerPool) Stop() {
 func (p *chatWorkerPool) worker(id int) {
 	for job := range p.jobs {
 		log.Println("data 수신 worker id ", id)
-
 		job.Execute(p.repository) // DB 처리 로직 수행 호출
 	}
 }

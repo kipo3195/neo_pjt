@@ -38,6 +38,7 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 	// 함수 종료시 세션 삭제
 	defer r.sendConnectionStorage.RemoveConnection(userHash)
 
+	/* 실제로 클라이언트 소켓에 write하는 로직 */
 	for message := range entity.Chan {
 		// 'ok' 검사가 필요 없습니다. 채널이 닫히면 for 루프는 자동으로 종료됩니다.
 
@@ -56,7 +57,7 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 func (r *socketSenderUsecase) SendChat(ctx context.Context, input input.SendChatInput) {
 
 	sendChatRoomEntity := entity.MakeSendChatRoomEntity(input.ChatRoomData.RoomKey, input.ChatRoomData.RoomType, input.ChatRoomData.SecretFlag)
-	sendChatLineEntity := entity.MakeSendChatLineEntity(input.ChatLineData.Cmd, input.ChatLineData.Contents, input.ChatLineData.LineKey, input.ChatLineData.SendUserHash, input.ChatLineData.SendDate)
+	sendChatLineEntity := entity.MakeSendChatLineEntity(input.ChatLineData.Cmd, input.ChatLineData.Contents, input.ChatLineData.LineKey, input.ChatLineData.TargetLineKey, input.ChatLineData.SendUserHash, input.ChatLineData.SendDate)
 
 	chatEntity := entity.MakeSendChatEntity(input.EventType, input.ChatSession, sendChatRoomEntity, sendChatLineEntity)
 
@@ -73,26 +74,9 @@ func (r *socketSenderUsecase) SendChat(ctx context.Context, input input.SendChat
 			err := r.socketSender.SendChat(ctx, recvUser, connectionEntity, chatEntity)
 
 			if err != nil {
+				log.Printf("[SendChat] recvUser :%s socket send error !", recvUser)
 				r.sendConnectionStorage.RemoveConnection(recvUser)
 			}
-
 		}
 	}
-
-	// for i := 0; i < len(RecvUserHash); i++ {
-
-	// 	// 수신자의 웹소켓 connection 객체 조회
-
-	// 	conn := r.chatUserStorage.GetChatConnect(RecvUserHash[i])
-
-	// 	if conn == nil {
-	// 		continue
-	// 	}
-
-	// 	err := r.socketSender.SendChat(ctx, RecvUserHash[i], entity, conn)
-
-	// 	if err != nil {
-	// 		r.chatUserStorage.RemoveChatConnect(RecvUserHash[i])
-	// 	}
-	// }
 }
