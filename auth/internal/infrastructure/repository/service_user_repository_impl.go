@@ -20,6 +20,8 @@ func NewServiceUserRepository(db *gorm.DB) repository.ServiceUserRepository {
 
 func (r *serviceUserRepository) InitServiceUsers() ([]entity.ServiceUserEntity, error) {
 
+	// 한명의 사용자가 여러개의 ID를 갖더라도 hash는 하나로..
+	// seq를 pk로 갖고 id : hash 형태를 갖는 테이블이면 될듯
 	var users []model.ServiceUsers
 
 	// 전체 조회
