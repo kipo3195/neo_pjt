@@ -10,9 +10,10 @@ import (
 )
 
 type ServerConfig struct {
-	dbConfig    *DBConfig
-	AutoMigrate bool
-	TokenConfig TokenHashConfig
+	dbConfig         *DBConfig
+	AutoMigrate      bool
+	TokenConfig      TokenHashConfig
+	OrgInfoBatchCron string
 }
 
 type TokenHashConfig struct {
@@ -47,10 +48,13 @@ func NewServerConfig() *ServerConfig {
 
 	tokenConfig := initTokenHash()
 
+	orgInfoBatchCron := initOrgInfoBatchCron()
+
 	return &ServerConfig{
-		dbConfig:    dbConfig,
-		AutoMigrate: autoMigrate,
-		TokenConfig: tokenConfig,
+		dbConfig:         dbConfig,
+		AutoMigrate:      autoMigrate,
+		TokenConfig:      tokenConfig,
+		OrgInfoBatchCron: orgInfoBatchCron,
 	}
 }
 func initDBConfig() *DBConfig {
@@ -71,6 +75,10 @@ func initTokenHash() TokenHashConfig {
 		AccessTokenHash:  accessTokenHash,
 		RefreshTokenHash: refreshTokenHash,
 	}
+}
+
+func initOrgInfoBatchCron() string {
+	return os.Getenv("ORG_INFO_CRON_BATCH")
 }
 
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {

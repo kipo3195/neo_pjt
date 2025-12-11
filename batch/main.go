@@ -36,7 +36,7 @@ func InitServer() *http.Server {
 	// ---- Domain Module Init -----
 	orgInfoBatchModule := di.InitOrgInfoBatchModule(orgInfoBatchStorage)
 
-	scheduler.SetOrgInfoBatch(orgInfoBatchModule)
+	scheduler.SetOrgInfoBatch(orgInfoBatchModule.Usecase)
 
 	return &http.Server{
 		Addr: ":8081",
