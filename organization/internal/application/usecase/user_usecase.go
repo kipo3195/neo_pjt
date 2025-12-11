@@ -22,7 +22,7 @@ type userUsecase struct {
 type UserUsecase interface {
 	GetMyInfo(ctx context.Context, input input.MyInfoInput) (output.MyInfoOutput, error)
 	CreateServiceUser(ctx context.Context, input input.CreateServiceUserInput) error
-	//CreateUserDetail(ctx context.Context, input input.CreateUserDetailInput) error
+	CreateUserDetail(ctx context.Context, input input.CreateUserDetailInput) error
 	CreateUserMultiLang(ctx context.Context, input input.CreateUserMultiLangInput) error
 	GetServiceUsers(ctx context.Context, org string) ([]output.ServiceUsersOutput, error)
 	GetUserInfo(ctx context.Context, input input.GetUserInfoInput) ([]output.MyInfoOutput, error)
@@ -109,31 +109,31 @@ func (r *userUsecase) GetServiceUsers(ctx context.Context, org string) ([]output
 
 }
 
-// func (r *userUsecase) CreateUserDetail(ctx context.Context, input input.CreateUserDetailInput) error {
+func (r *userUsecase) CreateUserDetail(ctx context.Context, input input.CreateUserDetailInput) error {
 
-// 	// like 검색으로 사용자를 조회함.
-// 	entities, err := r.repository.GetServiceUsers(ctx, input.Keyword)
-// 	if err != nil {
-// 		return err
-// 	}
+	// like 검색으로 사용자를 조회함.
+	entities, err := r.repository.GetServiceUsers(ctx, input.Keyword)
+	if err != nil {
+		return err
+	}
 
-// 	log.Println("조회된 사용자의 수 : ", len(entities))
+	log.Println("조회된 사용자의 수 : ", len(entities))
 
-// 	// type을 확인
-// 	for i := 0; i < len(entities); i++ {
-// 		email, _ := generateRandomEmail()
-// 		entities[i].UserEmail = email
-// 		entities[i].UserPhoneNum = generateRandomPhoneNum()
-// 	}
+	// type을 확인
+	for i := 0; i < len(entities); i++ {
+		email, _ := generateRandomEmail()
+		entities[i].UserEmail = email
+		entities[i].UserPhoneNum = generateRandomPhoneNum()
+	}
 
-// 	err = r.repository.CreateUserDetail(ctx, entities)
+	err = r.repository.CreateUserDetail(ctx, entities)
 
-// 	if err != nil {
-// 		return err
-// 	}
+	if err != nil {
+		return err
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 func generateRandomEmail() (string, error) {
 	// 4바이트(8자리 hex) 랜덤 문자열 생성

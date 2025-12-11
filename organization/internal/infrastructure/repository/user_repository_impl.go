@@ -375,30 +375,30 @@ func (r *userRepositoryImpl) GetServiceUsers(ctx context.Context, keyword string
 	return entities, nil
 }
 
-// func (r *userRepositoryImpl) CreateUserDetail(ctx context.Context, entities []entity.UserDetailEntity) error {
+func (r *userRepositoryImpl) CreateUserDetail(ctx context.Context, entities []entity.UserDetailEntity) error {
 
-// 	// entity → model 변환
-// 	var models []model.UserDetail
-// 	for _, e := range entities {
-// 		models = append(models, model.UserDetail{
-// 			UserHash:     e.UserHash,
-// 			UserPhoneNum: e.UserPhoneNum,
-// 			UserEmail:    e.UserEmail, // entity에 이메일이 있다면
-// 		})
-// 	}
+	// entity → model 변환
+	var models []model.UserDetail
+	for _, e := range entities {
+		models = append(models, model.UserDetail{
+			UserHash:     e.UserHash,
+			UserPhoneNum: e.UserPhoneNum,
+			UserEmail:    e.UserEmail, // entity에 이메일이 있다면
+		})
+	}
 
-// 	tx := r.db.WithContext(ctx)
+	tx := r.db.WithContext(ctx)
 
-// 	// Upsert: 이미 존재하면 update, 없으면 insert
-// 	if err := tx.Clauses(clause.OnConflict{
-// 		Columns:   []clause.Column{{Name: "user_hash"}},                               // PK 기준
-// 		DoUpdates: clause.AssignmentColumns([]string{"user_phone_num", "user_email"}), // update할 컬럼
-// 	}).Create(&models).Error; err != nil {
-// 		return err
-// 	}
+	// Upsert: 이미 존재하면 update, 없으면 insert
+	if err := tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_hash"}},                               // PK 기준
+		DoUpdates: clause.AssignmentColumns([]string{"user_phone_num", "user_email"}), // update할 컬럼
+	}).Create(&models).Error; err != nil {
+		return err
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 func (r *userRepositoryImpl) CreateUserMultiLang(ctx context.Context, e entity.UserMultiLangEntity) error {
 

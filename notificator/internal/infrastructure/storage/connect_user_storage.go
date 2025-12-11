@@ -14,7 +14,7 @@ type sendConnectionStorage struct {
 type SendConnectionStorage interface {
 	GetConnection(userHash string) *entity.SendConnectionEntity
 	RemoveConnection(userHash string)
-	PutConnection(userHash string, entity entity.SendConnectionEntity)
+	PutConnection(userHash string, entity *entity.SendConnectionEntity)
 }
 
 func NewSendConnectionStorage() SendConnectionStorage {
@@ -27,7 +27,12 @@ func (r *sendConnectionStorage) GetConnection(userHash string) *entity.SendConne
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return r.connectionMap[userHash]
+	entity, exists := r.connectionMap[userHash]
+	if !exists {
+		return nil
+	}
+
+	return entity
 }
 func (r *sendConnectionStorage) RemoveConnection(userHash string) {
 	r.mu.Lock()
@@ -38,9 +43,9 @@ func (r *sendConnectionStorage) RemoveConnection(userHash string) {
 	}
 	log.Println("[RemoveConnection] userHash : ", userHash)
 }
-func (r *sendConnectionStorage) PutConnection(userHash string, entity entity.SendConnectionEntity) {
+func (r *sendConnectionStorage) PutConnection(userHash string, entity *entity.SendConnectionEntity) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.connectionMap[userHash] = &entity
+	r.connectionMap[userHash] = entity
 	log.Println("[PutConnection] userHash : ", userHash)
 }
