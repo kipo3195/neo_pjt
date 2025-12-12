@@ -3,6 +3,7 @@ package main
 import (
 	"batch/internal/di"
 	"batch/internal/infrastructure/config"
+	"batch/internal/infrastructure/migration"
 	"batch/internal/infrastructure/storage"
 	"batch/internal/scheduler"
 	"log"
@@ -21,9 +22,12 @@ func InitServer() *http.Server {
 	sfg := config.NewServerConfig()
 
 	// ---- DB Connect -----
-	//db := config.ConnectDatabase(sfg)
+	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
 
 	// ---- Storage Init -----
 	orgInfoBatchStorage := storage.NewOrgInfoBatchStorage()

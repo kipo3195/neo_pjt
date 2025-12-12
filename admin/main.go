@@ -4,6 +4,7 @@ import (
 	"admin/internal/delivery/router"
 	"admin/internal/di"
 	"admin/internal/infrastructure/config"
+	"admin/internal/infrastructure/migration"
 	"log"
 	"net/http"
 )
@@ -24,6 +25,9 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
 
 	// ---- Storage Init -----
 
@@ -49,6 +53,9 @@ func InitServer() *http.Server {
 	// 부서 추가
 	orgDeptModule := di.InitOrgDeptModule(db)
 	router.SetOrgDeptRoutes(orgDeptModule.Handler)
+
+	serviceUserModule := di.InitServiceUserModule(db)
+	router.SetServiceUserRoutes(serviceUserModule.Handler)
 
 	return &http.Server{
 		Addr:    ":8089",

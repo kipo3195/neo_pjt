@@ -16,6 +16,7 @@ type AdminRouter interface {
 	SetOrgDeptRoutes(handler *handler.OrgDeptHandler)
 	SetOrgFileRoutes(handler *handler.OrgFileHandler)
 	SetSkinRoutes(handler *handler.SkinImgHandler)
+	SetServiceUserRoutes(handler *handler.ServiceUserHandler)
 	GetEngine() *gin.Engine
 }
 
@@ -65,4 +66,9 @@ func (r *adminRouter) SetSkinRoutes(handler *handler.SkinImgHandler) {
 	client := r.parent.Group("/client/v1/skinImg")
 	client.POST("/", handler.CreateSkinImg)
 
+}
+
+func (r *adminRouter) SetServiceUserRoutes(handler *handler.ServiceUserHandler) {
+	client := r.parent.Group("/client/v1/serviceUser")
+	client.POST("/", handler.RegistServiceUser)
 }
