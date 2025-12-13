@@ -35,6 +35,7 @@ func (h *DeviceHandler) GetMyDeviceInfo(c *gin.Context) {
 
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
 	}
 
 	deviceInfoArr := make([]device.DeviceInfo, 0)

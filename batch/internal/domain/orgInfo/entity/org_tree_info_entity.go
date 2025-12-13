@@ -1,0 +1,14 @@
+package entity
+
+type OrgTreeInfo struct {
+	DeptCode       string     `json:"deptCode"`
+	ParentDeptCode string     `json:"parentDeptCode"`
+	Name           NameEntity `json:"name"`
+	//UpdateHash     string         `json:"updateHash"`
+	SubDept     []OrgTreeInfo `json:"subDept,omitempty"` // 재귀 구조
+	UserHash    string        `json:"userHash,omitempty"`
+	UserId      string        `json:"userId,omitempty"`
+	Kind        string        `json:"kind"`             // 사용자, 부서 구분
+	Header      string        `json:"header,omitempty"` // omitempty -> 빈값인 경우 생략됨. zero value
+	Description string        `json:"description,omitempty"`
+}

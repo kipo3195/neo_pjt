@@ -30,7 +30,7 @@ func NewBatchScheduler(sfg *config.ServerConfig) BatchScheduler {
 func (r *batchScheduler) RegistOrgInfoBatchService(svc orchestrator.OrgInfoBatchService) {
 
 	// sfg(서버 환경변수)에 있는 크론 실행 주기를 가지고 usecase 실행
-	cronExpr := r.sfg.OrgInfoBatchCron // 예: "0 */5 * * *"
+	cronExpr := r.sfg.OrgInfoBatchConfig.Cron // 예: "0 */5 * * *"
 
 	log.Println("[SetOrgInfoBatch] cronExpr :", cronExpr)
 	_, err := r.cr.AddFunc(cronExpr, func() {

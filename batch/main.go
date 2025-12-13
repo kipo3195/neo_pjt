@@ -38,11 +38,11 @@ func InitServer() *http.Server {
 	scheduler := scheduler.NewBatchScheduler(sfg)
 
 	// ---- Domain Module Init -----
-	orgInfoModule := di.InitOrgInfoModule(orgInfoStorage)
+	orgInfoModule := di.InitOrgInfoModule(db, orgInfoStorage)
 	extendDBConnectModule := di.InitExtendDBConnectModule(db)
 
 	// ----- Service Orchestrator -----
-	orgInfoBatchServiceModule := di.InitOrgInfoBatchServiceModule(orgInfoModule.Usecase, extendDBConnectModule.Usecase)
+	orgInfoBatchServiceModule := di.InitOrgInfoBatchServiceModule(orgInfoModule.Usecase, extendDBConnectModule.Usecase, sfg.OrgInfoBatchConfig)
 
 	// ----- Scheduler Regist -----
 	scheduler.RegistOrgInfoBatchService(orgInfoBatchServiceModule)

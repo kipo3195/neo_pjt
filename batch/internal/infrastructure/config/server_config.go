@@ -10,10 +10,10 @@ import (
 )
 
 type ServerConfig struct {
-	dbConfig         *DBConfig
-	AutoMigrate      bool
-	TokenConfig      TokenHashConfig
-	OrgInfoBatchCron string
+	dbConfig           *DBConfig
+	AutoMigrate        bool
+	TokenConfig        TokenHashConfig
+	OrgInfoBatchConfig *OrgInfoBatchConfig
 }
 
 type TokenHashConfig struct {
@@ -22,6 +22,23 @@ type TokenHashConfig struct {
 }
 
 type DBConfig struct {
+	Host     string
+	Port     string
+	Id       string
+	Pw       string
+	Database string
+}
+
+type OrgInfoBatchConfig struct {
+	Org              string         // works code
+	BatchFlag        bool           // 배치 실행 여부
+	Cron             string         // 실행 주기 데이터
+	ExtendDBSyncFlag bool           // 외부 DB 연동 설정
+	ExtendDBConfig   ExtendDBConfig // 외부 DB 연결 정보
+}
+
+// 공통 - 외부 DB 연동을 위한 정보
+type ExtendDBConfig struct {
 	Host     string
 	Port     string
 	Id       string
@@ -48,13 +65,13 @@ func NewServerConfig() *ServerConfig {
 
 	tokenConfig := initTokenHash()
 
-	orgInfoBatchCron := initOrgInfoBatchCron()
+	orgInfoBatchConfig := initOrgInfoBatchConfig()
 
 	return &ServerConfig{
-		dbConfig:         dbConfig,
-		AutoMigrate:      autoMigrate,
-		TokenConfig:      tokenConfig,
-		OrgInfoBatchCron: orgInfoBatchCron,
+		dbConfig:           dbConfig,
+		AutoMigrate:        autoMigrate,
+		TokenConfig:        tokenConfig,
+		OrgInfoBatchConfig: &orgInfoBatchConfig,
 	}
 }
 func initDBConfig() *DBConfig {
@@ -77,8 +94,49 @@ func initTokenHash() TokenHashConfig {
 	}
 }
 
-func initOrgInfoBatchCron() string {
-	return os.Getenv("ORG_INFO_CRON_BATCH")
+func initOrgInfoBatchConfig() OrgInfoBatchConfig {
+
+	org := os.Getenv("ORG_INFO")
+	flag := os.Getenv("ORG_INFO_CRON_BATCH_FLAG")
+	cron := os.Getenv("ORG_INFO_CRON")
+
+	var batchFlag bool
+	if flag == "true" {
+		batchFlag = true
+	} else {
+		batchFlag = false
+	}
+
+	flag = os.Getenv("ORG_INFO_EXTEND_DB_SYNC_FLAG")
+
+	var extendDbSyncFlag bool
+	if flag == "true" {
+		batchFlag = true
+	} else {
+		batchFlag = false
+	}
+
+	extendDbHost := os.Getenv("ORG_INFO_EXTEND_DB_HOST")
+	extendDbPort := os.Getenv("ORG_INFO_EXTEND_DB_PORT")
+	extendDbId := os.Getenv("ORG_INFO_EXTEND_DB_ID")
+	extendDbPw := os.Getenv("ORG_INFO_EXTEND_DB_PW")
+	extendDbDatabase := os.Getenv("ORG_INFO_EXTEND_DB_DATABASE")
+
+	extendDBConfig := ExtendDBConfig{
+		Host:     extendDbHost,
+		Port:     extendDbPort,
+		Id:       extendDbId,
+		Pw:       extendDbPw,
+		Database: extendDbDatabase,
+	}
+
+	return OrgInfoBatchConfig{
+		Org:              org,
+		BatchFlag:        batchFlag,
+		Cron:             cron,
+		ExtendDBSyncFlag: extendDbSyncFlag,
+		ExtendDBConfig:   extendDBConfig,
+	}
 }
 
 func ConnectDatabase(sfg *ServerConfig) *gorm.DB {

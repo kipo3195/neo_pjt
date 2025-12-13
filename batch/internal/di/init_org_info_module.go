@@ -4,15 +4,17 @@ import (
 	"batch/internal/application/usecase"
 	"batch/internal/infrastructure/repository"
 	"batch/internal/infrastructure/storage"
+
+	"gorm.io/gorm"
 )
 
 type OrgInfoModule struct {
 	Usecase usecase.OrgInfoUsecase
 }
 
-func InitOrgInfoModule(storage storage.OrgInfoStorage) *OrgInfoModule {
+func InitOrgInfoModule(db *gorm.DB, storage storage.OrgInfoStorage) *OrgInfoModule {
 
-	repo := repository.NewOrgInfoRepository()
+	repo := repository.NewOrgInfoRepository(db)
 	usecase := usecase.NewOrgInfoUsecase(repo, storage)
 
 	return &OrgInfoModule{
