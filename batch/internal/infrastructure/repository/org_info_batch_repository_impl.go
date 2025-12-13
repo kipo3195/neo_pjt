@@ -7,15 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
-type orgInfoBatchRepository struct {
+type orgInfoRepository struct {
 }
 
 func OrgInfoMigrate(db *gorm.DB) {
 	db.AutoMigrate(model.OrgInfo{})
 }
 
-func NewOrgInfoBatchRepository() repository.OrgInfoBatchRepository {
+func NewOrgInfoRepository() repository.OrgInfoRepository {
 
-	return &orgInfoBatchRepository{}
-
+	return &orgInfoRepository{}
 }

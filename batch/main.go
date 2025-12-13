@@ -30,7 +30,7 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Storage Init -----
-	orgInfoBatchStorage := storage.NewOrgInfoBatchStorage()
+	orgInfoStorage := storage.NewOrgInfoStorage()
 
 	// ---- Data Loader -----
 
@@ -38,9 +38,17 @@ func InitServer() *http.Server {
 	scheduler := scheduler.NewBatchScheduler(sfg)
 
 	// ---- Domain Module Init -----
-	orgInfoBatchModule := di.InitOrgInfoBatchModule(orgInfoBatchStorage)
+	orgInfoModule := di.InitOrgInfoModule(orgInfoStorage)
+	extendDBConnectModule := di.InitExtendDBConnectModule(db)
 
-	scheduler.SetOrgInfoBatch(orgInfoBatchModule.Usecase)
+	// ----- Service Orchestrator -----
+	orgInfoBatchServiceModule := di.InitOrgInfoBatchServiceModule(orgInfoModule.Usecase, extendDBConnectModule.Usecase)
+
+	// ----- Scheduler Regist -----
+	scheduler.RegistOrgInfoBatchService(orgInfoBatchServiceModule)
+
+	// ----- Scheduler Start -----
+	scheduler.Start()
 
 	return &http.Server{
 		Addr: ":8081",
