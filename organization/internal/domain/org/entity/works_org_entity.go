@@ -1,5 +1,7 @@
 package entity
 
+// 20251214
+// batch에서 조회 된 결과를 전송하는 것과 동일한 구조 (view table 조회 결과를 담는다. )
 type WorksOrg struct {
 	Org            string `json:"org"` // 추가
 	DeptCode       string `json:"deptCode"`

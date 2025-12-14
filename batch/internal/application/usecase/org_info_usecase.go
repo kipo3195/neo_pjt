@@ -20,6 +20,7 @@ type orgInfoUsecase struct {
 
 type OrgInfoUsecase interface {
 	SendOrgInfoToOrg(ctx context.Context, org string) error
+	PutSnapShotJson(ctx context.Context, org string, orgInfo []entity.OrgInfoEntity, fileName string) error
 }
 
 func NewOrgInfoUsecase(repo repository.OrgInfoRepository, apiRepo repository.OrgInfoApiRepository, orgInfoStorage storage.OrgInfoStorage) OrgInfoUsecase {
@@ -36,7 +37,7 @@ func (r *orgInfoUsecase) SendOrgInfoToOrg(ctx context.Context, org string) error
 	// 현재 DB 조회 - 현재 조직도 json 파일 생성 zip 파일 생성 - 이걸 batch 서비스가 해야되는지 고민..
 
 	// 현재 DB 조회 - zip 파일 생성
-	orgTree, err := r.repo.GetOrgInfo(ctx, org)
+	orgInfo, err := r.repo.GetOrgInfo(ctx, org)
 
 	if err != nil {
 		return err
@@ -46,21 +47,20 @@ func (r *orgInfoUsecase) SendOrgInfoToOrg(ctx context.Context, org string) error
 	fileName := util.GetNow() + ".json"
 	log.Printf("[SendOrgInfoToOrg] org %s file name: %s\n", org, fileName)
 
-	// json 생성
-	orgEntity := parseOrgTree(orgTree)
-	orgJson, err := json.MarshalIndent(orgEntity, "", "  ")
+	// 현재 DB 조회 데이터 json 생성 스냅샷 저장
+	err = r.PutSnapShotJson(ctx, org, orgInfo, fileName)
 	if err != nil {
 		return err
 	}
 
-	// DB 백업
-	err = r.repo.PutOrgInfoJson(ctx, org, fileName, string(orgJson))
+	// org 서비스 전송용
+	orgInfoJson, err := json.MarshalIndent(orgInfo, "", "  ")
 	if err != nil {
 		return err
 	}
 
 	// json -> ZIP 파일 생성
-	zipData, err := buildZipInMemory(fileName, orgJson)
+	zipData, err := buildZipInMemory(fileName, orgInfoJson)
 	if err != nil {
 		return err
 	}
@@ -175,4 +175,21 @@ func buildZipInMemory(fileName string, content []byte) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+func (r *orgInfoUsecase) PutSnapShotJson(ctx context.Context, org string, orgInfo []entity.OrgInfoEntity, fileName string) error {
+
+	// 스냅샷 json 생성 (DB 저장용)
+	orgInfoSnapShot := parseOrgTree(orgInfo)
+	snapShot, err := json.MarshalIndent(orgInfoSnapShot, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// DB 백업
+	err = r.repo.PutOrgInfoJson(ctx, org, fileName, string(snapShot))
+	if err != nil {
+		return err
+	}
+	return nil
 }

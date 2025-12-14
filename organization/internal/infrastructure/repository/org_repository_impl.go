@@ -154,3 +154,11 @@ func convertWorksOrgToEntity(models []model.WorksOrg) []entity.WorksOrg {
 	}
 	return entities
 }
+
+func (r *orgRepositoryImpl) RegistOrgBatch(ctx context.Context, dept []entity.WorksOrg, user []entity.WorksOrg) error {
+
+	tx := r.db.Begin()
+
+	return tx.Commit().Error
+
+}

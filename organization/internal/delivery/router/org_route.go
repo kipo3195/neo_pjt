@@ -18,6 +18,7 @@ type OrgRouter interface {
 	SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.TokenHashConfig)
 	SetUserRoute(handler *handler.UserHandler, tokenConfig config.TokenHashConfig)
 	SetDummyDataServiceRoute(handler *handler.DummyDataServiceHandler)
+	SetOrgBatchServiceRoute(handler *handler.OrgBatchServiceHandler)
 	GetEngine() *gin.Engine
 }
 
@@ -59,8 +60,7 @@ func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.
 
 	serverApi := r.parent.Group("/server/v1/org")
 	//serverApi.Use(middleware.ServerAuthMiddleware())
-	serverApi.POST("/batch", handler.RegistOrgBatch) // batch 서비스에서 호출한 연동된 조직정보 데이터
-	serverApi.POST("/file", handler.CreateOrgFile)   // admin 서비스에서 호출한 현재 기준으로 json 생성 요청
+	serverApi.POST("/file", handler.CreateOrgFile) // admin 서비스에서 호출한 현재 기준으로 json 생성 요청
 
 }
 
@@ -84,5 +84,12 @@ func (r *orgRouter) SetDummyDataServiceRoute(handler *handler.DummyDataServiceHa
 	department.POST("/init/works-dept", handler.InitWorksDept)
 	department.POST("/init/works-dept-multi-lang", handler.InitWorksDeptMultiLang)
 	department.POST("/init/works-dept-user", handler.InitWorksDeptUser)
+
+}
+
+func (r *orgRouter) SetOrgBatchServiceRoute(handler *handler.OrgBatchServiceHandler) {
+
+	server := r.parent.Group("/server/v1/org/batch")
+	server.POST("/", handler.RegistOrgBatchData)
 
 }

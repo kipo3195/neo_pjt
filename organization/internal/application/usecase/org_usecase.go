@@ -274,17 +274,24 @@ func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatch
 		return consts.ErrUnzipAndGetJSONError
 	}
 
-	log.Println("[RegistOrgBatch] raw json :", string(jsonBytes))
+	// log.Println("[RegistOrgBatch] raw json :", string(jsonBytes))
 
 	// 2. JSON → Wrapper
-	var wrapper entity.OrgEntity
-	if err := json.Unmarshal(jsonBytes, &wrapper); err != nil {
+	var orgInfo []entity.WorksOrg
+	if err := json.Unmarshal(jsonBytes, &orgInfo); err != nil {
 		return consts.ErrInvalidOrgJSONError
 	}
-	log.Println("[RegistOrgBatch] org Info json : ", wrapper)
+	log.Println("[RegistOrgBatch] org Info json : ", orgInfo)
 
 	// diff 구하기
+
+	dept, user := splitByKind(orgInfo)
+
 	// DB 저장 insert update.
+	err = r.repository.RegistOrgBatch(ctx, dept, user)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -324,4 +331,39 @@ func unzipAndGetJSON(orgFile *[]byte) ([]byte, error) {
 	}
 
 	return nil, fmt.Errorf("json file not found in zip")
+}
+
+func splitByKind(temp []entity.WorksOrg) ([]entity.WorksOrg, []entity.WorksOrg) {
+
+	depts := make([]entity.WorksOrg, 0)
+	users := make([]entity.WorksOrg, 0)
+
+	for _, item := range temp {
+		switch item.Kind {
+		case "0": // 부서
+			depts = append(depts, entity.WorksOrg{
+				Org:            item.Org,
+				DeptCode:       item.DeptCode,
+				ParentDeptCode: item.ParentDeptCode,
+				KoLang:         item.KoLang,
+				EnLang:         item.EnLang,
+				UpdateHash:     item.UpdateHash,
+				Header:         item.Header,
+				Description:    item.Description,
+			})
+
+		case "1": // 사용자
+			users = append(users, entity.WorksOrg{
+				Org:        item.Org,
+				UserHash:   item.UserHash,
+				UserId:     item.UserId,
+				DeptCode:   item.ParentDeptCode, // 사용자는 상위 부서
+				KoLang:     item.KoLang,
+				EnLang:     item.EnLang,
+				UpdateHash: item.UpdateHash,
+			})
+		}
+	}
+
+	return depts, users
 }

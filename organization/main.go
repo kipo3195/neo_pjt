@@ -53,6 +53,9 @@ func InitServer() *http.Server {
 	dummyDataInitServiceModule := di.InitDummyDataServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
 	router.SetDummyDataServiceRoute(dummyDataInitServiceModule)
 
+	orgBatchServiceModule := di.InitOrgBatchDataServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
+	router.SetOrgBatchServiceRoute(orgBatchServiceModule)
+
 	return &http.Server{
 		Addr:    ":8088",
 		Handler: router.GetEngine(),
