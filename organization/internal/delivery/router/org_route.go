@@ -59,7 +59,8 @@ func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.
 
 	serverApi := r.parent.Group("/server/v1/org")
 	//serverApi.Use(middleware.ServerAuthMiddleware())
-	serverApi.POST("/file", handler.CreateOrgFile)
+	serverApi.POST("/batch", handler.RegistOrgBatch) // batch 서비스에서 호출한 연동된 조직정보 데이터
+	serverApi.POST("/file", handler.CreateOrgFile)   // admin 서비스에서 호출한 현재 기준으로 json 생성 요청
 
 }
 

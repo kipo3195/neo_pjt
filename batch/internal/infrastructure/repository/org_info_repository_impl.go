@@ -74,9 +74,9 @@ func (r *orgInfoRepositoryImpl) PutOrgInfoJson(ctx context.Context, org string, 
 		FileName:    fileName,
 		OrgInfoJson: orgJson,
 	}).Error; err != nil {
-		log.Println("[PutOrgInfoJson] err : ", err)
+		log.Println("[OrgInfoJsonHistory] err : ", err)
 		return err
 	}
-	log.Println("[PutOrgInfoJson] insert success.")
+	log.Println("[OrgInfoJsonHistory] insert success.")
 	return nil
 }

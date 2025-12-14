@@ -6,7 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"org/internal/application/usecase/input"
 	"org/internal/application/util"
 	"org/internal/consts"
 	"org/internal/delivery/dto/org"
@@ -27,6 +29,7 @@ type OrgUsecase interface {
 	GetOrgHash(ctx context.Context, req org.GetOrgHashRequest) (map[string]any, error)
 	GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error)
 	CreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error)
+	RegistOrgBatch(ctx context.Context, in input.RegistOrgBatchInput) error
 }
 
 func NewOrgUsecase(repository repository.OrgRepository, orgStorage storage.OrgFileStorage) OrgUsecase {
@@ -257,4 +260,68 @@ func buildOrgTree(flatList []entity.OrgInfo, parentCode string) []entity.OrgTree
 	}
 
 	return tree
+}
+
+func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatchInput) error {
+
+	en := entity.MakeRegistOrgBatchEntity(in.OrgFile, in.OrgFileName)
+
+	// zip 해제, json 구하기
+	jsonBytes, err := unzipAndGetJSON(en.OrgFile)
+
+	if err != nil {
+		log.Println("[RegistOrgBatch] unzipAndGetJSON error")
+		return consts.ErrUnzipAndGetJSONError
+	}
+
+	log.Println("[RegistOrgBatch] raw json :", string(jsonBytes))
+
+	// 2. JSON → Wrapper
+	var wrapper entity.OrgEntity
+	if err := json.Unmarshal(jsonBytes, &wrapper); err != nil {
+		return consts.ErrInvalidOrgJSONError
+	}
+	log.Println("[RegistOrgBatch] org Info json : ", wrapper)
+
+	// diff 구하기
+	// DB 저장 insert update.
+
+	return nil
+}
+
+func unzipAndGetJSON(orgFile *[]byte) ([]byte, error) {
+
+	// zip reader 생성
+	zr, err := zip.NewReader(
+		bytes.NewReader(*orgFile),
+		int64(len(*orgFile)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("zip reader error: %w", err)
+	}
+
+	// ZIP 내부 파일 순회
+	for _, f := range zr.File {
+
+		// json 파일만 추출
+		if !strings.HasSuffix(f.Name, ".json") {
+			continue
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer rc.Close()
+
+		// json 읽기
+		jsonBytes, err := io.ReadAll(rc)
+		if err != nil {
+			return nil, err
+		}
+
+		return jsonBytes, nil
+	}
+
+	return nil, fmt.Errorf("json file not found in zip")
 }

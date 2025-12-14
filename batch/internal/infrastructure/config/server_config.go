@@ -10,6 +10,7 @@ import (
 )
 
 type ServerConfig struct {
+	Domain             string
 	dbConfig           *DBConfig
 	AutoMigrate        bool
 	TokenConfig        TokenHashConfig
@@ -65,6 +66,8 @@ func NewServerConfig() *ServerConfig {
 
 	tokenConfig := initTokenHash()
 
+	domain := initDomain()
+
 	orgInfoBatchConfig := initOrgInfoBatchConfig()
 
 	return &ServerConfig{
@@ -72,6 +75,7 @@ func NewServerConfig() *ServerConfig {
 		AutoMigrate:        autoMigrate,
 		TokenConfig:        tokenConfig,
 		OrgInfoBatchConfig: &orgInfoBatchConfig,
+		Domain:             domain,
 	}
 }
 func initDBConfig() *DBConfig {
@@ -163,4 +167,8 @@ func initAutoMigrate() bool {
 	} else {
 		return false
 	}
+}
+
+func initDomain() string {
+	return os.Getenv("DOMAIN")
 }

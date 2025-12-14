@@ -38,7 +38,7 @@ func InitServer() *http.Server {
 	scheduler := scheduler.NewBatchScheduler(sfg)
 
 	// ---- Domain Module Init -----
-	orgInfoModule := di.InitOrgInfoModule(db, orgInfoStorage)
+	orgInfoModule := di.InitOrgInfoModule(db, orgInfoStorage, sfg.Domain)
 	extendDBConnectModule := di.InitExtendDBConnectModule(db)
 
 	// ----- Service Orchestrator -----

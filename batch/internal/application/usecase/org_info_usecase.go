@@ -15,17 +15,19 @@ import (
 type orgInfoUsecase struct {
 	orgInfoStorage storage.OrgInfoStorage
 	repo           repository.OrgInfoRepository
+	apiRepo        repository.OrgInfoApiRepository
 }
 
 type OrgInfoUsecase interface {
 	SendOrgInfoToOrg(ctx context.Context, org string) error
 }
 
-func NewOrgInfoUsecase(repo repository.OrgInfoRepository, orgInfoStorage storage.OrgInfoStorage) OrgInfoUsecase {
+func NewOrgInfoUsecase(repo repository.OrgInfoRepository, apiRepo repository.OrgInfoApiRepository, orgInfoStorage storage.OrgInfoStorage) OrgInfoUsecase {
 
 	return &orgInfoUsecase{
 		orgInfoStorage: orgInfoStorage,
 		repo:           repo,
+		apiRepo:        apiRepo,
 	}
 }
 
@@ -34,14 +36,11 @@ func (r *orgInfoUsecase) SendOrgInfoToOrg(ctx context.Context, org string) error
 	// 현재 DB 조회 - 현재 조직도 json 파일 생성 zip 파일 생성 - 이걸 batch 서비스가 해야되는지 고민..
 
 	// 현재 DB 조회 - zip 파일 생성
-
 	orgTree, err := r.repo.GetOrgInfo(ctx, org)
 
 	if err != nil {
 		return err
 	}
-
-	log.Print("[SendOrgInfoToOrg] length : ", len(orgTree))
 
 	// 파일 명 생성
 	fileName := util.GetNow() + ".json"
@@ -61,12 +60,16 @@ func (r *orgInfoUsecase) SendOrgInfoToOrg(ctx context.Context, org string) error
 	}
 
 	// json -> ZIP 파일 생성
-	// zipData, err := buildZipInMemory(fileName, orgJson)
-	// if err != nil {
-	// 	return err
-	// }
+	zipData, err := buildZipInMemory(fileName, orgJson)
+	if err != nil {
+		return err
+	}
 
 	// 파일 전송
+	err = r.apiRepo.SendJsonToOrg(ctx, fileName, zipData)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -121,7 +124,7 @@ func buildOrgTree(flatList []entity.OrgInfo, parentCode string) []entity.OrgTree
 	for _, org := range flatList {
 		if org.ParentDeptCode == parentCode {
 			// 재귀적으로 하위 부서를 구성
-			log.Println("buildOrgTree : ", org)
+
 			sub := buildOrgTree(flatList, org.DeptCode)
 
 			// 사실 이렇게 구분해서 init하지 않아도 entity.OrgTreeInfo 내부에서 omitempty처리하면 response시 보이지 않음.
