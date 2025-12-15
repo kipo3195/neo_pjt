@@ -4,6 +4,7 @@ type AppValidationOutput struct {
 	WorksCommonInfo WorksCommonInfo `json:"worksCommonInfo"`
 	WorksInfo       WorksInfo       `json:"worksInfo"`
 	WorksConfig     WorksConfig     `json:"worksConfig"`
+	Org             []string        `json:"org"`
 }
 
 type WorksCommonInfo struct {

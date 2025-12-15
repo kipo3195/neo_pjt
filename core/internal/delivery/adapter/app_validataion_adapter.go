@@ -34,5 +34,6 @@ func MakeValidateAppOutput(en *entity.DeviceInitResult) output.AppValidationOutp
 			Skin:       nil,
 		},
 		WorksCommonInfo: output.WorksCommonInfo(en.WorksCommonInfo),
+		Org:             en.Org,
 	}
 }

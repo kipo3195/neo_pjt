@@ -80,5 +80,6 @@ func (c *appValidationAPIRepository) DeviceInit(ctx context.Context, e entity.Va
 	return &entity.DeviceInitResult{
 		IssuedAppToken: (*entity.IssuedAppToken)(result.Data.IssuedAppToken),
 		WorksConfig:    result.Data.WorksConfig,
+		Org:            result.Data.Org,
 	}, nil
 }

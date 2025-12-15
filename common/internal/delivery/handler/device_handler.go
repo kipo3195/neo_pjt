@@ -73,12 +73,15 @@ func (h *DeviceHandler) DeviceInit(c *gin.Context) {
 		log.Println("skinInfo error")
 	}
 
+	org := h.svc.Org.GetWorksOrgCode()
+
 	// 결국 수정되어야할 api의 방향
 	result := device.DeviceResultResponse{
 		WorksInfo:      worksInfo, // works의 정보
 		IssuedAppToken: issuedAppToken,
 		WorksConfig:    worksConfig, // works의 설정정보
 		SkinInfo:       skinInfo,
+		Org:            org,
 	}
 
 	log.Println("result : ", result)

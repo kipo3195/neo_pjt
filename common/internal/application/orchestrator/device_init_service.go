@@ -9,8 +9,9 @@ type DeviceInitService struct {
 	Skin          usecase.SkinUsecase
 	Configuration usecase.ConfigurationUsecase
 	AppToken      usecase.AppTokenUsecase
+	Org           usecase.OrgUsecase
 }
 
-func NewDeviceInitService(device usecase.WorksInfoUsecase, skin usecase.SkinUsecase, configuration usecase.ConfigurationUsecase, appToken usecase.AppTokenUsecase) *DeviceInitService {
-	return &DeviceInitService{device, skin, configuration, appToken}
+func NewDeviceInitService(device usecase.WorksInfoUsecase, skin usecase.SkinUsecase, configuration usecase.ConfigurationUsecase, appToken usecase.AppTokenUsecase, org usecase.OrgUsecase) *DeviceInitService {
+	return &DeviceInitService{device, skin, configuration, appToken, org}
 }

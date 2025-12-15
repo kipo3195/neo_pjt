@@ -33,6 +33,7 @@ func InitServer() *http.Server {
 	configHashStorage := storage.NewConfigHashStorage()
 	skinStorage := storage.NewSkinStorage()
 	userStorage := storage.NewUserStorage()
+	orgStorage := storage.NewOrgStorage()
 
 	// deps := dependencies.Dependency{
 	// 	DB:                db,
@@ -48,6 +49,7 @@ func InitServer() *http.Server {
 	dataLoader := loader.NewDataLoader()
 	dataLoader.Register(loader.NewSkinLoader(db, skinStorage))
 	dataLoader.Register(loader.NewConfigHashLoader(db, configHashStorage))
+	dataLoader.Register(loader.NewOrgLoader(db, orgStorage))
 
 	if err := dataLoader.LoadAllData(ctx); err != nil {
 		log.Fatal("Failed to load initial data:", err)
@@ -68,13 +70,16 @@ func InitServer() *http.Server {
 	userModule := di.InitUserModule(db, userStorage)
 	router.SetUserRoutes(userModule.Handler)
 
+	orgModule := di.InitOrgModule(db, orgStorage)
+	router.SetOrgRoutes(orgModule.Handler)
+
 	worksInfoModule := di.InitWorksInfoModule(db)
 
 	// ---- Service Init -----
 	appValidationHandler := di.InitAppValidationServiceModule(nil, skinModule.Usecase, configurationModule.Usecase)
 	router.SetInitAppValidtaionRoutes(appValidationHandler)
 
-	deviceInitHandler := di.InitDeviceInitHandler(worksInfoModule.Usecase, skinModule.Usecase, configurationModule.Usecase, appTokenModule.Usecase)
+	deviceInitHandler := di.InitDeviceInitHandler(worksInfoModule.Usecase, skinModule.Usecase, configurationModule.Usecase, appTokenModule.Usecase, orgModule.Usecase)
 	router.SetDeviceRoutes(deviceInitHandler)
 
 	return &http.Server{

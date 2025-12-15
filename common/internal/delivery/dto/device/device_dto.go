@@ -15,4 +15,5 @@ type DeviceResultResponse struct {
 	IssuedAppToken interface{} `json:"issuedAppToken"`
 	SkinInfo       interface{} `json:"skinInfo"`
 	WorksConfig    interface{} `json:"worksConfig"`
+	Org            []string    `json:"org"`
 }
