@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"org/internal/application/usecase"
+	"org/internal/consts"
 	"org/internal/delivery/dto/org"
 	commonConsts "org/pkg/consts"
 	"org/pkg/response"
@@ -102,8 +103,14 @@ func (h *OrgHandler) GetOrgData(c *gin.Context) {
 		return
 
 	} else if err != nil {
-		// http status code 400
-		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+
+		if err == consts.ErrOrgFileNotFound {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.ORG_F001, consts.ORG_F001_MSG)
+		} else if err == consts.ErrOrgCodeNotExist {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.ORG_F002, consts.ORG_F002_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
 	} else {
 		response.SendSuccess(c, data)
 	}
@@ -139,7 +146,5 @@ func (h *OrgHandler) CreateOrgFile(c *gin.Context) {
 		// http status code 500
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 	}
-
-	// response.
 
 }

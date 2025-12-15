@@ -31,7 +31,7 @@ type OrgUsecase interface {
 	GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error)
 	CreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error)
 	RegistOrgBatch(ctx context.Context, in input.RegistOrgBatchInput) error
-	GetWorksOrgCode(ctx context.Context) []string
+	GetWorksOrgCode() []string
 }
 
 func NewOrgUsecase(repository repository.OrgRepository, orgFileStorage storage.OrgFileStorage, orgStorage storage.OrgStorage) OrgUsecase {
@@ -75,6 +75,14 @@ func (r *orgUsecase) GetOrgHash(ctx context.Context, req org.GetOrgHashRequest) 
 
 func (r *orgUsecase) GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error) {
 
+	serverOrgCode := r.orgStorage.WorksOrgCodeExist(req.OrgCode)
+
+	log.Println("serverOrgCode : ", serverOrgCode)
+	if !serverOrgCode {
+		log.Printf("[GetOrgData] orgCode %s not exist. \n", req.OrgCode)
+		return "", nil, consts.ErrOrgCodeNotExist
+	}
+
 	if req.Type == consts.FILE {
 		version, err := r.repository.GetOrgLatestVersion(ctx, req.OrgCode)
 		if err != nil {
@@ -88,7 +96,7 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req org.GetOrgDataRequest) 
 		// fileBytes, err := os.ReadFile(filePath)
 		if err != nil {
 			fmt.Printf("파일을 찾을 수 없음 %s \n", req.OrgCode)
-			return "", nil, err
+			return "", nil, consts.ErrOrgFileNotFound
 		}
 		return version, data, nil
 
@@ -371,6 +379,6 @@ func splitByKind(temp []entity.WorksOrg) ([]entity.WorksOrg, []entity.WorksOrg) 
 	return depts, users
 }
 
-func (r *orgUsecase) GetWorksOrgCode(ctx context.Context) []string {
+func (r *orgUsecase) GetWorksOrgCode() []string {
 	return r.orgStorage.GetWorksOrgCode()
 }

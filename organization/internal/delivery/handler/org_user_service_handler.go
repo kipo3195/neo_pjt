@@ -99,7 +99,7 @@ func (h *OrgUserServiceHandler) GetMyInfo(c *gin.Context) {
 		DeptInfo:  deptInfo,
 	}
 
-	worksOrgCode := h.svc.Org.GetWorksOrgCode(ctx)
+	worksOrgCode := h.svc.Org.GetWorksOrgCode()
 
 	res := user.GetMyInfoResponse{
 		MyInfo:       myInfo,

@@ -8,6 +8,7 @@ import (
 type OrgStorage interface {
 	PutWorksOrgCode(orgCode []string)
 	GetWorksOrgCode() []string
+	WorksOrgCodeExist(orgCode string) bool
 }
 
 type orgStorage struct {
@@ -41,4 +42,13 @@ func (r *orgStorage) GetWorksOrgCode() []string {
 	defer r.mu.RUnlock()
 
 	return r.worksOrgCode
+}
+func (r *orgStorage) WorksOrgCodeExist(orgCode string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if _, exists := r.worksOrgCodeMap[orgCode]; exists {
+		return true
+	}
+	return false
 }
