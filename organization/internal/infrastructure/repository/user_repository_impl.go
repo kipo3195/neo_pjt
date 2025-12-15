@@ -39,6 +39,7 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 	// 첫 번째 쿼리: 사용자 상세 정보
 	err := tx.Raw(
 		`SELECT 
+			su.org,
 			su.user_hash,
 			wuml.ko_lang,
 			wuml.en_lang,
@@ -59,41 +60,41 @@ func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHash
 	// 두 번째 쿼리: 부서 정보
 	err = tx.Raw(
 		`SELECT 
-			wdml.dept_org,
-			wdml.dept_code,
-			wdml.def_lang,
-			wdml.ko_lang,
-			wdml.en_lang,
-			wdml.jp_lang,
-			wdml.zh_lang,
-			wdml.ru_lang,
-			wdml.vi_lang,
-			wd.header,
-			wd.description,
-			a.r_kr_lang, a.r_en_lang, a.r_zh_lang, a.r_jp_lang,
-			a.p_kr_lang, a.p_en_lang, a.p_zh_lang, a.p_jp_lang
-		FROM works_dept AS wd 
-		JOIN works_dept_multi_lang AS wdml 
-			ON wd.dept_code = wdml.dept_code 
-		JOIN (
+		wdml.dept_org,
+		wdml.dept_code,
+		wdml.def_lang,
+		wdml.ko_lang,
+		wdml.en_lang,
+		wdml.jp_lang,
+		wdml.zh_lang,
+		wdml.ru_lang,
+		wdml.vi_lang,
+		wd.header,
+		wd.description,
+		a.r_kr_lang, a.r_en_lang, a.r_zh_lang, a.r_jp_lang,
+		a.p_kr_lang, a.p_en_lang, a.p_zh_lang, a.p_jp_lang
+	FROM works_dept AS wd 
+	JOIN works_dept_multi_lang AS wdml 
+		ON wd.dept_code = wdml.dept_code 
+	JOIN (
 			SELECT wdu.dept_code, 
-				rml.kr_lang as r_kr_lang, 
-				rml.en_lang as r_en_lang, 
-				rml.zh_lang as r_zh_lang,
-				rml.jp_lang as r_jp_lang,
-				pml.kr_lang as p_kr_lang,
-				pml.en_lang as p_en_lang,
-				pml.zh_lang as p_zh_lang,
-				pml.jp_lang as p_jp_lang
-			FROM service_users AS su 
-			JOIN works_dept_user AS wdu 
-				ON su.user_hash = wdu.user_hash 
-			LEFT JOIN role_multi_lang as rml
-				on wdu.role_code = rml.role_code
-			LEFT JOIN position_multi_lang as pml
-				on wdu.position_code = pml.position_code
-			WHERE su.use_yn = 'Y' AND su.user_hash = ? ) AS a 
-			ON wdml.dept_code = a.dept_code`, en.MyHash).Scan(&myDeptInfo).Error
+			rml.kr_lang as r_kr_lang, 
+			rml.en_lang as r_en_lang, 
+			rml.zh_lang as r_zh_lang,
+			rml.jp_lang as r_jp_lang,
+			pml.kr_lang as p_kr_lang,
+			pml.en_lang as p_en_lang,
+			pml.zh_lang as p_zh_lang,
+			pml.jp_lang as p_jp_lang
+		FROM service_users AS su 
+		JOIN works_dept_user AS wdu 
+			ON su.user_hash = wdu.user_hash 
+		LEFT JOIN role_multi_lang as rml
+			on wdu.role_code = rml.role_code
+		LEFT JOIN position_multi_lang as pml
+			on wdu.position_code = pml.position_code
+		WHERE su.use_yn = 'Y' AND su.user_hash = ? ) AS a 
+		ON wdml.dept_code = a.dept_code`, en.MyHash).Scan(&myDeptInfo).Error
 	if err != nil {
 		tx.Rollback()
 		return entity.MyInfoEntity{}, err
@@ -128,6 +129,7 @@ func toMyInfoEntity(myDetailInfo model.MyDetailInfo, myDeptInfo []model.DeptInfo
 	return entity.MyInfoEntity{
 		UserHash: myDetailInfo.UserHash,
 		Username: userName,
+		MyOrg:    myDetailInfo.Org,
 		DeptInfo: deptInfoEntity,
 	}
 }
@@ -191,6 +193,7 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 	// 첫 번째 쿼리: 사용자 상세 정보
 	err := tx.Raw(`
 	SELECT 
+	    su.org, 
 		su.user_hash,
 		wuml.ko_lang,
 		wuml.en_lang,
@@ -231,7 +234,7 @@ func (r *userRepositoryImpl) GetUserInfo(ctx context.Context, entity entity.User
 			ON wd.dept_code = wdml.dept_code 
 		JOIN (
 			SELECT wdu.dept_code, 
-			 su.user_hash,
+				su.user_hash,
 				rml.kr_lang as r_kr_lang, 
 				rml.en_lang as r_en_lang, 
 				rml.zh_lang as r_zh_lang,

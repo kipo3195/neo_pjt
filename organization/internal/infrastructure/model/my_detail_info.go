@@ -1,6 +1,7 @@
 package model
 
 type MyDetailInfo struct {
+	Org      string `gorm:"column:org"`
 	UserHash string `gorm:"column:user_hash"`
 	DefLang  string `gorm:"column:def_lang"`
 	KoLang   string `gorm:"column:ko_lang"`

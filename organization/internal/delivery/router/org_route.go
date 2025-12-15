@@ -19,6 +19,7 @@ type OrgRouter interface {
 	SetUserRoute(handler *handler.UserHandler, tokenConfig config.TokenHashConfig)
 	SetDummyDataServiceRoute(handler *handler.DummyDataServiceHandler)
 	SetOrgBatchServiceRoute(handler *handler.OrgBatchServiceHandler)
+	SetOrgUserServiceRoute(handler *handler.OrgUserServiceHandler, tokenConfig config.TokenHashConfig)
 	GetEngine() *gin.Engine
 }
 
@@ -65,11 +66,11 @@ func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.
 }
 
 func (r *orgRouter) SetUserRoute(handler *handler.UserHandler, tokenConfig config.TokenHashConfig) {
-	clientApi := r.parent.Group("/client/v1/user")
+	// clientApi := r.parent.Group("/client/v1/user")
 
-	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
-	clientApi.GET("/my-info", handler.GetMyInfo)
-	clientApi.POST("/info", handler.GetUserInfo)
+	// clientApi.Use(middleware.AuthMiddleware(tokenConfig))
+	//clientApi.GET("/my-info", handler.GetMyInfo)
+	//clientApi.POST("/info", handler.GetUserInfo)
 }
 
 // 더미데이터 생성 Service /////////////////////////////
@@ -91,5 +92,15 @@ func (r *orgRouter) SetOrgBatchServiceRoute(handler *handler.OrgBatchServiceHand
 
 	server := r.parent.Group("/server/v1/org/batch")
 	server.POST("/", handler.RegistOrgBatchData)
+
+}
+
+func (r *orgRouter) SetOrgUserServiceRoute(handler *handler.OrgUserServiceHandler, tokenConfig config.TokenHashConfig) {
+
+	clientApi := r.parent.Group("/client/v1/user")
+
+	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
+	clientApi.GET("/my-info", handler.GetMyInfo)
+	clientApi.POST("/info", handler.GetUserInfo)
 
 }

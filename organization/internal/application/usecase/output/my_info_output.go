@@ -5,10 +5,10 @@ import (
 )
 
 type MyInfoOutput struct {
-	UserHash string           `json:"userHash"`
-	Username UsernameOutput   `json:"userName"`
-	OrgCodes []string         `json:"orgCodes"`
-	DeptInfo []DeptInfoOutput `json:"deptInfo"`
+	UserHash  string           `json:"userHash"`
+	Username  UsernameOutput   `json:"userName"`
+	MyOrgCode string           `json:"myOrgCode"`
+	DeptInfo  []DeptInfoOutput `json:"deptInfo"`
 }
 
 func MakeMyInfoOutput(entity entity.MyInfoEntity) MyInfoOutput {
@@ -23,22 +23,19 @@ func MakeMyInfoOutput(entity entity.MyInfoEntity) MyInfoOutput {
 		Vi:  entity.Username.Vi,
 	}
 
-	deptInfo, orgCodes := makeDeptInfoOutput(entity.DeptInfo)
+	deptInfo := makeDeptInfoOutput(entity.DeptInfo)
 
 	return MyInfoOutput{
-		UserHash: entity.UserHash,
-		Username: username,
-		DeptInfo: deptInfo,
-		OrgCodes: orgCodes,
+		UserHash:  entity.UserHash,
+		Username:  username,
+		DeptInfo:  deptInfo,
+		MyOrgCode: entity.MyOrg,
 	}
 }
 
-func makeDeptInfoOutput(deptInfos []entity.DeptInfoEntity) ([]DeptInfoOutput, []string) {
+func makeDeptInfoOutput(deptInfos []entity.DeptInfoEntity) []DeptInfoOutput {
 
 	var deptInfoOutput []DeptInfoOutput
-
-	orgCodes := make(map[string]struct{})
-	var uniqueOrgs []string
 
 	for _, deptInfo := range deptInfos {
 		roleNameOutput := RoleNameOutput{
@@ -75,13 +72,7 @@ func makeDeptInfoOutput(deptInfos []entity.DeptInfoEntity) ([]DeptInfoOutput, []
 			PositionName: positionNameOutput,
 		})
 
-		// DeptOrg가 orgCodes에 이미 존재하는지 체크
-		if _, exists := orgCodes[deptInfo.DeptOrg]; !exists {
-			// 신규 DeptOrg면 put
-			orgCodes[deptInfo.DeptOrg] = struct{}{}
-			uniqueOrgs = append(uniqueOrgs, deptInfo.DeptOrg)
-		}
 	}
 
-	return deptInfoOutput, uniqueOrgs
+	return deptInfoOutput
 }
