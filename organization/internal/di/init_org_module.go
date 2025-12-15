@@ -14,10 +14,10 @@ type OrgModule struct {
 	Usecase usecase.OrgUsecase
 }
 
-func InitOrgModule(db *gorm.DB, orgStorage storage.OrgFileStorage) *OrgModule {
+func InitOrgModule(db *gorm.DB, orgFileStorage storage.OrgFileStorage, orgStorage storage.OrgStorage) *OrgModule {
 
 	repository := repository.NewOrgRepository(db)
-	usecase := usecase.NewOrgUsecase(repository, orgStorage)
+	usecase := usecase.NewOrgUsecase(repository, orgFileStorage, orgStorage)
 	handler := handler.NewOrgHandler(usecase)
 
 	return &OrgModule{

@@ -12,4 +12,5 @@ type OrgRepository interface {
 	PutOrgEventHash(ctx context.Context, org string, hash string) (bool, error)
 	GetOrg(ctx context.Context, orgCode string) ([]entity.WorksOrg, error)
 	RegistOrgBatch(ctx context.Context, dept []entity.WorksOrg, user []entity.WorksOrg) error
+	InitWorksOrgCode(ctx context.Context) ([]string, error)
 }

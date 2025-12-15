@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"org/internal/delivery/router"
 	"org/internal/di"
 	"org/internal/infrastructure/config"
+	"org/internal/infrastructure/loader"
 	"org/internal/infrastructure/migration"
 	"org/internal/infrastructure/storage"
+	"time"
 )
 
 func main() {
@@ -30,9 +33,19 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Storage Init -----
-	orgStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
+	orgFileStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
+	orgStorage := storage.NewOrgStorage()
 
 	// ---- Data Loader -----
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	dataLoader := loader.NewDataLoader()
+	dataLoader.Register(loader.NewOrgLoader(db, orgStorage))
+
+	if err := dataLoader.LoadAllData(ctx); err != nil {
+		log.Fatal("Failed to load initial data:", err)
+	}
 
 	// ---- Router Init -----
 	router := router.NewOrgRoute("org")
@@ -43,7 +56,7 @@ func InitServer() *http.Server {
 	departmentModule := di.InitDepartmentModule(db)
 	router.SetDepartmentRoutes(departmentModule.Handler, sfg.TokenConfig)
 
-	orgModule := di.InitOrgModule(db, orgStorage)
+	orgModule := di.InitOrgModule(db, orgFileStorage, orgStorage)
 	router.SetOrgRoute(orgModule.Handler, sfg.TokenConfig)
 
 	userModule := di.InitUserModule(db)

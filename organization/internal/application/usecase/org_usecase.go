@@ -21,8 +21,9 @@ import (
 )
 
 type orgUsecase struct {
-	repository repository.OrgRepository
-	orgStorage storage.OrgFileStorage
+	repository     repository.OrgRepository
+	orgFileStorage storage.OrgFileStorage
+	orgStorage     storage.OrgStorage
 }
 
 type OrgUsecase interface {
@@ -30,12 +31,14 @@ type OrgUsecase interface {
 	GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error)
 	CreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error)
 	RegistOrgBatch(ctx context.Context, in input.RegistOrgBatchInput) error
+	GetWorksOrgCode(ctx context.Context) []string
 }
 
-func NewOrgUsecase(repository repository.OrgRepository, orgStorage storage.OrgFileStorage) OrgUsecase {
+func NewOrgUsecase(repository repository.OrgRepository, orgFileStorage storage.OrgFileStorage, orgStorage storage.OrgStorage) OrgUsecase {
 	return &orgUsecase{
-		repository: repository,
-		orgStorage: orgStorage,
+		repository:     repository,
+		orgFileStorage: orgFileStorage,
+		orgStorage:     orgStorage,
 	}
 }
 
@@ -78,7 +81,7 @@ func (r *orgUsecase) GetOrgData(ctx context.Context, req org.GetOrgDataRequest) 
 			return "", nil, err
 		}
 
-		data, err := r.orgStorage.GetOrgFile(req.OrgCode)
+		data, err := r.orgFileStorage.GetOrgFile(req.OrgCode)
 
 		//filePath := "./storage/" + req.OrgCode + "/org_files/" + version // 전달할 파일 경로
 		// 파일을 메모리에 가지고 있도록 수정 할 것.
@@ -133,12 +136,12 @@ func (r *orgUsecase) CreateOrgFile(ctx context.Context, req org.CreateOrgFileReq
 		}
 
 		// 메모리 저장소에 저장
-		if err := r.orgStorage.SaveOrgFile(org, zipData); err != nil {
+		if err := r.orgFileStorage.SaveOrgFile(org, zipData); err != nil {
 			return nil, fmt.Errorf("memory save error: %w", err)
 		}
 
 		// 점검
-		data, err := r.orgStorage.GetOrgFile(org)
+		data, err := r.orgFileStorage.GetOrgFile(org)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -366,4 +369,8 @@ func splitByKind(temp []entity.WorksOrg) ([]entity.WorksOrg, []entity.WorksOrg) 
 	}
 
 	return depts, users
+}
+
+func (r *orgUsecase) GetWorksOrgCode(ctx context.Context) []string {
+	return r.orgStorage.GetWorksOrgCode()
 }

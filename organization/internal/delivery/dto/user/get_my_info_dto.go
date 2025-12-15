@@ -1,5 +1,6 @@
 package user
 
 type GetMyInfoResponse struct {
-	MyInfo DetailInfo `json:"myInfo"`
+	MyInfo       MyDetailInfo `json:"myInfo"`
+	WorksOrgCode []string     `json:"worksOrgCode"`
 }
