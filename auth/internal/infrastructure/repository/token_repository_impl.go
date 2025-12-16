@@ -33,7 +33,11 @@ func TokenMigrate(db *gorm.DB) {
 func (r *tokenRepository) PutIssuedAppToken(token *shared.AppTokenEntity) (bool, error) {
 
 	// entity -> model
-	issuedAppToken := toAppTokenModel(token)
+	issuedAppToken := model.IssuedAppToken{
+		Uuid:         token.Uuid,
+		AppToken:     token.AppToken,
+		RefreshToken: token.RefreshToken,
+	}
 
 	// Insert 실행
 	if err := r.db.Create(&issuedAppToken).Error; err != nil {
@@ -70,14 +74,6 @@ func (r *tokenRepository) GetValidationAppToken(entity entity.AppTokenValidation
 		}
 	}
 
-}
-
-func toAppTokenModel(e *shared.AppTokenEntity) *model.IssuedAppToken {
-	return &model.IssuedAppToken{
-		Uuid:         e.Uuid,
-		AppToken:     e.AppToken,
-		RefreshToken: e.RefreshToken,
-	}
 }
 
 func (r *tokenRepository) InitUserAuthToken() ([]entity.AuthTokenEntity, error) {

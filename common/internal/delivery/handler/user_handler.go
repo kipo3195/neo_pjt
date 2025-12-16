@@ -62,11 +62,16 @@ func (h *UserHandler) GetUserRegisterChallenge(c *gin.Context) {
 
 	userRegisterChallengeInput := adapter.MakeUserRegisterChallengeInput(req.Id, req.Salt)
 
-	userRegisterChallengeOutput := h.usecase.GenerateUserChallenge(ctx, userRegisterChallengeInput)
+	output, err := h.usecase.GenerateUserChallenge(ctx, userRegisterChallengeInput)
+
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.FAIL, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
 
 	// output -> dto ?
 	res := user.UserRegisterChallengeResponse{
-		Challenge: userRegisterChallengeOutput.Challenge,
+		Challenge: output.Challenge,
 	}
 
 	response.SendSuccess(c, res)

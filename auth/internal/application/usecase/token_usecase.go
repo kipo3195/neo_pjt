@@ -31,7 +31,7 @@ type tokenUsecase struct {
 
 type TokenUsecase interface {
 	AppTokenValidation(in input.AppTokenValidationInput, ctx context.Context) (bool, error)
-	GenerateAppToken(body token.GenerateAppTokenRequestBody) (*token.GenerateAppTokenResponseDTO, error)
+	GenerateAppToken(ctx context.Context, in input.GenerateAppTokenInput) (*token.GenerateAppTokenResponseDTO, error)
 	GenerateAuthToken(ctx context.Context, in input.GenerateAuthTokenInput) (output.GenerateAuthTokenOutput, error)
 	CheckRefreshTokenWithExp(in input.RefreshTokenCheckInput, ctx context.Context) (bool, string, error)
 	CheckRefreshToken(in input.RefreshTokenCheckInput, ctx context.Context) (string, error)
@@ -126,25 +126,25 @@ func appTokenValidationCheck(appToken string) error {
 	}
 }
 
-func (r *tokenUsecase) GenerateAppToken(body token.GenerateAppTokenRequestBody) (*token.GenerateAppTokenResponseDTO, error) {
+func (r *tokenUsecase) GenerateAppToken(ctx context.Context, in input.GenerateAppTokenInput) (*token.GenerateAppTokenResponseDTO, error) {
 
 	// 토큰 발급
-	appToken, err := util.GenerateDeviceTokenJWT(r.jwtCfg.AppTokenExp, body.Uuid)
+	appToken, err := util.GenerateDeviceTokenJWT(r.jwtCfg.AppTokenExp, in.Uuid)
 
-	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", body.Uuid, appToken)
+	fmt.Printf("요청한 uuid : %s, 발급된 토큰 : %s \n", in.Uuid, appToken)
 
 	if err != nil {
 		return nil, consts.ErrServerError
 	}
 
-	refreshToken, err := util.GenerateDeviceTokenJWT(r.jwtCfg.AppRefreshTokenExp, body.Uuid)
+	refreshToken, err := util.GenerateDeviceTokenJWT(r.jwtCfg.AppRefreshTokenExp, in.Uuid)
 	if err != nil {
 		return nil, consts.ErrServerError
 	}
 
 	// entity 생성
 	tokenEntity := &shared.AppTokenEntity{
-		Uuid:         body.Uuid,
+		Uuid:         in.Uuid,
 		AppToken:     appToken,
 		RefreshToken: refreshToken,
 	}

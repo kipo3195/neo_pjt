@@ -27,7 +27,7 @@ type userUsecase struct {
 }
 
 type UserUsecase interface {
-	GenerateUserChallenge(ctx context.Context, input input.UserRegisterChallengeInput) output.UserRegisterChallengeOutput
+	GenerateUserChallenge(ctx context.Context, input input.UserRegisterChallengeInput) (output.UserRegisterChallengeOutput, error)
 	UserRegister(ctx context.Context, input input.UserRegisterInput) string
 }
 
@@ -40,9 +40,17 @@ func NewUserUsecase(repository repository.UserRepository, storage storage.UserSt
 	}
 }
 
-func (u userUsecase) GenerateUserChallenge(ctx context.Context, input input.UserRegisterChallengeInput) output.UserRegisterChallengeOutput {
+func (u userUsecase) GenerateUserChallenge(ctx context.Context, input input.UserRegisterChallengeInput) (output.UserRegisterChallengeOutput, error) {
 
 	entity := entity.MakeUserRegisterChallengeEntity(input.Id, input.Salt)
+
+	// DB체크 service_users에 user_id가 있는지 점검.
+
+	err := u.repository.CheckUserRegist(ctx, entity.Id)
+
+	if err != nil {
+		return output.UserRegisterChallengeOutput{}, err
+	}
 
 	chanllenge := generateChallenge(entity.Id, entity.Salt)
 
@@ -50,7 +58,7 @@ func (u userUsecase) GenerateUserChallenge(ctx context.Context, input input.User
 
 	return output.UserRegisterChallengeOutput{
 		Challenge: chanllenge,
-	}
+	}, nil
 }
 
 func generateChallenge(userID, salt string) string {

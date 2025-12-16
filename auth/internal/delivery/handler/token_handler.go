@@ -25,6 +25,9 @@ func NewTokenHandler(uc usecase.TokenUsecase) *TokenHandler {
 
 func (h *TokenHandler) GenerateAppToken(c *gin.Context) {
 
+	ctx := c.Request.Context()
+
+	// ---- 이 로직은 middleware로 처리하기 시작
 	// request의 header 데이터 -> dto로 변경
 	header := token.GenerateAppTokenRequestHeader{
 		Token: c.GetHeader(consts.AUTHORIZATION),
@@ -37,21 +40,20 @@ func (h *TokenHandler) GenerateAppToken(c *gin.Context) {
 		return
 	}
 
-	// request body 데이터 -> dto로 변경
-	var body token.GenerateAppTokenRequestBody
+	// ---- 이 로직은 middleware로 처리하기 종료
 
-	if err := json.NewDecoder(c.Request.Body).Decode(&body); err != nil {
+	// request body 데이터 -> dto로 변경
+	var req token.GenerateAppTokenRequestBody
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_104, commonConsts.E_104_MSG)
 		return
 	}
 
-	requestDTO := token.GenerateAppTokenRequestDTO{
-		// Header: header,
-		Body: body,
-	}
+	input := adapter.MakeGenerateAppTokenInput(req.Uuid)
 
 	// 토큰 발급, DB 저장.
-	resDto, err := h.usecase.GenerateAppToken(requestDTO.Body)
+	resDto, err := h.usecase.GenerateAppToken(ctx, input)
 
 	log.Println("handler에서 토큰 구조체 반환 resDto : ", resDto)
 
