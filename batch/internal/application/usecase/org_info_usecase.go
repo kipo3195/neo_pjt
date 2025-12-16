@@ -66,7 +66,7 @@ func (r *orgInfoUsecase) SendOrgInfoToOrg(ctx context.Context, org string) error
 	}
 
 	// 파일 전송
-	err = r.apiRepo.SendJsonToOrg(ctx, fileName, zipData)
+	err = r.apiRepo.SendJsonToOrg(ctx, fileName, zipData, org)
 	if err != nil {
 		return err
 	}

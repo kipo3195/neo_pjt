@@ -25,14 +25,5 @@ func (r *OrgBatchService) RegistOrgBatch(ctx context.Context, input input.Regist
 
 	r.Org.RegistOrgBatch(ctx, input)
 
-	// 그룹
-	// select * from works_dept;
-	// select * from works_dept_multi_lang;
-
-	// 사용자
-	// select * from user_detail;
-	// select * from works_dept_user;
-	// select * from works_user_multi_lang;
-
 	return nil
 }

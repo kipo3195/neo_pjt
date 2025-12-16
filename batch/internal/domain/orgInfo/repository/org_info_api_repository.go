@@ -3,5 +3,5 @@ package repository
 import "context"
 
 type OrgInfoApiRepository interface {
-	SendJsonToOrg(ctx context.Context, fileName string, zipData []byte) error
+	SendJsonToOrg(ctx context.Context, fileName string, zipData []byte, orgCode string) error
 }

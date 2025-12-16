@@ -22,7 +22,7 @@ func NewOrgInfoApiRepository(serverUrl string) repository.OrgInfoApiRepository {
 	}
 }
 
-func (r *orgInfoApiRepositoryImpl) SendJsonToOrg(ctx context.Context, fileName string, zipData []byte) error {
+func (r *orgInfoApiRepositoryImpl) SendJsonToOrg(ctx context.Context, fileName string, zipData []byte, orgCode string) error {
 	url := "http://" + r.serverUrl + "/org/server/v1/org/batch" // 상대 서버 endpoint
 
 	body := &bytes.Buffer{}
@@ -39,8 +39,8 @@ func (r *orgInfoApiRepositoryImpl) SendJsonToOrg(ctx context.Context, fileName s
 	}
 
 	// ---- 추가 메타데이터 (선택) ----
-	// _ = writer.WriteField("type", "org-info")
-	// _ = writer.WriteField("generatedAt", util.GetNow())
+	// 수신 쪽에서는 c.Request.FormValue(키워드)로 꺼내씀.
+	_ = writer.WriteField("org_code", orgCode)
 
 	// multipart 종료
 	if err := writer.Close(); err != nil {

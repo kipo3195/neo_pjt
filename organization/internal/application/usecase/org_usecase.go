@@ -275,7 +275,7 @@ func buildOrgTree(flatList []entity.OrgInfo, parentCode string) []entity.OrgTree
 
 func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatchInput) error {
 
-	en := entity.MakeRegistOrgBatchEntity(in.OrgFile, in.OrgFileName)
+	en := entity.MakeRegistOrgBatchEntity(in.OrgFile, in.OrgFileName, in.OrgCode)
 
 	// zip 해제, json 구하기
 	jsonBytes, err := unzipAndGetJSON(en.OrgFile)
@@ -285,16 +285,18 @@ func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatch
 		return consts.ErrUnzipAndGetJSONError
 	}
 
-	//log.Println("[RegistOrgBatch] raw json :", string(jsonBytes))
-
 	// 2. JSON → Wrapper
 	var orgInfo []entity.WorksOrg
 	if err := json.Unmarshal(jsonBytes, &orgInfo); err != nil {
 		return consts.ErrInvalidOrgJSONError
 	}
-	// log.Println("[RegistOrgBatch] org Info json : ", orgInfo)
 
-	// diff 구하기
+	// 3. diff 구하기 (현재 데이터 조회)
+	nowOrgInfo, err := r.repository.GetOrg(ctx, en.OrgCode)
+	if err != nil {
+		return err
+	}
+	log.Println("[RegistOrgBatch] DIFF 계산을 위한 현재 ORG INFO : ", nowOrgInfo)
 
 	dept, user := splitByKind(orgInfo)
 

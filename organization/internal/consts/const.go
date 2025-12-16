@@ -7,3 +7,7 @@ const (
 	USER_ID       = "userId"
 	USER_HASH     = "userHash"
 )
+
+const (
+	ORG_FILE = "org_file"
+)
