@@ -1,11 +1,11 @@
 package entity
 
 type DeleteProfileImgEntity struct {
-	UserId string
+	UserHash string
 }
 
-func MakeDeleteProfileImgEntity(userId string) DeleteProfileImgEntity {
+func MakeDeleteProfileImgEntity(userHash string) DeleteProfileImgEntity {
 	return DeleteProfileImgEntity{
-		UserId: userId,
+		UserHash: userHash,
 	}
 }

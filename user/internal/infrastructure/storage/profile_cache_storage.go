@@ -12,9 +12,9 @@ type profileCacheStorage struct {
 }
 
 type ProfileCacheStorage interface {
-	PutProfileName(userId string, fileName string)
-	GetProfileName(userId string) string
-	DeleteProfileName(userId string, fileName string)
+	PutProfileName(userHash string, fileName string)
+	GetProfileName(userHash string) string
+	DeleteProfileName(userHash string, fileName string)
 }
 
 func NewProfileCacheStorage() ProfileCacheStorage {
@@ -43,14 +43,14 @@ func (r *profileCacheStorage) GetProfileName(userHash string) string {
 	}
 }
 
-func (r *profileCacheStorage) DeleteProfileName(userId string, fileName string) {
+func (r *profileCacheStorage) DeleteProfileName(userHash string, fileName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	serverFileName := r.profileNameMap[userId]
+	serverFileName := r.profileNameMap[userHash]
 
 	if serverFileName != "" && serverFileName == fileName {
-		delete(r.profileNameMap, userId)
+		delete(r.profileNameMap, userHash)
 		log.Printf("[DeleteProfileName] profile name %s delete success. \n", fileName)
 	}
 

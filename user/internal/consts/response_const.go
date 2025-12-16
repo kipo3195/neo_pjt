@@ -15,4 +15,7 @@ const (
 
 	USER_PROFILE_F005     = "USER_PROFILE_F005"
 	USER_PROFILE_F005_MSG = "Profile image not regist."
+
+	USER_PROFILE_F006     = "USER_PROFILE_F006"
+	USER_PROFILE_F006_MSG = "Profile image upload form-data error."
 )

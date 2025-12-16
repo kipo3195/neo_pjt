@@ -30,16 +30,16 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	userHash := util.GetUserIdByAccessToken(c)
-	userId := util.GetUserHashByAccessToken(c)
+	userId := util.GetUserIdByAccessToken(c)
+	userHash := util.GetUserHashByAccessToken(c)
 
 	// 테스트 용 -> 다른 사람꺼 등록가능
-	headerUserHash := c.GetHeader("User-Hash")
-	if headerUserHash != "" {
-		//response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
-		userHash = headerUserHash
-		userId = "TEST_USER_ID"
-	}
+	// headerUserHash := c.GetHeader("User-Hash")
+	// if headerUserHash != "" {
+	// 	//response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+	// 	userHash = headerUserHash
+	// 	userId = "TEST_USER_ID"
+	// }
 	// 테스트용 끝 -> 이후 제거될 코드
 
 	log.Print("userHash : ", userHash)
@@ -132,14 +132,14 @@ func (h *ProfileHandler) DeleteProfileImg(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	userId := util.GetUserIdByAccessToken(c)
-	if userId == "" {
+	userHash := util.GetUserHashByAccessToken(c)
+	if userHash == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
 		return
 	}
 
 	req := profile.DeleteProfileImgRequest{
-		UserId: userId,
+		UserHash: userHash,
 	}
 
 	validate := validator.New()
@@ -148,7 +148,7 @@ func (h *ProfileHandler) DeleteProfileImg(c *gin.Context) {
 		return
 	}
 
-	deleteProfileImgInput := adapter.MakeDeleteProfileImgInput(req.UserId)
+	deleteProfileImgInput := adapter.MakeDeleteProfileImgInput(req.UserHash)
 	err := h.usecase.DeleteProfileImg(ctx, deleteProfileImgInput)
 
 	if err != nil {
