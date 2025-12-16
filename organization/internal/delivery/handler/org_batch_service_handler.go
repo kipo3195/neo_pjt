@@ -29,7 +29,7 @@ func (r *OrgBatchServiceHandler) RegistOrgBatchData(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	orgCode := c.Request.FormValue("org_code")
-	log.Println("[RegistOrgBatchData] 1 orgCode :", orgCode)
+	log.Println("[RegistOrgBatchData] orgCode :", orgCode)
 
 	// 요청 org code가 없는 경우
 	if orgCode == "" {

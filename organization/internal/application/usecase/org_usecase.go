@@ -296,7 +296,8 @@ func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatch
 	if err != nil {
 		return err
 	}
-	log.Println("[RegistOrgBatch] DIFF 계산을 위한 현재 ORG INFO : ", nowOrgInfo)
+
+	// 부서 - 하위 사용자 구조로 만들고, 부서 * 부서 하위사용자 수만큼 반복
 
 	dept, user := splitByKind(orgInfo)
 
