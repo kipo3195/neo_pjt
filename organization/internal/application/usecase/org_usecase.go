@@ -274,14 +274,14 @@ func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatch
 		return consts.ErrUnzipAndGetJSONError
 	}
 
-	// log.Println("[RegistOrgBatch] raw json :", string(jsonBytes))
+	//log.Println("[RegistOrgBatch] raw json :", string(jsonBytes))
 
 	// 2. JSON → Wrapper
 	var orgInfo []entity.WorksOrg
 	if err := json.Unmarshal(jsonBytes, &orgInfo); err != nil {
 		return consts.ErrInvalidOrgJSONError
 	}
-	log.Println("[RegistOrgBatch] org Info json : ", orgInfo)
+	// log.Println("[RegistOrgBatch] org Info json : ", orgInfo)
 
 	// diff 구하기
 

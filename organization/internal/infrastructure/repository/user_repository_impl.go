@@ -24,6 +24,7 @@ func NewUserRepository(db *gorm.DB) repository.UserRepository {
 func UserMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.UserGrade{})
 	db.AutoMigrate(&model.UserProfile{})
+	db.AutoMigrate(&model.UserDetail{})
 }
 
 func (r *userRepositoryImpl) GetMyInfo(ctx context.Context, en entity.MyInfoHashEntity) (entity.MyInfoEntity, error) {

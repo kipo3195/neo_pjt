@@ -34,12 +34,12 @@ func (h *ProfileHandler) UploadProfileImg(c *gin.Context) {
 	userHash := util.GetUserHashByAccessToken(c)
 
 	// 테스트 용 -> 다른 사람꺼 등록가능
-	// headerUserHash := c.GetHeader("User-Hash")
-	// if headerUserHash != "" {
-	// 	//response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
-	// 	userHash = headerUserHash
-	// 	userId = "TEST_USER_ID"
-	// }
+	headerUserHash := c.GetHeader("User-Hash")
+	if headerUserHash != "" {
+		//response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+		userHash = headerUserHash
+		userId = "TEST_USER_ID"
+	}
 	// 테스트용 끝 -> 이후 제거될 코드
 
 	log.Print("userHash : ", userHash)

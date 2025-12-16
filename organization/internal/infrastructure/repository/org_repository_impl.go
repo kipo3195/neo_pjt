@@ -9,6 +9,7 @@ import (
 	"org/internal/infrastructure/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type orgRepositoryImpl struct {
@@ -24,6 +25,7 @@ func NewOrgRepository(db *gorm.DB) repository.OrgRepository {
 func OrgMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.OrgEvent{})
 	db.AutoMigrate(&model.OrgEventHash{})
+	db.AutoMigrate(&model.WorksDeptUser{})
 }
 
 func (r *orgRepositoryImpl) CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error) {
@@ -159,6 +161,163 @@ func (r *orgRepositoryImpl) RegistOrgBatch(ctx context.Context, dept []entity.Wo
 
 	tx := r.db.Begin()
 
-	return tx.Commit().Error
+	/* 부서 */
+	worksDept := make([]model.WorksDept, 0)
+	worksDeptMultiLang := make([]model.WorksDeptMultiLang, 0)
 
+	for _, d := range dept {
+
+		worksDept = append(worksDept, model.WorksDept{
+			DeptCode:        d.DeptCode,
+			DeptOrg:         d.Org,
+			ParentsDeptCode: d.ParentDeptCode,
+			UpdateHash:      d.UpdateHash,
+		})
+
+		worksDeptMultiLang = append(worksDeptMultiLang, model.WorksDeptMultiLang{
+			DeptCode: d.DeptCode,
+			DeptOrg:  d.Org,
+			KoLang:   d.KoLang,
+			EnLang:   d.EnLang,
+			ZhLang:   d.ZhLang,
+			JpLang:   d.JpLang,
+			RuLang:   d.RuLang,
+			ViLang:   d.ViLang,
+			DefLang:  d.KoLang,
+		})
+	}
+
+	if len(worksDept) > 0 {
+
+		err := tx.Clauses(
+			clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "dept_org"},
+					{Name: "dept_code"},
+				},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"update_hash",
+				}),
+			},
+		).Create(&worksDept).Error
+
+		if err != nil {
+			return err
+		}
+
+		err = tx.Clauses(
+			clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "dept_org"},
+					{Name: "dept_code"},
+				},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"ko_lang",
+					"en_lang",
+					"zh_lang",
+					"jp_lang",
+					"ru_lang",
+					"vi_lang",
+					"def_lang",
+				}),
+			},
+		).Create(&worksDeptMultiLang).Error
+
+		if err != nil {
+			return err
+		}
+	}
+
+	/* 사용자 */
+
+	userDetail := make([]model.UserDetail, 0)
+	worksDeptUser := make([]model.WorksDeptUser, 0)
+	worksUserMultiLang := make([]model.WorksUserMultiLang, 0)
+
+	for _, u := range user {
+
+		userDetail = append(userDetail, model.UserDetail{
+			UserHash: u.UserHash,
+		})
+
+		worksDeptUser = append(worksDeptUser, model.WorksDeptUser{
+			DeptCode:   u.DeptCode,
+			DeptOrg:    u.Org,
+			UserHash:   u.UserHash,
+			UpdateHash: u.UpdateHash,
+		})
+
+		worksUserMultiLang = append(worksUserMultiLang, model.WorksUserMultiLang{
+			UserHash: u.UserHash,
+			KoLang:   u.KoLang,
+			EnLang:   u.EnLang,
+			ZhLang:   u.ZhLang,
+			JpLang:   u.JpLang,
+			RuLang:   u.RuLang,
+			ViLang:   u.ViLang,
+			DefLang:  u.KoLang,
+		})
+
+	}
+
+	if len(userDetail) > 0 {
+
+		err := tx.Clauses(
+			clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "user_hash"},
+				},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"update_hash",
+					"user_phone_num",
+					"user_email",
+				}),
+			},
+		).Create(&userDetail).Error
+
+		if err != nil {
+			return err
+		}
+
+		err = tx.Clauses(
+			clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "dept_code"},
+					{Name: "user_hash"},
+				},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"update_hash",
+					"role_code",
+					"rank_number",
+				}),
+			},
+		).Create(&worksDeptUser).Error
+
+		if err != nil {
+			return err
+		}
+
+		err = tx.Clauses(
+			clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "user_hash"},
+				},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"ko_lang",
+					"en_lang",
+					"zh_lang",
+					"jp_lang",
+					"ru_lang",
+					"vi_lang",
+					"def_lang",
+				}),
+			},
+		).Create(&worksUserMultiLang).Error
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit().Error
 }
