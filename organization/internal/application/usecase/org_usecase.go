@@ -21,8 +21,9 @@ import (
 )
 
 type orgUsecase struct {
-	repository repository.OrgRepository
-	orgStorage storage.OrgFileStorage
+	repository     repository.OrgRepository
+	orgFileStorage storage.OrgFileStorage
+	orgStorage     storage.OrgStorage
 }
 
 type OrgUsecase interface {
@@ -30,12 +31,14 @@ type OrgUsecase interface {
 	GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error)
 	CreateOrgFile(ctx context.Context, req org.CreateOrgFileRequest) (interface{}, error)
 	RegistOrgBatch(ctx context.Context, in input.RegistOrgBatchInput) error
+	GetWorksOrgCode() []string
 }
 
-func NewOrgUsecase(repository repository.OrgRepository, orgStorage storage.OrgFileStorage) OrgUsecase {
+func NewOrgUsecase(repository repository.OrgRepository, orgFileStorage storage.OrgFileStorage, orgStorage storage.OrgStorage) OrgUsecase {
 	return &orgUsecase{
-		repository: repository,
-		orgStorage: orgStorage,
+		repository:     repository,
+		orgFileStorage: orgFileStorage,
+		orgStorage:     orgStorage,
 	}
 }
 
@@ -72,20 +75,28 @@ func (r *orgUsecase) GetOrgHash(ctx context.Context, req org.GetOrgHashRequest) 
 
 func (r *orgUsecase) GetOrgData(ctx context.Context, req org.GetOrgDataRequest) (string, interface{}, error) {
 
+	serverOrgCode := r.orgStorage.WorksOrgCodeExist(req.OrgCode)
+
+	log.Println("serverOrgCode : ", serverOrgCode)
+	if !serverOrgCode {
+		log.Printf("[GetOrgData] orgCode %s not exist. \n", req.OrgCode)
+		return "", nil, consts.ErrOrgCodeNotExist
+	}
+
 	if req.Type == consts.FILE {
 		version, err := r.repository.GetOrgLatestVersion(ctx, req.OrgCode)
 		if err != nil {
 			return "", nil, err
 		}
 
-		data, err := r.orgStorage.GetOrgFile(req.OrgCode)
+		data, err := r.orgFileStorage.GetOrgFile(req.OrgCode)
 
 		//filePath := "./storage/" + req.OrgCode + "/org_files/" + version // 전달할 파일 경로
 		// 파일을 메모리에 가지고 있도록 수정 할 것.
 		// fileBytes, err := os.ReadFile(filePath)
 		if err != nil {
 			fmt.Printf("파일을 찾을 수 없음 %s \n", req.OrgCode)
-			return "", nil, err
+			return "", nil, consts.ErrOrgFileNotFound
 		}
 		return version, data, nil
 
@@ -133,12 +144,12 @@ func (r *orgUsecase) CreateOrgFile(ctx context.Context, req org.CreateOrgFileReq
 		}
 
 		// 메모리 저장소에 저장
-		if err := r.orgStorage.SaveOrgFile(org, zipData); err != nil {
+		if err := r.orgFileStorage.SaveOrgFile(org, zipData); err != nil {
 			return nil, fmt.Errorf("memory save error: %w", err)
 		}
 
 		// 점검
-		data, err := r.orgStorage.GetOrgFile(org)
+		data, err := r.orgFileStorage.GetOrgFile(org)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -366,4 +377,8 @@ func splitByKind(temp []entity.WorksOrg) ([]entity.WorksOrg, []entity.WorksOrg) 
 	}
 
 	return depts, users
+}
+
+func (r *orgUsecase) GetWorksOrgCode() []string {
+	return r.orgStorage.GetWorksOrgCode()
 }

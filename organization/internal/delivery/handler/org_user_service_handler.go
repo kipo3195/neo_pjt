@@ -92,15 +92,18 @@ func (h *OrgUserServiceHandler) GetMyInfo(c *gin.Context) {
 
 	// 조직도 viewer org는 org 도메인에서 뽑아냄.
 
-	myInfo := user.DetailInfo{
+	myInfo := user.MyDetailInfo{
 		UserHash:  output.UserHash,
 		UserName:  userName,
 		MyOrgCode: output.MyOrgCode,
 		DeptInfo:  deptInfo,
 	}
 
+	worksOrgCode := h.svc.Org.GetWorksOrgCode()
+
 	res := user.GetMyInfoResponse{
-		MyInfo: myInfo,
+		MyInfo:       myInfo,
+		WorksOrgCode: worksOrgCode,
 	}
 
 	// response.

@@ -26,6 +26,7 @@ func OrgMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.OrgEvent{})
 	db.AutoMigrate(&model.OrgEventHash{})
 	db.AutoMigrate(&model.WorksDeptUser{})
+	db.AutoMigrate(&model.WorksOrgCode{})
 }
 
 func (r *orgRepositoryImpl) CheckOrgHash(ctx context.Context, org string, hash string) (bool, bool, error) {
@@ -320,4 +321,26 @@ func (r *orgRepositoryImpl) RegistOrgBatch(ctx context.Context, dept []entity.Wo
 	}
 
 	return tx.Commit().Error
+}
+
+func (r *orgRepositoryImpl) InitWorksOrgCode(ctx context.Context) ([]string, error) {
+
+	result := make([]string, 0)
+	var model []model.WorksOrgCode
+
+	viewSql := `SELECT org_code FROM org.works_org_code `
+	err := r.db.Raw(viewSql).Scan(&model).Error
+
+	if err != nil {
+		log.Println("[InitWorksOrgCode] - No record found or DB error")
+		return nil, err
+	}
+
+	if len(model) > 0 {
+		for _, value := range model {
+			result = append(result, value.OrgCode)
+		}
+	}
+
+	return result, nil
 }
