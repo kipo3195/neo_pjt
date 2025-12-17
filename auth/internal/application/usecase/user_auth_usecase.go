@@ -25,7 +25,7 @@ type userAuthUsecase struct {
 }
 
 type UserAuthUsecase interface {
-	PutUserAuth(ctx context.Context, input input.UserAuthRegisterInput) string
+	PutUserAuth(ctx context.Context, input []input.UserAuthRegisterInput) string
 	GenerateUserAuthChallenge(ctx context.Context, input input.UserAuthChallengeInput) (output.UserAuthChallengeOutput, error)
 	GetUserAuth(ctx context.Context, input input.UserAuthInput) (bool, error)
 }
@@ -37,15 +37,31 @@ func NewUserAuthUsecase(repo repository.UserAuthRepository, storage storage.User
 	}
 }
 
-func (u userAuthUsecase) PutUserAuth(ctx context.Context, input input.UserAuthRegisterInput) string {
+func (u userAuthUsecase) PutUserAuth(ctx context.Context, input []input.UserAuthRegisterInput) string {
 
-	entity := entity.MakeUserAuthInfoEntity(input.Id, input.Salt, input.AuthHash, input.UserHash)
+	en := make([]entity.UserAuthInfoEntity, 0)
 
-	err := u.repo.PutUserAuthInfo(ctx, entity)
+	for _, i := range input {
 
-	if err != nil {
+		temp := entity.UserAuthInfoEntity{
+			Id:       i.Id,
+			Salt:     i.Salt,
+			AuthHash: i.AuthHash,
+			UserHash: i.UserHash,
+		}
+
+		en = append(en, temp)
+	}
+
+	if len(en) > 0 {
+		err := u.repo.PutUserAuthInfo(ctx, en)
+		if err != nil {
+			return "fail"
+		}
+	} else {
 		return "fail"
 	}
+
 	return "success"
 }
 

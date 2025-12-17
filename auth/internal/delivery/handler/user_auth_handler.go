@@ -121,7 +121,7 @@ func (h UserAuthHandler) UserAuthInfoRegister(c *gin.Context) {
 		return
 	}
 
-	userAuthRegisterInput := adapter.MakeUserAuthRegisterInput(req.Id, req.Salt, req.AuthHash, req.UserHash)
+	userAuthRegisterInput := adapter.MakeUserAuthRegisterInput(req.UserAuth)
 	userAuthRegisterOutput := h.usecase.PutUserAuth(ctx, userAuthRegisterInput)
 
 	response.SendSuccess(c, userAuthRegisterOutput)

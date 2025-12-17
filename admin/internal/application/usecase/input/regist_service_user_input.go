@@ -1,6 +1,7 @@
 package input
 
 type RegistServiceUserInput struct {
-	Org    string
-	UserId []string
+	Org      string
+	UserId   []string
+	UserAuth string
 }

@@ -64,6 +64,8 @@ func (r *authRouter) SetUserAuthRoutes(handler *handler.UserAuthHandler) {
 	client.POST("/challenge", handler.GenerateAuthChallenge)
 	//client.POST("/", handler.GetUserAuth) // 서비스로 이관
 
+	// common, admin을 통한 사용자 인증 정보등록 API
+	// 20251217 배열로 변경
 	server := r.parent.Group("/server/v1/user/auth/info/register")
 	server.POST("/", handler.UserAuthInfoRegister)
 }

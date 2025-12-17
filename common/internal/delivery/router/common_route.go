@@ -74,6 +74,7 @@ func (r *commonRouter) SetConfigurationRoutes(handlers *handler.ConfigurationHan
 }
 
 func (r *commonRouter) SetUserRoutes(handler *handler.UserHandler) {
+	// http://bookstack.ucware.local/books/neo-erd/page/5ef05에 등록된 사용자 등록 요청 (회원가입)
 	client := r.parent.Group("/client/v1/user/register")
 	client.POST("/", handler.UserRegister)
 	client.GET("/challenge", handler.GetUserRegisterChallenge)

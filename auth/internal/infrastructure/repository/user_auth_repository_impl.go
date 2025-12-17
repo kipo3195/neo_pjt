@@ -26,29 +26,24 @@ func UserAuthMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.UserAuth{})
 }
 
-func (r *userAuthRepository) PutUserAuthInfo(ctx context.Context, entity entity.UserAuthInfoEntity) error {
+func (r *userAuthRepository) PutUserAuthInfo(ctx context.Context, entity []entity.UserAuthInfoEntity) error {
 
-	// 트랜잭션 시작
-	tx := r.db.WithContext(ctx).Begin()
-	if tx.Error != nil {
-		return tx.Error
+	models := make([]model.UserAuth, 0, len(entity))
+
+	for _, e := range entity {
+		models = append(models, model.UserAuth{
+			Id:       e.Id,
+			Salt:     e.Salt,
+			UserHash: e.UserHash,
+			AuthHash: e.AuthHash,
+		})
 	}
 
-	if err := tx.Create(&model.UserAuth{
-		Id:       entity.Id,
-		Salt:     entity.Salt,
-		UserHash: entity.UserHash,
-		AuthHash: entity.AuthHash,
-	}).Error; err != nil {
-		tx.Rollback()
+	if err := r.db.WithContext(ctx).
+		Create(&models).Error; err != nil {
 		return err
 	}
 
-	// 트랜잭션 종료
-	if err := tx.Commit().Error; err != nil {
-		log.Println("[PutUserAuth] - Commit failed")
-		return err
-	}
 	log.Println("[PutUserAuth] - Commit Success")
 	return nil
 }

@@ -1,52 +1,31 @@
 package repository
 
 import (
+	"admin/internal/domain/serviceUser/entity"
+	"admin/internal/domain/serviceUser/repository"
+	"admin/pkg/dto"
 	"bytes"
-	"common/internal/domain/user/entity"
-	"common/internal/domain/user/repository"
-	"common/internal/infrastructure/dto/user"
-	"common/pkg/dto"
 	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 )
 
-type userAPIRepository struct {
-	httpClient *http.Client
+type userAuthRegisterApiRepositoryImpl struct {
 }
 
-func NewUserAPIRepository() repository.UserAPIRepository {
-	return &userAPIRepository{
-		httpClient: &http.Client{Timeout: 30 * time.Second},
-	}
+func (r *userAuthRegisterApiRepositoryImpl) NewServiceUserApiRepository() repository.UserAuthRegisterApiRepository {
+
+	return &userAuthRegisterApiRepositoryImpl{}
+
 }
 
-func (r *userAPIRepository) UserAuthRegistInAuth(ctx context.Context, id string, entity entity.UserRegisterInfoEntity, challenge string) (string, error) {
+func (r *userAuthRegisterApiRepositoryImpl) UserAuthRegisterInAuth(ctx context.Context, entity []entity.ServiceUserEntity) error {
 
 	url := "http://" + "" + "/auth/server/v1/user/auth/info/register"
 	log.Println("auth service 호출! url : ", url)
 
 	userAuth := make([]user.UserAuthRegisterDto, 0)
-
-	userAuth = append(userAuth, user.UserAuthRegisterDto{
-		Id:       id,
-		Salt:     entity.Salt,
-		UserHash: challenge,
-		AuthHash: entity.Hash,
-	})
-
-	reqBody := user.UserAuthRegisterRequest{
-		UserAuth: userAuth,
-	}
-
-	// 직렬화
-	bodyByte, err := json.Marshal(reqBody)
-	if err != nil {
-		// 에러 처리
-		return "", err
-	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyByte))
 	if err != nil {
@@ -73,4 +52,5 @@ func (r *userAPIRepository) UserAuthRegistInAuth(ctx context.Context, id string,
 	}
 
 	return result.Data.Result, nil
+
 }

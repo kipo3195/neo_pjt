@@ -54,8 +54,13 @@ func InitServer() *http.Server {
 	orgDeptModule := di.InitOrgDeptModule(db)
 	router.SetOrgDeptRoutes(orgDeptModule.Handler)
 
+	userAuthRegisterModule := di.InitUserAuthRegisterModule()
+
 	serviceUserModule := di.InitServiceUserModule(db)
 	router.SetServiceUserRoutes(serviceUserModule.Handler)
+
+	serviceUserAuthRegisterServiceModule := di.InitServiceUserAuthRegisterServiceModule(serviceUserModule.Usecase, userAuthRegisterModule.Usecase)
+	router.SetServiceUserAuthRegisterServiceRoutes(serviceUserAuthRegisterServiceModule)
 
 	return &http.Server{
 		Addr:    ":8089",

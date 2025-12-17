@@ -1,8 +1,8 @@
-package entity
+package userAuth
 
-type UserAuthInfoEntity struct {
+type UserAuthRegisterDto struct {
 	Id       string `json:"id"`
 	Salt     string `json:"salt"`
-	AuthHash string `json:"authHash"`
 	UserHash string `json:"userHash"`
+	AuthHash string `json:"authHash"`
 }

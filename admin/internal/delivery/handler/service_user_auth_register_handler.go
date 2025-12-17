@@ -1,28 +1,27 @@
 package handler
 
 import (
-	"admin/internal/application/usecase"
+	"admin/internal/application/orchestrator"
 	"admin/internal/delivery/adapter"
 	"admin/internal/delivery/dto/serviceUser"
 	"admin/pkg/consts"
 	response "admin/pkg/response"
 	"encoding/json"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
 
-type ServiceUserHandler struct {
-	usecase usecase.ServiceUserUsecase
+type ServiceUserAuthRegisterHandler struct {
+	svc *orchestrator.ServiceUserAuthRegisterService
 }
 
-func NewServiceUserHandler(usecase usecase.ServiceUserUsecase) *ServiceUserHandler {
-	return &ServiceUserHandler{
-		usecase: usecase,
+func NewServiceUserAuthRegisterHandler(svc *orchestrator.ServiceUserAuthRegisterService) *ServiceUserAuthRegisterHandler {
+	return &ServiceUserAuthRegisterHandler{
+		svc: svc,
 	}
 }
 
-func (r *ServiceUserHandler) RegistServiceUser(c *gin.Context) {
+func (r *ServiceUserAuthRegisterHandler) RegistServiceUser(c *gin.context) {
 
 	ctx := c.Request.Context()
 
@@ -42,7 +41,7 @@ func (r *ServiceUserHandler) RegistServiceUser(c *gin.Context) {
 	}
 
 	input := adapter.MakeRegistServiceUserInput(req.Org, req.UserId, req.UserAuth)
-	output, err := r.usecase.RegistServiecUser(ctx, input)
+	output, err := r.svc.ServiceUser.RegistServiecUser(ctx, input)
 
 	if err != nil {
 		response.SendError(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
