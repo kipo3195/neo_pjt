@@ -8,6 +8,7 @@ import (
 	response "admin/pkg/response"
 	"encoding/json"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
 
@@ -21,7 +22,7 @@ func NewServiceUserAuthRegisterHandler(svc *orchestrator.ServiceUserAuthRegister
 	}
 }
 
-func (r *ServiceUserAuthRegisterHandler) RegistServiceUser(c *gin.context) {
+func (r *ServiceUserAuthRegisterHandler) RegistServiceUser(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
@@ -40,8 +41,16 @@ func (r *ServiceUserAuthRegisterHandler) RegistServiceUser(c *gin.context) {
 		return
 	}
 
-	input := adapter.MakeRegistServiceUserInput(req.Org, req.UserId, req.UserAuth)
-	output, err := r.svc.ServiceUser.RegistServiecUser(ctx, input)
+	serviceUserInput := adapter.MakeRegistServiceUserInput(req.Org, req.UserId, req.UserAuth)
+	serviceUserOutput, err := r.svc.ServiceUser.RegistServiecUser(ctx, serviceUserInput)
+
+	if err != nil {
+		response.SendError(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
+		return
+	}
+
+	userAuthInput := adapter.MakeUserAuthInput(serviceUserOutput)
+	err = r.svc.UserAuthRegister.UserAuthRegisterInAuth(ctx, userAuthInput)
 
 	if err != nil {
 		response.SendError(c, consts.SERVER_ERROR, consts.ERROR, consts.E_500, consts.E_500_MSG)
@@ -50,11 +59,12 @@ func (r *ServiceUserAuthRegisterHandler) RegistServiceUser(c *gin.context) {
 
 	user := make([]serviceUser.ServiceUser, 0)
 
-	for _, s := range output.ServiceUser {
+	for _, s := range serviceUserOutput.ServiceUser {
 
 		value := serviceUser.ServiceUser{
 			UserId: s.UserId,
 			Hash:   s.UserHash,
+			// Salt, UserAuth는 정의하지 않았음.
 		}
 
 		user = append(user, value)

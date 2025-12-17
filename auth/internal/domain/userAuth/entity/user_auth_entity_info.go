@@ -1,8 +1,8 @@
 package entity
 
 type UserAuthInfoEntity struct {
-	Id       string `json:"id"`
-	Salt     string `json:"salt"`
-	AuthHash string `json:"authHash"`
-	UserHash string `json:"userHash"`
+	UserId   string
+	Salt     string
+	UserAuth string
+	UserHash string
 }

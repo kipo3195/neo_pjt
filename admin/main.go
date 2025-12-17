@@ -54,11 +54,12 @@ func InitServer() *http.Server {
 	orgDeptModule := di.InitOrgDeptModule(db)
 	router.SetOrgDeptRoutes(orgDeptModule.Handler)
 
-	userAuthRegisterModule := di.InitUserAuthRegisterModule()
+	userAuthRegisterModule := di.InitUserAuthRegisterModule(sfg.Domain)
 
 	serviceUserModule := di.InitServiceUserModule(db)
 	router.SetServiceUserRoutes(serviceUserModule.Handler)
 
+	// 사용자 등록 (service User) + userAuth (salt, authHash) 생성
 	serviceUserAuthRegisterServiceModule := di.InitServiceUserAuthRegisterServiceModule(serviceUserModule.Usecase, userAuthRegisterModule.Usecase)
 	router.SetServiceUserAuthRegisterServiceRoutes(serviceUserAuthRegisterServiceModule)
 

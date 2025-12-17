@@ -10,3 +10,6 @@ var ErrFileSizeExceeded = errors.New("file size exceeded")
 var ErrFileExtentionDetect = errors.New("file extension detect failed")
 
 var ErrServerApiCallError = errors.New("server api call error")
+
+var ErrUserAuthRegisterEntitySizeError = errors.New("user auth register entity size error")
+var ErrUserAuthRegisterFail = errors.New("user auth register fail")

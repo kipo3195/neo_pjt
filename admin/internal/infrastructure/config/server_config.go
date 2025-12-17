@@ -11,6 +11,7 @@ import (
 type ServerConfig struct {
 	dbConfig    *DBConfig
 	AutoMigrate bool
+	Domain      string
 }
 
 type DBConfig struct {
@@ -29,9 +30,12 @@ func NewServerConfig() *ServerConfig {
 
 	autoMigrate := initAutoMigrate()
 
+	domain := initDomain()
+
 	return &ServerConfig{
 		dbConfig:    dbConfig,
 		AutoMigrate: autoMigrate,
+		Domain:      domain,
 	}
 }
 
@@ -56,4 +60,8 @@ func initAutoMigrate() bool {
 	} else {
 		return false
 	}
+}
+
+func initDomain() string {
+	return os.Getenv("DOMAIN")
 }

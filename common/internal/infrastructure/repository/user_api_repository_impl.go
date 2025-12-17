@@ -31,10 +31,10 @@ func (r *userAPIRepository) UserAuthRegistInAuth(ctx context.Context, id string,
 	userAuth := make([]user.UserAuthRegisterDto, 0)
 
 	userAuth = append(userAuth, user.UserAuthRegisterDto{
-		Id:       id,
+		UserId:   id,
 		Salt:     entity.Salt,
 		UserHash: challenge,
-		AuthHash: entity.Hash,
+		UserAuth: entity.Hash,
 	})
 
 	reqBody := user.UserAuthRegisterRequest{

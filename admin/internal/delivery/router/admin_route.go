@@ -72,7 +72,7 @@ func (r *adminRouter) SetSkinRoutes(handler *handler.SkinImgHandler) {
 func (r *adminRouter) SetServiceUserRoutes(handler *handler.ServiceUserHandler) {
 	// 20251217 인증정보 처리로직 추가로 인해서 SetServiceUserAuthRegisterServiceRoutes로 이관
 	// client := r.parent.Group("/client/v1/serviceUser")
-	client.POST("/", handler.RegistServiceUser)
+	//client.POST("/", handler.RegistServiceUser)
 }
 
 func (r *adminRouter) SetServiceUserAuthRegisterServiceRoutes(handler *handler.ServiceUserAuthRegisterHandler) {

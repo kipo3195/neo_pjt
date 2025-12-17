@@ -292,10 +292,10 @@ func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatch
 	}
 
 	// 3. diff 구하기 (현재 데이터 조회)
-	nowOrgInfo, err := r.repository.GetOrg(ctx, en.OrgCode)
-	if err != nil {
-		return err
-	}
+	// nowOrgInfo, err := r.repository.GetOrg(ctx, en.OrgCode)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// 부서 - 하위 사용자 구조로 만들고, 부서 * 부서 하위사용자 수만큼 반복
 

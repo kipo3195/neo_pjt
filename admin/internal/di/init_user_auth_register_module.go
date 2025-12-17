@@ -10,10 +10,11 @@ type UserAuthRegisterModule struct {
 	Usecase usecase.UserAuthRegisterUsecase
 }
 
-func InitUserAuthRegisterModule() UserAuthRegisterModule {
+func InitUserAuthRegisterModule(domain string) UserAuthRegisterModule {
 
 	repo := repository.NewUserAuthRegisterRepository()
-	usecase := usecase.NewUserAuthRegisterUsecase(repo)
+	apiRepo := repository.NewServiceUserApiRepository(domain)
+	usecase := usecase.NewUserAuthRegisterUsecase(repo, apiRepo)
 	_ = handler.NewUserAuthRegisterHandler(usecase)
 
 	return UserAuthRegisterModule{

@@ -32,10 +32,10 @@ func (r *userAuthRepository) PutUserAuthInfo(ctx context.Context, entity []entit
 
 	for _, e := range entity {
 		models = append(models, model.UserAuth{
-			Id:       e.Id,
+			UserId:   e.UserId,
 			Salt:     e.Salt,
 			UserHash: e.UserHash,
-			AuthHash: e.AuthHash,
+			UserAuth: e.UserAuth,
 		})
 	}
 
@@ -51,7 +51,7 @@ func (r *userAuthRepository) PutUserAuthInfo(ctx context.Context, entity []entit
 func (r *userAuthRepository) GetUserSalt(ctx context.Context, id string) (string, error) {
 	var salt string
 	result := r.db.Model(&model.UserAuth{}).
-		Where("id = ?", id).
+		Where("user_id = ?", id).
 		Select("salt").
 		First(&salt)
 
@@ -65,12 +65,12 @@ func (r *userAuthRepository) GetUserSalt(ctx context.Context, id string) (string
 	return salt, nil
 }
 
-func (r *userAuthRepository) GetUserAuthHash(ctx context.Context, id string) (string, error) {
-	var authHash string
+func (r *userAuthRepository) GetUserAuth(ctx context.Context, id string) (string, error) {
+	var userAuth string
 	result := r.db.Model(&model.UserAuth{}).
-		Where("id = ?", id).
-		Select("auth_hash").
-		First(&authHash)
+		Where("user_id = ?", id).
+		Select("user_auth").
+		First(&userAuth)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -78,5 +78,5 @@ func (r *userAuthRepository) GetUserAuthHash(ctx context.Context, id string) (st
 		}
 		return "", result.Error // 다른 DB 오류
 	}
-	return authHash, nil
+	return userAuth, nil
 }

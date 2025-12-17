@@ -12,10 +12,10 @@ func MakeUserAuthRegisterInput(dto []userAuth.UserAuthRegisterDto) []input.UserA
 	for _, d := range dto {
 
 		temp := input.UserAuthRegisterInput{
-			Id:       d.Id,
+			UserId:   d.UserId,
 			Salt:     d.Salt,
 			UserHash: d.UserHash,
-			AuthHash: d.AuthHash,
+			UserAuth: d.UserAuth,
 		}
 		in = append(in, temp)
 

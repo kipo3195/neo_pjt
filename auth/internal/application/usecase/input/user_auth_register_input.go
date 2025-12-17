@@ -1,8 +1,8 @@
 package input
 
 type UserAuthRegisterInput struct {
-	Id       string `json:"id"`
+	UserId   string `json:"userId"`
 	Salt     string `json:"salt"`
 	UserHash string `json:"userHash"`
-	AuthHash string `json:"authHash"`
+	UserAuth string `json:"userAuth"`
 }

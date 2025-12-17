@@ -44,9 +44,9 @@ func (u userAuthUsecase) PutUserAuth(ctx context.Context, input []input.UserAuth
 	for _, i := range input {
 
 		temp := entity.UserAuthInfoEntity{
-			Id:       i.Id,
+			UserId:   i.UserId,
 			Salt:     i.Salt,
-			AuthHash: i.AuthHash,
+			UserAuth: i.UserAuth,
 			UserHash: i.UserHash,
 		}
 
@@ -117,7 +117,7 @@ func (u userAuthUsecase) GetUserAuth(ctx context.Context, input input.UserAuthIn
 	}
 
 	// id 기반으로 hash 찾기
-	authHash, err := u.repo.GetUserAuthHash(ctx, entity.Id)
+	authHash, err := u.repo.GetUserAuth(ctx, entity.Id)
 	if err != nil {
 		return false, err
 	}

@@ -23,6 +23,8 @@ func MakeRegistServiceUserOutput(entity []entity.ServiceUserEntity) output.Regis
 		value := output.ServiceUserOutput{
 			UserId:   e.UserId,
 			UserHash: e.UserHash,
+			Salt:     e.Salt,
+			UserAuth: e.UserAuth,
 		}
 
 		serviceUser = append(serviceUser, value)

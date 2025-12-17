@@ -1,8 +1,8 @@
 package user
 
 type UserAuthRegisterDto struct {
-	Id       string
+	UserId   string
 	Salt     string
 	UserHash string
-	AuthHash string
+	UserAuth string
 }

@@ -1,6 +1,6 @@
-package output
+package input
 
-type ServiceUserOutput struct {
+type ServiceUserInput struct {
 	UserId   string
 	UserHash string
 	Salt     string
