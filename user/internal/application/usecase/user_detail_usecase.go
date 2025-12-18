@@ -15,10 +15,12 @@ import (
 	"user/internal/delivery/adapter"
 	"user/internal/domain/userDetail/entity"
 	"user/internal/domain/userDetail/repository"
+	"user/internal/infrastructure/storage"
 )
 
 type userDetailUsecase struct {
-	repository repository.UserDetailRepository
+	repository             repository.UserDetailRepository
+	userInfoServiceStorage storage.UserInfoServiceStorage
 }
 
 type UserDetailUsecase interface {
@@ -26,9 +28,10 @@ type UserDetailUsecase interface {
 	RegisterUserDetailBatch(ctx context.Context, input input.RegistUserDetailBatchInput) error
 }
 
-func NewUserDatailUsecase(repository repository.UserDetailRepository) UserDetailUsecase {
+func NewUserDatailUsecase(repository repository.UserDetailRepository, userInfoServiceStorage storage.UserInfoServiceStorage) UserDetailUsecase {
 	return &userDetailUsecase{
-		repository: repository,
+		repository:             repository,
+		userInfoServiceStorage: userInfoServiceStorage,
 	}
 }
 
@@ -40,11 +43,9 @@ func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input []input
 			UserHash:   i.UserHash,
 			UpdateHash: i.UpdateHash,
 		}
-
 		en = append(en, temp)
 	}
 	// 기존 DB 조회 로직을 메모리 체크 로직으로 변경 TODO
-
 	userInfos, err := u.repository.GetUserInfoDetailInfo(ctx, entity)
 
 	if err != nil {

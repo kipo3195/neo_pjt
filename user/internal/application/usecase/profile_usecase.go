@@ -19,9 +19,10 @@ import (
 )
 
 type profileUsecase struct {
-	repository          repository.ProfileRepository
-	profileStorage      domainStorage.ProfileStorage
-	profileCacheStorage storage.ProfileCacheStorage
+	repository             repository.ProfileRepository
+	profileStorage         domainStorage.ProfileStorage
+	profileCacheStorage    storage.ProfileCacheStorage
+	userInfoServiceStorage storage.UserInfoServiceStorage
 }
 
 type ProfileUsecase interface {
@@ -33,11 +34,12 @@ type ProfileUsecase interface {
 	GetProfileMsg(ctx context.Context, in input.GetProfileMsgInput) (output.GetProfileMsgOutput, error)
 }
 
-func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage) ProfileUsecase {
+func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage, userInfoServiceStorage storage.UserInfoServiceStorage) ProfileUsecase {
 	return &profileUsecase{
-		repository:          repository,
-		profileStorage:      profileStorage,
-		profileCacheStorage: profileCacheStorage,
+		repository:             repository,
+		profileStorage:         profileStorage,
+		profileCacheStorage:    profileCacheStorage,
+		userInfoServiceStorage: userInfoServiceStorage,
 	}
 }
 
@@ -215,7 +217,7 @@ func (u *profileUsecase) GetProfileInfo(ctx context.Context, in []userInfoServic
 	// return output.GetProfileInfoOutput{
 	// 	ResultMap: profileInfo,
 	// }, nil
-	return nil, nil
+	return output.GetProfileInfoOutput{}, nil
 }
 
 func (u *profileUsecase) GetProfileMsg(ctx context.Context, in input.GetProfileMsgInput) (output.GetProfileMsgOutput, error) {

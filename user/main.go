@@ -32,6 +32,7 @@ func InitServer() *http.Server {
 	// ---- Storage Init -----
 	profileCacheStorage := storage.NewProfileCacheStorage()
 	profileStorage := storage.NewServerProfileStorage("") // 추후 s3 storage로 전환
+	userInfoServiceStorage := storage.NewUserInfoServiceStorage()
 
 	// ---- Data Loader -----
 
@@ -43,10 +44,10 @@ func InitServer() *http.Server {
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
-	profileModule := di.InitProfileModule(db, profileStorage, profileCacheStorage)
+	profileModule := di.InitProfileModule(db, profileStorage, profileCacheStorage, userInfoServiceStorage)
 	router.SetProfileRoutes(profileModule.Handler)
 
-	userDetailModule := di.InitUserDetailModule(db)
+	userDetailModule := di.InitUserDetailModule(db, userInfoServiceStorage)
 	router.SetUserDetailRoutes(userDetailModule.Handler)
 
 	// ---- Service Handler Init ----

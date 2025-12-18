@@ -16,9 +16,9 @@ type ProfileModule struct {
 	Handler *handler.ProfileHandler
 }
 
-func InitProfileModule(db *gorm.DB, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage) *ProfileModule {
+func InitProfileModule(db *gorm.DB, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage, userInfoServiceStorage storage.UserInfoServiceStorage) *ProfileModule {
 	repository := repository.NewProfileRepository(db)
-	usecase := usecase.NewProfileUsecase(repository, profileStorage, profileCacheStorage)
+	usecase := usecase.NewProfileUsecase(repository, profileStorage, profileCacheStorage, userInfoServiceStorage)
 	handler := handler.NewProfileHandler(usecase)
 	return &ProfileModule{
 		Usecase: usecase,
