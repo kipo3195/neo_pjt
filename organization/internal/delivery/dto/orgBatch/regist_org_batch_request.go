@@ -1,6 +1,6 @@
-package input
+package orgBatch
 
-type RegistOrgBatchInput struct {
+type RegistOrgBatchRequest struct {
 	File     *[]byte
 	FileName string
 	OrgCode  string

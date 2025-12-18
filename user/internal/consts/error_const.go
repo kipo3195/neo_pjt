@@ -21,3 +21,7 @@ var ErrTokenSignatureInvalid = errors.New("token signature invalid")
 var ErrInvalidClaims = errors.New("invalid token or claims")
 var ErrTokenMismatch = errors.New("token mismatch")
 var ErrRefreshTokenAuthError = errors.New("refreshToken authentication failed")
+
+// batch
+var ErrUnzipAndGetJSONError = errors.New("unzip and get json error")
+var ErrInvalidUserDetailJSONError = errors.New("invalid user detail json error")

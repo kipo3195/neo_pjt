@@ -6,7 +6,7 @@ import (
 	"org/internal/delivery/handler"
 )
 
-func InitOrgBatchDataServiceModule(department usecase.DepartmentUsecase, org usecase.OrgUsecase, user usecase.UserUsecase) *handler.OrgBatchServiceHandler {
+func InitOrgBatchServiceModule(department usecase.DepartmentUsecase, org usecase.OrgUsecase, user usecase.UserUsecase) *handler.OrgBatchServiceHandler {
 
 	service := orchestrator.NewOrgBatchService(department, org, user)
 

@@ -1,8 +1,10 @@
 package usecase
 
 import (
+	"batch/internal/application/util"
 	"batch/internal/domain/userDetail/repository"
 	"context"
+	"encoding/json"
 	"log"
 )
 
@@ -31,7 +33,33 @@ func (r *userDetailUsecase) SendUserDetailToUser(ctx context.Context, org string
 		return err
 	}
 
-	log.Println("SendUserDetailToUser 현재 데이터 :", userDetail)
+	// 파일 명 생성
+	fileName := util.GetNow() + ".json"
+	log.Printf("[SendUserDetailToUser] org %s file name: %s\n", org, fileName)
+
+	// 현재 DB 조회 데이터 json 생성 스냅샷 저장
+	// err = r.PutSnapShotJson(ctx, org, orgInfo, fileName)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// org 서비스 전송용
+	userDetailJson, err := json.MarshalIndent(userDetail, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// json -> ZIP 파일 생성
+	zipData, err := buildZipInMemory(fileName, userDetailJson)
+	if err != nil {
+		return err
+	}
+
+	// 파일 전송
+	err = r.apiRepo.SendJsonToUser(ctx, fileName, zipData, org)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

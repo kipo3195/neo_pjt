@@ -275,7 +275,7 @@ func buildOrgTree(flatList []entity.OrgInfo, parentCode string) []entity.OrgTree
 
 func (r *orgUsecase) RegistOrgBatch(ctx context.Context, in input.RegistOrgBatchInput) error {
 
-	en := entity.MakeRegistOrgBatchEntity(in.OrgFile, in.OrgFileName, in.OrgCode)
+	en := entity.MakeRegistOrgBatchEntity(in.File, in.FileName, in.OrgCode)
 
 	// zip 해제, json 구하기
 	jsonBytes, err := unzipAndGetJSON(en.OrgFile)

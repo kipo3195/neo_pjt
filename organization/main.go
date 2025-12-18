@@ -69,7 +69,7 @@ func InitServer() *http.Server {
 	orgUserServiceModule := di.InitOrgUserServiceModule(orgModule.Usecase, userModule.Usecase)
 	router.SetOrgUserServiceRoute(orgUserServiceModule, sfg.TokenConfig)
 
-	orgBatchServiceModule := di.InitOrgBatchDataServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
+	orgBatchServiceModule := di.InitOrgBatchServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
 	router.SetOrgBatchServiceRoute(orgBatchServiceModule)
 
 	return &http.Server{

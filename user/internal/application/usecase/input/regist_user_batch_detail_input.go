@@ -1,6 +1,6 @@
 package input
 
-type RegistOrgBatchInput struct {
+type RegistUserDetailBatchInput struct {
 	File     *[]byte
 	FileName string
 	OrgCode  string
