@@ -167,7 +167,7 @@ func toDeptInfoEntity(myDeptInfo []model.DeptInfo) []entity.DeptInfoEntity {
 
 		deptEntity = append(deptEntity, entity.DeptInfoEntity{
 			DeptOrg:      dept.DeptOrg,
-			DeptCode:     dept.DeptOrg,
+			DeptCode:     dept.DeptCode,
 			DeptName:     deptName,
 			Header:       dept.Header,
 			Description:  dept.Description,
