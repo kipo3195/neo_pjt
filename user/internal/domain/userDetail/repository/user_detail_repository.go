@@ -13,4 +13,5 @@ type userDetailRepository struct {
 
 type UserDetailRepository interface {
 	GetUserInfoDetailInfo(ctx context.Context, entity entity.GetUserDetailInfoEntity) ([]entity.UserDetailInfoEntity, error)
+	RegistUserDetail(ctx context.Context, entity []entity.UserDetailBatchEntity) error
 }

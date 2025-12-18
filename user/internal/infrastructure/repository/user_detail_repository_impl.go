@@ -8,6 +8,7 @@ import (
 	"user/internal/infrastructure/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type userDetailRepositoryImpl struct {
@@ -50,4 +51,41 @@ func (r *userDetailRepositoryImpl) GetUserInfoDetailInfo(ctx context.Context, en
 	// }
 
 	return userDetailEntities, nil
+}
+
+func (r *userDetailRepositoryImpl) RegistUserDetail(ctx context.Context, entity []entity.UserDetailBatchEntity) error {
+
+	if len(entity) == 0 {
+		return nil
+	}
+
+	models := make([]model.UserDetail, 0, len(entity))
+
+	for _, e := range entity {
+		models = append(models, model.UserDetail{
+			Org:          e.Org,
+			UserHash:     e.UserHash,
+			UserPhoneNum: e.UserPhoneNum,
+			UserEmail:    e.UserEmail,
+		})
+	}
+
+	err := r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "org"},       // PK 기준
+				{Name: "user_hash"}, // PK 기준
+			},
+			DoUpdates: clause.AssignmentColumns([]string{
+				"user_phone_num",
+				"user_email",
+			}),
+		}).
+		Create(&models).Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

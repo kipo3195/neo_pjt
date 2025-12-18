@@ -64,7 +64,13 @@ func (u *userDetailUsecase) RegisterUserDetailBatch(ctx context.Context, in inpu
 		return consts.ErrInvalidUserDetailJSONError
 	}
 
-	log.Println("[RegisterUserDetailBatch] 연동 사용자 정보  : ", orgInfo)
+	log.Println("[RegisterUserDetailBatch] 연동 사용자 수  : ", len(orgInfo))
+
+	err = u.repository.RegistUserDetail(ctx, orgInfo)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

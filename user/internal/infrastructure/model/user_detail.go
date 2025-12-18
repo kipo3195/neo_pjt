@@ -1,6 +1,7 @@
 package model
 
 type UserDetail struct {
+	Org          string `gorm:"column:org;type:varchar(30);primaryKey;comment:pk"`
 	UserHash     string `gorm:"column:user_hash;type:varchar(100);primaryKey;comment:pk"`
 	UserPhoneNum string `gorm:"column:user_phone_num;type:varchar(30);'comment:사용자 휴대폰 번호"`
 	UserEmail    string `gorm:"column:user_email;type:varchar(200);comment:사용자 이메일"`
