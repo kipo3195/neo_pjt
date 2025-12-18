@@ -2,7 +2,7 @@ package model
 
 type OrgInfo struct {
 	Seq            int64  `gorm:"column:seq;primaryKey;autoIncrement;comment:pk" json:"seq"`
-	Org            string `gorm:"column:org;type:longtext;not null;comment:works code" json:"org"`
+	Org            string `gorm:"column:org;type:longtext;not null;comment:org code" json:"org"`
 	DeptCode       string `gorm:"column:dept_code;type:longtext;not null;comment:부서 코드" json:"dept_code"`
 	ParentDeptCode string `gorm:"column:parent_dept_code;type:longtext;not null;comment:부모 부서 코드" json:"parent_dept_code"`
 	UserId         string `gorm:"column:user_id;type:varchar(100);comment:사용자 id" json:"user_id,omitempty"`

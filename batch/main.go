@@ -31,6 +31,7 @@ func InitServer() *http.Server {
 
 	// ---- Storage Init -----
 	orgInfoStorage := storage.NewOrgInfoStorage()
+	userDetailStorage := storage.NewUserDetailStorage()
 
 	// ---- Data Loader -----
 
@@ -39,13 +40,17 @@ func InitServer() *http.Server {
 
 	// ---- Domain Module Init -----
 	orgInfoModule := di.InitOrgInfoModule(db, orgInfoStorage, sfg.Domain)
+	userDetailModule := di.InitUserDetailModule(db, userDetailStorage, sfg.Domain)
+
 	extendDBConnectModule := di.InitExtendDBConnectModule(db)
 
 	// ----- Service Orchestrator -----
 	orgInfoBatchServiceModule := di.InitOrgInfoBatchServiceModule(orgInfoModule.Usecase, extendDBConnectModule.Usecase, sfg.OrgInfoBatchConfig)
+	userDetailBatchServiceModule := di.InitUserDetailBatchserviceModule(userDetailModule.Usecase, extendDBConnectModule.Usecase, sfg.UserDetailBatchConfig)
 
 	// ----- Scheduler Regist -----
 	scheduler.RegistOrgInfoBatchService(orgInfoBatchServiceModule)
+	scheduler.RegistUserDetailBatchService(userDetailBatchServiceModule)
 
 	// ----- Scheduler Start -----
 	scheduler.Start()

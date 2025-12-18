@@ -12,10 +12,10 @@ import (
 type OrgInfoBatchService struct {
 	ExtendDBConnect usecase.ExtendDBConnectUsecase
 	OrgInfo         usecase.OrgInfoUsecase
-	serviceConfig   *config.OrgInfoBatchConfig
+	serviceConfig   *config.BatchConfig
 }
 
-func NewOrgInfoServiceModule(orgInfo usecase.OrgInfoUsecase, extendDBConnection usecase.ExtendDBConnectUsecase, serviceConfig *config.OrgInfoBatchConfig) OrgInfoBatchService {
+func NewOrgInfoBatchServiceModule(orgInfo usecase.OrgInfoUsecase, extendDBConnection usecase.ExtendDBConnectUsecase, serviceConfig *config.BatchConfig) OrgInfoBatchService {
 
 	return OrgInfoBatchService{
 		OrgInfo:         orgInfo,
@@ -38,6 +38,8 @@ func (r *OrgInfoBatchService) Run(ctx context.Context) error {
 		if err != nil {
 			log.Println("[OrgInfoBatchService] GetOrgInfo error : ", err)
 		}
+	} else {
+		log.Println("[OrgInfoBatchService] extend db sync not used")
 	}
 
 	err := r.OrgInfo.SendOrgInfoToOrg(ctx, r.serviceConfig.Org)

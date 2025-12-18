@@ -10,11 +10,12 @@ import (
 )
 
 type ServerConfig struct {
-	Domain             string
-	dbConfig           *DBConfig
-	AutoMigrate        bool
-	TokenConfig        TokenHashConfig
-	OrgInfoBatchConfig *OrgInfoBatchConfig
+	Domain                string
+	dbConfig              *DBConfig
+	AutoMigrate           bool
+	TokenConfig           TokenHashConfig
+	OrgInfoBatchConfig    *BatchConfig
+	UserDetailBatchConfig *BatchConfig
 }
 
 type TokenHashConfig struct {
@@ -30,7 +31,7 @@ type DBConfig struct {
 	Database string
 }
 
-type OrgInfoBatchConfig struct {
+type BatchConfig struct {
 	Org              string         // works code
 	BatchFlag        bool           // 배치 실행 여부
 	Cron             string         // 실행 주기 데이터
@@ -70,12 +71,15 @@ func NewServerConfig() *ServerConfig {
 
 	orgInfoBatchConfig := initOrgInfoBatchConfig()
 
+	userDetailBatchConfig := initUserDetailBatchConfig()
+
 	return &ServerConfig{
-		dbConfig:           dbConfig,
-		AutoMigrate:        autoMigrate,
-		TokenConfig:        tokenConfig,
-		OrgInfoBatchConfig: &orgInfoBatchConfig,
-		Domain:             domain,
+		dbConfig:              dbConfig,
+		AutoMigrate:           autoMigrate,
+		TokenConfig:           tokenConfig,
+		OrgInfoBatchConfig:    &orgInfoBatchConfig,
+		UserDetailBatchConfig: &userDetailBatchConfig,
+		Domain:                domain,
 	}
 }
 func initDBConfig() *DBConfig {
@@ -98,7 +102,51 @@ func initTokenHash() TokenHashConfig {
 	}
 }
 
-func initOrgInfoBatchConfig() OrgInfoBatchConfig {
+func initUserDetailBatchConfig() BatchConfig {
+	org := os.Getenv("USER_DETAIL")
+	flag := os.Getenv("USER_DETAIL_CRON_BATCH_FLAG")
+	cron := os.Getenv("USER_DETAIL_CRON")
+
+	var batchFlag bool
+	if flag == "true" {
+		batchFlag = true
+	} else {
+		batchFlag = false
+	}
+
+	flag = os.Getenv("USER_DETAIL_EXTEND_DB_SYNC_FLAG")
+
+	var extendDbSyncFlag bool
+	if flag == "true" {
+		extendDbSyncFlag = true
+	} else {
+		extendDbSyncFlag = false
+	}
+
+	extendDbHost := os.Getenv("USER_DETAIL_EXTEND_DB_HOST")
+	extendDbPort := os.Getenv("USER_DETAIL_EXTEND_DB_PORT")
+	extendDbId := os.Getenv("USER_DETAIL_EXTEND_DB_ID")
+	extendDbPw := os.Getenv("USER_DETAIL_EXTEND_DB_PW")
+	extendDbDatabase := os.Getenv("USER_DETAIL_EXTEND_DB_DATABASE")
+
+	extendDBConfig := ExtendDBConfig{
+		Host:     extendDbHost,
+		Port:     extendDbPort,
+		Id:       extendDbId,
+		Pw:       extendDbPw,
+		Database: extendDbDatabase,
+	}
+
+	return BatchConfig{
+		Org:              org,
+		BatchFlag:        batchFlag,
+		Cron:             cron,
+		ExtendDBSyncFlag: extendDbSyncFlag,
+		ExtendDBConfig:   extendDBConfig,
+	}
+}
+
+func initOrgInfoBatchConfig() BatchConfig {
 
 	org := os.Getenv("ORG_INFO")
 	flag := os.Getenv("ORG_INFO_CRON_BATCH_FLAG")
@@ -115,9 +163,9 @@ func initOrgInfoBatchConfig() OrgInfoBatchConfig {
 
 	var extendDbSyncFlag bool
 	if flag == "true" {
-		batchFlag = true
+		extendDbSyncFlag = true
 	} else {
-		batchFlag = false
+		extendDbSyncFlag = false
 	}
 
 	extendDbHost := os.Getenv("ORG_INFO_EXTEND_DB_HOST")
@@ -134,7 +182,7 @@ func initOrgInfoBatchConfig() OrgInfoBatchConfig {
 		Database: extendDbDatabase,
 	}
 
-	return OrgInfoBatchConfig{
+	return BatchConfig{
 		Org:              org,
 		BatchFlag:        batchFlag,
 		Cron:             cron,
