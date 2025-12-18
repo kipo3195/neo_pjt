@@ -22,7 +22,7 @@ type userDetailUsecase struct {
 }
 
 type UserDetailUsecase interface {
-	GetUserDetailInfo(ctx context.Context, input input.GetUserDetailInfoInput) (output.GetUserDetailInfoOutput, error)
+	GetUserDetailInfo(ctx context.Context, input []input.GetUserDetailInfoInput) (output.GetUserDetailInfoOutput, error)
 	RegisterUserDetailBatch(ctx context.Context, input input.RegistUserDetailBatchInput) error
 }
 
@@ -32,9 +32,19 @@ func NewUserDatailUsecase(repository repository.UserDetailRepository) UserDetail
 	}
 }
 
-func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input input.GetUserDetailInfoInput) (output.GetUserDetailInfoOutput, error) {
+func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input []input.GetUserDetailInfoInput) (output.GetUserDetailInfoOutput, error) {
 
-	entity := entity.MakeGetUserDetailInfoEntity(input.UserHashs)
+	en := make([]entity.ReqUserEntity, 0)
+	for _, i := range input {
+		temp := entity.ReqUserEntity{
+			UserHash:   i.UserHash,
+			UpdateHash: i.UpdateHash,
+		}
+
+		en = append(en, temp)
+	}
+	// 기존 DB 조회 로직을 메모리 체크 로직으로 변경 TODO
+
 	userInfos, err := u.repository.GetUserInfoDetailInfo(ctx, entity)
 
 	if err != nil {

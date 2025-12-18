@@ -1,5 +1,6 @@
 package input
 
 type GetUserDetailInfoInput struct {
-	UserHashs []string
+	UserHash   string
+	UpdateHash string
 }

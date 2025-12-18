@@ -114,7 +114,7 @@ func (h *UserInfoServiceHandler) GetUserDetailInfo(c *gin.Context) {
 		return
 	}
 
-	detailInput := adapter.MakeGetUserDetailInfoInput(req.UserHashs)
+	detailInput := adapter.MakeGetUserDetailInfoInput(req.ReqUsers)
 	detailOutput, err := h.svc.UserDetail.GetUserDetailInfo(ctx, detailInput)
 
 	if err != nil {
@@ -123,7 +123,7 @@ func (h *UserInfoServiceHandler) GetUserDetailInfo(c *gin.Context) {
 	}
 
 	// 프로필 정보 조회
-	profileInput := adapter.MakeGetProfileInfoInput(req.UserHashs)
+	profileInput := adapter.MakeGetProfileInfoInput(req.ReqUsers)
 	profileOutput, err := h.svc.Profile.GetProfileInfo(ctx, profileInput)
 
 	if err != nil {
