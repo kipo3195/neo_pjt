@@ -44,7 +44,7 @@ func InitServer() *http.Server {
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
-	profileModule := di.InitProfileModule(db, profileStorage, profileCacheStorage, userInfoServiceStorage)
+	profileModule := di.InitProfileModule(db, profileStorage, profileCacheStorage)
 	router.SetProfileRoutes(profileModule.Handler)
 
 	userDetailModule := di.InitUserDetailModule(db, userInfoServiceStorage)

@@ -64,8 +64,8 @@ func (r *userRouter) SetUserDetailRoutes(handler *handler.UserDetailHandler) {
 func (r *userRouter) SetUserInfoServiceRoutes(handler *handler.UserInfoServiceHandler) {
 	client := r.parent.Group("/client/v1/detail")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
-	client.GET("/my", handler.GetMyDetailInfo)      // 내 정보 조회
-	client.POST("/user", handler.GetUserDetailInfo) // 사용자 정보 조회
+	client.GET("/my", handler.GetMyDetailInfo) // 내 정보 조회
+	client.POST("/user", handler.GetUserInfo)  // 사용자 정보 조회
 }
 
 func (r *userRouter) SetUserBatchServiceRoute(handler *handler.UserBatchServiceHandler) {

@@ -11,7 +11,6 @@ import (
 	"user/internal/application/util"
 	"user/internal/consts"
 	"user/internal/delivery/adapter"
-	"user/internal/delivery/dto/userInfoService"
 	"user/internal/domain/profile/entity"
 	"user/internal/domain/profile/repository"
 	domainStorage "user/internal/domain/profile/storage"
@@ -19,10 +18,9 @@ import (
 )
 
 type profileUsecase struct {
-	repository             repository.ProfileRepository
-	profileStorage         domainStorage.ProfileStorage
-	profileCacheStorage    storage.ProfileCacheStorage
-	userInfoServiceStorage storage.UserInfoServiceStorage
+	repository          repository.ProfileRepository
+	profileStorage      domainStorage.ProfileStorage
+	profileCacheStorage storage.ProfileCacheStorage
 }
 
 type ProfileUsecase interface {
@@ -30,16 +28,16 @@ type ProfileUsecase interface {
 	GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error)
 	DeleteProfileImg(ctx context.Context, in input.DeleteProfileImgInput) error
 	RegistProfileMsg(ctx context.Context, in input.RegistProfileMsgInput) error
-	GetProfileInfo(ctx context.Context, in []userInfoService.UserInfoServiceDto) (output.GetProfileInfoOutput, error)
+	GetProfileInfo(ctx context.Context, in []input.GetUserProfileInfoInput) ([]output.UserProfileOutput, error)
 	GetProfileMsg(ctx context.Context, in input.GetProfileMsgInput) (output.GetProfileMsgOutput, error)
+	GetMyProfileInfo(ctx context.Context, userHash []string) ([]output.UserProfileOutput, error)
 }
 
-func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage, userInfoServiceStorage storage.UserInfoServiceStorage) ProfileUsecase {
+func NewProfileUsecase(repository repository.ProfileRepository, profileStorage domainStorage.ProfileStorage, profileCacheStorage storage.ProfileCacheStorage) ProfileUsecase {
 	return &profileUsecase{
-		repository:             repository,
-		profileStorage:         profileStorage,
-		profileCacheStorage:    profileCacheStorage,
-		userInfoServiceStorage: userInfoServiceStorage,
+		repository:          repository,
+		profileStorage:      profileStorage,
+		profileCacheStorage: profileCacheStorage,
 	}
 }
 
@@ -205,19 +203,75 @@ func (u *profileUsecase) RegistProfileMsg(ctx context.Context, in input.RegistPr
 
 }
 
-func (u *profileUsecase) GetProfileInfo(ctx context.Context, in []userInfoService.UserInfoServiceDto) (output.GetProfileInfoOutput, error) {
+func (u *profileUsecase) GetMyProfileInfo(ctx context.Context, userHash []string) ([]output.UserProfileOutput, error) {
 
-	// entity := entity.MakeGetProfileInfoEntity(in.UserHashs)
-	// profileInfo, err := u.repository.GetProfileInfo(ctx, entity)
+	profileInfo := u.profileStorage.GetProfileInfo(userHash)
 
-	// if err != nil {
-	// 	return output.GetProfileInfoOutput{}, err
-	// }
+	o := make([]output.UserProfileOutput, 0)
+	for _, p := range profileInfo {
 
-	// return output.GetProfileInfoOutput{
-	// 	ResultMap: profileInfo,
-	// }, nil
-	return output.GetProfileInfoOutput{}, nil
+		temp := output.UserProfileOutput{
+
+			UserHash:    p.UserHash,
+			ProfileHash: p.ProfileHash,
+			ProfileMsg:  p.ProfileMsg,
+		}
+
+		o = append(o, temp)
+	}
+
+	return o, nil
+}
+
+func (u *profileUsecase) GetProfileInfo(ctx context.Context, input []input.GetUserProfileInfoInput) ([]output.UserProfileOutput, error) {
+
+	// entity 생성
+	en := make([]entity.ReqUserEntity, 0)
+	for _, i := range input {
+		temp := entity.ReqUserEntity{
+			UserHash:    i.UserHash,
+			ProfileHash: i.ProfileHash,
+		}
+		en = append(en, temp)
+	}
+
+	currentInfos, err := u.profileStorage.GetUserProfileUpdateHash(ctx, en)
+	if err != nil {
+		return nil, err
+	}
+
+	// 요청한 사용자의 updateHash 데이터 비교
+	targetUsers := make([]string, 0)
+
+	for _, req := range en {
+		current, exists := currentInfos[req.UserHash]
+
+		// 변경된 것만 골라냄 (이전 질문에서 논의한 직접 비교)
+		if !exists {
+			// 없다 - DB 한번 더 체크?
+			log.Printf("[GetProfileInfo] %s hash is not exist \n", req.UserHash)
+		} else if current.ProfileHash != req.ProfileHash {
+			// 있지만 다르다.
+			targetUsers = append(targetUsers, req.UserHash)
+		}
+	}
+
+	profileInfo := u.profileStorage.GetProfileInfo(targetUsers)
+
+	o := make([]output.UserProfileOutput, 0)
+	for _, p := range profileInfo {
+
+		temp := output.UserProfileOutput{
+
+			UserHash:    p.UserHash,
+			ProfileHash: p.ProfileHash,
+			ProfileMsg:  p.ProfileMsg,
+		}
+
+		o = append(o, temp)
+	}
+
+	return o, nil
 }
 
 func (u *profileUsecase) GetProfileMsg(ctx context.Context, in input.GetProfileMsgInput) (output.GetProfileMsgOutput, error) {

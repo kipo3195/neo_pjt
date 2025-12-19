@@ -5,14 +5,14 @@ import (
 	"user/internal/delivery/dto/userInfoService"
 )
 
-func MakeGetProfileInfoInput(users []userInfoService.UserInfoServiceDto) []input.GetUserDetailInfoInput {
-	reqUsers := make([]input.GetUserDetailInfoInput, 0)
+func MakeGetProfileInfoInput(users []userInfoService.UserInfoServiceDto) []input.GetUserProfileInfoInput {
+	reqUsers := make([]input.GetUserProfileInfoInput, 0)
 
 	for _, u := range users {
 
-		temp := input.GetUserDetailInfoInput{
-			UserHash:   u.UserHash,
-			UpdateHash: u.UpdateHash,
+		temp := input.GetUserProfileInfoInput{
+			UserHash:    u.UserHash,
+			ProfileHash: u.ProfileHash,
 		}
 
 		reqUsers = append(reqUsers, temp)

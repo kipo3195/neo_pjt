@@ -1,6 +1,6 @@
 package entity
 
 type ReqUserEntity struct {
-	UserHash   string
-	DetailHash string
+	UserHash    string
+	ProfileHash string
 }

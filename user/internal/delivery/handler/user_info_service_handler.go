@@ -31,72 +31,61 @@ func (h *UserInfoServiceHandler) GetMyDetailInfo(c *gin.Context) {
 	// AT에 있는 정보로 요청
 	myHash := util.GetUserHashByAccessToken(c)
 
-	temp := make([]string, 0)
-	temp = append(temp, myHash)
-
-	req := userInfoService.GetUserInfoServiceRequest{
-		UserHashs: temp,
+	req := userInfoService.GetMyInfoRequest{
+		MyHash: myHash,
 	}
 
 	log.Println(req)
 
 	// 어차피 adapter layer는 원시 값을 usecase에 맞는 input으로 변환하는 처리를 하므로
-	detailInput := adapter.MakeGetUserDetailInfoInput(req.UserHashs)
-	detailOutput, err := h.svc.UserDetail.GetUserDetailInfo(ctx, detailInput)
+	myInfoInput := adapter.MakeGetMyInfoInput(req.MyHash)
+	myInfoOutput, err := h.svc.GetMyInfo(ctx, myInfoInput)
 
 	if err != nil {
-		// 사용자 정보 조회 에러
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
 
-	// 프로필 정보 조회
-	profileInput := adapter.MakeGetProfileInfoInput(req.UserHashs)
-	profileOutput, err := h.svc.Profile.GetProfileInfo(ctx, profileInput)
+	detail := make([]userInfoService.UserDetail, 0)
+	for _, d := range myInfoOutput.UserDetail {
 
-	if err != nil {
-		// 프로필 이미지 조회 에러
-		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
-		return
+		temp := userInfoService.UserDetail{
+			UserHash:     d.UserHash,
+			UserEmail:    d.UserEmail,
+			UserPhoneNum: d.UserPhoneNum,
+		}
+
+		detail = append(detail, temp)
 	}
 
-	// 사용자 상세 정보로 기반한 response 구성
-	var res userInfoService.GetMyInfoServiceResponse
+	profile := make([]userInfoService.UserProfile, 0)
+	for _, d := range myInfoOutput.UserProfile {
 
-	// userHash : 프로필 정보 구조체 {} map 생성 필요
-
-	for i := 0; i < len(detailOutput.UserInfos); i++ {
-
-		// detail 정보 생성
-		detail := userInfoService.UserDetail{
-			UserHash:     detailOutput.UserInfos[i].UserHash,
-			UserEmail:    detailOutput.UserInfos[i].UserEmail,
-			UserPhoneNum: detailOutput.UserInfos[i].UserPhoneNum,
+		temp := userInfoService.UserProfile{
+			UserHash:     d.UserHash,
+			ProlfileHash: d.ProfileHash,
+			ProfileMsg:   d.ProfileMsg,
 		}
 
-		profileInfoEntity := profileOutput.ResultMap[detailOutput.UserInfos[i].UserHash]
-
-		profile := userInfoService.UserProfile{
-			ProlfileHash: profileInfoEntity.ProfileImgHash,
-			ProfileMsg:   profileInfoEntity.ProfileMsg,
-		}
-
-		info := userInfoService.UserInfo{
-			UserDetail:  detail,
-			UserProfile: profile,
-		}
-
-		res.UserInfo = append(res.UserInfo, info)
+		profile = append(profile, temp)
 	}
-	// dto 배열을 response할건지 구조체로 배열을 감싼 걸 response 할건지?
-	// 20251030
+
+	userInfo := userInfoService.UserInfo{
+		UserDetail:  detail,
+		UserProfile: profile,
+	}
+
+	res := userInfoService.GetMyInfoServiceResponse{
+		UserInfo: userInfo,
+	}
+
 	// 리스트 응답을 감싸는 구조체를 유지하는 게 더 낫습니다.
 	// 즉, 지금처럼 GetUserDetailInfoResponse 안에 UserDetails []UserDetail 필드를 두는 구조가 더 바람직합니다.
 	response.SendSuccess(c, res)
 
 }
 
-func (h *UserInfoServiceHandler) GetUserDetailInfo(c *gin.Context) {
+func (h *UserInfoServiceHandler) GetUserInfo(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
@@ -114,54 +103,46 @@ func (h *UserInfoServiceHandler) GetUserDetailInfo(c *gin.Context) {
 		return
 	}
 
-	detailInput := adapter.MakeGetUserDetailInfoInput(req.ReqUsers)
-	detailOutput, err := h.svc.UserDetail.GetUserDetailInfo(ctx, detailInput)
+	detailInput, profileInput := adapter.MakeGetUserInfoInput(req.ReqUsers)
+	userInfoOutput, err := h.svc.GetUserInfo(ctx, detailInput, profileInput)
 
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
 
-	// 프로필 정보 조회
-	profileInput := adapter.MakeGetProfileInfoInput(req.ReqUsers)
-	profileOutput, err := h.svc.Profile.GetProfileInfo(ctx, profileInput)
+	detail := make([]userInfoService.UserDetail, 0)
+	for _, d := range userInfoOutput.UserDetail {
 
-	if err != nil {
-		// 프로필 이미지 조회 에러
-		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
-		return
+		temp := userInfoService.UserDetail{
+			UserHash:     d.UserHash,
+			UserEmail:    d.UserEmail,
+			UserPhoneNum: d.UserPhoneNum,
+		}
+
+		detail = append(detail, temp)
 	}
 
-	// 사용자 상세 정보로 기반한 response 구성
+	profile := make([]userInfoService.UserProfile, 0)
+	for _, d := range userInfoOutput.UserProfile {
+
+		temp := userInfoService.UserProfile{
+			UserHash:     d.UserHash,
+			ProlfileHash: d.ProfileHash,
+			ProfileMsg:   d.ProfileMsg,
+		}
+
+		profile = append(profile, temp)
+	}
+
+	userInfo := userInfoService.UserInfo{
+		UserDetail:  detail,
+		UserProfile: profile,
+	}
+
 	res := userInfoService.GetUserInfoServiceResponse{
-		UserInfo: []userInfoService.UserInfo{},
+		UserInfo: userInfo,
 	}
-
-	for i := 0; i < len(detailOutput.UserInfos); i++ {
-
-		// detail 정보 생성
-		detail := userInfoService.UserDetail{
-			UserHash:     detailOutput.UserInfos[i].UserHash,
-			UserEmail:    detailOutput.UserInfos[i].UserEmail,
-			UserPhoneNum: detailOutput.UserInfos[i].UserPhoneNum,
-		}
-
-		profileInfoEntity := profileOutput.ResultMap[detailOutput.UserInfos[i].UserHash]
-
-		profile := userInfoService.UserProfile{
-			ProlfileHash: profileInfoEntity.ProfileImgHash,
-			ProfileMsg:   profileInfoEntity.ProfileMsg,
-		}
-
-		info := userInfoService.UserInfo{
-			UserDetail:  detail,
-			UserProfile: profile,
-		}
-
-		res.UserInfo = append(res.UserInfo, info)
-	}
-	// dto 배열을 response할건지 구조체로 배열을 감싼 걸 response 할건지?
-	// 20251030
 	// 리스트 응답을 감싸는 구조체를 유지하는 게 더 낫습니다.
 	// 즉, 지금처럼 GetUserDetailInfoResponse 안에 UserDetails []UserDetail 필드를 두는 구조가 더 바람직합니다.
 	response.SendSuccess(c, res)

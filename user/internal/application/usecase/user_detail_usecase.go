@@ -19,40 +19,70 @@ import (
 )
 
 type userDetailUsecase struct {
-	repository             repository.UserDetailRepository
-	userInfoServiceStorage storage.UserInfoServiceStorage
+	repository repository.UserDetailRepository
+	storage    storage.UserInfoServiceStorage
 }
 
 type UserDetailUsecase interface {
-	GetUserDetailInfo(ctx context.Context, input []input.GetUserDetailInfoInput) (output.GetUserDetailInfoOutput, error)
+	GetUserDetailInfo(ctx context.Context, input []input.GetUserDetailInfoInput) ([]output.UserDetailOutput, error)
+	GetMyDetailInfo(ctx context.Context, in []string) ([]output.UserDetailOutput, error)
 	RegisterUserDetailBatch(ctx context.Context, input input.RegistUserDetailBatchInput) error
 }
 
-func NewUserDatailUsecase(repository repository.UserDetailRepository, userInfoServiceStorage storage.UserInfoServiceStorage) UserDetailUsecase {
+func NewUserDatailUsecase(repository repository.UserDetailRepository, storage storage.UserInfoServiceStorage) UserDetailUsecase {
 	return &userDetailUsecase{
-		repository:             repository,
-		userInfoServiceStorage: userInfoServiceStorage,
+		repository: repository,
+		storage:    storage,
 	}
 }
 
-func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input []input.GetUserDetailInfoInput) (output.GetUserDetailInfoOutput, error) {
+func (u *userDetailUsecase) GetMyDetailInfo(ctx context.Context, in []string) ([]output.UserDetailOutput, error) {
 
+	detailInfo := u.storage.GetUserDetailInfo(in)
+
+	output := adapter.MakeGetUserDetailInfoOutput(detailInfo)
+
+	return output, nil
+}
+
+func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input []input.GetUserDetailInfoInput) ([]output.UserDetailOutput, error) {
+
+	// entity 생성
 	en := make([]entity.ReqUserEntity, 0)
 	for _, i := range input {
 		temp := entity.ReqUserEntity{
 			UserHash:   i.UserHash,
-			UpdateHash: i.UpdateHash,
+			DetailHash: i.DetailHash,
 		}
 		en = append(en, temp)
 	}
 	// 기존 DB 조회 로직을 메모리 체크 로직으로 변경 TODO
-	userInfos, err := u.repository.GetUserInfoDetailInfo(ctx, entity)
+	//userInfos, err := u.repository.GetUserInfoDetailInfo(ctx, entity)
 
+	// 이 방식이 루프 안에서 N번 호출하는 것보다 훨씬 빠릅니다.
+	currentInfos, err := u.storage.GetUserInfoUpdateHash(ctx, en)
 	if err != nil {
-		return output.GetUserDetailInfoOutput{}, err
+		return nil, err
 	}
 
-	output := adapter.MakeGetUserDetailInfoOutput(userInfos)
+	// 요청한 사용자의 updateHash 데이터 비교
+	targetUsers := make([]string, 0)
+	for _, req := range en {
+		current, exists := currentInfos[req.UserHash]
+
+		// 변경된 것만 골라냄 (이전 질문에서 논의한 직접 비교)
+		if !exists {
+			// 없다 - DB 한번 더 체크?
+			log.Printf("[GetUserDetailInfo] %s hash is not exist \n", req.UserHash)
+		} else if current.DetailHash != req.DetailHash {
+			// 있지만 다르다.
+			targetUsers = append(targetUsers, req.UserHash)
+		}
+	}
+
+	detailInfo := u.storage.GetUserDetailInfo(targetUsers)
+
+	output := adapter.MakeGetUserDetailInfoOutput(detailInfo)
 
 	return output, nil
 }
