@@ -25,6 +25,23 @@ func UserDetailMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.UserDetail{})
 }
 
+func (r *userDetailRepositoryImpl) InitUserDetail(ctx context.Context) ([]entity.UserDetailInfoEntity, error) {
+
+	var initUserEntities []entity.UserDetailInfoEntity
+
+	// DB 조회
+	if err := r.db.
+		Select(" a.* ").
+		Table("user_detail AS a").
+		Joins("JOIN service_users AS b ON a.user_hash = b.user_hash").
+		Where("b.use_yn = 'Y'").
+		Scan(&initUserEntities).Error; err != nil {
+		return nil, err
+	}
+
+	return initUserEntities, nil
+}
+
 func (r *userDetailRepositoryImpl) GetUserInfoDetailInfo(ctx context.Context, en entity.GetUserDetailInfoEntity) ([]entity.UserDetailInfoEntity, error) {
 
 	var userDetailEntities []entity.UserDetailInfoEntity

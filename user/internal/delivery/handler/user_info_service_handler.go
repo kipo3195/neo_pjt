@@ -50,9 +50,10 @@ func (h *UserInfoServiceHandler) GetMyDetailInfo(c *gin.Context) {
 	for _, d := range myInfoOutput.UserDetail {
 
 		temp := userInfoService.UserDetail{
-			UserHash:     d.UserHash,
-			UserEmail:    d.UserEmail,
-			UserPhoneNum: d.UserPhoneNum,
+			UserHash:      d.UserHash,
+			UserEmail:     d.UserEmail,
+			UserPhoneNum:  d.UserPhoneNum,
+			DetailVersion: d.DetailVersion,
 		}
 
 		detail = append(detail, temp)
@@ -62,9 +63,9 @@ func (h *UserInfoServiceHandler) GetMyDetailInfo(c *gin.Context) {
 	for _, d := range myInfoOutput.UserProfile {
 
 		temp := userInfoService.UserProfile{
-			UserHash:     d.UserHash,
-			ProlfileHash: d.ProfileHash,
-			ProfileMsg:   d.ProfileMsg,
+			UserHash:       d.UserHash,
+			ProfileVersion: d.ProfileVersion,
+			ProfileMsg:     d.ProfileMsg,
 		}
 
 		profile = append(profile, temp)
@@ -115,9 +116,10 @@ func (h *UserInfoServiceHandler) GetUserInfo(c *gin.Context) {
 	for _, d := range userInfoOutput.UserDetail {
 
 		temp := userInfoService.UserDetail{
-			UserHash:     d.UserHash,
-			UserEmail:    d.UserEmail,
-			UserPhoneNum: d.UserPhoneNum,
+			UserHash:      d.UserHash,
+			UserEmail:     d.UserEmail,
+			UserPhoneNum:  d.UserPhoneNum,
+			DetailVersion: d.DetailVersion,
 		}
 
 		detail = append(detail, temp)
@@ -127,9 +129,9 @@ func (h *UserInfoServiceHandler) GetUserInfo(c *gin.Context) {
 	for _, d := range userInfoOutput.UserProfile {
 
 		temp := userInfoService.UserProfile{
-			UserHash:     d.UserHash,
-			ProlfileHash: d.ProfileHash,
-			ProfileMsg:   d.ProfileMsg,
+			UserHash:       d.UserHash,
+			ProfileVersion: d.ProfileVersion,
+			ProfileMsg:     d.ProfileMsg,
 		}
 
 		profile = append(profile, temp)

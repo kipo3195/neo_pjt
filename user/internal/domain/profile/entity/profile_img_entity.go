@@ -1,6 +1,7 @@
 package entity
 
 type ProfileImgEntity struct {
+	Org                 string
 	ProfileImg          *[]byte
 	ProfileImgSize      int64
 	ProfileImgName      string

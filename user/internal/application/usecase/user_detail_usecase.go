@@ -20,7 +20,7 @@ import (
 
 type userDetailUsecase struct {
 	repository repository.UserDetailRepository
-	storage    storage.UserInfoServiceStorage
+	storage    storage.UserDetailStorage
 }
 
 type UserDetailUsecase interface {
@@ -29,7 +29,7 @@ type UserDetailUsecase interface {
 	RegisterUserDetailBatch(ctx context.Context, input input.RegistUserDetailBatchInput) error
 }
 
-func NewUserDatailUsecase(repository repository.UserDetailRepository, storage storage.UserInfoServiceStorage) UserDetailUsecase {
+func NewUserDatailUsecase(repository repository.UserDetailRepository, storage storage.UserDetailStorage) UserDetailUsecase {
 	return &userDetailUsecase{
 		repository: repository,
 		storage:    storage,
@@ -51,8 +51,8 @@ func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input []input
 	en := make([]entity.ReqUserEntity, 0)
 	for _, i := range input {
 		temp := entity.ReqUserEntity{
-			UserHash:   i.UserHash,
-			DetailHash: i.DetailHash,
+			UserHash:      i.UserHash,
+			DetailVersion: i.DetailVersion,
 		}
 		en = append(en, temp)
 	}
@@ -74,7 +74,7 @@ func (u *userDetailUsecase) GetUserDetailInfo(ctx context.Context, input []input
 		if !exists {
 			// 없다 - DB 한번 더 체크?
 			log.Printf("[GetUserDetailInfo] %s hash is not exist \n", req.UserHash)
-		} else if current.DetailHash != req.DetailHash {
+		} else if current.DetailVersion != req.DetailVersion {
 			// 있지만 다르다.
 			targetUsers = append(targetUsers, req.UserHash)
 		}

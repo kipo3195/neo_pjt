@@ -55,9 +55,11 @@ func (r *UserInfoService) GetUserInfo(ctx context.Context, detailInput []input.G
 	for _, r := range detailResult {
 
 		d := output.UserDetailOutput{
-			UserHash:     r.UserHash,
-			UserEmail:    r.UserEmail,
-			UserPhoneNum: r.UserPhoneNum,
+			Org:           r.Org,
+			UserHash:      r.UserHash,
+			UserEmail:     r.UserEmail,
+			UserPhoneNum:  r.UserPhoneNum,
+			DetailVersion: r.DetailVersion,
 		}
 
 		detailOutput = append(detailOutput, d)
@@ -76,9 +78,9 @@ func (r *UserInfoService) GetUserInfo(ctx context.Context, detailInput []input.G
 	for _, r := range profileResult {
 
 		p := output.UserProfileOutput{
-			UserHash:    r.UserHash,
-			ProfileHash: r.ProfileHash,
-			ProfileMsg:  r.ProfileMsg,
+			UserHash:       r.UserHash,
+			ProfileVersion: r.ProfileVersion,
+			ProfileMsg:     r.ProfileMsg,
 		}
 
 		profileOutput = append(profileOutput, p)

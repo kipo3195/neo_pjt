@@ -2,10 +2,8 @@ package usecase
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"log"
-	"time"
+	"strconv"
 	"user/internal/application/usecase/input"
 	"user/internal/application/usecase/output"
 	"user/internal/application/util"
@@ -61,7 +59,7 @@ func (u *profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileI
 	}
 
 	// 저장 파일명 생성 사용자 hash + 날짜
-	profileImgHash := GenerateUserProfileHash(profileKey)
+	profileImgHash := in.UserHash + "_" + strconv.FormatInt(util.GenerateIntHash(), 10)
 	log.Printf("[ProfileImgUpload] userHash : %s, GenerateUserProfileHash : %s \n", profileKey, profileImgHash)
 
 	// 파일 저장 처리 (저장 경로저장 필요시 _ 를 변수타입으로 변경해서 사용)
@@ -122,15 +120,10 @@ func (u *profileUsecase) ProfileImgUpload(ctx context.Context, in input.ProfileI
 
 	// id : 파일 명칭으로 저장
 	u.profileCacheStorage.PutProfileName(profileKey, entity.ProfileImgSavedName)
+	// profile version 변경
+	u.profileCacheStorage.PutProfileVersion(entity.UserHash, util.GenerateIntHash())
 
 	return nil
-}
-
-func GenerateUserProfileHash(userId string) string {
-	date := time.Now().Format(consts.YYYYMMDDHHMSS)
-	temp := userId + date
-	hash := sha256.Sum256([]byte(temp))
-	return hex.EncodeToString(hash[:])
 }
 
 func (u *profileUsecase) GetProfileImg(ctx context.Context, in input.GetProfileImgInput) (output.GetProfileImgOutput, error) {
@@ -205,16 +198,15 @@ func (u *profileUsecase) RegistProfileMsg(ctx context.Context, in input.RegistPr
 
 func (u *profileUsecase) GetMyProfileInfo(ctx context.Context, userHash []string) ([]output.UserProfileOutput, error) {
 
-	profileInfo := u.profileStorage.GetProfileInfo(userHash)
+	profileInfo := u.profileCacheStorage.GetProfileInfo(userHash)
 
 	o := make([]output.UserProfileOutput, 0)
 	for _, p := range profileInfo {
 
 		temp := output.UserProfileOutput{
-
-			UserHash:    p.UserHash,
-			ProfileHash: p.ProfileHash,
-			ProfileMsg:  p.ProfileMsg,
+			UserHash:       p.UserHash,
+			ProfileVersion: p.ProfileVersion,
+			ProfileMsg:     p.ProfileMsg,
 		}
 
 		o = append(o, temp)
@@ -229,13 +221,13 @@ func (u *profileUsecase) GetProfileInfo(ctx context.Context, input []input.GetUs
 	en := make([]entity.ReqUserEntity, 0)
 	for _, i := range input {
 		temp := entity.ReqUserEntity{
-			UserHash:    i.UserHash,
-			ProfileHash: i.ProfileHash,
+			UserHash:       i.UserHash,
+			ProfileVersion: i.ProfileVersion,
 		}
 		en = append(en, temp)
 	}
 
-	currentInfos, err := u.profileStorage.GetUserProfileUpdateHash(ctx, en)
+	currentInfos, err := u.profileCacheStorage.GetUserProfileUpdateVersion(ctx, en)
 	if err != nil {
 		return nil, err
 	}
@@ -250,22 +242,22 @@ func (u *profileUsecase) GetProfileInfo(ctx context.Context, input []input.GetUs
 		if !exists {
 			// 없다 - DB 한번 더 체크?
 			log.Printf("[GetProfileInfo] %s hash is not exist \n", req.UserHash)
-		} else if current.ProfileHash != req.ProfileHash {
+		} else if current.ProfileVersion != req.ProfileVersion {
 			// 있지만 다르다.
 			targetUsers = append(targetUsers, req.UserHash)
 		}
 	}
 
-	profileInfo := u.profileStorage.GetProfileInfo(targetUsers)
+	profileInfo := u.profileCacheStorage.GetProfileInfo(targetUsers)
 
 	o := make([]output.UserProfileOutput, 0)
 	for _, p := range profileInfo {
 
 		temp := output.UserProfileOutput{
 
-			UserHash:    p.UserHash,
-			ProfileHash: p.ProfileHash,
-			ProfileMsg:  p.ProfileMsg,
+			UserHash:       p.UserHash,
+			ProfileVersion: p.ProfileVersion,
+			ProfileMsg:     p.ProfileMsg,
 		}
 
 		o = append(o, temp)

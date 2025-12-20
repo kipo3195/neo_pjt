@@ -1,7 +1,9 @@
 package output
 
 type UserDetailOutput struct {
-	UserHash     string
-	UserEmail    string
-	UserPhoneNum string
+	Org           string
+	UserHash      string
+	UserEmail     string
+	UserPhoneNum  string
+	DetailVersion int64
 }

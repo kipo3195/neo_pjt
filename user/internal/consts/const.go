@@ -1,11 +1,11 @@
 package consts
 
 const (
-	FILE          = "file"
-	EVENT         = "event"
-	YYYYMMDDHHMSS = "20060102150405"
-	USER_ID       = "userId"
-	USER_HASH     = "userHash"
+	FILE           = "file"
+	EVENT          = "event"
+	YYYYMMDDHHMMSS = "20060102150405"
+	USER_ID        = "userId"
+	USER_HASH      = "userHash"
 )
 
 const (

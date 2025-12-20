@@ -1,7 +1,7 @@
 package userInfoService
 
 type UserProfile struct {
-	UserHash     string `json:"userHash"`
-	ProlfileHash string `json:"profileHash"`
-	ProfileMsg   string `json:"profileMsg"`
+	UserHash       string `json:"userHash"`
+	ProfileVersion int64  `json:"profileVersion"`
+	ProfileMsg     string `json:"profileMsg"`
 }

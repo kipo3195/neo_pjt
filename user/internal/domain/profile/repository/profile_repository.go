@@ -18,4 +18,5 @@ type ProfileRepository interface {
 	GetProfileInfo(ctx context.Context, entity entity.GetProfileInfoEntity) (map[string]entity.GetProfileInfoResultEntity, error)
 	PutProfileMsg(ctx context.Context, entity entity.PutProfileMsgEntity) error
 	GetProfileMsg(ctx context.Context, entity entity.GetProfileMsgEntity) ([]entity.GetProfileMsgResultEntity, error)
+	InitProfile(ctx context.Context) ([]entity.ProfileInfoEntity, error)
 }

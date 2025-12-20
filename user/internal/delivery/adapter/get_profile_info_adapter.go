@@ -11,8 +11,8 @@ func MakeGetProfileInfoInput(users []userInfoService.UserInfoServiceDto) []input
 	for _, u := range users {
 
 		temp := input.GetUserProfileInfoInput{
-			UserHash:    u.UserHash,
-			ProfileHash: u.ProfileHash,
+			UserHash:       u.UserHash,
+			ProfileVersion: u.ProfileVersion,
 		}
 
 		reqUsers = append(reqUsers, temp)

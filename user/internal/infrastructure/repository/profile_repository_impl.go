@@ -161,7 +161,7 @@ func (r *profileRepositoryImpl) PutProfileMsg(ctx context.Context, en entity.Put
 	return nil
 }
 
-func (r profileRepositoryImpl) GetProfileMsg(ctx context.Context, en entity.GetProfileMsgEntity) ([]entity.GetProfileMsgResultEntity, error) {
+func (r *profileRepositoryImpl) GetProfileMsg(ctx context.Context, en entity.GetProfileMsgEntity) ([]entity.GetProfileMsgResultEntity, error) {
 
 	if len(en.UserHashs) == 0 {
 		return []entity.GetProfileMsgResultEntity{}, nil
@@ -178,4 +178,22 @@ func (r profileRepositoryImpl) GetProfileMsg(ctx context.Context, en entity.GetP
 	}
 
 	return result, nil
+}
+
+func (r *profileRepositoryImpl) InitProfile(ctx context.Context) ([]entity.ProfileInfoEntity, error) {
+
+	var initUserEntities []entity.ProfileInfoEntity
+	// DB 조회
+
+	if err := r.db.
+		Select("a.org, a.user_hash, b.save_name, c.profile_msg ").
+		Table("service_users AS a").
+		Joins("left join profile_img_info as b on a.user_hash = b.user_hash").
+		Joins("left join profile_msg_info as c on b.user_hash = c.user_hash").
+		Where("b.use_yn = 'Y'").
+		Scan(&initUserEntities).Error; err != nil {
+		return nil, err
+	}
+
+	return initUserEntities, nil
 }

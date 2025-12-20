@@ -15,13 +15,13 @@ func MakeGetUserInfoInput(users []userInfoService.UserInfoServiceDto) ([]input.G
 	for _, u := range users {
 
 		d := input.GetUserDetailInfoInput{
-			UserHash:   u.UserHash,
-			DetailHash: u.DetailHash,
+			UserHash:      u.UserHash,
+			DetailVersion: u.DetailVersion,
 		}
 
 		p := input.GetUserProfileInfoInput{
-			UserHash:    u.UserHash,
-			ProfileHash: u.ProfileHash,
+			UserHash:       u.UserHash,
+			ProfileVersion: u.ProfileVersion,
 		}
 
 		detail = append(detail, d)
@@ -37,10 +37,10 @@ func MakeGetUserDetailInfoOutput(userInfos []entity.UserDetailInfoEntity) []outp
 
 	for _, u := range userInfos {
 		temp := output.UserDetailOutput{
-
-			UserHash:     u.UserHash,
-			UserEmail:    u.UserEmail,
-			UserPhoneNum: u.UserPhoneNum,
+			UserHash:      u.UserHash,
+			UserEmail:     u.UserEmail,
+			UserPhoneNum:  u.UserPhoneNum,
+			DetailVersion: u.DetailVersion,
 		}
 		result = append(result, temp)
 	}

@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"user/internal/consts"
-	"user/internal/domain/profile/entity"
 
 	"github.com/disintegration/imaging"
 )
@@ -23,14 +22,6 @@ func NewServerProfileStorage(serverUrl string) *ServerProfileStorage {
 	return &ServerProfileStorage{
 		ServerUrl: serverUrl,
 	}
-}
-
-func (s *ServerProfileStorage) GetUserProfileUpdateHash(ctx context.Context, entity []entity.ReqUserEntity) (map[string]entity.ProfileHashEntity, error) {
-	return nil, nil
-}
-
-func (s *ServerProfileStorage) GetProfileInfo(userHash []string) []entity.ProfileInfoEntity {
-	return nil
 }
 
 func (s *ServerProfileStorage) Upload(ctx context.Context, profileImg []byte, fileHash string) (string, string, error) {
