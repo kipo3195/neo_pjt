@@ -25,6 +25,7 @@ func ChatRoomMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.ChatRoom{})
 	db.AutoMigrate(&model.ChatRoomDetail{})
 	db.AutoMigrate(&model.ChatRoomMember{})
+	db.AutoMigrate(&model.ChatRoomOwner{})
 }
 
 func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity []entity.CreateChatRoomMemberEntity, roomEntity entity.ChatRoomEntity) error {
@@ -108,6 +109,22 @@ func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity [
 		}
 	}
 
+	// 방장
+	if err := tx.Create(&model.ChatRoomOwner{
+		RoomKey:         roomEntity.RoomKey,
+		OwnerHash:       roomEntity.CreateUserHash,
+		ActiveFlag:      "Y",
+		MemberWorksCode: roomEntity.WorksCode,
+		UpdateDate:      roomEntity.RegDate,
+	}).Error; err != nil {
+		// 감지가 안되므로 일단 주석 처리
+		// if errors.Is(err, gorm.ErrDuplicatedKey) {
+		// 	log.Println("[PutChatRoom] room detail - Duplicate key : ", roomEntity.RoomKey)
+		// 	return consts.ErrRoomKeyAlreadyExist
+		// }
+		return err
+	}
+
 	// 트랜잭션 종료
 	if err := tx.Commit().Error; err != nil {
 		log.Println("[PutChatRoom] - Commit failed")
@@ -161,7 +178,8 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 		from (
 			select 
 				detail.*,
-				line.room_hash
+				line.room_hash,
+				group_concat(DISTINCT owner.owner_hash separator ',') as owner 
 			from chat_room_member as member 
 			left join chat_room as room 
 				on member.room_key = room.room_key
@@ -169,6 +187,8 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 				on room.room_key= detail.room_key
 			left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line 
 				on room.room_key = line.room_key
+			left join chat_room_owner as owner
+				on room.room_key = owner.room_key and owner.active_flag = 'Y'
 			where 
 				member_hash = ? and room.room_type = ? limit ?) as AA 
 		join chat_room_member as BB on AA.room_key = BB.room_key

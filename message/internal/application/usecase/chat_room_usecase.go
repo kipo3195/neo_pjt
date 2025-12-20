@@ -120,6 +120,7 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 
 		// member 를 ','로 split하여 리스트 생성
 		memberSet := util.SplitAndMakeSet(r.Member, ",")
+		owner := util.SplitAndMakeSet(r.Owner, ",")
 
 		temp := output.ChatRoomDetail{
 			RoomKey:     r.RoomKey,
@@ -132,6 +133,7 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 			CreateDate:  r.CreateDate,
 			CreateUser:  r.CreateUser,
 			Hash:        r.Hash,
+			Owner:       owner,
 		}
 
 		detail := output.GetChatRoomDetailOutput{
@@ -162,6 +164,7 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 
 		// member 를 ','로 split하여 리스트 생성
 		memberSet := util.SplitAndMakeSet(r.Member, ",")
+		owner := util.SplitAndMakeSet(r.Owner, ",")
 
 		temp := output.ChatRoomDetail{
 			RoomKey:     r.RoomKey,
@@ -174,6 +177,7 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 			CreateDate:  r.CreateDate,
 			CreateUser:  r.CreateUser,
 			Hash:        r.Hash,
+			Owner:       owner,
 		}
 
 		detail := output.GetChatRoomListOutput{

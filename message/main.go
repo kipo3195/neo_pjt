@@ -61,8 +61,17 @@ func InitServer() *http.Server {
 	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage)
 	router.SetChatRoomRoutes(chatRoomModule.Handler)
 
+	chatRoomFixedModule := di.InitChatRoomFixedModule(db)
+	chatRoomTitleModule := di.InitChatRoomTitleModule(db)
+	chatRoomConfigModule := di.InitChatRoomConfigModule(db)
+
+	// chatService에도 chatRoom이 들어가지만, 다른 usecase의 조합으로 처리해야 할 수 있으므로 chat과 chatRoom을 분리.
+	// usecase의 조합이지만 메인이 뭐냐? 라고 생각하고 작업하기
 	chatServiceModule := di.InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase, chatRoomModule.Usecase)
 	router.SetChatServiceRoutes(chatServiceModule)
+
+	chatRoomServiceModule := di.InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
+	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
 
 	return &http.Server{
 		Addr:    ":8083",

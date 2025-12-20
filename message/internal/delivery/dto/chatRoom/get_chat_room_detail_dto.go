@@ -1,6 +1,15 @@
 package chatRoom
 
+import (
+	"message/internal/delivery/dto/chatRoomConfig"
+	"message/internal/delivery/dto/chatRoomFixed"
+	"message/internal/delivery/dto/chatRoomTitle"
+)
+
 type GetChatRoomDetailDto struct {
-	ChatRoomDetail ChatRoomDetail `json:"roomDetail"`
-	Member         []string       `json:"member"`
+	ChatRoomDetail   ChatRoomDetail                `json:"roomDetail"`
+	ChatRoomFixed    chatRoomFixed.ChatRoomFixed   `json:"fixed"`
+	MyChatRoomTitle  chatRoomTitle.ChatRoomTitle   `json:"myChatRoomTitle"`
+	MyChatRoomConfig chatRoomConfig.ChatRoomConfig `json:"myChatRoomConfig"`
+	Member           []string                      `json:"member"`
 }

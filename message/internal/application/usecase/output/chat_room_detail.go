@@ -11,4 +11,5 @@ type ChatRoomDetail struct {
 	CreateDate  string
 	CreateUser  string
 	Hash        string
+	Owner       []string
 }

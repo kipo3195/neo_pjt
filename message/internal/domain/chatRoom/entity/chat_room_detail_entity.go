@@ -12,4 +12,5 @@ type ChatRoomDetailEntity struct {
 	CreateUser  string `gorm:"column:room_create_user"`
 	Hash        string `gorm:"column:room_hash"`
 	Member      string `gorm:"column:member"`
+	Owner       string `gorm:"column:owner"`
 }

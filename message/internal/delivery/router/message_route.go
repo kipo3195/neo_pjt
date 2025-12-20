@@ -22,6 +22,7 @@ type MessageRouter interface {
 	SetNoteRoutes(handler *handler.NoteHandler)
 	SetOtpRoutes(handler *handler.OtpHandler)
 	SetChatRoomRoutes(handler *handler.ChatRoomHandler)
+	SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler)
 }
 
 func (r *messageRouter) GetEngine() *gin.Engine {
@@ -76,10 +77,12 @@ func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 
 func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
 
-	client := r.parent.Group("/client/v1/chatRoom")
+}
+
+func (r *messageRouter) SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler) {
+	client := r.parent.Group("/client/v1/chat/room")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
 	client.POST("/", handler.CreateChatRoom)
 	client.POST("/detail", handler.GetChatRoomDetail)
 	client.POST("/list", handler.GetChatRoomList)
-
 }
