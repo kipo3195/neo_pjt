@@ -172,27 +172,26 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 
 	// 내가 참여중인 방에 한해서 조회 가능하도록 처리함 20251208
 	err := r.db.Raw(`
-		select 
-			AA.*,
-			group_concat(DISTINCT BB.member_hash separator ',') as member 
-		from (
 			select 
 				detail.*,
 				line.room_hash,
-				group_concat(DISTINCT owner.owner_hash separator ',') as owner 
+				member_view.member,
+				owner_view.owner
 			from chat_room_member as member 
-			left join chat_room as room 
-				on member.room_key = room.room_key
-			left join chat_room_detail as detail 
-				on room.room_key= detail.room_key
-			left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line 
-				on room.room_key = line.room_key
+			join chat_room as room 
+				on member.room_key = room.room_key and member_hash = ?
+			join chat_room_detail as detail 
+				on member.room_key = detail.room_key
+			left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line
+				on member.room_key = line.room_key
 			left join chat_room_owner as owner
-				on room.room_key = owner.room_key and owner.active_flag = 'Y'
+				on member.room_key = owner.room_key and owner.active_flag = 'Y'
+			left join (select group_concat(DISTINCT member_hash separator ',') as member, room_key from chat_room_member group by room_key) as member_view
+				on member.room_key = member_view.room_key
+			left join (select group_concat(DISTINCT owner_hash separator ',') as owner, room_key from chat_room_owner group by room_key) as owner_view
+				on member.room_key = owner_view.room_key
 			where 
-				member_hash = ? and room.room_type = ? limit ?) as AA 
-		join chat_room_member as BB on AA.room_key = BB.room_key
-		group by AA.room_key`, en.ReqUserHash, en.RoomType, en.ReqCount).Scan(&result).Error
+				room.room_type = ? order by line.room_hash desc, detail.room_create_date desc limit ?`, en.ReqUserHash, en.RoomType, en.ReqCount).Scan(&result).Error
 
 	if err != nil {
 		log.Println("[GetChatRoomList] DB error :", err)
