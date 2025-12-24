@@ -54,7 +54,7 @@ func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler
 
 	client := r.parent.Group("/client/v1/chat")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
-	client.POST("/", handler.SendChat)
+	client.POST("", handler.SendChat)
 
 }
 
@@ -62,7 +62,7 @@ func (r *messageRouter) SetNoteRoutes(handler *handler.NoteHandler) {
 
 	client := r.parent.Group("/client/v1/note")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
-	client.POST("/", handler.SendNote)
+	client.POST("", handler.SendNote)
 
 }
 
@@ -82,7 +82,7 @@ func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
 func (r *messageRouter) SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler) {
 	client := r.parent.Group("/client/v1/chat/room")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
-	client.POST("/", handler.CreateChatRoom)
+	client.POST("", handler.CreateChatRoom)
 	client.POST("/detail", handler.GetChatRoomDetail)
 	client.POST("/list", handler.GetChatRoomList)
 }

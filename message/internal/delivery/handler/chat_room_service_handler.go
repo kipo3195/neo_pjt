@@ -81,6 +81,8 @@ func (r *ChatRoomServiceHandler) CreateChatRoom(c *gin.Context) {
 
 	res := chatRoom.CreateChatRoomResponse{
 		RegDate: regDate,
+		RoomKey: input.RoomKey,
+		Type:    input.RoomType,
 	}
 
 	response.SendSuccess(c, res)
