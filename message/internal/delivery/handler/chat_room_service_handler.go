@@ -136,6 +136,7 @@ func (r *ChatRoomServiceHandler) GetChatRoomDetail(c *gin.Context) {
 			CreateUser:  o.ChatRoomDetail.CreateUser,
 			Hash:        o.ChatRoomDetail.Hash,
 			Owner:       o.ChatRoomDetail.Owner,
+			Type:        o.ChatRoomDetail.Type,
 		}
 
 		chatRoomFixed := chatRoomFixed.ChatRoomFixed{
@@ -219,6 +220,7 @@ func (r *ChatRoomServiceHandler) GetChatRoomList(c *gin.Context) {
 			CreateUser:  o.ChatRoomDetail.CreateUser,
 			Hash:        o.ChatRoomDetail.Hash,
 			Owner:       o.ChatRoomDetail.Owner,
+			Type:        o.ChatRoomDetail.Type,
 		}
 
 		chatRoomFixed := chatRoomFixed.ChatRoomFixed{

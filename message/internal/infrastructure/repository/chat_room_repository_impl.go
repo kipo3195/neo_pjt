@@ -143,7 +143,8 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 			detail.*,
 			line.room_hash,
 			member_view.member,
-			owner_view.owner
+			owner_view.owner,
+			room.room_type
 		from chat_room_member as member 
 		join chat_room as room 
 			on member.room_key = room.room_key and member_hash = ?
@@ -179,7 +180,8 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 				detail.*,
 				line.room_hash,
 				member_view.member,
-				owner_view.owner
+				owner_view.owner,
+				room.room_type
 			from chat_room_member as member 
 			join chat_room as room 
 				on member.room_key = room.room_key and member_hash = ?

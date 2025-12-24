@@ -134,6 +134,7 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 			CreateUser:  r.CreateUser,
 			Hash:        r.Hash,
 			Owner:       owner,
+			Type:        r.Type,
 		}
 
 		detail := output.GetChatRoomDetailOutput{
@@ -178,6 +179,7 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 			CreateUser:  r.CreateUser,
 			Hash:        r.Hash,
 			Owner:       owner,
+			Type:        r.Type,
 		}
 
 		detail := output.GetChatRoomListOutput{

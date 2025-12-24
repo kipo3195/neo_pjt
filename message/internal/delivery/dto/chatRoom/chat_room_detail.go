@@ -13,4 +13,5 @@ type ChatRoomDetail struct {
 	CreateUser  string   `json:"createUser"`
 	Hash        string   `json:"hash"`
 	Owner       []string `json:"owner"`
+	Type        string   `json:"roomType"`
 }
