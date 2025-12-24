@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"time"
 	"user/internal/application/usecase/input"
 	"user/internal/application/usecase/output"
 	"user/internal/consts"
@@ -107,11 +108,24 @@ func (u *userDetailUsecase) RegisterUserDetailBatch(ctx context.Context, in inpu
 
 	log.Println("[RegisterUserDetailBatch] 연동 사용자 수  : ", len(orgInfo))
 
+	// 사용자 정보는 insert/update로 처리 (org, user_hash)
 	err = u.repository.RegistUserDetail(ctx, orgInfo)
 
 	if err != nil {
 		return err
 	}
+
+	// userDetail의 version을 바꿀 수 있는 4가지 중 하나 - 사용자 정보 연동
+	// http://bookstack.ucware.local/books/neo-erd/page/9be40 참고
+	initUsers, err := u.repository.GetOrgUsers(ctx, in.OrgCode)
+	if err != nil {
+		return err
+	}
+
+	detailVersion := time.Now().UnixNano()
+	u.storage.InitUserDetail(ctx, detailVersion, initUsers)
+
+	log.Println("[RegisterUserDetailBatch] detail version  : ", detailVersion)
 
 	return nil
 }

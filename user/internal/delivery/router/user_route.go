@@ -70,5 +70,5 @@ func (r *userRouter) SetUserInfoServiceRoutes(handler *handler.UserInfoServiceHa
 
 func (r *userRouter) SetUserBatchServiceRoute(handler *handler.UserBatchServiceHandler) {
 	server := r.parent.Group("/server/v1/detail/batch")
-	server.POST("/", handler.RegistUserDetailData)
+	server.POST("", handler.RegistUserDetailData)
 }

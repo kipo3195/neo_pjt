@@ -20,7 +20,5 @@ func NewUserBatchService(profile usecase.ProfileUsecase, userDetail usecase.User
 
 func (r *UserBatchService) RegisterUserDetailBatch(ctx context.Context, input input.RegistUserDetailBatchInput) error {
 
-	r.UserDetail.RegisterUserDetailBatch(ctx, input)
-
-	return nil
+	return r.UserDetail.RegisterUserDetailBatch(ctx, input)
 }

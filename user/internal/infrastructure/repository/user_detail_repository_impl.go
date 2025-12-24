@@ -106,3 +106,20 @@ func (r *userDetailRepositoryImpl) RegistUserDetail(ctx context.Context, entity 
 
 	return nil
 }
+
+func (r *userDetailRepositoryImpl) GetOrgUsers(ctx context.Context, orgCode string) ([]entity.UserDetailInfoEntity, error) {
+
+	var userDetailEntities []entity.UserDetailInfoEntity
+
+	// DB 조회
+	if err := r.db.
+		Select(" a.* ").
+		Table("user_detail AS a").
+		Joins("JOIN service_users AS b ON a.user_hash = b.user_hash").
+		Where("b.use_yn = 'Y' and a.org = ?", orgCode).
+		Scan(&userDetailEntities).Error; err != nil {
+		return nil, err
+	}
+
+	return userDetailEntities, nil
+}

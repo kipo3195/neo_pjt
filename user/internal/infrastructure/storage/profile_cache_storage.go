@@ -112,7 +112,6 @@ func (r *profileCacheStorage) GetProfileInfo(userHash []string) []entity.Profile
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	log.Println("[GetProfileInfo]")
 	result := make([]entity.ProfileInfoEntity, 0)
 
 	for _, h := range userHash {
