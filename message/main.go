@@ -62,7 +62,10 @@ func InitServer() *http.Server {
 	router.SetChatRoomRoutes(chatRoomModule.Handler)
 
 	chatRoomFixedModule := di.InitChatRoomFixedModule(db)
+
 	chatRoomTitleModule := di.InitChatRoomTitleModule(db)
+	router.SetChatRoomTitleRoutes(chatRoomTitleModule.Handler)
+
 	chatRoomConfigModule := di.InitChatRoomConfigModule(db)
 
 	// chatService에도 chatRoom이 들어가지만, 다른 usecase의 조합으로 처리해야 할 수 있으므로 chat과 chatRoom을 분리.

@@ -23,6 +23,7 @@ type MessageRouter interface {
 	SetOtpRoutes(handler *handler.OtpHandler)
 	SetChatRoomRoutes(handler *handler.ChatRoomHandler)
 	SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler)
+	SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHandler)
 }
 
 func (r *messageRouter) GetEngine() *gin.Engine {
@@ -76,6 +77,15 @@ func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 }
 
 func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
+
+}
+
+func (r *messageRouter) SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHandler) {
+
+	client := r.parent.Group("client/v1/chat/room/title")
+	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+	client.POST("", handler.UpdateChatRoomTitle)
+	client.DELETE("", handler.DeleteChatRoomTitle)
 
 }
 
