@@ -1,6 +1,6 @@
 package entity
 
-type SendChatLineEntity struct {
+type ChatLineEntity struct {
 	Cmd           int
 	Contents      string
 	LineKey       string
@@ -9,8 +9,8 @@ type SendChatLineEntity struct {
 	SendDate      string
 }
 
-func MakeSendChatLineEntity(cmd int, contents string, lineKey string, targetLineKey string, sendUserHash string, sendDate string) SendChatLineEntity {
-	return SendChatLineEntity{
+func MakeChatLineEntity(cmd int, contents string, lineKey string, targetLineKey string, sendUserHash string, sendDate string) ChatLineEntity {
+	return ChatLineEntity{
 		Cmd:           cmd,
 		Contents:      contents,
 		LineKey:       lineKey,

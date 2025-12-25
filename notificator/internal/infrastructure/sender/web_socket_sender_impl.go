@@ -33,9 +33,9 @@ func NewWebSocketSender() sender.SocketSender {
 // 	return nil
 // }
 
-func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatEntity entity.SendChatEntity) error {
+func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatEntity entity.ChatEntity) error {
 
-	res := dto.MakeSendChatDto(chatEntity.Type, chatEntity.EventType, chatEntity.ChatSession, chatEntity.SendChatLineEntity, chatEntity.SendChatRoomEntity)
+	res := dto.MakeChatDto(chatEntity.Type, chatEntity.EventType, chatEntity.ChatSession, chatEntity.ChatLineEntity, chatEntity.ChatRoomEntity)
 
 	select {
 	case entity.Chan <- res:

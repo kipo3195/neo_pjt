@@ -2,7 +2,7 @@ package dto
 
 import "notificator/internal/domain/socketSender/entity"
 
-type SendChatDto struct {
+type ChatDto struct {
 	Type         string      `json:"type"`
 	ChatSession  string      `json:"chatSession"`
 	EventType    string      `json:"eventType"`
@@ -10,13 +10,13 @@ type SendChatDto struct {
 	ChatRoomData ChatRoomDto `json:"chatRoomData"`
 }
 
-func MakeSendChatDto(t string, eventType string, chatSession string, chatLineData entity.SendChatLineEntity, chatRoomData entity.SendChatRoomEntity) SendChatDto {
+func MakeChatDto(t string, eventType string, chatSession string, chatLineData entity.ChatLineEntity, chatRoomData entity.ChatRoomEntity) ChatDto {
 
 	chatLine := MakeChatLineDto(chatLineData.Cmd, chatLineData.Contents, chatLineData.LineKey, chatLineData.TargetLineKey, chatLineData.SendUserHash, chatLineData.SendDate)
 
 	chatRoom := MakeChatRoomDto(chatRoomData.RoomType, chatRoomData.RoomKey, chatRoomData.SecretFlag)
 
-	return SendChatDto{
+	return ChatDto{
 
 		Type:         t,
 		EventType:    eventType,

@@ -7,5 +7,5 @@ import (
 
 type SocketSender interface {
 	//SendChat(ctx context.Context, recv string, entity entity.SendChatEntity, conn *websocket.Conn) error
-	SendChat(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatEntity entity.SendChatEntity) error
+	SendChat(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatEntity entity.ChatEntity) error
 }

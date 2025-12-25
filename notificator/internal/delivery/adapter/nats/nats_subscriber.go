@@ -80,8 +80,8 @@ func (s *NatsSubscriber) handleNatsMessage(kind string, data []byte) {
 
 		// chat 메시지 -> 클라이언트
 		output := s.chatUsecase.RecvChatMessage(ctx, input)
-		in := adapter.MakeSendChatInput(output.EventType, output.ChatSession, output.ChatRoomData, output.ChatLineData)
-		s.socketSenderUsecase.SendChat(ctx, in)
+		in := adapter.MakeChatInput(output.EventType, output.ChatSession, output.ChatRoomData, output.ChatLineData)
+		s.socketSenderUsecase.RecvChat(ctx, in)
 
 	case "note.message":
 		var input input.NoteMessageInput

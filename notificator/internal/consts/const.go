@@ -15,4 +15,5 @@ const (
 	CHAT  = "chat"
 	NOTE  = "note"
 	LOGIN = "login"
+	PONG  = "pong"
 )

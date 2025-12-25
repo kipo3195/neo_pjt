@@ -5,7 +5,7 @@ import (
 	"notificator/internal/application/usecase/output"
 )
 
-func MakeSendChatInput(eventType string, chatSession string, roomData output.ChatRoomDataOutput, lineData output.ChatLineDataOutput) input.SendChatInput {
+func MakeChatInput(eventType string, chatSession string, roomData output.ChatRoomDataOutput, lineData output.ChatLineDataOutput) input.ChatInput {
 
 	chatRoomDataInput := input.ChatRoomDataInput{
 		RoomKey:    roomData.RoomKey,
@@ -21,7 +21,7 @@ func MakeSendChatInput(eventType string, chatSession string, roomData output.Cha
 		SendUserHash:  lineData.SendUserHash,
 		SendDate:      lineData.SendDate,
 	}
-	return input.SendChatInput{
+	return input.ChatInput{
 		EventType:    eventType,
 		ChatSession:  chatSession,
 		ChatRoomData: chatRoomDataInput,

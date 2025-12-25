@@ -1,6 +1,6 @@
 package input
 
-type SendChatInput struct {
+type ChatInput struct {
 	EventType    string            `json:"eventType"`
 	ChatSession  string            `json:"chatSession"`
 	ChatRoomData ChatRoomDataInput `json:"chatRoomData"`

@@ -71,7 +71,7 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
-	log.Println("111 tokenHash : ", tokenHash)
+	log.Println("[AuthMiddleware] tokenHash : ", tokenHash)
 
 	token, err := parser.ParseWithClaims(tokenStr, &claims.DeviceJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -79,8 +79,6 @@ func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, strin
 		}
 		return []byte(tokenHash.AccessTokenHash), nil
 	})
-
-	log.Println("222")
 
 	if err != nil {
 		return "", "", fmt.Errorf("token parsing failed: %w", err)
@@ -97,7 +95,7 @@ func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, strin
 		return "", "", consts.ErrTokenExpired
 	}
 
-	log.Printf("토큰 검증 완료 verifyJWT id : %s, hash : %s \n", parsedClaims.Id, parsedClaims.Hash)
+	log.Printf("[AuthMiddleware] verifyJWT id : %s, hash : %s \n", parsedClaims.Id, parsedClaims.Hash)
 
 	return parsedClaims.Id, parsedClaims.Hash, nil
 }

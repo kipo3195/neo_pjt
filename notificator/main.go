@@ -14,10 +14,10 @@ import (
 func main() {
 	server := InitServer()
 	if server != nil {
-		log.Println("Message service is running on :8082")
+		log.Println("Notificator service is running on :8082")
 		log.Fatal(server.ListenAndServe())
 	} else {
-		log.Println("[ERROR] Message service is not available")
+		log.Println("[ERROR] Notificator service is not available")
 	}
 
 }
@@ -55,7 +55,7 @@ func InitServer() *http.Server {
 	socketSendModule := di.InitSocketSendModule(webSocketSender, sendConnectionStorage)
 
 	// ---- Service Handler Init ----
-	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase, loginModule.Usecase)
+	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
 	router.SetNotificatorServiceRoutes(notificatorServiceModule)
 
 	// ---- Message Broker init ----

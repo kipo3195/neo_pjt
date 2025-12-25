@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
@@ -17,9 +18,17 @@ const (
 )
 
 type ServerConfig struct {
-	dbConfig    *DBConfig
-	mbConfig    *MessageBrokerConfig
-	TokenConfig TokenHashConfig
+	dbConfig                  *DBConfig
+	mbConfig                  *MessageBrokerConfig
+	TokenConfig               TokenHashConfig
+	WebsocketConnectionConfig WebsocketConnectionConfig
+}
+
+type WebsocketConnectionConfig struct {
+	WriteWait      int
+	PongWait       int
+	PingPeriod     int
+	MaxMessageSize int64
 }
 
 type TokenHashConfig struct {
@@ -55,11 +64,13 @@ func NewServerConfig() *ServerConfig {
 	dbConfig := initDBConfig()
 	mbConfig := initMBConfig()
 	tokenConfig := initTokenHash()
+	websocketConnectionConfig := initWebSocketConnectionConfig()
 
 	return &ServerConfig{
-		dbConfig:    dbConfig,
-		mbConfig:    mbConfig,
-		TokenConfig: tokenConfig,
+		dbConfig:                  dbConfig,
+		mbConfig:                  mbConfig,
+		TokenConfig:               tokenConfig,
+		WebsocketConnectionConfig: websocketConnectionConfig,
 	}
 }
 
@@ -85,7 +96,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 		log.Fatal("Failed to connect to database!")
 	}
 
-	log.Println("Message Database Connected !")
+	log.Println("Notificator Database Connected !")
 	return db
 }
 
@@ -130,4 +141,29 @@ func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
 	// 	log.Println("RabbitMQ is not available.")
 	// }
 	//	return nil
+}
+
+/* WEBSOCKET CONNECTION CONFIG */
+func initWebSocketConnectionConfig() WebsocketConnectionConfig {
+	writeWait := os.Getenv("WEBSOCKET_WRITE_WAIT")
+	pongWait := os.Getenv("WEBSOCKET_PONG_WAIT")
+	pingPeriod := os.Getenv("WEBSOCKET_PING_PERIOD")
+	maxMessageSize := os.Getenv("WEBSOCKET_MAX_MESSAGE_SIZE")
+	return WebsocketConnectionConfig{
+		WriteWait:      atoiWithDefault(writeWait, 10),
+		PongWait:       atoiWithDefault(pongWait, 60),
+		PingPeriod:     atoiWithDefault(pingPeriod, 20),
+		MaxMessageSize: int64(atoiWithDefault(maxMessageSize, 512)),
+	}
+}
+
+func atoiWithDefault(s string, defaultVal int) int {
+	if s == "" {
+		return defaultVal
+	}
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		return defaultVal
+	}
+	return val
 }
