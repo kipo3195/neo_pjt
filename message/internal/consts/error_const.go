@@ -4,6 +4,7 @@ import "errors"
 
 // db
 var ErrDBresultNotFound = errors.New("db result not found")
+var ErrDB = errors.New("db error")
 
 // token
 var ErrTokenParsing = errors.New("token parsing failed")

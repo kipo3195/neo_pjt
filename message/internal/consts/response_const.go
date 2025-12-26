@@ -29,4 +29,12 @@ const (
 	// 방 생성시 시크릿 구분값이 Y임에도 시크릿 정보 존재 하지않음.
 	MESSAGE_F007     = "MESSAGE_F007"
 	MESSAGE_F007_MSG = "Chat room secret empty."
+
+	// 방 제목 변경 실패 - 조건에 일치하는 데이터가 없는 경우
+	MESSAGE_F008     = "MESSAGE_F008"
+	MESSAGE_F008_MSG = "Chat room title update error."
+
+	// 방 제목 삭제 실패 - 조건에 일치하는 데이터가 없는 경우
+	MESSAGE_F009     = "MESSAGE_F009"
+	MESSAGE_F009_MSG = "Chat room title delete error."
 )

@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"message/internal/application/usecase"
+	"message/internal/consts"
 	"message/internal/delivery/adapter"
 	"message/internal/delivery/dto/chatRoomTitle"
 	"message/internal/delivery/util"
@@ -47,7 +48,12 @@ func (h *ChatRoomTitleHandler) UpdateChatRoomTitle(c *gin.Context) {
 	output, err := h.usecase.UpdateChatRoomTitle(ctx, input)
 
 	if err != nil {
-		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		if err == consts.ErrDBresultNotFound {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F008, consts.MESSAGE_F008_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+		return
 	}
 
 	res := chatRoomTitle.UpdateChatRoomTitleResponse{
@@ -82,7 +88,12 @@ func (h *ChatRoomTitleHandler) DeleteChatRoomTitle(c *gin.Context) {
 	output, err := h.usecase.DeleteChatRoomTitle(ctx, input)
 
 	if err != nil {
-		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		if err == consts.ErrDBresultNotFound {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F009, consts.MESSAGE_F009_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+		return
 	}
 
 	res := chatRoomTitle.DeleteChatRoomTitleResponse{

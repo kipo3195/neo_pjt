@@ -144,10 +144,11 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 			line.room_hash,
 			member_view.member,
 			owner_view.owner,
-			room.room_type
+			room.room_type,
+			case when title.update_flag is null then 'N' else title.update_flag end as title_update_flag, title.my_room_title, title.update_date as title_update_date
 		from chat_room_member as member 
 		join chat_room as room 
-			on member.room_key = room.room_key and member_hash = ?
+			on member.room_key = room.room_key and member_hash = 
 		join chat_room_detail as detail 
 			on member.room_key = detail.room_key
 		left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line
@@ -158,9 +159,11 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 			on member.room_key = member_view.room_key
 		left join (select group_concat(DISTINCT owner_hash separator ',') as owner, room_key from chat_room_owner group by room_key) as owner_view
 			on member.room_key = owner_view.room_key
+		left join chat_room_title as title 
+			on member.room_key = title.room_key and user_hash = ?
 		where 
 			member.room_key IN (?) and room.room_type = ? order by line.room_hash desc, detail.room_create_date desc`,
-		en.ReqUserHash, en.RoomKey, en.RoomType).Scan(&result).Error
+		en.ReqUserHash, en.ReqUserHash, en.RoomKey, en.RoomType).Scan(&result).Error
 
 	if err != nil {
 		log.Println("[GetChatRoomDetail] DB error :", err)
@@ -176,27 +179,30 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 
 	// 내가 참여중인 방에 한해서 조회 가능하도록 처리함 20251208
 	err := r.db.Raw(`
-			select 
-				detail.*,
-				line.room_hash,
-				member_view.member,
-				owner_view.owner,
-				room.room_type
-			from chat_room_member as member 
-			join chat_room as room 
-				on member.room_key = room.room_key and member_hash = ?
-			join chat_room_detail as detail 
-				on member.room_key = detail.room_key
-			left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line
-				on member.room_key = line.room_key
-			left join chat_room_owner as owner
-				on member.room_key = owner.room_key and owner.active_flag = 'Y'
-			left join (select group_concat(DISTINCT member_hash separator ',') as member, room_key from chat_room_member group by room_key) as member_view
-				on member.room_key = member_view.room_key
-			left join (select group_concat(DISTINCT owner_hash separator ',') as owner, room_key from chat_room_owner group by room_key) as owner_view
-				on member.room_key = owner_view.room_key
-			where 
-				room.room_type = ? order by line.room_hash desc, detail.room_create_date desc limit ?`, en.ReqUserHash, en.RoomType, en.ReqCount).Scan(&result).Error
+		select 
+			detail.*,
+			line.room_hash,
+			member_view.member,
+			owner_view.owner,
+			room.room_type,
+			case when title.update_flag is null then 'N' else title.update_flag end as title_update_flag, title.my_room_title, title.update_date as title_update_date
+		from chat_room_member as member 
+		join chat_room as room 
+			on member.room_key = room.room_key and member_hash = ?
+		join chat_room_detail as detail 
+			on member.room_key = detail.room_key
+		left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line
+			on member.room_key = line.room_key
+		left join chat_room_owner as owner
+			on member.room_key = owner.room_key and owner.active_flag = 'Y'
+		left join (select group_concat(DISTINCT member_hash separator ',') as member, room_key from chat_room_member group by room_key) as member_view
+			on member.room_key = member_view.room_key
+		left join (select group_concat(DISTINCT owner_hash separator ',') as owner, room_key from chat_room_owner group by room_key) as owner_view
+			on member.room_key = owner_view.room_key
+		left join chat_room_title as title 
+			on member.room_key = title.room_key and user_hash = ?
+		where 
+			room.room_type = ? order by line.room_hash desc, detail.room_create_date desc limit ?`, en.ReqUserHash, en.ReqUserHash, en.RoomType, en.ReqCount).Scan(&result).Error
 
 	if err != nil {
 		log.Println("[GetChatRoomList] DB error :", err)
