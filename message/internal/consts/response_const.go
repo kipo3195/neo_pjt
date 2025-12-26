@@ -37,4 +37,12 @@ const (
 	// 방 제목 삭제 실패 - 조건에 일치하는 데이터가 없는 경우
 	MESSAGE_F009     = "MESSAGE_F009"
 	MESSAGE_F009_MSG = "Chat room title delete error."
+
+	// 방 제목 변경, 삭제 실패 - 조건에 일치하는 데이터가 없거나 참여중인 방이 아님.
+	MESSAGE_F010     = "MESSAGE_F010"
+	MESSAGE_F010_MSG = "Chat room that do not exist or that you are not participating in."
+
+	// 방 제목 변경, 삭제 실패 - 요청 룸 타입과 서버의 룸 타입이 일치하지 않음.
+	MESSAGE_F011     = "MESSAGE_F011"
+	MESSAGE_F011_MSG = "Chat room type mismatch."
 )

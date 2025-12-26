@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"message/internal/application/usecase/input"
+	"message/internal/consts"
 	"message/internal/domain/chatRoomTitle/entity"
 	"message/internal/domain/chatRoomTitle/repository"
 	"time"
@@ -27,12 +28,24 @@ func (r *chatRoomTitleUsecase) UpdateChatRoomTitle(ctx context.Context, input in
 
 	en := entity.MakeUpdateChatRoomTitleEntity(input.UserHash, input.Org, input.RoomKey, input.Type, input.Title)
 
+	serverRoomType, err := r.repo.GetChatRoomType(ctx, en)
+	if err != nil {
+		if err == consts.ErrDBresultNotFound {
+			return "", consts.ErrChatRoomKeyCheck
+		} else {
+			return "", err
+		}
+	}
+
+	if serverRoomType != en.Type {
+		return "", consts.ErrChatRoomTypeMismatch
+	}
+
 	regDate := time.Now()
 	updateDate := regDate.UTC().Format(time.RFC3339)
-
 	en.EventDate = updateDate
 
-	err := r.repo.UpdateChatRoomTitle(ctx, en)
+	err = r.repo.UpdateChatRoomTitle(ctx, en)
 
 	if err != nil {
 		return "", err
@@ -45,12 +58,23 @@ func (r *chatRoomTitleUsecase) DeleteChatRoomTitle(ctx context.Context, input in
 
 	en := entity.MakeDeleteChatRoomTitleEntity(input.UserHash, input.Org, input.RoomKey, input.Type)
 
+	serverRoomType, err := r.repo.GetChatRoomType(ctx, en)
+	if err != nil {
+		if err == consts.ErrDBresultNotFound {
+			return "", consts.ErrChatRoomKeyCheck
+		} else {
+			return "", err
+		}
+	}
+
+	if serverRoomType != en.Type {
+		return "", consts.ErrChatRoomTypeMismatch
+	}
+
 	regDate := time.Now()
 	deleteDate := regDate.UTC().Format(time.RFC3339)
-
 	en.EventDate = deleteDate
-
-	err := r.repo.DeleteChatRoomTitle(ctx, en)
+	err = r.repo.DeleteChatRoomTitle(ctx, en)
 
 	if err != nil {
 		return "", err

@@ -30,3 +30,7 @@ var ErrRoomKeyAlreadyExist = errors.New("room key already exist")
 var ErrRoomTypeCheckError = errors.New("room type check error")
 var ErrRoomSecretFlagCheckError = errors.New("room secret flag check error")
 var ErrRoomSecretCheckError = errors.New("room secret check error")
+
+// chat room title
+var ErrChatRoomTypeMismatch = errors.New("chat room type mismatch") // 요청한 타입에 해당하는 방이 없음.
+var ErrChatRoomKeyCheck = errors.New("chat room key check")         // 내가 참여하지 않은 방이거나, 룸이 존재하지 않음.

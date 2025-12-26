@@ -50,6 +50,10 @@ func (h *ChatRoomTitleHandler) UpdateChatRoomTitle(c *gin.Context) {
 	if err != nil {
 		if err == consts.ErrDBresultNotFound {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F008, consts.MESSAGE_F008_MSG)
+		} else if err == consts.ErrChatRoomKeyCheck {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F010, consts.MESSAGE_F010_MSG)
+		} else if err == consts.ErrChatRoomTypeMismatch {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F011, consts.MESSAGE_F011_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}
@@ -90,6 +94,10 @@ func (h *ChatRoomTitleHandler) DeleteChatRoomTitle(c *gin.Context) {
 	if err != nil {
 		if err == consts.ErrDBresultNotFound {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F009, consts.MESSAGE_F009_MSG)
+		} else if err == consts.ErrChatRoomKeyCheck {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F010, consts.MESSAGE_F010_MSG)
+		} else if err == consts.ErrChatRoomTypeMismatch {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F011, consts.MESSAGE_F011_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}

@@ -137,12 +137,19 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 			Type:        r.Type,
 		}
 
-		detail := output.GetChatRoomDetailOutput{
-			ChatRoomDetail: temp,
-			Member:         memberSet,
+		title := output.ChatRoomTitleOutput{
+			Title:      r.MyRoomTitle,
+			UpdateFlag: r.TitleUpdateFlag,
+			UpdateDate: r.TitleUpdateDate,
 		}
 
-		result = append(result, detail)
+		roomInfo := output.GetChatRoomDetailOutput{
+			ChatRoomDetail:  temp,
+			Member:          memberSet,
+			MyChatRoomTitle: title,
+		}
+
+		result = append(result, roomInfo)
 	}
 
 	return result, nil
@@ -182,12 +189,19 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 			Type:        r.Type,
 		}
 
-		detail := output.GetChatRoomListOutput{
-			ChatRoomDetail: temp,
-			Member:         memberSet,
+		title := output.ChatRoomTitleOutput{
+			Title:      r.MyRoomTitle,
+			UpdateFlag: r.TitleUpdateFlag,
+			UpdateDate: r.TitleUpdateDate,
 		}
 
-		result = append(result, detail)
+		roomInfo := output.GetChatRoomListOutput{
+			ChatRoomDetail:  temp,
+			Member:          memberSet,
+			MyChatRoomTitle: title,
+		}
+
+		result = append(result, roomInfo)
 	}
 
 	return result, nil

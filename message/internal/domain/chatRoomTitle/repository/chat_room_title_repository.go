@@ -8,4 +8,5 @@ import (
 type ChatRoomTitleRepository interface {
 	UpdateChatRoomTitle(ctx context.Context, en entity.ChatRoomTitleEntity) error
 	DeleteChatRoomTitle(ctx context.Context, en entity.ChatRoomTitleEntity) error
+	GetChatRoomType(ctx context.Context, en entity.ChatRoomTitleEntity) (string, error)
 }

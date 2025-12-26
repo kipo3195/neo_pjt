@@ -1,6 +1,7 @@
 package output
 
 type GetChatRoomDetailOutput struct {
-	ChatRoomDetail ChatRoomDetail
-	Member         []string
+	ChatRoomDetail  ChatRoomDetail
+	Member          []string
+	MyChatRoomTitle ChatRoomTitleOutput
 }

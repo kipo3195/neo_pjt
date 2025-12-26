@@ -148,7 +148,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 			case when title.update_flag is null then 'N' else title.update_flag end as title_update_flag, title.my_room_title, title.update_date as title_update_date
 		from chat_room_member as member 
 		join chat_room as room 
-			on member.room_key = room.room_key and member_hash = 
+			on member.room_key = room.room_key and member_hash = ?
 		join chat_room_detail as detail 
 			on member.room_key = detail.room_key
 		left join (select max(line_key) as room_hash, room_key from chat_line_event group by room_key) as line

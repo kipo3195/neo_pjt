@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"log"
 	"message/internal/consts"
 	"message/internal/domain/chatRoomTitle/entity"
@@ -78,4 +79,26 @@ func (r *chatRoomTitleRepositoryImpl) DeleteChatRoomTitle(ctx context.Context, e
 	}
 
 	return nil
+}
+
+func (r *chatRoomTitleRepositoryImpl) GetChatRoomType(ctx context.Context, en entity.ChatRoomTitleEntity) (string, error) {
+
+	var roomType string
+
+	err := r.db.WithContext(ctx).
+		Table("chat_room as room").
+		Select("room.room_type").
+		Joins("join chat_room_member as member on room.room_key = member.room_key and member.member_hash = ?", en.UserHash).
+		Where("room.room_key = ?", en.RoomKey).
+		Take(&roomType).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", consts.ErrDBresultNotFound
+		}
+		return "", consts.ErrDB
+	}
+
+	return roomType, nil
+
 }

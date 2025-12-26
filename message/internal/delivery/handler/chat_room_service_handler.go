@@ -145,9 +145,9 @@ func (r *ChatRoomServiceHandler) GetChatRoomDetail(c *gin.Context) {
 		}
 
 		myChatRoomTitle := chatRoomTitle.ChatRoomTitle{
-			Title:      "",
-			ChangeFlag: "N",
-			UpdateDate: "",
+			Title:      o.MyChatRoomTitle.Title,
+			ChangeFlag: o.MyChatRoomTitle.UpdateFlag,
+			UpdateDate: o.MyChatRoomTitle.UpdateDate,
 		}
 
 		myChatRoomConfig := chatRoomConfig.ChatRoomConfig{
@@ -229,9 +229,9 @@ func (r *ChatRoomServiceHandler) GetChatRoomList(c *gin.Context) {
 		}
 
 		myChatRoomTitle := chatRoomTitle.ChatRoomTitle{
-			Title:      "",
-			ChangeFlag: "N",
-			UpdateDate: "",
+			Title:      o.MyChatRoomTitle.Title,
+			ChangeFlag: o.MyChatRoomTitle.UpdateFlag,
+			UpdateDate: o.MyChatRoomTitle.UpdateDate,
 		}
 
 		myChatRoomConfig := chatRoomConfig.ChatRoomConfig{
