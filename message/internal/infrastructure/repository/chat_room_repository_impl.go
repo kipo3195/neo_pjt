@@ -28,7 +28,7 @@ func ChatRoomMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.ChatRoomOwner{})
 }
 
-func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity []entity.CreateChatRoomMemberEntity, roomEntity entity.ChatRoomEntity) error {
+func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, en entity.CreateChatRoomEntity) error {
 	// 트랜잭션 시작
 	tx := r.db.WithContext(ctx).Begin()
 	if tx.Error != nil {
@@ -46,8 +46,8 @@ func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity [
 
 	// 방 정보
 	if err := tx.Create(&model.ChatRoom{
-		RoomKey:  roomEntity.RoomKey,
-		RoomType: roomEntity.RoomType,
+		RoomKey:  en.ChatRoomEntity.RoomKey,
+		RoomType: en.ChatRoomEntity.RoomType,
 	}).Error; err != nil {
 		// 감지가 안되므로 일단 주석 처리
 		// if errors.Is(err, gorm.ErrDuplicatedKey) {
@@ -59,15 +59,15 @@ func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity [
 
 	// 방 상세 정보
 	if err := tx.Create(&model.ChatRoomDetail{
-		RoomKey:         roomEntity.RoomKey,
-		RoomTitle:       roomEntity.Title,
-		RoomSecretFlag:  roomEntity.SecretFlag,
-		RoomSecret:      roomEntity.Secret,
-		RoomDescription: roomEntity.Description,
-		RoomWorksCode:   roomEntity.WorksCode,
-		RoomCreateDate:  roomEntity.RegDate,
-		RoomUpdateDate:  roomEntity.RegDate,
-		RoomCreateUser:  roomEntity.CreateUserHash,
+		RoomKey:         en.ChatRoomEntity.RoomKey,
+		RoomTitle:       en.ChatRoomEntity.Title,
+		RoomSecretFlag:  en.ChatRoomEntity.SecretFlag,
+		RoomSecret:      en.ChatRoomEntity.Secret,
+		RoomDescription: en.ChatRoomEntity.Description,
+		RoomWorksCode:   en.ChatRoomEntity.WorksCode,
+		RoomCreateDate:  en.ChatRoomEntity.RegDate,
+		RoomUpdateDate:  en.ChatRoomEntity.RegDate,
+		RoomCreateUser:  en.ChatRoomEntity.CreateUserHash,
 	}).Error; err != nil {
 		// 감지가 안되므로 일단 주석 처리
 		// if errors.Is(err, gorm.ErrDuplicatedKey) {
@@ -78,15 +78,15 @@ func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity [
 	}
 
 	// 방 참여자 정보
-	if len(memberEntity) > 0 {
+	if len(en.ChatRoomMemberEntity) > 0 {
 		// Entity를 Model로 변환
-		memberModels := make([]model.ChatRoomMember, len(memberEntity))
-		for i, member := range memberEntity {
+		memberModels := make([]model.ChatRoomMember, len(en.ChatRoomMemberEntity))
+		for i, member := range en.ChatRoomMemberEntity {
 			memberModels[i] = model.ChatRoomMember{
-				RoomKey:         roomEntity.RoomKey,
+				RoomKey:         en.ChatRoomEntity.RoomKey,
 				MemberHash:      member.MemberHash,
-				MemberFirstDate: roomEntity.RegDate, // 최초 입장 시간
-				MemberDate:      roomEntity.RegDate, // 입장 시간
+				MemberFirstDate: en.ChatRoomEntity.RegDate, // 최초 입장 시간
+				MemberDate:      en.ChatRoomEntity.RegDate, // 입장 시간
 				MemberWorksCode: member.MemberWorksCode,
 			}
 		}
@@ -99,7 +99,7 @@ func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity [
 			// 충돌 발생 시 업데이트할 컬럼과 값 지정
 			DoUpdates: clause.Assignments(map[string]interface{}{
 				// 컬럼 이름: 업데이트할 값 (함수 인자로 받은 regDate)
-				"member_date": roomEntity.RegDate, // 입장 시간
+				"member_date": en.ChatRoomEntity.RegDate, // 입장 시간
 			}),
 		}).Create(&memberModels).Error; err != nil {
 			// OnConflict를 사용했으므로 DuplicatedKey 에러는 발생하지 않으며,
@@ -111,11 +111,11 @@ func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, memberEntity [
 
 	// 방장
 	if err := tx.Create(&model.ChatRoomOwner{
-		RoomKey:         roomEntity.RoomKey,
-		OwnerHash:       roomEntity.CreateUserHash,
+		RoomKey:         en.ChatRoomEntity.RoomKey,
+		OwnerHash:       en.ChatRoomEntity.CreateUserHash,
 		ActiveFlag:      "Y",
-		MemberWorksCode: roomEntity.WorksCode,
-		UpdateDate:      roomEntity.RegDate,
+		MemberWorksCode: en.ChatRoomEntity.WorksCode,
+		UpdateDate:      en.ChatRoomEntity.RegDate,
 	}).Error; err != nil {
 		// 감지가 안되므로 일단 주석 처리
 		// if errors.Is(err, gorm.ErrDuplicatedKey) {

@@ -3,15 +3,15 @@ package entity
 import "time"
 
 type ChatRoomEntity struct {
-	CreateUserHash string
-	RegDate        time.Time
-	RoomKey        string
-	RoomType       string
-	Title          string
-	SecretFlag     string
-	Secret         string
-	Description    string
-	WorksCode      string
+	CreateUserHash string    `json:"createUserHash"`
+	RegDate        time.Time `json:"regDate"`
+	RoomKey        string    `json:"roomKey"`
+	RoomType       string    `json:"roomType"`
+	Title          string    `json:"title"`
+	SecretFlag     string    `json:"secretFlag"`
+	Secret         string    `json:"secret"`
+	Description    string    `json:"description"`
+	WorksCode      string    `json:"worksCode"`
 }
 
 // 생성과 조회 entity는 동일하나 이벤트에 따른 구분 처리를 위함

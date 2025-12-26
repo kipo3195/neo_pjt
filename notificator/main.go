@@ -67,6 +67,7 @@ func InitServer() *http.Server {
 
 	sub.AddSubscribe("chat.message")
 	sub.AddSubscribe("note.message")
+	sub.AddQueueSubscribe("create.chat.room.message")
 
 	return &http.Server{
 		Addr:    ":8082",

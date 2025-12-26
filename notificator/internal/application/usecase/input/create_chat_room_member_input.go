@@ -1,6 +1,6 @@
-package entity
+package input
 
-type CreateChatRoomMemberEntity struct {
+type CreateChatRoomMemberInput struct {
 	MemberHash      string `json:"memberHash"`
 	MemberWorksCode string `json:"memberWorksCode"`
 }

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"log"
 	"message/internal/application/usecase/input"
 	"message/internal/application/usecase/output"
 	"message/internal/consts"
@@ -11,10 +12,13 @@ import (
 	"message/internal/util"
 	"strings"
 	"time"
+
+	"github.com/nats-io/nats.go"
 )
 
 type chatRoomUsecase struct {
 	repository repository.ChatRoomRepository
+	connector  *nats.Conn
 	storage    storage.ChatRoomStorage
 }
 
@@ -24,17 +28,19 @@ type ChatRoomUsecase interface {
 	GetChatRoomList(ctx context.Context, input input.GetChatRoomListInput) ([]output.GetChatRoomListOutput, error)
 }
 
-func NewChatRoomUsecase(repository repository.ChatRoomRepository, storage storage.ChatRoomStorage) ChatRoomUsecase {
+func NewChatRoomUsecase(repository repository.ChatRoomRepository, connector *nats.Conn, storage storage.ChatRoomStorage) ChatRoomUsecase {
 
 	return &chatRoomUsecase{
 		repository: repository,
 		storage:    storage,
+		connector:  connector,
 	}
 
 }
 
 func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.CreateChatRoomInput) (string, error) {
 
+	// member entity
 	memberEntity := make([]entity.CreateChatRoomMemberEntity, 0)
 
 	for _, member := range input.Member {
@@ -50,28 +56,56 @@ func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.Create
 	regDate := time.Now()
 	regDateStr := regDate.UTC().Format(time.RFC3339)
 
+	// chat room entity
 	chatRoomEntity := entity.MakeCreateChatRoomEntity(input.CreateUserHash, regDate, input.RoomKey, input.RoomType, input.Title, input.Description, input.SecretFlag, input.Secret, input.WorksCode)
 
+	// member + chat room
+	CreateChatRoomEntity := entity.CreateChatRoomEntity{
+		ChatRoomEntity:       chatRoomEntity,
+		ChatRoomMemberEntity: memberEntity,
+	}
+
 	// 타입 에러 체크
-	upperType, err := roomTypeCheck(chatRoomEntity.RoomType)
+	upperType, err := roomTypeCheck(CreateChatRoomEntity.ChatRoomEntity.RoomType)
 	if err != nil {
 		return "", err
 	} else {
-		chatRoomEntity.RoomType = upperType
+		CreateChatRoomEntity.ChatRoomEntity.RoomType = upperType
 	}
 
 	// 암호 처리 여부 체크
-	upperSecret, err := secretCheck(chatRoomEntity.SecretFlag, chatRoomEntity.Secret)
+	upperSecret, err := secretCheck(CreateChatRoomEntity.ChatRoomEntity.SecretFlag, CreateChatRoomEntity.ChatRoomEntity.Secret)
 	if err != nil {
 		return "", err
 	} else {
-		chatRoomEntity.SecretFlag = upperSecret
+		CreateChatRoomEntity.ChatRoomEntity.SecretFlag = upperSecret
 	}
 
-	err = u.repository.PutChatRoom(ctx, memberEntity, chatRoomEntity)
+	err = u.repository.PutChatRoom(ctx, CreateChatRoomEntity)
 	if err != nil {
 		return "", err
 	}
+
+	data, err := util.EntityMarshal(CreateChatRoomEntity)
+	if err != nil {
+		log.Fatal(err)
+		return "", err
+	}
+
+	/* 채팅방 생성 이벤트 발송 Message Broker */
+	msg, err := u.connector.Request("create.chat.room.message", data, 5*time.Second)
+	if err != nil {
+		if err == nats.ErrNoResponders {
+			// 아무도 수신하지 않았으므로 재처리 혹은 server to server 처리 필요 혹은 별도 정책 정의하기.
+			log.Fatal("NATS publish failed:", err)
+		} else {
+			log.Fatal("NATS publish failed:", err)
+		}
+		return "", consts.ErrPublishToMessageBrokerError
+		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
+	}
+	// 기존 publish는 던지고 잊는 구조이므로 누가 수신을 했는지에 대한 정보가 없음..
+	log.Println("[CreateChatRoom] recv notificator response :", string(msg.Data))
 
 	return regDateStr, nil
 }

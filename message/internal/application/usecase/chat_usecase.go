@@ -58,6 +58,8 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	if err != nil {
 		log.Fatal("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError
+
+		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
 	}
 
 	/* DB 저장 Task */

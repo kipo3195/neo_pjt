@@ -61,7 +61,6 @@ func (s *NatsSubscriber) AddSubscribe(kind string) error {
 	}
 
 	return nil
-
 }
 
 func (s *NatsSubscriber) handleNatsMessage(kind string, data []byte) {
@@ -90,5 +89,45 @@ func (s *NatsSubscriber) handleNatsMessage(kind string, data []byte) {
 			return
 		}
 		s.noteUsecase.RecvChatMessage(ctx, input)
+	}
+}
+
+// 로드밸런싱 정책이 Queue Group (구독하는 N개중 1개만 수신 할 수 있음. )
+func (s *NatsSubscriber) AddQueueSubscribe(kind string) error {
+
+	_, err := s.conn.QueueSubscribe(kind, "notificator-queue-group", func(msg *nats.Msg) {
+		// 수신 데이터 로깅
+		log.Println("[Notificator Queue Group] kind : "+kind+" Received message:", string(msg.Data))
+
+		// 수신 받은 데이터는 별도 고루틴에서 처리
+		go s.QueueGrouphandleNatsMessage(kind, msg.Data)
+
+		// 처리가 끝났음을 알림 (Reply)
+		msg.Respond([]byte(kind + " success"))
+	})
+
+	if err != nil {
+		log.Printf("NATS subscription failed for %s: %v", kind, err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *NatsSubscriber) QueueGrouphandleNatsMessage(kind string, data []byte) {
+
+	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	switch kind {
+	case "create.chat.room.message":
+
+		var input input.CreateChatRoomMessageInput
+		if err := json.Unmarshal(data, &input); err != nil {
+			log.Printf("invalid message: %v", err)
+			return
+		}
+
+		log.Println("[create.chat.room.message] input : ", input)
 	}
 }
