@@ -52,7 +52,7 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 	log.Println("[RecvChatMessage] recv data : ", in)
 
 	chatLineEntity := entity.MakeChatLineEntity(in.ChatLineData.Cmd, in.ChatLineData.Contents, in.ChatLineData.LineKey, in.ChatLineData.TargetLineKey, in.ChatLineData.SendUserHash, in.ChatLineData.SendDate)
-	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomKey, in.ChatRoomData.RoomType, in.ChatRoomData.SecretFlag)
+	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomType, in.ChatRoomData.RoomKey, in.ChatRoomData.SecretFlag)
 	en := entity.MakeRecvChatMessageEntity(in.EventType, in.ChatSession, chatRoomEntity, chatLineEntity)
 
 	return adapter.MakeChatMessageOutput(en)
@@ -79,5 +79,12 @@ func (u *chatUsecase) SaveChatRoom(ctx context.Context, in input.CreateChatRoomM
 
 	createChatRoomEntity := entity.MakeCreateChatRoomEntity(in.CreateChatRoomInput.RoomKey, in.CreateChatRoomInput.RoomType, chatRoomMemberEntity)
 
-	return u.repo.PutChatRoomMember(ctx, createChatRoomEntity)
+	err := u.repo.PutChatRoomMember(ctx, createChatRoomEntity)
+
+	if err != nil {
+		return err
+	}
+
+	u.chatUserStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, createChatRoomEntity.CreateChatRoomMember)
+	return nil
 }

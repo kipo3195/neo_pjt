@@ -56,7 +56,7 @@ func InitServer() *http.Server {
 
 	loginModule := di.InitLoginModule(db)
 
-	socketSendModule := di.InitSocketSendModule(webSocketSender, sendConnectionStorage)
+	socketSendModule := di.InitSocketSendModule(webSocketSender, sendConnectionStorage, chatUserStorage)
 
 	// ---- Service Handler Init ----
 	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)

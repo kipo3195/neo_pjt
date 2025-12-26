@@ -16,6 +16,7 @@ import (
 type socketSenderUsecase struct {
 	socketSender          sender.SocketSender
 	sendConnectionStorage storage.SendConnectionStorage
+	chatUserStorage       storage.ChatUserStorage
 }
 
 type SocketSenderUsecase interface {
@@ -24,10 +25,11 @@ type SocketSenderUsecase interface {
 	GetConnection(userHash string) *entity.SendConnectionEntity
 }
 
-func NewSocketSenderUsecase(ss sender.SocketSender, sendConnectionStorage storage.SendConnectionStorage) SocketSenderUsecase {
+func NewSocketSenderUsecase(ss sender.SocketSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSenderUsecase {
 	return &socketSenderUsecase{
 		socketSender:          ss,
 		sendConnectionStorage: sendConnectionStorage,
+		chatUserStorage:       chatUserStorage,
 	}
 }
 
@@ -112,11 +114,12 @@ func (r *socketSenderUsecase) RecvChat(ctx context.Context, input input.ChatInpu
 
 	chatEntity := entity.MakeChatEntity(input.EventType, input.ChatSession, chatRoomEntity, chatLineEntity)
 
-	// 이후 메모리에서 가져올 수 있도록 처리 필수
 	RecvUserHash := make([]string, 0)
-	RecvUserHash = append(RecvUserHash, "nauryhash", "kipo3195", "cyh8858hash")
+	RecvUserHash = r.chatUserStorage.GetChatRoomMember(input.ChatRoomData.RoomKey)
 
 	for _, recvUser := range RecvUserHash {
+
+		log.Println("[RecvChat] recv user hash : ", recvUser)
 
 		connectionEntity := r.sendConnectionStorage.GetConnection(recvUser)
 
