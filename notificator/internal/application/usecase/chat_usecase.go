@@ -5,9 +5,11 @@ import (
 	"log"
 	"notificator/internal/application/usecase/input"
 	"notificator/internal/application/usecase/output"
+	"notificator/internal/consts"
 	"notificator/internal/delivery/adapter"
 
 	"notificator/internal/domain/chat/entity"
+	"notificator/internal/domain/chat/repository"
 	"notificator/internal/infrastructure/storage"
 
 	"github.com/gorilla/websocket"
@@ -18,18 +20,20 @@ const (
 )
 
 type chatUsecase struct {
-	//repo repository.ChatRepository
+	repo            repository.ChatRepository
 	chatUserStorage storage.ChatUserStorage
 }
 
 type ChatUsecase interface {
 	SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn)
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
+	SaveChatRoom(ctx context.Context, in input.CreateChatRoomMessageInput) error
 }
 
-func NewChatUsecase(chatUserStorage storage.ChatUserStorage) ChatUsecase {
+func NewChatUsecase(chatUserStorage storage.ChatUserStorage, repo repository.ChatRepository) ChatUsecase {
 	return &chatUsecase{
 		chatUserStorage: chatUserStorage,
+		repo:            repo,
 	}
 }
 
@@ -53,4 +57,27 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 
 	return adapter.MakeChatMessageOutput(en)
 
+}
+
+func (u *chatUsecase) SaveChatRoom(ctx context.Context, in input.CreateChatRoomMessageInput) error {
+
+	chatRoomMemberEntity := make([]entity.CreateChatRoomMemberEntity, 0)
+
+	for _, v := range in.CreateChatRoomMemberInput {
+
+		temp := entity.CreateChatRoomMemberEntity{
+			MemberHash:      v.MemberHash,
+			MemberWorksCode: v.MemberWorksCode,
+		}
+
+		chatRoomMemberEntity = append(chatRoomMemberEntity, temp)
+	}
+
+	if len(chatRoomMemberEntity) == 0 {
+		return consts.ErrChatRoomMemberInvalid
+	}
+
+	createChatRoomEntity := entity.MakeCreateChatRoomEntity(in.CreateChatRoomInput.RoomKey, in.CreateChatRoomInput.RoomType, chatRoomMemberEntity)
+
+	return u.repo.PutChatRoomMember(ctx, createChatRoomEntity)
 }

@@ -2,6 +2,7 @@ package di
 
 import (
 	"notificator/internal/application/usecase"
+	"notificator/internal/infrastructure/repository"
 	"notificator/internal/infrastructure/storage"
 
 	"gorm.io/gorm"
@@ -13,8 +14,8 @@ type ChatModule struct {
 
 func InitChatModule(db *gorm.DB, chatUserStorage storage.ChatUserStorage) *ChatModule {
 
-	//repo := repository.NewChatRepository(db)
-	usecase := usecase.NewChatUsecase(chatUserStorage)
+	repo := repository.NewChatRepository(db)
+	usecase := usecase.NewChatUsecase(chatUserStorage, repo)
 
 	return &ChatModule{
 		Usecase: usecase,

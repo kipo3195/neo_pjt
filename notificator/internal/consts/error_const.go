@@ -12,3 +12,6 @@ var ErrRefreshTokenAuthError = errors.New("refreshToken authentication failed")
 
 // websocket session
 var ErrSenderChannelError = errors.New("sender channel error")
+
+// chat room member regist
+var ErrChatRoomMemberInvalid = errors.New("chat room member is invalid")

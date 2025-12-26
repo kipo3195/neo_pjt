@@ -22,6 +22,7 @@ type ServerConfig struct {
 	mbConfig                  *MessageBrokerConfig
 	TokenConfig               TokenHashConfig
 	WebsocketConnectionConfig WebsocketConnectionConfig
+	AutoMigrate               bool
 }
 
 type WebsocketConnectionConfig struct {
@@ -65,12 +66,14 @@ func NewServerConfig() *ServerConfig {
 	mbConfig := initMBConfig()
 	tokenConfig := initTokenHash()
 	websocketConnectionConfig := initWebSocketConnectionConfig()
+	autoMigrate := initAutoMigrate()
 
 	return &ServerConfig{
 		dbConfig:                  dbConfig,
 		mbConfig:                  mbConfig,
 		TokenConfig:               tokenConfig,
 		WebsocketConnectionConfig: websocketConnectionConfig,
+		AutoMigrate:               autoMigrate,
 	}
 }
 
@@ -118,6 +121,14 @@ func initTokenHash() TokenHashConfig {
 	}
 }
 
+func initAutoMigrate() bool {
+	flag := os.Getenv("AUTO_MIGRATE")
+	if flag != "" && flag == "true" {
+		return true
+	} else {
+		return false
+	}
+}
 func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
 	//broker.Broker {
 

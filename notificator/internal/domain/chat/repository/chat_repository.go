@@ -1,10 +1,10 @@
 package repository
 
-import "gorm.io/gorm"
-
-type chatRepository struct {
-	db *gorm.DB
-}
+import (
+	"context"
+	"notificator/internal/domain/chat/entity"
+)
 
 type ChatRepository interface {
+	PutChatRoomMember(ctx context.Context, en entity.CreateChatRoomEntity) error
 }

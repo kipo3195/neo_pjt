@@ -7,6 +7,7 @@ import (
 	router "notificator/internal/delivery/router"
 	"notificator/internal/di"
 	"notificator/internal/infrastructure/config"
+	"notificator/internal/infrastructure/migration"
 	"notificator/internal/infrastructure/sender"
 	"notificator/internal/infrastructure/storage"
 )
@@ -31,6 +32,9 @@ func InitServer() *http.Server {
 	db := config.ConnectDatabase(sfg)
 
 	// ---- DB Migration -----
+	if sfg.AutoMigrate {
+		migration.RunAll(db)
+	}
 
 	// ---- Storage Init -----
 	chatUserStorage := storage.NewChatUserStorage()

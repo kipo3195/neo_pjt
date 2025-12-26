@@ -116,18 +116,24 @@ func (s *NatsSubscriber) AddQueueSubscribe(kind string) error {
 
 func (s *NatsSubscriber) QueueGrouphandleNatsMessage(kind string, data []byte) {
 
-	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	switch kind {
 	case "create.chat.room.message":
-
 		var input input.CreateChatRoomMessageInput
 		if err := json.Unmarshal(data, &input); err != nil {
 			log.Printf("invalid message: %v", err)
 			return
 		}
+		log.Printf("[%s] input : %s\n", kind, input)
 
-		log.Println("[create.chat.room.message] input : ", input)
+		err := s.chatUsecase.SaveChatRoom(ctx, input)
+		if err != nil {
+			log.Printf("[%s] err : %s\n", kind, err)
+			return
+		}
+
+		log.Printf("[%s] success. \n", kind)
 	}
 }
