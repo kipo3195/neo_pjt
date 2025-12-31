@@ -112,7 +112,7 @@ func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.Create
 		return "", consts.ErrPublishToMessageBrokerError
 		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
 	}
-	// 기존 publish는 던지고 잊는 구조이므로 누가 수신을 했는지에 대한 정보가 없음..
+	// 기존 publish는 던지고 잊는 구조이므로 누가 수신을 했는지에 대한 정보가 없음.. 그래서 Request로 변경
 	log.Println("[CreateChatRoom] recv notificator response :", string(msg.Data))
 
 	return regDateStr, nil

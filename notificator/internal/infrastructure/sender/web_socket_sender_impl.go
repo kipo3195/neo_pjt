@@ -35,7 +35,7 @@ func NewWebSocketSender() sender.SocketSender {
 
 func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatEntity entity.ChatEntity) error {
 
-	res := dto.MakeChatDto(chatEntity.Type, chatEntity.EventType, chatEntity.ChatSession, chatEntity.ChatLineEntity, chatEntity.ChatRoomEntity)
+	res := dto.MakeSendChatResponse(chatEntity.Type, chatEntity.EventType, chatEntity.ChatSession, chatEntity.ChatLineEntity, chatEntity.ChatRoomEntity)
 
 	select {
 	case entity.Chan <- res:
@@ -47,9 +47,19 @@ func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity 
 	return nil
 }
 
-func (r *webSocketSenderImpl) SendChatRoom(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatRoomEntity entity.ChatRoomEntity) error {
+func (r *webSocketSenderImpl) SendCreateChatRoom(ctx context.Context, recv string, entity *entity.SendConnectionEntity, en entity.CreateChatRoomEntity) error {
 
-	res := dto.MakeChatRoomDto(chatRoomEntity.RoomType, chatRoomEntity.RoomKey, chatRoomEntity.SecretFlag)
+	res := dto.MakeCreateChatRoomResponse(
+		en.CreateUserHash,
+		en.RegDate,
+		en.RoomKey,
+		en.RoomType,
+		en.Title,
+		en.SecretFlag,
+		en.Secret,
+		en.Description,
+		en.WorksCode,
+	)
 
 	select {
 	case entity.Chan <- res:

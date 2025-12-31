@@ -136,7 +136,7 @@ func (s *NatsSubscriber) QueueGrouphandleNatsMessage(kind string, data []byte) {
 		}
 
 		// 별도의 가공처리가 필요 없음, RecvCreateChatRoomMessage에서도 별도의 가공처리를 하지 않으므로 input을 그대로 사용함.
-		s.socketSenderUsecase.RecvChatRoom(ctx, input)
+		s.socketSenderUsecase.RecvCreateChatRoom(ctx, input)
 
 		log.Printf("[%s] success. \n", kind)
 	}

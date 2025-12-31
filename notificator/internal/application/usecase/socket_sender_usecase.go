@@ -23,7 +23,7 @@ type SocketSenderUsecase interface {
 	SaveConnection(conn *websocket.Conn, userHash string, websocketConfig config.WebsocketConnectionConfig)
 	GetConnection(userHash string) *entity.SendConnectionEntity
 	RecvChat(ctx context.Context, input input.ChatInput)
-	RecvChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput)
+	RecvCreateChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput)
 }
 
 func NewSocketSenderUsecase(ss sender.SocketSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSenderUsecase {
@@ -136,9 +136,20 @@ func (r *socketSenderUsecase) RecvChat(ctx context.Context, input input.ChatInpu
 	}
 }
 
-func (r *socketSenderUsecase) RecvChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput) {
+func (r *socketSenderUsecase) RecvCreateChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput) {
 
-	chatRoomEntity := entity.MakeChatRoomEntity(input.CreateChatRoomInput.RoomKey, input.CreateChatRoomInput.RoomType, false)
+	createChatRoomEntity := entity.MakeCreateChatRoomEntity(
+		input.CreateChatRoomInput.CreateUserHash,
+		input.CreateChatRoomInput.RegDate,
+		input.CreateChatRoomInput.RoomKey,
+		input.CreateChatRoomInput.RoomType,
+		input.CreateChatRoomInput.Title,
+		input.CreateChatRoomInput.SecretFlag,
+		input.CreateChatRoomInput.Secret,
+		input.CreateChatRoomInput.Description,
+		input.CreateChatRoomInput.WorksCode,
+	)
+
 	// 길이 0, cap은 전달 받은 값 만큼
 	chatRoomMemberEntity := make([]entity.ChatRoomMemberEntity, 0, len(input.CreateChatRoomMemberInput))
 
@@ -159,7 +170,7 @@ func (r *socketSenderUsecase) RecvChatRoom(ctx context.Context, input input.Crea
 
 		if connectionEntity != nil {
 
-			err := r.socketSender.SendChatRoom(ctx, recvUser.MemberHash, connectionEntity, chatRoomEntity)
+			err := r.socketSender.SendCreateChatRoom(ctx, recvUser.MemberHash, connectionEntity, createChatRoomEntity)
 
 			if err != nil {
 				log.Printf("[SendChatRoom] recvUser :%s socket send error !", recvUser)

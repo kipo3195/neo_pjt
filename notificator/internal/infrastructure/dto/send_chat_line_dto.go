@@ -1,6 +1,6 @@
 package dto
 
-type ChatLineDto struct {
+type SendChatLineDto struct {
 	Cmd           int    `json:"cmd"`
 	Contents      string `json:"contents"`
 	LineKey       string `json:"lineKey"`
@@ -9,8 +9,8 @@ type ChatLineDto struct {
 	SendDate      string `json:"sendDate"`
 }
 
-func MakeChatLineDto(cmd int, contents string, lineKey string, targetLineKey string, sendUserHash string, sendDate string) ChatLineDto {
-	return ChatLineDto{
+func MakeChatLineDto(cmd int, contents string, lineKey string, targetLineKey string, sendUserHash string, sendDate string) SendChatLineDto {
+	return SendChatLineDto{
 		Cmd:           cmd,
 		Contents:      contents,
 		LineKey:       lineKey,
