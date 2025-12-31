@@ -43,15 +43,26 @@ func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.Create
 	// member entity
 	memberEntity := make([]entity.CreateChatRoomMemberEntity, 0)
 
+	// 중복 제거
+	unique := make(map[string]struct{}, 0)
 	for _, member := range input.Member {
 
+		if _, exists := unique[member.MemberHash]; exists {
+			continue
+		}
 		temp := entity.CreateChatRoomMemberEntity{
 			MemberHash:      member.MemberHash,
 			MemberWorksCode: member.MemberWorksCode,
 		}
-
 		memberEntity = append(memberEntity, temp)
+		unique[member.MemberHash] = struct{}{}
 	}
+
+	// 참여자에 내가 없으면 error
+	if _, exists := unique[input.CreateUserHash]; exists {
+		return "", consts.ErrChatRoomCreateMemberIsNotExist
+	}
+
 	// 시간 생성
 	regDate := time.Now()
 	regDateStr := regDate.UTC().Format(time.RFC3339)

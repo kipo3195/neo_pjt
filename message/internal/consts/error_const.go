@@ -32,5 +32,6 @@ var ErrRoomSecretFlagCheckError = errors.New("room secret flag check error")
 var ErrRoomSecretCheckError = errors.New("room secret check error")
 
 // chat room title
-var ErrChatRoomTypeMismatch = errors.New("chat room type mismatch") // 요청한 타입에 해당하는 방이 없음.
-var ErrChatRoomKeyCheck = errors.New("chat room key check")         // 내가 참여하지 않은 방이거나, 룸이 존재하지 않음.
+var ErrChatRoomTypeMismatch = errors.New("chat room type mismatch")                        // 요청한 타입에 해당하는 방이 없음.
+var ErrChatRoomKeyCheck = errors.New("chat room key check")                                // 내가 참여하지 않은 방이거나, 룸이 존재하지 않음.
+var ErrChatRoomCreateMemberIsNotExist = errors.New("chat room create member is not exist") // 채팅방 생성시 참여자 정보가 누락됨.
