@@ -45,8 +45,4 @@ const (
 	// 방 제목 변경, 삭제 실패 - 요청 룸 타입과 서버의 룸 타입이 일치하지 않음.
 	MESSAGE_F011     = "MESSAGE_F011"
 	MESSAGE_F011_MSG = "Chat room type mismatch."
-
-	// 방 생성시 생성자가 참여자에 포함되어 있지 않음.
-	MESSAGE_F012     = "MESSAGE_F012"
-	MESSAGE_F012_MSG = "Room creator is not included in member"
 )

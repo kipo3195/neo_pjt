@@ -73,9 +73,6 @@ func (r *ChatRoomServiceHandler) CreateChatRoom(c *gin.Context) {
 		} else if err == consts.ErrRoomSecretCheckError {
 			// 시크릿 데이터 에러
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F007, consts.MESSAGE_F007_MSG)
-		} else if err == consts.ErrChatRoomCreateMemberIsNotExist {
-			// 생성자가 참여자에 포함되어 있지 않는 에러
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F012, consts.MESSAGE_F012_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}

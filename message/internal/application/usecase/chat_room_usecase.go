@@ -58,10 +58,7 @@ func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.Create
 		unique[member.MemberHash] = struct{}{}
 	}
 
-	// 참여자에 내가 없으면 error
-	if _, exists := unique[input.CreateUserHash]; exists {
-		return "", consts.ErrChatRoomCreateMemberIsNotExist
-	}
+	log.Println("[CreateChatRoom] chat room member : ", unique)
 
 	// 시간 생성
 	regDate := time.Now()
