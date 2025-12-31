@@ -3,10 +3,10 @@ package entity
 type CreateChatRoomEntity struct {
 	RoomKey              string
 	RoomType             string
-	CreateChatRoomMember []CreateChatRoomMemberEntity
+	CreateChatRoomMember []ChatRoomMemberEntity
 }
 
-func MakeCreateChatRoomEntity(roomKey string, roomType string, member []CreateChatRoomMemberEntity) CreateChatRoomEntity {
+func MakeCreateChatRoomEntity(roomKey string, roomType string, member []ChatRoomMemberEntity) CreateChatRoomEntity {
 	return CreateChatRoomEntity{
 		RoomKey:              roomKey,
 		RoomType:             roomType,

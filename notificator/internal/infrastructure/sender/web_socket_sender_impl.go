@@ -46,3 +46,18 @@ func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity 
 
 	return nil
 }
+
+func (r *webSocketSenderImpl) SendChatRoom(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatRoomEntity entity.ChatRoomEntity) error {
+
+	res := dto.MakeChatRoomDto(chatRoomEntity.RoomType, chatRoomEntity.RoomKey, chatRoomEntity.SecretFlag)
+
+	select {
+	case entity.Chan <- res:
+
+	default:
+		return consts.ErrSenderChannelError
+	}
+
+	return nil
+
+}

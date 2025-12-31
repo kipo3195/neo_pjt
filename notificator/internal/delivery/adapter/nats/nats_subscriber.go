@@ -79,6 +79,7 @@ func (s *NatsSubscriber) handleNatsMessage(kind string, data []byte) {
 
 		// chat 메시지 -> 클라이언트
 		output := s.chatUsecase.RecvChatMessage(ctx, input)
+		// 실시간 발송 처리를 위한 도메인 구분 (chatUsecase, socketSenderUsecase)
 		in := adapter.MakeChatInput(output.EventType, output.ChatSession, output.ChatRoomData, output.ChatLineData)
 		s.socketSenderUsecase.RecvChat(ctx, in)
 
@@ -127,12 +128,15 @@ func (s *NatsSubscriber) QueueGrouphandleNatsMessage(kind string, data []byte) {
 			return
 		}
 		log.Printf("[%s] input : %s\n", kind, input)
-
-		err := s.chatUsecase.SaveChatRoom(ctx, input)
+		// 실시간 발송 처리를 위한 도메인 구분 (chatUsecase, socketSenderUsecase)
+		err := s.chatUsecase.RecvCreateChatRoomMessage(ctx, input)
 		if err != nil {
 			log.Printf("[%s] err : %s\n", kind, err)
 			return
 		}
+
+		// 별도의 가공처리가 필요 없음, RecvCreateChatRoomMessage에서도 별도의 가공처리를 하지 않으므로 input을 그대로 사용함.
+		s.socketSenderUsecase.RecvChatRoom(ctx, input)
 
 		log.Printf("[%s] success. \n", kind)
 	}

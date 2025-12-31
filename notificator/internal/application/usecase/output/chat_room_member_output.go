@@ -1,6 +1,6 @@
-package entity
+package output
 
-type ChatRoomMemberEntity struct {
+type ChatRoomMemberOutput struct {
 	MemberHash      string
 	MemberWorksCode string
 }

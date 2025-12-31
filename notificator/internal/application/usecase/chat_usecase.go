@@ -27,7 +27,7 @@ type chatUsecase struct {
 type ChatUsecase interface {
 	SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn)
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
-	SaveChatRoom(ctx context.Context, in input.CreateChatRoomMessageInput) error
+	RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error
 }
 
 func NewChatUsecase(chatUserStorage storage.ChatUserStorage, repo repository.ChatRepository) ChatUsecase {
@@ -59,13 +59,13 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 
 }
 
-func (u *chatUsecase) SaveChatRoom(ctx context.Context, in input.CreateChatRoomMessageInput) error {
+func (u *chatUsecase) RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error {
 
-	chatRoomMemberEntity := make([]entity.CreateChatRoomMemberEntity, 0)
+	chatRoomMemberEntity := make([]entity.ChatRoomMemberEntity, 0)
 
 	for _, v := range in.CreateChatRoomMemberInput {
 
-		temp := entity.CreateChatRoomMemberEntity{
+		temp := entity.ChatRoomMemberEntity{
 			MemberHash:      v.MemberHash,
 			MemberWorksCode: v.MemberWorksCode,
 		}
@@ -86,5 +86,6 @@ func (u *chatUsecase) SaveChatRoom(ctx context.Context, in input.CreateChatRoomM
 	}
 
 	u.chatUserStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, createChatRoomEntity.CreateChatRoomMember)
+
 	return nil
 }

@@ -21,8 +21,9 @@ type socketSenderUsecase struct {
 
 type SocketSenderUsecase interface {
 	SaveConnection(conn *websocket.Conn, userHash string, websocketConfig config.WebsocketConnectionConfig)
-	RecvChat(ctx context.Context, input input.ChatInput)
 	GetConnection(userHash string) *entity.SendConnectionEntity
+	RecvChat(ctx context.Context, input input.ChatInput)
+	RecvChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput)
 }
 
 func NewSocketSenderUsecase(ss sender.SocketSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSenderUsecase {
@@ -133,4 +134,38 @@ func (r *socketSenderUsecase) RecvChat(ctx context.Context, input input.ChatInpu
 			}
 		}
 	}
+}
+
+func (r *socketSenderUsecase) RecvChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput) {
+
+	chatRoomEntity := entity.MakeChatRoomEntity(input.CreateChatRoomInput.RoomKey, input.CreateChatRoomInput.RoomType, false)
+	// 길이 0, cap은 전달 받은 값 만큼
+	chatRoomMemberEntity := make([]entity.ChatRoomMemberEntity, 0, len(input.CreateChatRoomMemberInput))
+
+	for _, m := range input.CreateChatRoomMemberInput {
+
+		temp := entity.ChatRoomMemberEntity{
+			MemberHash:      m.MemberHash,
+			MemberWorksCode: m.MemberWorksCode,
+		}
+		chatRoomMemberEntity = append(chatRoomMemberEntity, temp)
+	}
+
+	for _, recvUser := range chatRoomMemberEntity {
+
+		log.Println("[RecvChatRoom] recv user hash : ", recvUser.MemberHash)
+
+		connectionEntity := r.sendConnectionStorage.GetConnection(recvUser.MemberHash)
+
+		if connectionEntity != nil {
+
+			err := r.socketSender.SendChatRoom(ctx, recvUser.MemberHash, connectionEntity, chatRoomEntity)
+
+			if err != nil {
+				log.Printf("[SendChatRoom] recvUser :%s socket send error !", recvUser)
+				r.sendConnectionStorage.RemoveConnection(recvUser.MemberHash)
+			}
+		}
+	}
+
 }

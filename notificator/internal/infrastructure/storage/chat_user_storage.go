@@ -20,7 +20,7 @@ type ChatUserStorage interface {
 	RemoveChatConnect(userHash string)
 	PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte)
 	GetChatRoomMember(roomKey string) []string
-	PutChatRoomMember(roomKey string, member []entity.CreateChatRoomMemberEntity)
+	PutChatRoomMember(roomKey string, member []entity.ChatRoomMemberEntity)
 }
 
 func NewChatUserStorage() ChatUserStorage {
@@ -73,7 +73,7 @@ func (r *chatUserStorage) GetChatRoomMember(roomKey string) []string {
 	return result
 }
 
-func (r *chatUserStorage) PutChatRoomMember(roomKey string, member []entity.CreateChatRoomMemberEntity) {
+func (r *chatUserStorage) PutChatRoomMember(roomKey string, member []entity.ChatRoomMemberEntity) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
