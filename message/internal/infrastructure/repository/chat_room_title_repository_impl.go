@@ -28,6 +28,7 @@ func ChatRoomTitleMigrate(db *gorm.DB) {
 
 func (r *chatRoomTitleRepositoryImpl) UpdateChatRoomTitle(ctx context.Context, en entity.ChatRoomTitleEntity) error {
 
+	// 생성된 방을 기준으로 처리하기 위함 (insert select)
 	result := r.db.Exec(`
 		INSERT INTO chat_room_title (org, user_hash, room_key, my_room_title, update_flag, update_date)
 		SELECT 

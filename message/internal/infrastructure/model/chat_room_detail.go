@@ -11,10 +11,12 @@ type ChatRoomDetail struct {
 	RoomState       string    `gorm:"column:room_state;type:varchar(1);default:1;comment:방 상태 1 : 사용, 2 : 중지 (조회만 가능), 3 : 폐쇄 (입장 불가)"`
 	RoomWorksCode   string    `gorm:"column:room_works_code;type:varchar(50);comment:방 생성자 기준 works code"`
 	RoomCreateDate  time.Time `gorm:"column:room_create_date;not null;comment:등록 일"`
-	RoomUpdateDate  time.Time `gorm:"column:room_create_date;not null;comment:수정 일"`
-	RoomCreateUser  string    `gorm:"column:room_create_user;not null;comment:등록 사용자"`
+	RoomUpdateDate  time.Time `gorm:"column:room_update_date;not null;comment:수정 일"`
+	RoomCreateUser  string    `gorm:"column:room_create_user;type:varchar(191);not null;comment:등록 사용자"`
 }
 
 func (ChatRoomDetail) TableName() string {
 	return "chat_room_detail"
 }
+
+// 20260101 정리

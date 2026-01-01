@@ -36,7 +36,7 @@ func (h *OtpHandler) OtpKeyRegist(c *gin.Context) {
 		return
 	}
 
-	// id 기반으로 등록하는 이유는 userHash가 너무 길기 때문이다.
+	// id 기반으로 등록하는 이유는 userHash가 너무 길기 때문이다 + device 등록 시점에 otp를 등록하는데 해당 시점에는 AT가 없으므로 hash를 뽑아낼 수 없다.
 	input := adapter.MakeOtpKeyRegistInput(req.Id, req.Uuid, req.DevicePubKey)
 	output, err := h.usecase.OtpKeyRegist(ctx, input)
 

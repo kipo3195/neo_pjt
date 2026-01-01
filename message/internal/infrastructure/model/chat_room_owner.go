@@ -13,3 +13,5 @@ type ChatRoomOwner struct {
 func (ChatRoomOwner) TableName() string {
 	return "chat_room_owner"
 }
+
+// 20260101 정리

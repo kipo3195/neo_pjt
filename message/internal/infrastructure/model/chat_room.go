@@ -8,3 +8,5 @@ type ChatRoom struct {
 func (ChatRoom) TableName() string {
 	return "chat_room"
 }
+
+// 20260101 정리

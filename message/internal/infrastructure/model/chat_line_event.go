@@ -15,3 +15,5 @@ type ChatLineEvent struct {
 func (ChatLineEvent) TableName() string {
 	return "chat_line_event"
 }
+
+// 20260101 정리

@@ -8,10 +8,12 @@ type ChatRoomMember struct {
 	MemberState     string    `gorm:"column:member_state;type:varchar(1);not null;default:1;comment:참여자 상태 1 : 참여중, 2 : 퇴장, 3 : 강퇴"`
 	MemberFirstDate time.Time `gorm:"column:member_first_date;not null;comment:참여자 최초 입장 시간"`
 	MemberDate      time.Time `gorm:"column:member_date;not null;comment:참여자 입장 시간"`
-	MemberExitDate  time.Time `gorm:"column:member_exit_hash;comment:참여자 퇴장(강퇴) 시간"`
+	MemberExitDate  time.Time `gorm:"column:member_exit_date;comment:참여자 퇴장(강퇴) 시간"`
 	MemberWorksCode string    `gorm:"column:member_works_code;type:varchar(50);comment:방 참여자 기준 works code"`
 }
 
 func (ChatRoomMember) TableName() string {
 	return "chat_room_member"
 }
+
+// 20260101 정리
