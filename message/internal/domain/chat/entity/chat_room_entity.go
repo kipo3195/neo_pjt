@@ -3,10 +3,10 @@ package entity
 type ChatRoomEntity struct {
 	RoomKey    string `json:"roomKey"`
 	RoomType   string `json:"roomType"`
-	SecretFlag bool   `json:"secretFlag"`
+	SecretFlag string `json:"secretFlag"`
 }
 
-func MakeChatRoomEntity(roomKey string, roomType string, secretFlag bool) ChatRoomEntity {
+func MakeChatRoomEntity(roomKey string, roomType string, secretFlag string) ChatRoomEntity {
 	return ChatRoomEntity{
 		RoomType:   roomType,
 		RoomKey:    roomKey,

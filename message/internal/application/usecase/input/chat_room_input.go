@@ -3,5 +3,5 @@ package input
 type ChatRoomInput struct {
 	RoomKey    string
 	RoomType   string
-	SecretFlag bool
+	SecretFlag string
 }
