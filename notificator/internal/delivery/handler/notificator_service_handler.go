@@ -56,17 +56,28 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	defer conn.Close()
 
 	/* header에 있는 AT를 파싱하여 사용자 정보 체크 */
-	userHash := r.Context().Value(consts.USER_HASH)
-	log.Println("Notificator service connect success! userHash :", userHash)
+	user := r.Context().Value(consts.USER_HASH)
+	log.Println("Notificator service connect request userHash :", user)
 
-	/* 연결 성공에 대한 response 처리 */
-	res := notificatorService.NotificatorConnectResponse{
-		UserHash: userHash.(string),
+	if user == nil || user == "" {
+		log.Println("Notificator service connect error. userHash invalid.")
+
+		// todo error msg
+		return
 	}
-	response.SendSuccess(conn, res)
+	userHash := user.(string)
 
 	/* 쓰기 (server -> client) 채널 생성 후 메모리 저장, 쓰기 고루틴 시작 */
-	go h.svc.SocketSender.SaveConnection(conn, userHash.(string), h.websocketConfig)
+	go h.svc.SocketSender.SaveConnection(conn, userHash, h.websocketConfig)
+
+	/* 내가 참여중인 방 notificator 서비스 메모리에 로딩 처리 시작 */
+	err = h.svc.Chat.SubscribeChat(userHash)
+	if err != nil {
+		log.Println("Notificator service connect error. Subscribe chat room error.")
+
+		// todo error msg
+		return
+	}
 
 	/* pong 처리 */
 	// pong을 for 문안에서 처리하지않아도 되는 이유
@@ -83,6 +94,12 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
+
+	/* 연결 성공에 대한 response 처리 */
+	res := notificatorService.NotificatorConnectResponse{
+		UserHash: userHash,
+	}
+	response.SendSuccess(conn, res)
 
 	// 읽기 (client -> server)
 	for {

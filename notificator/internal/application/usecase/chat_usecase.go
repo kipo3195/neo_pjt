@@ -11,8 +11,6 @@ import (
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/repository"
 	"notificator/internal/infrastructure/storage"
-
-	"github.com/gorilla/websocket"
 )
 
 const (
@@ -25,7 +23,7 @@ type chatUsecase struct {
 }
 
 type ChatUsecase interface {
-	SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn)
+	SubscribeChat(userHash string) error
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
 	RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error
 }
@@ -37,12 +35,15 @@ func NewChatUsecase(chatUserStorage storage.ChatUserStorage, repo repository.Cha
 	}
 }
 
-func (u *chatUsecase) SubscribeChat(in input.ChatConnectInput, conn *websocket.Conn) {
+func (u *chatUsecase) SubscribeChat(userHash string) error {
 
-	//entity := entity.MakeSubscribeChatEntity(in.UserHash)
+	myChatRoom, err := u.repo.GetMyChatRoom(userHash)
+	if err != nil {
+		return err
+	}
 
-	// 메모리에 사용자 정보 등록
-	//u.chatUserStorage.PutChatConnect(entity.UserHash, conn)
+	u.chatUserStorage.InitMyRoom(myChatRoom.RoomKey, userHash)
+	return nil
 }
 
 // message broker가 아니더라도, rest api, rabbit mq를 통해 전달받은 데이터도 가공 처리 할 수 있다!
