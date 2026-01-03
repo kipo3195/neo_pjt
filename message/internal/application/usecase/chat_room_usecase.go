@@ -26,6 +26,7 @@ type ChatRoomUsecase interface {
 	CreateChatRoom(ctx context.Context, input input.CreateChatRoomInput) (string, error)
 	GetChatRoomDetail(ctx context.Context, input input.GetChatRoomDetailInput) ([]output.GetChatRoomDetailOutput, error)
 	GetChatRoomList(ctx context.Context, input input.GetChatRoomListInput) ([]output.GetChatRoomListOutput, error)
+	GetChatRoomUpdateDate(ctx context.Context, input input.GetChatRoomUpdateInput) ([]output.GetChatRoomUpdateDateOutput, error)
 }
 
 func NewChatRoomUsecase(repository repository.ChatRoomRepository, connector *nats.Conn, storage storage.ChatRoomStorage) ChatRoomUsecase {
@@ -248,4 +249,33 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 
 	return result, nil
 
+}
+
+func (r *chatRoomUsecase) GetChatRoomUpdateDate(ctx context.Context, input input.GetChatRoomUpdateInput) ([]output.GetChatRoomUpdateDateOutput, error) {
+
+	en := entity.MakeGetChatRoomUpdateDateEntity(input.ReqUserHash, input.Type, input.Date)
+
+	updateDate, err := r.repository.GetChatRoomUpdateDate(ctx, en)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]output.GetChatRoomUpdateDateOutput, 0)
+	for _, rd := range updateDate {
+
+		temp := output.GetChatRoomUpdateDateOutput{
+			RoomKey:  rd.RoomKey,
+			RoomType: rd.RoomType,
+			Detail:   rd.Detail,
+			Line:     rd.Line,
+			Member:   rd.Member,
+			Owner:    rd.Owner,
+			Title:    rd.Title,
+		}
+
+		result = append(result, temp)
+	}
+
+	return result, nil
 }

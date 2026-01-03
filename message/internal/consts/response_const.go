@@ -45,4 +45,8 @@ const (
 	// 방 제목 변경, 삭제 실패 - 요청 룸 타입과 서버의 룸 타입이 일치하지 않음.
 	MESSAGE_F011     = "MESSAGE_F011"
 	MESSAGE_F011_MSG = "Chat room type mismatch."
+
+	// 방 update date 조회 타입 에러
+	MESSAGE_F012     = "MESSAGE_F012"
+	MESSAGE_F012_MSG = "Chat room update date request type invalid."
 )

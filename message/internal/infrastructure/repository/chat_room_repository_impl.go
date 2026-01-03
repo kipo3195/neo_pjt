@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"log"
+	"message/internal/consts"
 	"message/internal/domain/chatRoom/entity"
 	"message/internal/domain/chatRoom/repository"
 	"message/internal/infrastructure/model"
@@ -211,4 +212,76 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 
 	return result, err
 
+}
+
+func (r *chatRoomRepositoryImpl) GetChatRoomUpdateDate(ctx context.Context, en entity.GetChatRoomUpdateDateEntity) ([]entity.ChatRoomUpdateDateEntity, error) {
+
+	var result []entity.ChatRoomUpdateDateEntity
+
+	var err error
+
+	if en.Type == "A" {
+		err = r.db.Raw(
+			`select 
+			room.room_key, room.room_type,
+			detail.room_update_date as detail,
+			line.send_date as line,
+			member_view.member_date as member,
+			owner_view.update_date as owner,
+			title.update_date as title
+		from chat_room_member as member 
+		join chat_room as room 
+			on member.room_key = room.room_key and member_hash = ?
+		join chat_room_detail as detail 
+			on member.room_key = detail.room_key
+		left join (select max(line_key), room_key, send_date from chat_line_event group by room_key) as line
+			on member.room_key = line.room_key
+		left join chat_room_owner as owner
+			on member.room_key = owner.room_key and owner.active_flag = 'Y'
+		left join (select max(member_date) as member_date, room_key from chat_room_member group by room_key) as member_view
+			on member.room_key = member_view.room_key
+		left join (select max(update_date) as update_date, room_key from chat_room_owner group by room_key) as owner_view
+			on member.room_key = owner_view.room_key
+		left join chat_room_title as title 
+			on member.room_key = title.room_key and user_hash = ?
+		order by line.send_date desc, detail.room_create_date desc`, en.ReqUserHash, en.ReqUserHash).Scan(&result).Error
+	} else if en.Type == "S" {
+		err = r.db.Raw(
+			`select 
+			room.room_key, room.room_type,
+			detail.room_update_date as detail,
+			line.send_date as line,
+			member_view.member_date as member,
+			owner_view.update_date as owner,
+			title.update_date as title
+		from chat_room_member as member 
+		join chat_room as room 
+			on member.room_key = room.room_key and member_hash = ?
+		join chat_room_detail as detail 
+			on member.room_key = detail.room_key
+		left join (select max(line_key), room_key, send_date from chat_line_event group by room_key) as line
+			on member.room_key = line.room_key
+		left join chat_room_owner as owner
+			on member.room_key = owner.room_key and owner.active_flag = 'Y'
+		left join (select max(member_date) as member_date, room_key from chat_room_member group by room_key) as member_view
+			on member.room_key = member_view.room_key
+		left join (select max(update_date) as update_date, room_key from chat_room_owner group by room_key) as owner_view
+			on member.room_key = owner_view.room_key
+		left join chat_room_title as title 
+			on member.room_key = title.room_key and user_hash = ?
+		where detail.room_update_date >= ? or line.send_date >= ? or member_view.member_date >= ? or owner_view.update_date >= ? or title.update_date >= ?
+		order by line.send_date desc, detail.room_create_date desc`,
+			en.ReqUserHash, en.ReqUserHash,
+			en.Date, en.Date, en.Date, en.Date, en.Date,
+		).Scan(&result).Error
+	} else {
+		return nil, consts.ErrRoomUpdateDateTypeError
+	}
+
+	if err != nil {
+		log.Println("[GetChatRoomUpdateDate] DB error :", err)
+		return nil, err
+	}
+
+	return result, nil
 }

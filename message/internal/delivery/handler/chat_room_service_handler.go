@@ -9,6 +9,7 @@ import (
 	"message/internal/delivery/dto/chatRoomConfig"
 	"message/internal/delivery/dto/chatRoomFixed"
 	"message/internal/delivery/dto/chatRoomTitle"
+	"message/internal/delivery/util"
 	commonConsts "message/pkg/consts"
 	response "message/pkg/response"
 
@@ -31,9 +32,8 @@ func (r *ChatRoomServiceHandler) CreateChatRoom(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 사용자 정보 파싱
-	hash := c.Value(consts.USER_HASH)
-	createUserHash, ok := hash.(string)
-	if !ok {
+	createUserHash := util.GetUserHashByAccessToken(c)
+	if createUserHash == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
 		return
 	}
@@ -93,9 +93,8 @@ func (r *ChatRoomServiceHandler) GetChatRoomDetail(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 사용자 정보 파싱
-	hash := c.Value(consts.USER_HASH)
-	reqUserHash, ok := hash.(string)
-	if !ok {
+	reqUserHash := util.GetUserHashByAccessToken(c)
+	if reqUserHash == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
 		return
 	}
@@ -177,9 +176,8 @@ func (r *ChatRoomServiceHandler) GetChatRoomList(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 사용자 정보 파싱
-	hash := c.Value(consts.USER_HASH)
-	reqUserHash, ok := hash.(string)
-	if !ok {
+	reqUserHash := util.GetUserHashByAccessToken(c)
+	if reqUserHash == "" {
 		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
 		return
 	}
@@ -252,6 +250,58 @@ func (r *ChatRoomServiceHandler) GetChatRoomList(c *gin.Context) {
 
 	res := chatRoom.GetChatRoomListResponse{
 		Room: room,
+	}
+
+	response.SendSuccess(c, res)
+
+}
+
+func (r *ChatRoomServiceHandler) GetChatRoomUpdateDate(c *gin.Context) {
+
+	ctx := c.Request.Context()
+
+	reqUserHash := util.GetUserHashByAccessToken(c)
+	if reqUserHash == "" {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+		return
+	}
+
+	var req chatRoom.GetChatRoomUpdateDateRequest
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	input := adapter.MakeGetChatRoomUpdateDateInput(reqUserHash, req.Type, req.Date)
+	output, err := r.svc.ChatRoom.GetChatRoomUpdateDate(ctx, input)
+
+	if err != nil {
+		if err == consts.ErrRoomUpdateDateTypeError {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F012, consts.MESSAGE_F012_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
+		return
+	}
+
+	updateDate := make([]chatRoom.ChatRoomUpdateDateDto, 0)
+
+	for _, o := range output {
+
+		temp := chatRoom.ChatRoomUpdateDateDto{
+			RoomKey:  o.RoomKey,
+			RoomType: o.RoomType,
+			Detail:   o.Detail,
+			Line:     o.Line,
+			Owner:    o.Owner,
+			Member:   o.Member,
+			Title:    o.Title,
+		}
+		updateDate = append(updateDate, temp)
+	}
+
+	res := chatRoom.GetChatRoomUpdateDateResponse{
+		RoomUpdateDate: updateDate,
 	}
 
 	response.SendSuccess(c, res)
