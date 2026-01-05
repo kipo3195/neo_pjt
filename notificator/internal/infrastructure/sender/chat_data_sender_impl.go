@@ -8,11 +8,11 @@ import (
 	"notificator/internal/infrastructure/dto"
 )
 
-type webSocketSenderImpl struct {
+type chatDataSenderImpl struct {
 }
 
-func NewWebSocketSender() sender.SocketSender {
-	return &webSocketSenderImpl{}
+func NewChatDataSender() sender.ChatDataSender {
+	return &chatDataSenderImpl{}
 }
 
 // func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity entity.SendChatEntity, conn *websocket.Conn) error {
@@ -33,7 +33,7 @@ func NewWebSocketSender() sender.SocketSender {
 // 	return nil
 // }
 
-func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatEntity entity.ChatEntity) error {
+func (r *chatDataSenderImpl) SendChat(ctx context.Context, recv string, entity *entity.SendConnectionEntity, chatEntity entity.ChatEntity) error {
 
 	res := dto.MakeSendChatResponse(chatEntity.Type, chatEntity.EventType, chatEntity.ChatSession, chatEntity.ChatLineEntity, chatEntity.ChatRoomEntity)
 
@@ -47,7 +47,7 @@ func (r *webSocketSenderImpl) SendChat(ctx context.Context, recv string, entity 
 	return nil
 }
 
-func (r *webSocketSenderImpl) SendCreateChatRoom(ctx context.Context, recv string, entity *entity.SendConnectionEntity, en entity.CreateChatRoomEntity) error {
+func (r *chatDataSenderImpl) SendCreateChatRoom(ctx context.Context, recv string, entity *entity.SendConnectionEntity, en entity.CreateChatRoomEntity) error {
 
 	res := dto.MakeCreateChatRoomResponse(
 		en.CreateUserHash,

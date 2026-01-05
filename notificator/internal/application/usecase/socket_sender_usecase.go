@@ -14,7 +14,7 @@ import (
 )
 
 type socketSenderUsecase struct {
-	socketSender          sender.SocketSender
+	chatDataSender        sender.ChatDataSender
 	sendConnectionStorage storage.SendConnectionStorage
 	chatUserStorage       storage.ChatUserStorage
 }
@@ -26,9 +26,9 @@ type SocketSenderUsecase interface {
 	RecvCreateChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput)
 }
 
-func NewSocketSenderUsecase(ss sender.SocketSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSenderUsecase {
+func NewSocketSenderUsecase(chatDataSender sender.ChatDataSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSenderUsecase {
 	return &socketSenderUsecase{
-		socketSender:          ss,
+		chatDataSender:        chatDataSender,
 		sendConnectionStorage: sendConnectionStorage,
 		chatUserStorage:       chatUserStorage,
 	}
@@ -126,7 +126,7 @@ func (r *socketSenderUsecase) RecvChat(ctx context.Context, input input.ChatInpu
 
 		if connectionEntity != nil {
 
-			err := r.socketSender.SendChat(ctx, recvUser, connectionEntity, chatEntity)
+			err := r.chatDataSender.SendChat(ctx, recvUser, connectionEntity, chatEntity)
 
 			if err != nil {
 				log.Printf("[SendChat] recvUser :%s socket send error !", recvUser)
@@ -170,7 +170,7 @@ func (r *socketSenderUsecase) RecvCreateChatRoom(ctx context.Context, input inpu
 
 		if connectionEntity != nil {
 
-			err := r.socketSender.SendCreateChatRoom(ctx, recvUser.MemberHash, connectionEntity, createChatRoomEntity)
+			err := r.chatDataSender.SendCreateChatRoom(ctx, recvUser.MemberHash, connectionEntity, createChatRoomEntity)
 
 			if err != nil {
 				log.Printf("[SendChatRoom] recvUser :%s socket send error !", recvUser)

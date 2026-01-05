@@ -12,7 +12,8 @@ type chatUserStorage struct {
 	mu                 sync.RWMutex
 	chatUserConnectMap map[string]*websocket.Conn
 	// chatRoomMemberMap  map[string][]string -> 이 구조는 방에 참여자가 많아질수록 방의 수 * 참여자의 수만큼 반복해야하므로.. 개선함
-	chatRoomMemberMap map[string]map[string]struct{} // roomKey : 참여자SET 의 형태를 취함.
+	chatRoomMemberMap map[string]map[string]struct{} // roomKey : 참여자SET 의 형태를 취함.  -> 채팅방 수신시 사용자에게 write 하기 위한 용도
+	memberChatRoomMap map[string]map[string]struct{} // 참여자 : roomkey SET 의 형태를 취함. -> 소켓 disconnect시 내가 참여 중인 방을 정리하기 위한용도
 }
 
 type ChatUserStorage interface {
@@ -28,6 +29,7 @@ func NewChatUserStorage() ChatUserStorage {
 	return &chatUserStorage{
 		chatUserConnectMap: make(map[string]*websocket.Conn),
 		chatRoomMemberMap:  make(map[string]map[string]struct{}),
+		memberChatRoomMap:  make(map[string]map[string]struct{}),
 	}
 }
 
@@ -84,6 +86,7 @@ func (r *chatUserStorage) PutChatRoomMember(roomKey string, member []entity.Chat
 	// 해당 방의 멤버 맵 초기화
 	newMembers := make(map[string]struct{}, len(member))
 	for _, m := range member {
+		// 현재 세션이 연결되 있는 상태에서만 추가.
 		newMembers[m.MemberHash] = struct{}{}
 	}
 
@@ -114,6 +117,8 @@ func (r *chatUserStorage) InitMyRoom(roomKey []string, userHash string) {
 
 		// Set 구조이므로 중복 체크를 위해 루프를 돌 필요가 없음 (O(1))
 		r.chatRoomMemberMap[rk][userHash] = struct{}{}
+
+		r.memberChatRoomMap[userHash][rk] = struct{}{}
 
 		log.Printf(
 			"[InitMyRoom] roomKey=%s members=%v",

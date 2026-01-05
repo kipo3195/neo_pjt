@@ -42,7 +42,8 @@ func InitServer() *http.Server {
 	sendConnectionStorage := storage.NewSendConnectionStorage()
 
 	// ---- Websocket sender Init
-	webSocketSender := sender.NewWebSocketSender()
+	chatDataSender := sender.NewChatDataSender()
+	//noteDataSender : sender.NewNoteDataSender() TODO
 
 	// ---- Data Loader -----
 
@@ -50,13 +51,13 @@ func InitServer() *http.Server {
 	router := router.NewNotificatorRouter("notificator", sfg.TokenConfig)
 
 	// ---- Domain Handler Init -----
-	chatModule := di.InitChatModule(db, chatUserStorage)
+	chatModule := di.InitChatModule(db, chatUserStorage, sendConnectionStorage)
 
 	noteModule := di.InitNoteModule(db, noteUserStorage)
 
 	loginModule := di.InitLoginModule(db)
 
-	socketSendModule := di.InitSocketSendModule(webSocketSender, sendConnectionStorage, chatUserStorage)
+	socketSendModule := di.InitSocketSendModule(chatDataSender, sendConnectionStorage, chatUserStorage)
 
 	// ---- Service Handler Init ----
 	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)

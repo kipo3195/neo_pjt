@@ -10,8 +10,8 @@ type SocketSendModule struct {
 	Usecase usecase.SocketSenderUsecase
 }
 
-func InitSocketSendModule(ss sender.SocketSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSendModule {
-	usecase := usecase.NewSocketSenderUsecase(ss, sendConnectionStorage, chatUserStorage)
+func InitSocketSendModule(chatDataSender sender.ChatDataSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSendModule {
+	usecase := usecase.NewSocketSenderUsecase(chatDataSender, sendConnectionStorage, chatUserStorage)
 
 	return SocketSendModule{
 		Usecase: usecase,

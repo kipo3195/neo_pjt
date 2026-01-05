@@ -18,8 +18,9 @@ const (
 )
 
 type chatUsecase struct {
-	repo            repository.ChatRepository
-	chatUserStorage storage.ChatUserStorage
+	repo                  repository.ChatRepository
+	chatUserStorage       storage.ChatUserStorage
+	sendConnectionStorage storage.SendConnectionStorage
 }
 
 type ChatUsecase interface {
@@ -28,10 +29,11 @@ type ChatUsecase interface {
 	RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error
 }
 
-func NewChatUsecase(chatUserStorage storage.ChatUserStorage, repo repository.ChatRepository) ChatUsecase {
+func NewChatUsecase(chatUserStorage storage.ChatUserStorage, sendConnectionStorage storage.SendConnectionStorage, repo repository.ChatRepository) ChatUsecase {
 	return &chatUsecase{
-		chatUserStorage: chatUserStorage,
-		repo:            repo,
+		chatUserStorage:       chatUserStorage,
+		repo:                  repo,
+		sendConnectionStorage: sendConnectionStorage,
 	}
 }
 
