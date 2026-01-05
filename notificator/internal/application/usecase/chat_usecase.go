@@ -25,6 +25,7 @@ type chatUsecase struct {
 
 type ChatUsecase interface {
 	SubscribeChat(userHash string) error
+	UnSubscribeChat(userHash string)
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
 	RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error
 }
@@ -46,6 +47,10 @@ func (u *chatUsecase) SubscribeChat(userHash string) error {
 
 	u.chatUserStorage.InitMyRoom(myChatRoom.RoomKey, userHash)
 	return nil
+}
+
+func (u *chatUsecase) UnSubscribeChat(userHash string) {
+	u.chatUserStorage.CleanUpMyRoom(userHash)
 }
 
 // message broker가 아니더라도, rest api, rabbit mq를 통해 전달받은 데이터도 가공 처리 할 수 있다!
@@ -88,7 +93,18 @@ func (u *chatUsecase) RecvCreateChatRoomMessage(ctx context.Context, in input.Cr
 		return err
 	}
 
-	u.chatUserStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, createChatRoomEntity.CreateChatRoomMember)
+	// sendConnectionStorage의 IsOnline이 true인 유저 = 실제 웹소켓 연결 유저만 별도로 조회
+	onlineMember := make([]string, 0)
+	for _, member := range chatRoomMemberEntity {
+
+		isOnline := u.sendConnectionStorage.IsOnline(member.MemberHash)
+		if isOnline {
+			onlineMember = append(onlineMember, member.MemberHash)
+		} else {
+			log.Printf("[RecvCreateChatRoomMessage] userHash : %s is not connected. \n", member.MemberHash)
+		}
+	}
+	u.chatUserStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, onlineMember)
 
 	return nil
 }

@@ -2,60 +2,58 @@ package storage
 
 import (
 	"log"
-	"notificator/internal/domain/chat/entity"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
 
 type chatUserStorage struct {
-	mu                 sync.RWMutex
-	chatUserConnectMap map[string]*websocket.Conn
+	mu sync.RWMutex
+	//chatUserConnectMap map[string]*websocket.Conn
 	// chatRoomMemberMap  map[string][]string -> 이 구조는 방에 참여자가 많아질수록 방의 수 * 참여자의 수만큼 반복해야하므로.. 개선함
 	chatRoomMemberMap map[string]map[string]struct{} // roomKey : 참여자SET 의 형태를 취함.  -> 채팅방 수신시 사용자에게 write 하기 위한 용도
 	memberChatRoomMap map[string]map[string]struct{} // 참여자 : roomkey SET 의 형태를 취함. -> 소켓 disconnect시 내가 참여 중인 방을 정리하기 위한용도
 }
 
 type ChatUserStorage interface {
-	GetChatConnect(userHash string) *websocket.Conn
-	RemoveChatConnect(userHash string)
-	PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte)
+	// GetChatConnect(userHash string) *websocket.Conn
+	// RemoveChatConnect(userHash string)
+	//PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte)
 	GetChatRoomMember(roomKey string) []string
-	PutChatRoomMember(roomKey string, member []entity.ChatRoomMemberEntity)
+	PutChatRoomMember(roomKey string, member []string)
 	InitMyRoom(roomKey []string, userHash string)
+	CleanUpMyRoom(userHash string)
 }
 
 func NewChatUserStorage() ChatUserStorage {
 	return &chatUserStorage{
-		chatUserConnectMap: make(map[string]*websocket.Conn),
-		chatRoomMemberMap:  make(map[string]map[string]struct{}),
-		memberChatRoomMap:  make(map[string]map[string]struct{}),
+		//chatUserConnectMap: make(map[string]*websocket.Conn),
+		chatRoomMemberMap: make(map[string]map[string]struct{}),
+		memberChatRoomMap: make(map[string]map[string]struct{}),
 	}
 }
 
-func (r *chatUserStorage) GetChatConnect(userHash string) *websocket.Conn {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+// func (r *chatUserStorage) GetChatConnect(userHash string) *websocket.Conn {
+// 	r.mu.RLock()
+// 	defer r.mu.RUnlock()
 
-	return r.chatUserConnectMap[userHash]
-}
-func (r *chatUserStorage) RemoveChatConnect(userHash string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	connect := r.chatUserConnectMap[userHash]
+// 	return r.chatUserConnectMap[userHash]
+// }
+// func (r *chatUserStorage) RemoveChatConnect(userHash string) {
+// 	r.mu.Lock()
+// 	defer r.mu.Unlock()
+// 	connect := r.chatUserConnectMap[userHash]
 
-	if connect != nil {
-		delete(r.chatUserConnectMap, userHash)
-	}
-	log.Println("[RemoveChatConnect] userHash : ", userHash)
-}
-func (r *chatUserStorage) PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.chatUserConnectMap[userHash] = conn
-	log.Println("[PutChatConnect] userHash : ", userHash)
+//		if connect != nil {
+//			delete(r.chatUserConnectMap, userHash)
+//		}
+//		log.Println("[RemoveChatConnect] userHash : ", userHash)
+//	}
+// func (r *chatUserStorage) PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte) {
+// 	r.mu.Lock()
+// 	defer r.mu.Unlock()
+// 	r.chatUserConnectMap[userHash] = conn
+// 	log.Println("[PutChatConnect] userHash : ", userHash)
 
-}
+// }
 
 func (r *chatUserStorage) GetChatRoomMember(roomKey string) []string {
 	r.mu.RLock()
@@ -79,15 +77,15 @@ func (r *chatUserStorage) GetChatRoomMember(roomKey string) []string {
 	return result
 }
 
-func (r *chatUserStorage) PutChatRoomMember(roomKey string, member []entity.ChatRoomMemberEntity) {
+func (r *chatUserStorage) PutChatRoomMember(roomKey string, member []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	// 해당 방의 멤버 맵 초기화
 	newMembers := make(map[string]struct{}, len(member))
 	for _, m := range member {
-		// 현재 세션이 연결되 있는 상태에서만 추가.
-		newMembers[m.MemberHash] = struct{}{}
+		newMembers[m] = struct{}{}
+		r.memberChatRoomMap[m][roomKey] = struct{}{}
 	}
 
 	r.chatRoomMemberMap[roomKey] = newMembers
@@ -117,7 +115,6 @@ func (r *chatUserStorage) InitMyRoom(roomKey []string, userHash string) {
 
 		// Set 구조이므로 중복 체크를 위해 루프를 돌 필요가 없음 (O(1))
 		r.chatRoomMemberMap[rk][userHash] = struct{}{}
-
 		r.memberChatRoomMap[userHash][rk] = struct{}{}
 
 		log.Printf(
@@ -126,4 +123,36 @@ func (r *chatUserStorage) InitMyRoom(roomKey []string, userHash string) {
 			r.chatRoomMemberMap[rk],
 		)
 	}
+}
+
+func (r *chatUserStorage) CleanUpMyRoom(userHash string) {
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// 1. 해당 유저가 속한 모든 roomKey 목록을 가져옴 (memberChatRoomMap 이용)
+	rooms, exists := r.memberChatRoomMap[userHash]
+	if !exists {
+		log.Printf("[CleanUpMyRoom] No active rooms found for user: %s", userHash)
+		return
+	}
+
+	// 2. 찾아낸 각 roomKey를 순회하며 chatRoomMemberMap에서 유저를 제거
+	for roomKey := range rooms {
+		if members, ok := r.chatRoomMemberMap[roomKey]; ok {
+			delete(members, userHash) // 방 멤버 목록에서 나를 삭제
+
+			// (선택 사항) 만약 방에 아무도 남지 않았다면 방 자체를 삭제하여 메모리 절약
+			if len(members) == 0 {
+				delete(r.chatRoomMemberMap, roomKey)
+				log.Printf("[CleanUpMyRoom] Room %s is now empty and removed", roomKey)
+			}
+		}
+	}
+
+	// 3. 마지막으로 유저 기준 맵에서도 해당 유저 데이터를 완전히 삭제
+	delete(r.memberChatRoomMap, userHash)
+
+	log.Printf("[CleanUpMyRoom] complete for user: %s", userHash)
+
 }

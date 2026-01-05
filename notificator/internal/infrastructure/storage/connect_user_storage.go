@@ -55,6 +55,8 @@ func (r *sendConnectionStorage) PutConnection(userHash string, entity *entity.Se
 }
 
 func (r *sendConnectionStorage) IsOnline(userHash string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
 	value, exists := r.connectionStateMap[userHash]
 
@@ -69,5 +71,5 @@ func (r *sendConnectionStorage) SetState(userHash string, state bool) {
 	defer r.mu.Unlock()
 
 	r.connectionStateMap[userHash] = state
-	log.Printf("[SetState] userHash :%s, state :%t", userHash, r.connectionStateMap[userHash])
+	log.Printf("[SetState] userHash :%s, state :%t \n", userHash, r.connectionStateMap[userHash])
 }

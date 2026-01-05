@@ -70,14 +70,18 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	/* 쓰기 (server -> client) 채널 생성 후 메모리 저장, 쓰기 고루틴 시작 */
 	go h.svc.SocketSender.SaveConnection(conn, userHash, h.websocketConfig)
 
+	/* 채팅, 쪽지, 알림 도메인에서 연결 상태를 조회할 수 있도록(online) 처리, 소켓 연결 종료시 offline 처리 */
+	h.svc.SocketSender.SetOnline(userHash)
+	defer h.svc.SocketSender.SetOffline(userHash)
+
 	/* 내가 참여중인 방 notificator 서비스 메모리에 로딩 처리 시작 */
 	err = h.svc.Chat.SubscribeChat(userHash)
 	if err != nil {
 		log.Println("Notificator service connect error. Subscribe chat room error.")
-
 		// todo error msg
 		return
 	}
+	defer h.svc.Chat.UnSubscribeChat(userHash)
 
 	/* pong 처리 */
 	// pong을 for 문안에서 처리하지않아도 되는 이유

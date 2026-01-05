@@ -24,6 +24,8 @@ type SocketSenderUsecase interface {
 	GetConnection(userHash string) *entity.SendConnectionEntity
 	RecvChat(ctx context.Context, input input.ChatInput)
 	RecvCreateChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput)
+	SetOnline(userHash string)
+	SetOffline(userHash string)
 }
 
 func NewSocketSenderUsecase(chatDataSender sender.ChatDataSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSenderUsecase {
@@ -32,6 +34,14 @@ func NewSocketSenderUsecase(chatDataSender sender.ChatDataSender, sendConnection
 		sendConnectionStorage: sendConnectionStorage,
 		chatUserStorage:       chatUserStorage,
 	}
+}
+
+func (r *socketSenderUsecase) SetOnline(userHash string) {
+	r.sendConnectionStorage.SetState(userHash, true)
+}
+
+func (r *socketSenderUsecase) SetOffline(userHash string) {
+	r.sendConnectionStorage.SetState(userHash, false)
 }
 
 func (r *socketSenderUsecase) GetConnection(userHash string) *entity.SendConnectionEntity {
