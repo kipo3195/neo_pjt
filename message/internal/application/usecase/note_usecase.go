@@ -39,7 +39,7 @@ func (u *noteUsecase) SendNote(context context.Context, input input.SendNoteInpu
 	}
 
 	// 쪽지 발송
-	err = u.connector.Publish("note.message", data)
+	err = u.connector.Publish("note.broadcast", data)
 	if err != nil {
 		log.Fatal("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError

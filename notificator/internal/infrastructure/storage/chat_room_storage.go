@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type chatUserStorage struct {
+type chatRoomStorage struct {
 	mu sync.RWMutex
 	//chatUserConnectMap map[string]*websocket.Conn
 	// chatRoomMemberMap  map[string][]string -> 이 구조는 방에 참여자가 많아질수록 방의 수 * 참여자의 수만큼 반복해야하므로.. 개선함
@@ -13,7 +13,7 @@ type chatUserStorage struct {
 	memberChatRoomMap map[string]map[string]struct{} // 참여자 : roomkey SET 의 형태를 취함. -> 소켓 disconnect시 내가 참여 중인 방을 정리하기 위한용도
 }
 
-type ChatUserStorage interface {
+type ChatRoomStorage interface {
 	// GetChatConnect(userHash string) *websocket.Conn
 	// RemoveChatConnect(userHash string)
 	//PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte)
@@ -23,8 +23,8 @@ type ChatUserStorage interface {
 	CleanUpMyRoom(userHash string)
 }
 
-func NewChatUserStorage() ChatUserStorage {
-	return &chatUserStorage{
+func NewChatRoomStorage() ChatRoomStorage {
+	return &chatRoomStorage{
 		//chatUserConnectMap: make(map[string]*websocket.Conn),
 		chatRoomMemberMap: make(map[string]map[string]struct{}),
 		memberChatRoomMap: make(map[string]map[string]struct{}),
@@ -55,7 +55,7 @@ func NewChatUserStorage() ChatUserStorage {
 
 // }
 
-func (r *chatUserStorage) GetChatRoomMember(roomKey string) []string {
+func (r *chatRoomStorage) GetChatRoomMember(roomKey string) []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	// mutex 는 지연이 있을 수 도 있지 않을까? 그러니까 sync 자료구조로?
@@ -77,7 +77,7 @@ func (r *chatUserStorage) GetChatRoomMember(roomKey string) []string {
 	return result
 }
 
-func (r *chatUserStorage) PutChatRoomMember(roomKey string, member []string) {
+func (r *chatRoomStorage) PutChatRoomMember(roomKey string, member []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -98,7 +98,7 @@ func (r *chatUserStorage) PutChatRoomMember(roomKey string, member []string) {
 
 }
 
-func (r *chatUserStorage) InitMyRoom(roomKey []string, userHash string) {
+func (r *chatRoomStorage) InitMyRoom(roomKey []string, userHash string) {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -130,7 +130,7 @@ func (r *chatUserStorage) InitMyRoom(roomKey []string, userHash string) {
 	}
 }
 
-func (r *chatUserStorage) CleanUpMyRoom(userHash string) {
+func (r *chatRoomStorage) CleanUpMyRoom(userHash string) {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()

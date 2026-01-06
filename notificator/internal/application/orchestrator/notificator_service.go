@@ -3,16 +3,14 @@ package orchestrator
 import "notificator/internal/application/usecase"
 
 type NotificatorService struct {
-	Chat         usecase.ChatUsecase
-	Note         usecase.NoteUsecase
+	ChatRoom     usecase.ChatRoomUsecase
 	SocketSender usecase.SocketSenderUsecase
 	Login        usecase.LoginUsecase
 }
 
-func NewNotificatorService(chat usecase.ChatUsecase, note usecase.NoteUsecase, socketSender usecase.SocketSenderUsecase, login usecase.LoginUsecase) *NotificatorService {
+func NewNotificatorService(chatRoom usecase.ChatRoomUsecase, socketSender usecase.SocketSenderUsecase, login usecase.LoginUsecase) *NotificatorService {
 	return &NotificatorService{
-		Chat:         chat,
-		Note:         note,
+		ChatRoom:     chatRoom,
 		SocketSender: socketSender,
 		Login:        login,
 	}

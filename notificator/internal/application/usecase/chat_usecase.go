@@ -19,39 +19,39 @@ const (
 
 type chatUsecase struct {
 	repo                  repository.ChatRepository
-	chatUserStorage       storage.ChatUserStorage
+	chatRoomStorage       storage.ChatRoomStorage
 	sendConnectionStorage storage.SendConnectionStorage
 }
 
 type ChatUsecase interface {
-	SubscribeChat(userHash string) error
-	UnSubscribeChat(userHash string)
+	// SubscribeChat(userHash string) error
+	// UnSubscribeChat(userHash string)
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
 	RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error
 }
 
-func NewChatUsecase(chatUserStorage storage.ChatUserStorage, sendConnectionStorage storage.SendConnectionStorage, repo repository.ChatRepository) ChatUsecase {
+func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, sendConnectionStorage storage.SendConnectionStorage, repo repository.ChatRepository) ChatUsecase {
 	return &chatUsecase{
-		chatUserStorage:       chatUserStorage,
+		chatRoomStorage:       chatRoomStorage,
 		repo:                  repo,
 		sendConnectionStorage: sendConnectionStorage,
 	}
 }
 
-func (u *chatUsecase) SubscribeChat(userHash string) error {
+// func (u *chatUsecase) SubscribeChat(userHash string) error {
 
-	myChatRoom, err := u.repo.GetMyChatRoom(userHash)
-	if err != nil {
-		return err
-	}
+// 	myChatRoom, err := u.repo.GetMyChatRoom(userHash)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	u.chatUserStorage.InitMyRoom(myChatRoom.RoomKey, userHash)
-	return nil
-}
+// 	u.chatRoomStorage.InitMyRoom(myChatRoom.RoomKey, userHash)
+// 	return nil
+// }
 
-func (u *chatUsecase) UnSubscribeChat(userHash string) {
-	u.chatUserStorage.CleanUpMyRoom(userHash)
-}
+// func (u *chatUsecase) UnSubscribeChat(userHash string) {
+// 	u.chatRoomStorage.CleanUpMyRoom(userHash)
+// }
 
 // message broker가 아니더라도, rest api, rabbit mq를 통해 전달받은 데이터도 가공 처리 할 수 있다!
 // 이게바로 클린 아키텍쳐!
@@ -92,6 +92,7 @@ func (u *chatUsecase) RecvCreateChatRoomMessage(ctx context.Context, in input.Cr
 	if err != nil {
 		return err
 	}
+	// 여기서 끝내야 되겠네..
 
 	// sendConnectionStorage의 IsOnline이 true인 유저 = 실제 웹소켓 연결 유저만 별도로 조회
 	onlineMember := make([]string, 0)
@@ -104,7 +105,7 @@ func (u *chatUsecase) RecvCreateChatRoomMessage(ctx context.Context, in input.Cr
 			log.Printf("[RecvCreateChatRoomMessage] userHash : %s is not connected. \n", member.MemberHash)
 		}
 	}
-	u.chatUserStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, onlineMember)
+	u.chatRoomStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, onlineMember)
 
 	return nil
 }

@@ -7,9 +7,9 @@ import (
 	"notificator/internal/infrastructure/config"
 )
 
-func InitNotificatorServiceModule(chat usecase.ChatUsecase, note usecase.NoteUsecase, socketSender usecase.SocketSenderUsecase, login usecase.LoginUsecase, websocketConfig config.WebsocketConnectionConfig) *handler.NotificatorServiceHandler {
+func InitNotificatorServiceModule(chatRoom usecase.ChatRoomUsecase, socketSender usecase.SocketSenderUsecase, login usecase.LoginUsecase, websocketConfig config.WebsocketConnectionConfig) *handler.NotificatorServiceHandler {
 
-	service := orchestrator.NewNotificatorService(chat, note, socketSender, login)
+	service := orchestrator.NewNotificatorService(chatRoom, socketSender, login)
 	return handler.NewNotificatorServiceHandler(service, websocketConfig)
 
 }

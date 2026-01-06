@@ -54,7 +54,7 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	}
 
 	/* 채팅 발송 Message Broker */
-	err = u.connector.Publish("chat.message", data)
+	err = u.connector.Publish("chat.broadcast", data)
 	if err != nil {
 		log.Fatal("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError

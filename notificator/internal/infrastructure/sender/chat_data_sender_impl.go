@@ -46,28 +46,3 @@ func (r *chatDataSenderImpl) SendChat(ctx context.Context, recv string, entity *
 
 	return nil
 }
-
-func (r *chatDataSenderImpl) SendCreateChatRoom(ctx context.Context, recv string, entity *entity.SendConnectionEntity, en entity.CreateChatRoomEntity) error {
-
-	res := dto.MakeCreateChatRoomResponse(
-		en.CreateUserHash,
-		en.RegDate,
-		en.RoomKey,
-		en.RoomType,
-		en.Title,
-		en.SecretFlag,
-		en.Secret,
-		en.Description,
-		en.WorksCode,
-	)
-
-	select {
-	case entity.Chan <- res:
-
-	default:
-		return consts.ErrSenderChannelError
-	}
-
-	return nil
-
-}

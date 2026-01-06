@@ -12,10 +12,10 @@ type ChatModule struct {
 	Usecase usecase.ChatUsecase
 }
 
-func InitChatModule(db *gorm.DB, chatUserStorage storage.ChatUserStorage, sendConnectionStorage storage.SendConnectionStorage) *ChatModule {
+func InitChatModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, sendConnectionStorage storage.SendConnectionStorage) *ChatModule {
 
 	repo := repository.NewChatRepository(db)
-	usecase := usecase.NewChatUsecase(chatUserStorage, sendConnectionStorage, repo)
+	usecase := usecase.NewChatUsecase(chatRoomStorage, sendConnectionStorage, repo)
 
 	return &ChatModule{
 		Usecase: usecase,

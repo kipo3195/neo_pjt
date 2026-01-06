@@ -15,8 +15,9 @@ import (
 
 type socketSenderUsecase struct {
 	chatDataSender        sender.ChatDataSender
+	chatRoomDataSender    sender.ChatRoomDataSender
 	sendConnectionStorage storage.SendConnectionStorage
-	chatUserStorage       storage.ChatUserStorage
+	chatRoomStorage       storage.ChatRoomStorage
 }
 
 type SocketSenderUsecase interface {
@@ -28,11 +29,11 @@ type SocketSenderUsecase interface {
 	SetOffline(userHash string)
 }
 
-func NewSocketSenderUsecase(chatDataSender sender.ChatDataSender, sendConnectionStorage storage.SendConnectionStorage, chatUserStorage storage.ChatUserStorage) SocketSenderUsecase {
+func NewSocketSenderUsecase(chatDataSender sender.ChatDataSender, sendConnectionStorage storage.SendConnectionStorage, chatRoomStorage storage.ChatRoomStorage) SocketSenderUsecase {
 	return &socketSenderUsecase{
 		chatDataSender:        chatDataSender,
 		sendConnectionStorage: sendConnectionStorage,
-		chatUserStorage:       chatUserStorage,
+		chatRoomStorage:       chatRoomStorage,
 	}
 }
 
@@ -126,7 +127,7 @@ func (r *socketSenderUsecase) RecvChat(ctx context.Context, input input.ChatInpu
 	chatEntity := entity.MakeChatEntity(input.EventType, input.ChatSession, chatRoomEntity, chatLineEntity)
 
 	RecvUserHash := make([]string, 0)
-	RecvUserHash = r.chatUserStorage.GetChatRoomMember(input.ChatRoomData.RoomKey)
+	RecvUserHash = r.chatRoomStorage.GetChatRoomMember(input.ChatRoomData.RoomKey)
 
 	for _, recvUser := range RecvUserHash {
 
@@ -180,7 +181,7 @@ func (r *socketSenderUsecase) RecvCreateChatRoom(ctx context.Context, input inpu
 
 		if connectionEntity != nil {
 
-			err := r.chatDataSender.SendCreateChatRoom(ctx, recvUser.MemberHash, connectionEntity, createChatRoomEntity)
+			err := r.chatRoomDataSender.SendCreateChatRoom(ctx, recvUser.MemberHash, connectionEntity, createChatRoomEntity)
 
 			if err != nil {
 				log.Printf("[SendChatRoom] recvUser :%s socket send error !", recvUser)

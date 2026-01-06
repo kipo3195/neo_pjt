@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"notificator/internal/application/orchestrator"
-	"notificator/internal/application/usecase/input"
 	"notificator/internal/consts"
 	"notificator/internal/delivery/adapter"
 	"notificator/internal/delivery/dto/notificatorService"
@@ -75,13 +74,13 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	defer h.svc.SocketSender.SetOffline(userHash)
 
 	/* 내가 참여중인 방 notificator 서비스 메모리에 로딩 처리 시작 */
-	err = h.svc.Chat.SubscribeChat(userHash)
+	err = h.svc.ChatRoom.SubscribeChat(userHash)
 	if err != nil {
 		log.Println("Notificator service connect error. Subscribe chat room error.")
 		// todo error msg
 		return
 	}
-	defer h.svc.Chat.UnSubscribeChat(userHash)
+	defer h.svc.ChatRoom.UnSubscribeChat(userHash)
 
 	/* pong 처리 */
 	// pong을 for 문안에서 처리하지않아도 되는 이유
@@ -139,20 +138,6 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 			input := adapter.MakeLoginInput(body.Uuid, body.DeviceType)
 			h.svc.Login.LoginProcess(input)
 
-		// 채팅, 쪽지 구독이 필요한가?
-		case consts.CHAT:
-			var input input.ChatConnectInput
-			if err := json.Unmarshal(msg, &input); err == nil {
-				//h.svc.Chat.SubscribeChat(input, conn)
-				log.Println("Notificator service chat subscribe success.")
-			}
-
-		case consts.NOTE:
-			var input input.NoteConnectInput
-			if err := json.Unmarshal(msg, &input); err == nil {
-				h.svc.Note.SubscribeNote(input, conn)
-				log.Println("Notificator service note subscribe success.")
-			}
 		default:
 			log.Println("unknown message type:", req.Type)
 			// 타입에 따라 적절한 에러 처리 return도 가능.

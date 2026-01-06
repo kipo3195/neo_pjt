@@ -102,7 +102,7 @@ func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.Create
 	}
 
 	/* 채팅방 생성 이벤트 발송 Message Broker */
-	msg, err := u.connector.Request("create.chat.room.message", data, 5*time.Second)
+	msg, err := u.connector.Request("create.chat.room", data, 5*time.Second)
 	if err != nil {
 		if err == nats.ErrNoResponders {
 			// 아무도 수신하지 않았으므로 재처리 혹은 server to server 처리 필요 혹은 별도 정책 정의하기.

@@ -37,8 +37,7 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Storage Init -----
-	chatUserStorage := storage.NewChatUserStorage()
-	noteUserStorage := storage.NewNoteUserStorage()
+	chatRoomStorage := storage.NewChatRoomStorage()
 	sendConnectionStorage := storage.NewSendConnectionStorage()
 
 	// ---- Websocket sender Init
@@ -51,28 +50,36 @@ func InitServer() *http.Server {
 	router := router.NewNotificatorRouter("notificator", sfg.TokenConfig)
 
 	// ---- Domain Handler Init -----
-	chatModule := di.InitChatModule(db, chatUserStorage, sendConnectionStorage)
+	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage)
 
-	noteModule := di.InitNoteModule(db, noteUserStorage)
+	chatModule := di.InitChatModule(db, chatRoomStorage, sendConnectionStorage)
+
+	noteModule := di.InitNoteModule(db)
 
 	loginModule := di.InitLoginModule(db)
 
-	socketSendModule := di.InitSocketSendModule(chatDataSender, sendConnectionStorage, chatUserStorage)
+	socketSendModule := di.InitSocketSendModule(chatDataSender, sendConnectionStorage, chatRoomStorage)
 
 	// ---- Service Handler Init ----
-	notificatorServiceModule := di.InitNotificatorServiceModule(chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
+	notificatorServiceModule := di.InitNotificatorServiceModule(chatRoomModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
 	router.SetNotificatorServiceRoutes(notificatorServiceModule)
 
 	// ---- Message Broker init ----
 	mb := config.ConnectMessageBroker(sfg)
+	conn := mb
 
 	// ---- Message Broker Subscribe ----
-	conn := mb
-	sub := natsBrocker.NewNatsSubscriber(conn, chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase)
+	// 각 도메인별 핸들러 정의
+	chatSub := natsBrocker.NewNatsChatSubscriber(conn, chatModule.Usecase, socketSendModule.Usecase)
+	noteSub := natsBrocker.NewNatsNoteSubscriber(conn, noteModule.Usecase, socketSendModule.Usecase)
+	chatRoomSub := natsBrocker.NewNatsChatRoomSubscriber(conn, chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase)
 
-	sub.AddSubscribe("chat.message")
-	sub.AddSubscribe("note.message")
-	sub.AddQueueSubscribe("create.chat.room.message")
+	// ---- NATS Subscribe ----
+	// 도메인별 토픽만 구독
+	chatSub.AddSubscribe("chat.broadcast")
+	noteSub.AddSubscribe("note.broadcast")
+	chatRoomSub.AddSubscribe("chat.room.broadcast")
+	chatRoomSub.AddQueueSubscribe("create.chat.room")
 
 	return &http.Server{
 		Addr:    ":8082",
