@@ -15,3 +15,6 @@ var ErrSenderChannelError = errors.New("sender channel error")
 
 // chat room member regist
 var ErrChatRoomMemberInvalid = errors.New("chat room member is invalid")
+
+// nats
+var ErrPublishToMessageBrokerError = errors.New("publish to message broker failed")

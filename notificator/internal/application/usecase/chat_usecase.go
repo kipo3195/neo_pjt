@@ -5,7 +5,6 @@ import (
 	"log"
 	"notificator/internal/application/usecase/input"
 	"notificator/internal/application/usecase/output"
-	"notificator/internal/consts"
 	"notificator/internal/delivery/adapter"
 
 	"notificator/internal/domain/chat/entity"
@@ -27,7 +26,6 @@ type ChatUsecase interface {
 	// SubscribeChat(userHash string) error
 	// UnSubscribeChat(userHash string)
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
-	RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error
 }
 
 func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, sendConnectionStorage storage.SendConnectionStorage, repo repository.ChatRepository) ChatUsecase {
@@ -65,47 +63,4 @@ func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageI
 
 	return adapter.MakeChatMessageOutput(en)
 
-}
-
-func (u *chatUsecase) RecvCreateChatRoomMessage(ctx context.Context, in input.CreateChatRoomMessageInput) error {
-
-	chatRoomMemberEntity := make([]entity.ChatRoomMemberEntity, 0)
-
-	for _, v := range in.CreateChatRoomMemberInput {
-
-		temp := entity.ChatRoomMemberEntity{
-			MemberHash:      v.MemberHash,
-			MemberWorksCode: v.MemberWorksCode,
-		}
-
-		chatRoomMemberEntity = append(chatRoomMemberEntity, temp)
-	}
-
-	if len(chatRoomMemberEntity) == 0 {
-		return consts.ErrChatRoomMemberInvalid
-	}
-
-	createChatRoomEntity := entity.MakeCreateChatRoomEntity(in.CreateChatRoomInput.RoomKey, in.CreateChatRoomInput.RoomType, chatRoomMemberEntity)
-
-	err := u.repo.PutChatRoomMember(ctx, createChatRoomEntity)
-
-	if err != nil {
-		return err
-	}
-	// 여기서 끝내야 되겠네..
-
-	// sendConnectionStorage의 IsOnline이 true인 유저 = 실제 웹소켓 연결 유저만 별도로 조회
-	onlineMember := make([]string, 0)
-	for _, member := range chatRoomMemberEntity {
-
-		isOnline := u.sendConnectionStorage.IsOnline(member.MemberHash)
-		if isOnline {
-			onlineMember = append(onlineMember, member.MemberHash)
-		} else {
-			log.Printf("[RecvCreateChatRoomMessage] userHash : %s is not connected. \n", member.MemberHash)
-		}
-	}
-	u.chatRoomStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, onlineMember)
-
-	return nil
 }

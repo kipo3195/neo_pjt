@@ -14,7 +14,7 @@ var ErrInvalidClaims = errors.New("invalid token or claims")
 var ErrTokenMismatch = errors.New("token mismatch")
 var ErrRefreshTokenAuthError = errors.New("refreshToken authentication failed")
 
-// chat
+// nats
 var ErrPublishToMessageBrokerError = errors.New("publish to message broker failed")
 
 // otp

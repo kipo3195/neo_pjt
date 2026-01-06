@@ -81,10 +81,20 @@ func (r *chatRoomStorage) PutChatRoomMember(roomKey string, member []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// 방이 없으면 생성
+	if _, exists := r.chatRoomMemberMap[roomKey]; !exists {
+		r.chatRoomMemberMap[roomKey] = make(map[string]struct{})
+	}
+
 	// 해당 방의 멤버 맵 초기화
 	newMembers := make(map[string]struct{}, len(member))
 	for _, m := range member {
 		newMembers[m] = struct{}{}
+
+		// 참여자가 없으면 생성
+		if _, exists := r.memberChatRoomMap[m]; !exists {
+			r.memberChatRoomMap[m] = make(map[string]struct{})
+		}
 		r.memberChatRoomMap[m][roomKey] = struct{}{}
 	}
 

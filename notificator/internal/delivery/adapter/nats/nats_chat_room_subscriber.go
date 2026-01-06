@@ -13,14 +13,16 @@ import (
 
 type NatsChatRoomSubscriber struct {
 	conn                *nats.Conn
-	chatUsecase         usecase.ChatUsecase
-	noteUsecase         usecase.NoteUsecase
+	chatRoomUsecase     usecase.ChatRoomUsecase
 	socketSenderUsecase usecase.SocketSenderUsecase
 	handler             func(data []byte) error
 }
 
-func NewNatsChatRoomSubscriber(nc *nats.Conn, chatUsecase usecase.ChatUsecase, noteUsecase usecase.NoteUsecase, socketSendUsecase usecase.SocketSenderUsecase) *NatsChatRoomSubscriber {
-	return &NatsChatRoomSubscriber{conn: nc, chatUsecase: chatUsecase, noteUsecase: noteUsecase, socketSenderUsecase: socketSendUsecase}
+func NewNatsChatRoomSubscriber(nc *nats.Conn, chatRoomUsecase usecase.ChatRoomUsecase, socketSendUsecase usecase.SocketSenderUsecase) *NatsChatRoomSubscriber {
+	return &NatsChatRoomSubscriber{
+		conn:                nc,
+		chatRoomUsecase:     chatRoomUsecase,
+		socketSenderUsecase: socketSendUsecase}
 }
 
 // 구독, goroutine을 동한 처리 변경
@@ -45,12 +47,19 @@ func (s *NatsChatRoomSubscriber) AddSubscribe(kind string) error {
 
 func (s *NatsChatRoomSubscriber) handleNatsMessage(kind string, data []byte) {
 
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	switch kind {
 	case "chat.room.broadcast":
+		var input input.ChatRoomEventInput
+		if err := json.Unmarshal(data, &input); err != nil {
+			log.Printf("invalid message: %v", err)
+			return
+		}
 
+		// 별도의 가공처리가 필요 없음, RecvCreateChatRoomMessage에서도 별도의 가공처리를 하지 않으므로 input을 그대로 사용함.
+		s.socketSenderUsecase.RecvChatRoomEvent(ctx, input)
 	}
 }
 
@@ -90,14 +99,11 @@ func (s *NatsChatRoomSubscriber) QueueGrouphandleNatsMessage(kind string, data [
 		}
 		log.Printf("[%s] input : %s\n", kind, input)
 		// 실시간 발송 처리를 위한 도메인 구분 (chatUsecase, socketSenderUsecase)
-		err := s.chatUsecase.RecvCreateChatRoomMessage(ctx, input)
+		err := s.chatRoomUsecase.RecvCreateChatRoomMessage(ctx, input)
 		if err != nil {
 			log.Printf("[%s] err : %s\n", kind, err)
 			return
 		}
-
-		// 별도의 가공처리가 필요 없음, RecvCreateChatRoomMessage에서도 별도의 가공처리를 하지 않으므로 input을 그대로 사용함.
-		s.socketSenderUsecase.RecvCreateChatRoom(ctx, input)
 
 		log.Printf("[%s] success. \n", kind)
 	}

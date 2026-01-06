@@ -36,6 +36,10 @@ func InitServer() *http.Server {
 		migration.RunAll(db)
 	}
 
+	// ---- Message Broker init ----
+	mb := config.ConnectMessageBroker(sfg)
+	conn := mb
+
 	// ---- Storage Init -----
 	chatRoomStorage := storage.NewChatRoomStorage()
 	sendConnectionStorage := storage.NewSendConnectionStorage()
@@ -50,7 +54,7 @@ func InitServer() *http.Server {
 	router := router.NewNotificatorRouter("notificator", sfg.TokenConfig)
 
 	// ---- Domain Handler Init -----
-	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage)
+	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage, conn)
 
 	chatModule := di.InitChatModule(db, chatRoomStorage, sendConnectionStorage)
 
@@ -64,15 +68,11 @@ func InitServer() *http.Server {
 	notificatorServiceModule := di.InitNotificatorServiceModule(chatRoomModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
 	router.SetNotificatorServiceRoutes(notificatorServiceModule)
 
-	// ---- Message Broker init ----
-	mb := config.ConnectMessageBroker(sfg)
-	conn := mb
-
 	// ---- Message Broker Subscribe ----
 	// 각 도메인별 핸들러 정의
 	chatSub := natsBrocker.NewNatsChatSubscriber(conn, chatModule.Usecase, socketSendModule.Usecase)
 	noteSub := natsBrocker.NewNatsNoteSubscriber(conn, noteModule.Usecase, socketSendModule.Usecase)
-	chatRoomSub := natsBrocker.NewNatsChatRoomSubscriber(conn, chatModule.Usecase, noteModule.Usecase, socketSendModule.Usecase)
+	chatRoomSub := natsBrocker.NewNatsChatRoomSubscriber(conn, chatRoomModule.Usecase, socketSendModule.Usecase)
 
 	// ---- NATS Subscribe ----
 	// 도메인별 토픽만 구독

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"log"
 	"notificator/internal/domain/chatRoom/entity"
 	"notificator/internal/domain/chatRoom/repository"
@@ -22,6 +23,26 @@ func NewChatRoomRepository(db *gorm.DB) repository.ChatRoomRepository {
 	return &chatRoomRepositoryImpl{
 		db: db,
 	}
+}
+
+func (r *chatRoomRepositoryImpl) PutChatRoomMember(ctx context.Context, en entity.CreateChatRoomEntity) error {
+
+	memberModels := make([]model.ChatRoomMember, len(en.CreateChatRoomMember))
+	for i, member := range en.CreateChatRoomMember {
+		memberModels[i] = model.ChatRoomMember{
+			RoomKey:    en.RoomKey,
+			MemberHash: member.MemberHash,
+		}
+	}
+
+	// bulk insert
+	if err := r.db.
+		WithContext(ctx).
+		Create(&memberModels).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *chatRoomRepositoryImpl) GetMyChatRoom(userHash string) (entity.MyChatRoomEntity, error) {

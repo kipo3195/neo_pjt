@@ -24,7 +24,7 @@ type SocketSenderUsecase interface {
 	SaveConnection(conn *websocket.Conn, userHash string, websocketConfig config.WebsocketConnectionConfig)
 	GetConnection(userHash string) *entity.SendConnectionEntity
 	RecvChat(ctx context.Context, input input.ChatInput)
-	RecvCreateChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput)
+	RecvChatRoomEvent(ctx context.Context, input input.ChatRoomEventInput)
 	SetOnline(userHash string)
 	SetOffline(userHash string)
 }
@@ -147,24 +147,24 @@ func (r *socketSenderUsecase) RecvChat(ctx context.Context, input input.ChatInpu
 	}
 }
 
-func (r *socketSenderUsecase) RecvCreateChatRoom(ctx context.Context, input input.CreateChatRoomMessageInput) {
+func (r *socketSenderUsecase) RecvChatRoomEvent(ctx context.Context, input input.ChatRoomEventInput) {
 
 	createChatRoomEntity := entity.MakeCreateChatRoomEntity(
-		input.CreateChatRoomInput.CreateUserHash,
-		input.CreateChatRoomInput.RegDate,
-		input.CreateChatRoomInput.RoomKey,
-		input.CreateChatRoomInput.RoomType,
-		input.CreateChatRoomInput.Title,
-		input.CreateChatRoomInput.SecretFlag,
-		input.CreateChatRoomInput.Secret,
-		input.CreateChatRoomInput.Description,
-		input.CreateChatRoomInput.WorksCode,
+		input.ChatRoomEventDataInput.CreateUserHash,
+		input.ChatRoomEventDataInput.RegDate,
+		input.ChatRoomEventDataInput.RoomKey,
+		input.ChatRoomEventDataInput.RoomType,
+		input.ChatRoomEventDataInput.Title,
+		input.ChatRoomEventDataInput.SecretFlag,
+		input.ChatRoomEventDataInput.Secret,
+		input.ChatRoomEventDataInput.Description,
+		input.ChatRoomEventDataInput.WorksCode,
 	)
 
-	// 길이 0, cap은 전달 받은 값 만큼
-	chatRoomMemberEntity := make([]entity.ChatRoomMemberEntity, 0, len(input.CreateChatRoomMemberInput))
+	/* 참여자 entity 생성 */
+	chatRoomMemberEntity := make([]entity.ChatRoomMemberEntity, 0, len(input.ChatRoomEventMemberInput))
 
-	for _, m := range input.CreateChatRoomMemberInput {
+	for _, m := range input.ChatRoomEventMemberInput {
 
 		temp := entity.ChatRoomMemberEntity{
 			MemberHash:      m.MemberHash,
@@ -172,6 +172,21 @@ func (r *socketSenderUsecase) RecvCreateChatRoom(ctx context.Context, input inpu
 		}
 		chatRoomMemberEntity = append(chatRoomMemberEntity, temp)
 	}
+
+	// sendConnectionStorage의 IsOnline이 true인 유저 = 실제 웹소켓 연결 유저만 별도로 조회
+	onlineMember := make([]string, 0)
+	for _, member := range chatRoomMemberEntity {
+
+		isOnline := r.sendConnectionStorage.IsOnline(member.MemberHash)
+		if isOnline {
+			onlineMember = append(onlineMember, member.MemberHash)
+		} else {
+			log.Printf("[RecvCreateChatRoomMessage] userHash : %s is not connected. \n", member.MemberHash)
+		}
+	}
+
+	/* 룸키 : 소켓 연결된 사용자 저장 */
+	r.chatRoomStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, onlineMember)
 
 	for _, recvUser := range chatRoomMemberEntity {
 
