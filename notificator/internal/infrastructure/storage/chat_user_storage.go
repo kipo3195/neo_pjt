@@ -113,6 +113,11 @@ func (r *chatUserStorage) InitMyRoom(roomKey []string, userHash string) {
 			r.chatRoomMemberMap[rk] = make(map[string]struct{})
 		}
 
+		// 참여자가 없으면 생성
+		if _, exists := r.memberChatRoomMap[userHash]; !exists {
+			r.memberChatRoomMap[userHash] = make(map[string]struct{})
+		}
+
 		// Set 구조이므로 중복 체크를 위해 루프를 돌 필요가 없음 (O(1))
 		r.chatRoomMemberMap[rk][userHash] = struct{}{}
 		r.memberChatRoomMap[userHash][rk] = struct{}{}
