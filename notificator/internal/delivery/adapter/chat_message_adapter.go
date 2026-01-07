@@ -2,8 +2,6 @@ package adapter
 
 import (
 	"notificator/internal/application/usecase/input"
-	"notificator/internal/application/usecase/output"
-	"notificator/internal/domain/chat/entity"
 )
 
 func MakeChatMessageInput(eventType string, chatSession string, roomData input.ChatRoomDataInput, lineData input.ChatLineDataInput) input.ChatMessageInput {
@@ -15,27 +13,27 @@ func MakeChatMessageInput(eventType string, chatSession string, roomData input.C
 	}
 }
 
-func MakeChatMessageOutput(en entity.ChatMessage) output.ChatMessageOutput {
+// func MakeChatMessageOutput(en entity.ChatMessage) output.ChatMessageOutput {
 
-	chatRoomData := output.ChatRoomDataOutput{
-		RoomType:   en.ChatRoomData.RoomType,
-		RoomKey:    en.ChatRoomData.RoomKey,
-		SecretFlag: en.ChatRoomData.SecretFlag,
-	}
+// 	chatRoomData := output.ChatRoomDataOutput{
+// 		RoomType:   en.ChatRoomData.RoomType,
+// 		RoomKey:    en.ChatRoomData.RoomKey,
+// 		SecretFlag: en.ChatRoomData.SecretFlag,
+// 	}
 
-	chatLineData := output.ChatLineDataOutput{
-		Cmd:           en.ChatLineData.Cmd,
-		Contents:      en.ChatLineData.Contents,
-		LineKey:       en.ChatLineData.LineKey,
-		TargetLineKey: en.ChatLineData.TargetLineKey,
-		SendUserHash:  en.ChatLineData.SendUserHash,
-		SendDate:      en.ChatLineData.SendDate,
-	}
+// 	chatLineData := output.ChatLineDataOutput{
+// 		Cmd:           en.ChatLineData.Cmd,
+// 		Contents:      en.ChatLineData.Contents,
+// 		LineKey:       en.ChatLineData.LineKey,
+// 		TargetLineKey: en.ChatLineData.TargetLineKey,
+// 		SendUserHash:  en.ChatLineData.SendUserHash,
+// 		SendDate:      en.ChatLineData.SendDate,
+// 	}
 
-	return output.ChatMessageOutput{
-		ChatRoomData: chatRoomData,
-		ChatLineData: chatLineData,
-		EventType:    en.EventType,
-		ChatSession:  en.ChatSession,
-	}
-}
+// 	return output.ChatMessageOutput{
+// 		ChatRoomData: chatRoomData,
+// 		ChatLineData: chatLineData,
+// 		EventType:    en.EventType,
+// 		ChatSession:  en.ChatSession,
+// 	}
+// }

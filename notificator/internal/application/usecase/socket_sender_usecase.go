@@ -1,11 +1,8 @@
 package usecase
 
 import (
-	"context"
 	"log"
-	"notificator/internal/application/usecase/input"
 	"notificator/internal/domain/socketSender/entity"
-	"notificator/internal/domain/socketSender/sender"
 	"notificator/internal/infrastructure/config"
 	"notificator/internal/infrastructure/storage"
 	"time"
@@ -14,35 +11,18 @@ import (
 )
 
 type socketSenderUsecase struct {
-	chatDataSender        sender.ChatDataSender
-	chatRoomDataSender    sender.ChatRoomDataSender
 	sendConnectionStorage storage.SendConnectionStorage
-	chatRoomStorage       storage.ChatRoomStorage
 }
 
 type SocketSenderUsecase interface {
 	SaveConnection(conn *websocket.Conn, userHash string, websocketConfig config.WebsocketConnectionConfig)
 	GetConnection(userHash string) *entity.SendConnectionEntity
-	RecvChat(ctx context.Context, input input.ChatInput)
-	RecvChatRoomEvent(ctx context.Context, input input.ChatRoomEventInput)
-	SetOnline(userHash string)
-	SetOffline(userHash string)
 }
 
-func NewSocketSenderUsecase(chatDataSender sender.ChatDataSender, sendConnectionStorage storage.SendConnectionStorage, chatRoomStorage storage.ChatRoomStorage) SocketSenderUsecase {
+func NewSocketSenderUsecase(sendConnectionStorage storage.SendConnectionStorage) SocketSenderUsecase {
 	return &socketSenderUsecase{
-		chatDataSender:        chatDataSender,
 		sendConnectionStorage: sendConnectionStorage,
-		chatRoomStorage:       chatRoomStorage,
 	}
-}
-
-func (r *socketSenderUsecase) SetOnline(userHash string) {
-	r.sendConnectionStorage.SetState(userHash, true)
-}
-
-func (r *socketSenderUsecase) SetOffline(userHash string) {
-	r.sendConnectionStorage.SetState(userHash, false)
 }
 
 func (r *socketSenderUsecase) GetConnection(userHash string) *entity.SendConnectionEntity {
@@ -117,92 +97,4 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 	// }
 
 	// 만약 쓰기 고루틴에서 에러가 발생하여 소켓을 닫을 일이 있다면 여기서 conn을 닫는것도 방법임.
-}
-
-func (r *socketSenderUsecase) RecvChat(ctx context.Context, input input.ChatInput) {
-
-	chatRoomEntity := entity.MakeChatRoomEntity(input.ChatRoomData.RoomKey, input.ChatRoomData.RoomType, input.ChatRoomData.SecretFlag)
-	chatLineEntity := entity.MakeChatLineEntity(input.ChatLineData.Cmd, input.ChatLineData.Contents, input.ChatLineData.LineKey, input.ChatLineData.TargetLineKey, input.ChatLineData.SendUserHash, input.ChatLineData.SendDate)
-
-	chatEntity := entity.MakeChatEntity(input.EventType, input.ChatSession, chatRoomEntity, chatLineEntity)
-
-	RecvUserHash := make([]string, 0)
-	RecvUserHash = r.chatRoomStorage.GetChatRoomMember(input.ChatRoomData.RoomKey)
-
-	for _, recvUser := range RecvUserHash {
-
-		log.Println("[RecvChat] recv user hash : ", recvUser)
-
-		connectionEntity := r.sendConnectionStorage.GetConnection(recvUser)
-
-		if connectionEntity != nil {
-
-			err := r.chatDataSender.SendChat(ctx, recvUser, connectionEntity, chatEntity)
-
-			if err != nil {
-				log.Printf("[SendChat] recvUser :%s socket send error !", recvUser)
-				r.sendConnectionStorage.RemoveConnection(recvUser)
-			}
-		}
-	}
-}
-
-func (r *socketSenderUsecase) RecvChatRoomEvent(ctx context.Context, input input.ChatRoomEventInput) {
-
-	createChatRoomEntity := entity.MakeCreateChatRoomEntity(
-		input.ChatRoomEventDataInput.CreateUserHash,
-		input.ChatRoomEventDataInput.RegDate,
-		input.ChatRoomEventDataInput.RoomKey,
-		input.ChatRoomEventDataInput.RoomType,
-		input.ChatRoomEventDataInput.Title,
-		input.ChatRoomEventDataInput.SecretFlag,
-		input.ChatRoomEventDataInput.Secret,
-		input.ChatRoomEventDataInput.Description,
-		input.ChatRoomEventDataInput.WorksCode,
-	)
-
-	/* 참여자 entity 생성 */
-	chatRoomMemberEntity := make([]entity.ChatRoomMemberEntity, 0, len(input.ChatRoomEventMemberInput))
-
-	for _, m := range input.ChatRoomEventMemberInput {
-
-		temp := entity.ChatRoomMemberEntity{
-			MemberHash:      m.MemberHash,
-			MemberWorksCode: m.MemberWorksCode,
-		}
-		chatRoomMemberEntity = append(chatRoomMemberEntity, temp)
-	}
-
-	// sendConnectionStorage의 IsOnline이 true인 유저 = 실제 웹소켓 연결 유저만 별도로 조회
-	onlineMember := make([]string, 0)
-	for _, member := range chatRoomMemberEntity {
-
-		isOnline := r.sendConnectionStorage.IsOnline(member.MemberHash)
-		if isOnline {
-			onlineMember = append(onlineMember, member.MemberHash)
-		} else {
-			log.Printf("[RecvCreateChatRoomMessage] userHash : %s is not connected. \n", member.MemberHash)
-		}
-	}
-
-	/* 룸키 : 소켓 연결된 사용자 저장 */
-	r.chatRoomStorage.PutChatRoomMember(createChatRoomEntity.RoomKey, onlineMember)
-
-	for _, recvUser := range chatRoomMemberEntity {
-
-		log.Println("[RecvChatRoom] recv user hash : ", recvUser.MemberHash)
-
-		connectionEntity := r.sendConnectionStorage.GetConnection(recvUser.MemberHash)
-
-		if connectionEntity != nil {
-
-			err := r.chatRoomDataSender.SendCreateChatRoom(ctx, recvUser.MemberHash, connectionEntity, createChatRoomEntity)
-
-			if err != nil {
-				log.Printf("[SendChatRoom] recvUser :%s socket send error !", recvUser)
-				r.sendConnectionStorage.RemoveConnection(recvUser.MemberHash)
-			}
-		}
-	}
-
 }

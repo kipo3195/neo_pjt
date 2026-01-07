@@ -58,8 +58,11 @@ func (s *NatsChatRoomSubscriber) handleNatsMessage(kind string, data []byte) {
 			return
 		}
 
-		// 별도의 가공처리가 필요 없음, RecvCreateChatRoomMessage에서도 별도의 가공처리를 하지 않으므로 input을 그대로 사용함.
-		s.socketSenderUsecase.RecvChatRoomEvent(ctx, input)
+		// 채팅방 생성시 현재 online인 사용자를 roomKey에 매핑시킴
+		s.chatRoomUsecase.RegistChatRoomMember(ctx, input)
+
+		// 클라이언트에게 전송
+		s.chatRoomUsecase.SendChatRoomEvent(ctx, input)
 	}
 }
 

@@ -1,7 +1,7 @@
 package output
 
 type ChatRoomDataOutput struct {
-	RoomType   string
-	RoomKey    string
-	SecretFlag string
+	RoomType   string `json:"roomType"`
+	RoomKey    string `json:"roomKey"`
+	SecretFlag string `json:"secretFlag"`
 }

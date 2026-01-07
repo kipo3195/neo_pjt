@@ -2,6 +2,7 @@ package sender
 
 import (
 	"context"
+	"log"
 	"notificator/internal/consts"
 	"notificator/internal/domain/socketSender/entity"
 	"notificator/internal/domain/socketSender/sender"
@@ -28,6 +29,8 @@ func (r *chatRoomDataSenderImpl) SendCreateChatRoom(ctx context.Context, recv st
 		en.Description,
 		en.WorksCode,
 	)
+
+	log.Println("SendCreateChatRoom Chan ? : ", entity.Chan)
 
 	select {
 	case entity.Chan <- res:

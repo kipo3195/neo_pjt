@@ -1,8 +1,9 @@
 package output
 
 type ChatMessageOutput struct {
-	EventType    string
-	ChatSession  string
-	ChatRoomData ChatRoomDataOutput
-	ChatLineData ChatLineDataOutput
+	Type         string             `json:"type"`
+	EventType    string             `json:"eventType"`
+	ChatSession  string             `json:"chatSession"`
+	ChatRoomData ChatRoomDataOutput `json:"chatRoomData"`
+	ChatLineData ChatLineDataOutput `json:"chatLineData"`
 }

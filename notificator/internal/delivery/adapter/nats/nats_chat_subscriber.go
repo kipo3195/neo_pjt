@@ -6,24 +6,24 @@ import (
 	"log"
 	"notificator/internal/application/usecase"
 	"notificator/internal/application/usecase/input"
-	"notificator/internal/delivery/adapter"
+	"notificator/internal/core/port"
 	"time"
 
 	"github.com/nats-io/nats.go"
 )
 
 type NatsChatSubscriber struct {
-	conn                *nats.Conn
-	chatUsecase         usecase.ChatUsecase
-	socketSenderUsecase usecase.SocketSenderUsecase
-	handler             func(data []byte) error
+	conn          *nats.Conn
+	chatUsecase   usecase.ChatUsecase
+	handler       func(data []byte) error
+	messageSender port.MessageSender
 }
 
-func NewNatsChatSubscriber(nc *nats.Conn, chatUsecase usecase.ChatUsecase, socketSendUsecase usecase.SocketSenderUsecase) *NatsChatSubscriber {
+func NewNatsChatSubscriber(nc *nats.Conn, chatUsecase usecase.ChatUsecase, messageSender port.MessageSender) *NatsChatSubscriber {
 	return &NatsChatSubscriber{
-		conn:                nc,
-		chatUsecase:         chatUsecase,
-		socketSenderUsecase: socketSendUsecase,
+		conn:          nc,
+		chatUsecase:   chatUsecase,
+		messageSender: messageSender,
 	}
 }
 
@@ -61,11 +61,7 @@ func (s *NatsChatSubscriber) handleNatsMessage(kind string, data []byte) {
 			return
 		}
 
-		// chat 메시지 -> 클라이언트
-		output := s.chatUsecase.RecvChatMessage(ctx, input)
 		// 실시간 발송 처리를 위한 도메인 구분 (chatUsecase, socketSenderUsecase)
-		in := adapter.MakeChatInput(output.EventType, output.ChatSession, output.ChatRoomData, output.ChatLineData)
-		s.socketSenderUsecase.RecvChat(ctx, in)
-
+		s.chatUsecase.RecvChatMessage(ctx, input)
 	}
 }

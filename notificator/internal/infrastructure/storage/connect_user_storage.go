@@ -13,8 +13,6 @@ type sendConnectionStorage struct {
 }
 
 type SendConnectionStorage interface {
-	IsOnline(userHash string) bool
-	SetState(userHash string, state bool)
 	GetConnection(userHash string) *entity.SendConnectionEntity
 	RemoveConnection(userHash string)
 	PutConnection(userHash string, entity *entity.SendConnectionEntity)
@@ -47,29 +45,10 @@ func (r *sendConnectionStorage) RemoveConnection(userHash string) {
 	}
 	log.Println("[RemoveConnection] userHash : ", userHash)
 }
+
 func (r *sendConnectionStorage) PutConnection(userHash string, entity *entity.SendConnectionEntity) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.connectionMap[userHash] = entity
 	log.Println("[PutConnection] userHash : ", userHash)
-}
-
-func (r *sendConnectionStorage) IsOnline(userHash string) bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	value, exists := r.connectionStateMap[userHash]
-
-	if exists {
-		return value
-	} else {
-		return false
-	}
-}
-func (r *sendConnectionStorage) SetState(userHash string, state bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	r.connectionStateMap[userHash] = state
-	log.Printf("[SetState] userHash :%s, state :%t \n", userHash, r.connectionStateMap[userHash])
 }

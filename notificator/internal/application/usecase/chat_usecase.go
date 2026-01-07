@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
-	"log"
 	"notificator/internal/application/usecase/input"
 	"notificator/internal/application/usecase/output"
-	"notificator/internal/delivery/adapter"
+	"notificator/internal/consts"
+	"notificator/internal/core/port"
 
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/repository"
@@ -17,50 +17,54 @@ const (
 )
 
 type chatUsecase struct {
-	repo                  repository.ChatRepository
-	chatRoomStorage       storage.ChatRoomStorage
-	sendConnectionStorage storage.SendConnectionStorage
+	repo            repository.ChatRepository
+	chatRoomStorage storage.ChatRoomStorage
+	messageSender   port.MessageSender
 }
 
 type ChatUsecase interface {
-	// SubscribeChat(userHash string) error
-	// UnSubscribeChat(userHash string)
-	RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput
+	RecvChatMessage(ctx context.Context, in input.ChatMessageInput)
 }
 
-func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, sendConnectionStorage storage.SendConnectionStorage, repo repository.ChatRepository) ChatUsecase {
+func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.ChatRepository, messageSender port.MessageSender) ChatUsecase {
 	return &chatUsecase{
-		chatRoomStorage:       chatRoomStorage,
-		repo:                  repo,
-		sendConnectionStorage: sendConnectionStorage,
+		chatRoomStorage: chatRoomStorage,
+		repo:            repo,
+		messageSender:   messageSender,
 	}
 }
 
-// func (u *chatUsecase) SubscribeChat(userHash string) error {
+func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessageInput) {
 
-// 	myChatRoom, err := u.repo.GetMyChatRoom(userHash)
-// 	if err != nil {
-// 		return err
-// 	}
+	chatRoomEntity := entity.MakeChatRoomEntity(input.ChatRoomData.RoomKey, input.ChatRoomData.RoomType, input.ChatRoomData.SecretFlag)
+	chatLineEntity := entity.MakeChatLineEntity(input.ChatLineData.Cmd, input.ChatLineData.Contents, input.ChatLineData.LineKey, input.ChatLineData.TargetLineKey, input.ChatLineData.SendUserHash, input.ChatLineData.SendDate)
 
-// 	u.chatRoomStorage.InitMyRoom(myChatRoom.RoomKey, userHash)
-// 	return nil
-// }
+	RecvUserHash := r.chatRoomStorage.GetChatRoomMember(input.ChatRoomData.RoomKey)
 
-// func (u *chatUsecase) UnSubscribeChat(userHash string) {
-// 	u.chatRoomStorage.CleanUpMyRoom(userHash)
-// }
+	chatRoomOutput := output.ChatRoomDataOutput{
+		RoomKey:    chatRoomEntity.RoomKey,
+		RoomType:   chatRoomEntity.RoomType,
+		SecretFlag: chatRoomEntity.SecretFlag,
+	}
 
-// message broker가 아니더라도, rest api, rabbit mq를 통해 전달받은 데이터도 가공 처리 할 수 있다!
-// 이게바로 클린 아키텍쳐!
-// Input의 형태만 유지하면됨.
-func (u *chatUsecase) RecvChatMessage(ctx context.Context, in input.ChatMessageInput) output.ChatMessageOutput {
-	log.Println("[RecvChatMessage] recv data : ", in)
+	chatLintOutput := output.ChatLineDataOutput{
+		Cmd:           chatLineEntity.Cmd,
+		Contents:      chatLineEntity.Contents,
+		LineKey:       chatLineEntity.LineKey,
+		TargetLineKey: chatLineEntity.TargetLineKey,
+		SendUserHash:  chatLineEntity.SendUserHash,
+		SendDate:      chatLineEntity.SendDate,
+	}
 
-	chatLineEntity := entity.MakeChatLineEntity(in.ChatLineData.Cmd, in.ChatLineData.Contents, in.ChatLineData.LineKey, in.ChatLineData.TargetLineKey, in.ChatLineData.SendUserHash, in.ChatLineData.SendDate)
-	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoomData.RoomType, in.ChatRoomData.RoomKey, in.ChatRoomData.SecretFlag)
-	en := entity.MakeRecvChatMessageEntity(in.EventType, in.ChatSession, chatRoomEntity, chatLineEntity)
+	out := output.ChatMessageOutput{
+		Type:         consts.CHAT,
+		EventType:    input.EventType,
+		ChatSession:  input.ChatSession,
+		ChatRoomData: chatRoomOutput,
+		ChatLineData: chatLintOutput,
+	}
 
-	return adapter.MakeChatMessageOutput(en)
-
+	for _, recvUser := range RecvUserHash {
+		r.messageSender.SendToClient(recvUser, out)
+	}
 }

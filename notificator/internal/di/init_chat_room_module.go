@@ -2,6 +2,7 @@ package di
 
 import (
 	"notificator/internal/application/usecase"
+	"notificator/internal/core/port"
 	"notificator/internal/infrastructure/repository"
 	"notificator/internal/infrastructure/storage"
 
@@ -13,10 +14,10 @@ type ChatRoomModule struct {
 	Usecase usecase.ChatRoomUsecase
 }
 
-func InitChatRoomModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, connector *nats.Conn) *ChatRoomModule {
+func InitChatRoomModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, sendConnectionStorage storage.SendConnectionStorage, connector *nats.Conn, messageSender port.MessageSender) *ChatRoomModule {
 
 	repo := repository.NewChatRoomRepository(db)
-	usecase := usecase.NewChatRoomUsecase(repo, chatRoomStorage, connector)
+	usecase := usecase.NewChatRoomUsecase(repo, chatRoomStorage, sendConnectionStorage, connector, messageSender)
 
 	return &ChatRoomModule{
 		Usecase: usecase,

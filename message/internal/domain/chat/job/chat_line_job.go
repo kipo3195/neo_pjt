@@ -23,7 +23,7 @@ type ChatLineJob struct {
 func (j *ChatLineJob) Execute(repository repository.ChatRepository) error {
 	defer j.Cancel()
 
-	log.Println("채팅 라인 저장 작업 시작. LineKey:", j.SendChatEntity.ChatLineEntity.LineKey)
+	log.Println("[SaveChatLine] LineKey:", j.SendChatEntity.ChatLineEntity.LineKey)
 
 	// 실제 DB 저장 로직 (가장 무거운 작업)을 여기서 호출합니다.
 	// 예시: LineKey를 사용하여 데이터를 찾거나 저장합니다.

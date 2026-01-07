@@ -6,17 +6,12 @@ import (
 )
 
 type chatRoomStorage struct {
-	mu sync.RWMutex
-	//chatUserConnectMap map[string]*websocket.Conn
-	// chatRoomMemberMap  map[string][]string -> 이 구조는 방에 참여자가 많아질수록 방의 수 * 참여자의 수만큼 반복해야하므로.. 개선함
+	mu                sync.RWMutex
 	chatRoomMemberMap map[string]map[string]struct{} // roomKey : 참여자SET 의 형태를 취함.  -> 채팅방 수신시 사용자에게 write 하기 위한 용도
 	memberChatRoomMap map[string]map[string]struct{} // 참여자 : roomkey SET 의 형태를 취함. -> 소켓 disconnect시 내가 참여 중인 방을 정리하기 위한용도
 }
 
 type ChatRoomStorage interface {
-	// GetChatConnect(userHash string) *websocket.Conn
-	// RemoveChatConnect(userHash string)
-	//PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte)
 	GetChatRoomMember(roomKey string) []string
 	PutChatRoomMember(roomKey string, member []string)
 	InitMyRoom(roomKey []string, userHash string)
@@ -31,35 +26,9 @@ func NewChatRoomStorage() ChatRoomStorage {
 	}
 }
 
-// func (r *chatUserStorage) GetChatConnect(userHash string) *websocket.Conn {
-// 	r.mu.RLock()
-// 	defer r.mu.RUnlock()
-
-// 	return r.chatUserConnectMap[userHash]
-// }
-// func (r *chatUserStorage) RemoveChatConnect(userHash string) {
-// 	r.mu.Lock()
-// 	defer r.mu.Unlock()
-// 	connect := r.chatUserConnectMap[userHash]
-
-//		if connect != nil {
-//			delete(r.chatUserConnectMap, userHash)
-//		}
-//		log.Println("[RemoveChatConnect] userHash : ", userHash)
-//	}
-// func (r *chatUserStorage) PutChatConnect(userHash string, conn *websocket.Conn, c chan []byte) {
-// 	r.mu.Lock()
-// 	defer r.mu.Unlock()
-// 	r.chatUserConnectMap[userHash] = conn
-// 	log.Println("[PutChatConnect] userHash : ", userHash)
-
-// }
-
 func (r *chatRoomStorage) GetChatRoomMember(roomKey string) []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	// mutex 는 지연이 있을 수 도 있지 않을까? 그러니까 sync 자료구조로?
-	log.Println("[GetChatRoomMember] ", roomKey)
 
 	members, exists := r.chatRoomMemberMap[roomKey]
 	if !exists || len(members) == 0 {
@@ -91,7 +60,7 @@ func (r *chatRoomStorage) PutChatRoomMember(roomKey string, member []string) {
 	for _, m := range member {
 		newMembers[m] = struct{}{}
 
-		// 참여자가 없으면 생성
+		// 참여자의 참여중인 방 정보 관리 map이 없으면 생성
 		if _, exists := r.memberChatRoomMap[m]; !exists {
 			r.memberChatRoomMap[m] = make(map[string]struct{})
 		}
@@ -123,7 +92,7 @@ func (r *chatRoomStorage) InitMyRoom(roomKey []string, userHash string) {
 			r.chatRoomMemberMap[rk] = make(map[string]struct{})
 		}
 
-		// 참여자가 없으면 생성
+		// 참여자의 참여중인 방 정보 관리 map이 없으면 생성
 		if _, exists := r.memberChatRoomMap[userHash]; !exists {
 			r.memberChatRoomMap[userHash] = make(map[string]struct{})
 		}
@@ -169,5 +138,4 @@ func (r *chatRoomStorage) CleanUpMyRoom(userHash string) {
 	delete(r.memberChatRoomMap, userHash)
 
 	log.Printf("[CleanUpMyRoom] complete for user: %s", userHash)
-
 }
