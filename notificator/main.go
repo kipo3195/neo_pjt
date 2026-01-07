@@ -54,13 +54,9 @@ func InitServer() *http.Server {
 
 	// ---- Domain Handler Init -----
 	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage, sendConnectionStorage, conn, messageSender)
-
 	chatModule := di.InitChatModule(db, chatRoomStorage, messageSender)
-
 	noteModule := di.InitNoteModule(db)
-
 	loginModule := di.InitLoginModule(db)
-
 	socketSendModule := di.InitSocketSendModule(sendConnectionStorage)
 
 	// ---- Service Handler Init ----
