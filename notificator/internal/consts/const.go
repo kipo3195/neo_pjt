@@ -10,13 +10,14 @@ const (
 	JoinRoomCancle = "joinRoomCancle"
 	SendMessage    = "sendMessage"
 
-	TYPE     = "type" // 이벤트의 대분류
-	AUTH     = "auth"
-	CHAT     = "chat"
-	NOTE     = "note"
-	LOGIN    = "login"
-	PONG     = "pong"
-	CHATROOM = "chatRoom"
+	TYPE       = "type" // 이벤트의 대분류
+	AUTH       = "auth"
+	CHAT       = "chat"
+	CHATUNREAD = "chatUnread"
+	NOTE       = "note"
+	LOGIN      = "login"
+	PONG       = "pong"
+	CHATROOM   = "chatRoom"
 
 	CREATE = "C"
 )

@@ -72,6 +72,7 @@ func InitServer() *http.Server {
 	// ---- NATS Subscribe ----
 	// 도메인별 토픽만 구독
 	chatSub.AddSubscribe("chat.broadcast")
+	chatSub.AddSubscribe("chat.unread.broadcast")
 	noteSub.AddSubscribe("note.broadcast")
 	chatRoomSub.AddSubscribe("chat.room.broadcast")
 	chatRoomSub.AddQueueSubscribe("create.chat.room")
