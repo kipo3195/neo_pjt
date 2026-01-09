@@ -52,11 +52,9 @@ func (r *messageRouter) SetChatRoutes(handler *handler.ChatHandler) {
 }
 
 func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler) {
-
 	client := r.parent.Group("/client/v1/chat")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
 	client.POST("", handler.SendChat)
-
 }
 
 func (r *messageRouter) SetNoteRoutes(handler *handler.NoteHandler) {

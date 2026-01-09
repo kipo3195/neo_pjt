@@ -34,7 +34,7 @@ func (u *lineKeyUsecase) GetLineKey(ctx context.Context) (string, string) {
 	t := time.UnixMilli(int64(uid.Time())).Format("2006-01-02 15:04:05.000")
 
 	log.Println("발급된 라인키 : ", lineKey)
-	log.Printf(" 발급된 시간: %v\n", t)
+	log.Printf("발급된 시간: %v\n", t)
 
 	return lineKey, t
 }

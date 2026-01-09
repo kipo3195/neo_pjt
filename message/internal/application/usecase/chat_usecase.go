@@ -23,6 +23,7 @@ type chatUsecase struct {
 
 type ChatUsecase interface {
 	SendChat(ctx context.Context, in input.SendChatInput) error
+	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatUnreadEntity entity.ChatUnreadEntity, workerPool workerPool.ChatWorkerPool) error
 }
 
 func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool) ChatUsecase {
@@ -42,12 +43,15 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	// 채팅 룸 entity
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType, in.ChatRoom.SecretFlag)
 
+	// 미확인 건수 전송용 entity
+	chatUnreadEntity := entity.MakeChatUnreadEntity(in.ChatRoom.RoomKey, chatRoomEntity.RoomType, "unread", in.ChatLine.SendUserHash, 1)
+
 	// 채팅 전송용 entity
-	entity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity)
+	chatEntity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity)
 
-	log.Println("[SendChat] send entity : ", entity)
+	log.Println("[SendChat] send entity : ", chatEntity)
 
-	data, err := util.EntityMarshal(entity)
+	data, err := util.EntityMarshal(chatEntity)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -63,11 +67,11 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	}
 
 	/* DB 저장 Task */
-	err = addTaskChatLineJob(entity, u.workerPool)
+	err = u.addTaskChatLineJob(chatEntity, chatUnreadEntity, u.workerPool)
 	return nil
 }
 
-func addTaskChatLineJob(entity entity.SendChatEntity, workerPool workerPool.ChatWorkerPool) error {
+func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatUnreadEntity entity.ChatUnreadEntity, workerPool workerPool.ChatWorkerPool) error {
 
 	// Context 전달
 	// ※ http의 context 전달시 job 에서 repository 호출하는 DB 처리 프로세스에서 context canceled 발생.
@@ -76,10 +80,13 @@ func addTaskChatLineJob(entity entity.SendChatEntity, workerPool workerPool.Chat
 	// 이후 다른 비동기 처리가 추가될때 context 를 밖에서 생성하고 각각의 task에 주입하므로써 하나의 context로 모든 task를 아우를수 있는지 점검해보기
 	jobCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	job := &job.ChatLineJob{
-		SendChatEntity: entity,
-		Ctx:            jobCtx,
-		Cancel:         cancel,
+		SendChatEntity:   entity,
+		ChatUnreadEntity: chatUnreadEntity,
+		Ctx:              jobCtx,
+		Cancel:           cancel,
+		Connector:        u.connector,
 	}
+
 	workerPool.AddTask(job)
 	return nil
 }
