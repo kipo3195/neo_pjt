@@ -12,6 +12,7 @@ type ChatRoomMember struct {
 	MemberUnreadCountDate time.Time `gorm:"column:member_unread_count_date;comment:미확인 건수 변경 시간 "`
 	MemberWorksCode       string    `gorm:"column:member_works_code;type:varchar(50);comment:방 참여자 기준 works code"`
 	MemberUnreadCount     int       `gorm:"column:member_unread_count;type:int(11);not null;default:0;comment:미확인 건수"`
+	MemberReadDate        time.Time `gorm:"column:member_read_date;comment:채팅방 읽음 처리 시간 "`
 }
 
 func (ChatRoomMember) TableName() string {

@@ -23,7 +23,8 @@ type chatUsecase struct {
 
 type ChatUsecase interface {
 	SendChat(ctx context.Context, in input.SendChatInput) error
-	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatUnreadEntity entity.ChatUnreadEntity, workerPool workerPool.ChatWorkerPool) error
+	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity, workerPool workerPool.ChatWorkerPool) error
+	ReadChat(ctx context.Context, in input.ReadChatInput) error
 }
 
 func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool) ChatUsecase {
@@ -33,6 +34,35 @@ func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, 
 		connector:  connector,
 		workerPool: workerPool, // Usecase는 ChatWorkerPool이라는 인터페이스에 의존하고, 이 인터페이스의 구현체가 chatWorkerPool 구조체라는 사실을 전혀 알지 못합니다.
 	}
+}
+func (u *chatUsecase) ReadChat(ctx context.Context, in input.ReadChatInput) error {
+
+	readChatEntity := entity.MakeReadChatEntity(in.RoomKey, in.RoomType, in.UserHash, in.ReadDate)
+
+	err := u.repository.ReadChatLine(ctx, readChatEntity)
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	chatCountEventEntity := entity.MakeChatCountEventEntity(readChatEntity.RoomKey, readChatEntity.RoomType, "read", readChatEntity.UserHash, 0)
+
+	data, err := util.EntityMarshal(chatCountEventEntity)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	/* 미확인 건수 발송 Message Broker */
+	err = u.connector.Publish("chat.count.broadcast", data)
+	if err != nil {
+		log.Fatal("NATS publish failed:", err)
+		return consts.ErrPublishToMessageBrokerError
+		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
+	}
+
+	return nil
 }
 
 func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) error {
@@ -44,12 +74,12 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType, in.ChatRoom.SecretFlag)
 
 	// 미확인 건수 전송용 entity
-	chatUnreadEntity := entity.MakeChatUnreadEntity(in.ChatRoom.RoomKey, chatRoomEntity.RoomType, "unread", in.ChatLine.SendUserHash, 1)
+	chatCountEventEntity := entity.MakeChatCountEventEntity(in.ChatRoom.RoomKey, chatRoomEntity.RoomType, "unread", in.ChatLine.SendUserHash, 1)
 
 	// 채팅 전송용 entity
 	chatEntity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity)
 
-	log.Println("[SendChat] send entity : ", chatEntity)
+	log.Println("[SendChat] entity : ", chatEntity)
 
 	data, err := util.EntityMarshal(chatEntity)
 	if err != nil {
@@ -67,11 +97,11 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	}
 
 	/* DB 저장 Task */
-	err = u.addTaskChatLineJob(chatEntity, chatUnreadEntity, u.workerPool)
+	err = u.addTaskChatLineJob(chatEntity, chatCountEventEntity, u.workerPool)
 	return nil
 }
 
-func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatUnreadEntity entity.ChatUnreadEntity, workerPool workerPool.ChatWorkerPool) error {
+func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity, workerPool workerPool.ChatWorkerPool) error {
 
 	// Context 전달
 	// ※ http의 context 전달시 job 에서 repository 호출하는 DB 처리 프로세스에서 context canceled 발생.
@@ -80,11 +110,11 @@ func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatUnrea
 	// 이후 다른 비동기 처리가 추가될때 context 를 밖에서 생성하고 각각의 task에 주입하므로써 하나의 context로 모든 task를 아우를수 있는지 점검해보기
 	jobCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	job := &job.ChatLineJob{
-		SendChatEntity:   entity,
-		ChatUnreadEntity: chatUnreadEntity,
-		Ctx:              jobCtx,
-		Cancel:           cancel,
-		Connector:        u.connector,
+		SendChatEntity:       entity,
+		ChatCountEventEntity: chatCountEventEntity,
+		Ctx:                  jobCtx,
+		Cancel:               cancel,
+		Connector:            u.connector,
 	}
 
 	workerPool.AddTask(job)

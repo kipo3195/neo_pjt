@@ -41,7 +41,7 @@ func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity
 		}
 	}()
 
-	err := tx.Create(&model.ChatLineEvent{
+	if err := tx.Create(&model.ChatLineEvent{
 		EventType:     sendChatEntity.EventType,
 		Cmd:           sendChatEntity.ChatLineEntity.Cmd,
 		RoomKey:       sendChatEntity.ChatRoomEntity.RoomKey,
@@ -50,29 +50,53 @@ func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity
 		Contents:      sendChatEntity.ChatLineEntity.Contents,
 		SendUserHash:  sendChatEntity.ChatLineEntity.SendUserHash,
 		SendDate:      sendChatEntity.ChatLineEntity.SendDate,
-	}).Error
-
-	if err != nil {
-		log.Println("[SaveChatLine] - line insert failed :", err)
+	}).Error; err != nil {
+		tx.Rollback()
+		log.Println("[SaveChatLine] line insert failed:", err)
 		return err
 	}
 
-	err = r.db.WithContext(ctx).Model(&model.ChatRoomMember{}).
+	if err := tx.Model(&model.ChatRoomMember{}).
 		Where("room_key = ?", sendChatEntity.ChatRoomEntity.RoomKey).
 		Where("member_hash != ?", sendChatEntity.ChatLineEntity.SendUserHash).
 		Where("member_state = ?", "1").
 		Updates(map[string]interface{}{
-			// SQL의 컬럼 연산을 위해 gorm.Expr 사용
-			"member_unread_count":      gorm.Expr("member_unread_count + ?", 1),
+			"member_unread_count":      gorm.Expr("member_unread_count + 1"),
 			"member_unread_count_date": sendChatEntity.ChatLineEntity.SendDate,
+		}).Error; err != nil {
+		tx.Rollback()
+		log.Println("[SaveChatLine] unread update failed:", err)
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	log.Println("[SaveChatLine] - DB process Success lineKey : ", sendChatEntity.ChatLineEntity.LineKey)
+	return nil
+}
+
+func (r *chatRepository) ReadChatLine(ctx context.Context, readChatEntity entity.ReadChatEntity) error {
+
+	err := r.db.WithContext(ctx).Model(&model.ChatRoomMember{}).
+		Where("room_key = ?", readChatEntity.RoomKey).
+		Where("member_hash = ?", readChatEntity.UserHash).
+		Where("member_state = ?", "1").
+		Updates(map[string]interface{}{
+			// SQL의 컬럼 연산을 위해 gorm.Expr 사용
+			"member_unread_count":      0,
+			"member_unread_count_date": readChatEntity.ReadDate,
+			"member_read_date":         readChatEntity.ReadDate,
 		}).Error
 
 	if err != nil {
-		log.Println("[SaveChatLine] - member unread update failed :", err)
+		log.Println("[ReadChatLine] - member unread update failed :", err)
 		return err
 	} else {
 
-		log.Println("[SaveChatLine] - DB process Success : ", sendChatEntity.ChatLineEntity.LineKey)
+		log.Println("[ReadChatLine] - DB process Success userHash: ", readChatEntity.UserHash)
 		return nil
 	}
+
 }

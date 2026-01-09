@@ -16,8 +16,8 @@ import (
 // 이 작업의 '무엇을' 저장하고 '어떻게' 저장할지 결정하는 것은 비즈니스 로직의 영역입니다.
 // ChatLineJob은 LineKey 같은 도메인 데이터를 캡슐화하고 있으며, 이를 처리하는 **행위(Execute)**를 정의합니다.
 type ChatLineJob struct {
-	SendChatEntity   entity.SendChatEntity
-	ChatUnreadEntity entity.ChatUnreadEntity
+	SendChatEntity       entity.SendChatEntity
+	ChatCountEventEntity entity.ChatCountEventEntity
 
 	// 🎯 Context 필드 추가
 	Ctx       context.Context
@@ -37,16 +37,16 @@ func (j *ChatLineJob) Execute(repository repository.ChatRepository) error {
 		return err
 	}
 
-	log.Println("[SendChatUnread] send entity : ", j.ChatUnreadEntity)
+	log.Println("[SendChatUnread] send entity : ", j.ChatCountEventEntity)
 
-	data, err := util.EntityMarshal(j.ChatUnreadEntity)
+	data, err := util.EntityMarshal(j.ChatCountEventEntity)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	/* 채팅 발송 Message Broker */
-	err = j.Connector.Publish("chat.unread.broadcast", data)
+	/* 미확인 건수 발송 Message Broker */
+	err = j.Connector.Publish("chat.count.broadcast", data)
 	if err != nil {
 		log.Fatal("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError

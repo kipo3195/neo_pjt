@@ -7,4 +7,5 @@ import (
 
 type ChatRepository interface {
 	SaveChatLine(ctx context.Context, sendChatEntity entity.SendChatEntity) error
+	ReadChatLine(ctx context.Context, readChatEntity entity.ReadChatEntity) error
 }

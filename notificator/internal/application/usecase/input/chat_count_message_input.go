@@ -1,9 +1,9 @@
 package input
 
-type ChatUnreadMessageInput struct {
+type ChatCountMessageInput struct {
 	RoomKey      string `json:"roomKey"`
 	RoomType     string `json:"roomType"`
-	UnreadType   string `json:"unreadType"`
+	EventType    string `json:"eventType"`
 	SendUserHash string `json:"sendUserHash"`
 	Delta        int    `json:"delta"` // 변경 건수 (unreadType에 따라 달라짐)
 }
