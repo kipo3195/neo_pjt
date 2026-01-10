@@ -6,6 +6,7 @@ type ChatRoomUpdateDateDto struct {
 	Detail   string `json:"detail,omitempty"`
 	Line     string `json:"line,omitempty"`
 	Member   string `json:"member,omitempty"`
+	Unread   string `json:"unread,omitempty"`
 	Owner    string `json:"owner,omitempty"`
 	Title    string `json:"title,omitempty"`
 }

@@ -6,6 +6,7 @@ type GetChatRoomUpdateDateOutput struct {
 	Detail   string
 	Line     string
 	Member   string
+	Unread   string
 	Owner    string
 	Title    string
 }

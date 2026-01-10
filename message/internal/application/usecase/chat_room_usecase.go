@@ -270,6 +270,7 @@ func (r *chatRoomUsecase) GetChatRoomUpdateDate(ctx context.Context, input input
 			Detail:   rd.Detail,
 			Line:     rd.Line,
 			Member:   rd.Member,
+			Unread:   rd.Unread,
 			Owner:    rd.Owner,
 			Title:    rd.Title,
 		}

@@ -295,6 +295,7 @@ func (r *ChatRoomServiceHandler) GetChatRoomUpdateDate(c *gin.Context) {
 			Line:     o.Line,
 			Owner:    o.Owner,
 			Member:   o.Member,
+			Unread:   o.Unread,
 			Title:    o.Title,
 		}
 		updateDate = append(updateDate, temp)

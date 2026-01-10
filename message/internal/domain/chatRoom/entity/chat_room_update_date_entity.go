@@ -6,6 +6,7 @@ type ChatRoomUpdateDateEntity struct {
 	Detail   string `gorm:"column:detail"`
 	Line     string `gorm:"column:line"`
 	Member   string `gorm:"column:member"`
+	Unread   string `gorm:"column:unread"`
 	Owner    string `gorm:"column:owner"`
 	Title    string `gorm:"column:title"`
 }
