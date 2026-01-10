@@ -38,7 +38,7 @@ func (r *ChatServiceHandler) ReadChat(c *gin.Context) {
 		return
 	}
 
-	// 라인키 생성
+	// 라인키 생성 -> 사실상 response의 sendDate 값을 구하기 용도
 	_, readDate := r.svc.LineKey.GetLineKey(ctx)
 
 	input := adapter.MakeReadChatInput(req.RoomKey, req.RoomType, userHash, readDate)
@@ -47,6 +47,8 @@ func (r *ChatServiceHandler) ReadChat(c *gin.Context) {
 	if err != nil {
 		if err == consts.ErrPublishToMessageBrokerError {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F001, consts.MESSAGE_F001_MSG)
+		} else if err == consts.ErrDBResultNotUpdate {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F013, consts.MESSAGE_F013_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}

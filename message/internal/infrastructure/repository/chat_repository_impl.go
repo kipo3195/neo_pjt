@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"log"
+	"message/internal/consts"
 	"message/internal/domain/chat/entity"
 	"message/internal/domain/chat/repository"
 	"message/internal/infrastructure/model"
@@ -79,24 +80,28 @@ func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity
 
 func (r *chatRepository) ReadChatLine(ctx context.Context, readChatEntity entity.ReadChatEntity) error {
 
-	err := r.db.WithContext(ctx).Model(&model.ChatRoomMember{}).
+	result := r.db.WithContext(ctx).Model(&model.ChatRoomMember{}).
 		Where("room_key = ?", readChatEntity.RoomKey).
 		Where("member_hash = ?", readChatEntity.UserHash).
 		Where("member_state = ?", "1").
+		Where("member_unread_count > 0"). // 거의 동시 타이밍에 읽음처리 됬을때 뒤에 들어온 요청을 무시(notifcator로 전달 X) 하기 위함.
 		Updates(map[string]interface{}{
 			// SQL의 컬럼 연산을 위해 gorm.Expr 사용
 			"member_unread_count":      0,
 			"member_unread_count_date": readChatEntity.ReadDate,
 			"member_read_date":         readChatEntity.ReadDate,
-		}).Error
+		})
 
-	if err != nil {
-		log.Println("[ReadChatLine] - member unread update failed :", err)
-		return err
-	} else {
-
-		log.Println("[ReadChatLine] - DB process Success userHash: ", readChatEntity.UserHash)
-		return nil
+	if result.Error != nil {
+		log.Printf("[ReadChatLine] - %s member unread update failed :%s\n", readChatEntity.UserHash, result.Error)
+		return result.Error
 	}
 
+	if result.RowsAffected == 0 {
+		log.Printf("[ReadChatLine] - %s member unread count not update \n", readChatEntity.UserHash)
+		return consts.ErrDBResultNotUpdate
+	}
+
+	log.Println("[ReadChatLine] - DB process Success userHash: ", readChatEntity.UserHash)
+	return nil
 }

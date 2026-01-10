@@ -49,4 +49,8 @@ const (
 	// 방 update date 조회 타입 에러
 	MESSAGE_F012     = "MESSAGE_F012"
 	MESSAGE_F012_MSG = "Chat room update date request type invalid."
+
+	// 방 read count 갱신 실패 (모두 읽은 상황)
+	MESSAGE_F013     = "MESSAGE_F013"
+	MESSAGE_F013_MSG = "Already read chat all."
 )
