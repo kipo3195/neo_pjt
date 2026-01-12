@@ -90,9 +90,6 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 		ChatCountData: chatCountData,
 	}
 
-	// TODO 사용자별 buffer 처리 로직 추가 필요.
-	// 2~3개 이상 쌓였거나 대기시간이 0.5초 이상이거나 읽음처리가 와서 0으로 변경해야 하는 경우에 발송
-
 	if chatCountEntity.EventType == consts.READ {
 		// 읽음처리 - 나에게 발송
 		r.chatDebouncer.AddChatCount(chatCountEntity.SendUserHash, chatCountMessageEntity)
