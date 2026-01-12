@@ -6,7 +6,7 @@ import (
 	"notificator/internal/application/usecase/input"
 	"notificator/internal/application/usecase/output"
 	"notificator/internal/consts"
-	"notificator/internal/core/port"
+	"notificator/internal/domain/port"
 
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/repository"
@@ -21,6 +21,7 @@ type chatUsecase struct {
 	repo            repository.ChatRepository
 	chatRoomStorage storage.ChatRoomStorage
 	messageSender   port.MessageSender
+	chatDebouncer   port.ChatCountDebouncer
 }
 
 type ChatUsecase interface {
@@ -28,11 +29,12 @@ type ChatUsecase interface {
 	RecvChatCountMessage(ctx context.Context, in input.ChatCountMessageInput)
 }
 
-func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.ChatRepository, messageSender port.MessageSender) ChatUsecase {
+func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.ChatRepository, messageSender port.MessageSender, chatDebouncer port.ChatCountDebouncer) ChatUsecase {
 	return &chatUsecase{
 		chatRoomStorage: chatRoomStorage,
 		repo:            repo,
 		messageSender:   messageSender,
+		chatDebouncer:   chatDebouncer,
 	}
 }
 
@@ -76,31 +78,33 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 	chatCountEntity := entity.MakeChatCountEntity(in.RoomKey, in.RoomType, in.EventType, in.SendUserHash, in.Delta)
 	log.Println("[RecvChatUnreadMessage] chatCountEntity: ", chatCountEntity)
 
-	chatCountOutput := output.ChatCountDataOutput{
+	chatCountData := entity.ChatCountDataEntity{
 		RoomKey:  chatCountEntity.RoomKey,
 		RoomType: chatCountEntity.RoomType,
 		Delta:    chatCountEntity.Delta,
 	}
 
-	out := output.ChatCountMessageOutput{
+	chatCountMessageEntity := &entity.ChatCountMessageEntity{
 		Type:          consts.CHATUNREAD,
 		EventType:     in.EventType,
-		ChatCountData: chatCountOutput,
+		ChatCountData: chatCountData,
 	}
 
 	// TODO 사용자별 buffer 처리 로직 추가 필요.
 	// 2~3개 이상 쌓였거나 대기시간이 0.5초 이상이거나 읽음처리가 와서 0으로 변경해야 하는 경우에 발송
 
-	if chatCountEntity.EventType == "read" {
+	if chatCountEntity.EventType == consts.READ {
 		// 읽음처리 - 나에게 발송
-		r.messageSender.SendToClient(chatCountEntity.SendUserHash, out)
-	} else if chatCountEntity.EventType == "unread" {
+		//r.messageSender.SendToClient(chatCountEntity.SendUserHash, chatCountMessageEntity)
+		r.chatDebouncer.AddChatCount(chatCountEntity.SendUserHash, chatCountMessageEntity)
+	} else if chatCountEntity.EventType == consts.UNREAD {
 		// 신규 라인 발생 - 발신자를 제외하고 보냄.
 		RecvUserHash := r.chatRoomStorage.GetChatRoomMember(in.RoomKey)
 		for _, recvUser := range RecvUserHash {
-			if recvUser != chatCountEntity.SendUserHash {
-				r.messageSender.SendToClient(recvUser, out)
-			}
+			//if recvUser != chatCountEntity.SendUserHash {
+			//r.messageSender.SendToClient(recvUser, chatCountMessageEntity)
+			r.chatDebouncer.AddChatCount(recvUser, chatCountMessageEntity)
+			//}
 		}
 	}
 

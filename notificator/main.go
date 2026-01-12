@@ -6,6 +6,7 @@ import (
 	natsBrocker "notificator/internal/delivery/adapter/nats"
 	router "notificator/internal/delivery/router"
 	"notificator/internal/di"
+	"notificator/internal/infrastructure/buffer"
 	"notificator/internal/infrastructure/config"
 	"notificator/internal/infrastructure/migration"
 	"notificator/internal/infrastructure/sender"
@@ -47,6 +48,9 @@ func InitServer() *http.Server {
 	// ---- Websocket sender Init
 	messageSender := sender.NewMessageSender(sendConnectionStorage)
 
+	// ---- debouncer Init -----
+	chatDebouncer := buffer.NewChatCountDebouncer(messageSender)
+
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
@@ -54,7 +58,7 @@ func InitServer() *http.Server {
 
 	// ---- Domain Handler Init -----
 	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage, sendConnectionStorage, conn, messageSender)
-	chatModule := di.InitChatModule(db, chatRoomStorage, messageSender)
+	chatModule := di.InitChatModule(db, chatRoomStorage, messageSender, chatDebouncer)
 	noteModule := di.InitNoteModule(db)
 	loginModule := di.InitLoginModule(db)
 	socketSendModule := di.InitSocketSendModule(sendConnectionStorage)

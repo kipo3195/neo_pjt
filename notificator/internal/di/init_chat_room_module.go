@@ -2,7 +2,7 @@ package di
 
 import (
 	"notificator/internal/application/usecase"
-	"notificator/internal/core/port"
+	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/repository"
 	"notificator/internal/infrastructure/storage"
 

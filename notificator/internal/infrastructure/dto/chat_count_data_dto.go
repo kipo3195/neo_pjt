@@ -1,6 +1,6 @@
-package output
+package dto
 
-type ChatCountDataOutput struct {
+type ChatCountDataDto struct {
 	RoomKey  string `json:"roomKey"`
 	RoomType string `json:"roomType"`
 	Delta    int    `json:"delta"`

@@ -19,5 +19,8 @@ const (
 	PONG       = "pong"
 	CHATROOM   = "chatRoom"
 
+	READ   = "read"
+	UNREAD = "unread"
+
 	CREATE = "C"
 )

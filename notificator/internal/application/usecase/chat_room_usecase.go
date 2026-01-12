@@ -6,9 +6,9 @@ import (
 	"notificator/internal/application/usecase/input"
 	"notificator/internal/application/usecase/output"
 	"notificator/internal/consts"
-	"notificator/internal/core/port"
 	"notificator/internal/domain/chatRoom/entity"
 	"notificator/internal/domain/chatRoom/repository"
+	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/storage"
 	"notificator/internal/util"
 

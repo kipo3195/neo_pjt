@@ -6,7 +6,7 @@ import (
 	"log"
 	"notificator/internal/application/usecase"
 	"notificator/internal/application/usecase/input"
-	"notificator/internal/core/port"
+	"notificator/internal/domain/port"
 	"time"
 
 	"github.com/nats-io/nats.go"

@@ -2,7 +2,7 @@ package sender
 
 import (
 	"notificator/internal/consts"
-	"notificator/internal/core/port"
+	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/storage"
 )
 
