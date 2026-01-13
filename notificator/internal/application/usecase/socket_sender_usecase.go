@@ -36,7 +36,7 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 	var writeWait = time.Duration(websocketConfig.WriteWait) * time.Second   // 쓰기 타임아웃
 
 	// 쓰기용 채널 생성 (Write Channel)
-	Ch := make(chan interface{})
+	Ch := make(chan interface{}, 100) // 초당 3~4건의 데이터를 받는다고 가정했을때 25~30초 분량의 트래픽을 받아 낼 수 있음.
 	entity := entity.MakeSendConnectionEntity(userHash, conn, Ch)
 	r.sendConnectionStorage.PutConnection(userHash, entity)
 
@@ -45,9 +45,9 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 
 	// 함수 종료시 티커 중지 + 세션 삭제 + 소켓 종료
 	defer func() {
-		ticker.Stop() // 티커 중지
-		r.sendConnectionStorage.RemoveConnection(userHash)
-		conn.Close() // 소켓 연결 종료
+		ticker.Stop()                                      // 티커 중지
+		r.sendConnectionStorage.RemoveConnection(userHash) // 메모리 누수 및 블로킹 방지를 위한 로직 -> 이 userHash로 메시지를 보내려 해도 저장소에 없으므로...
+		conn.Close()                                       // 소켓 연결 종료
 	}()
 
 	log.Printf("[SaveConnection] Start for user: %s", userHash)
