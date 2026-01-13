@@ -95,8 +95,8 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 		r.chatDebouncer.AddChatCount(chatCountEntity.SendUserHash, chatCountMessageEntity)
 	} else if chatCountEntity.EventType == consts.UNREAD {
 		// 신규 라인 발생 - 발신자를 제외하고 보냄.
-		RecvUserHash := r.chatRoomStorage.GetChatRoomMember(in.RoomKey)
-		for _, recvUser := range RecvUserHash {
+		recvUserHash := r.chatRoomStorage.GetChatRoomMember(in.RoomKey)
+		for _, recvUser := range recvUserHash {
 			if recvUser != chatCountEntity.SendUserHash {
 				r.chatDebouncer.AddChatCount(recvUser, chatCountMessageEntity)
 			}
