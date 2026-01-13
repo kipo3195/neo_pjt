@@ -308,3 +308,47 @@ func (r *ChatRoomServiceHandler) GetChatRoomUpdateDate(c *gin.Context) {
 	response.SendSuccess(c, res)
 
 }
+
+func (r *ChatRoomServiceHandler) GetChatRoomMemberReadDate(c *gin.Context) {
+
+	ctx := c.Request.Context()
+
+	reqUserHash := util.GetUserHashByAccessToken(c)
+	if reqUserHash == "" {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+		return
+	}
+
+	var req chatRoom.GetChatRoomMemberReadDateRequest
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	input := adapter.MakeGetChatRoomMemberReadDateInput(req.RoomKey, req.RoomType, reqUserHash)
+	out, err := r.svc.ChatRoom.GetChatRoomMemberReadDate(ctx, input)
+
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
+
+	memberReadDate := make([]chatRoom.ChatRoomMemberReadDateDto, 0)
+
+	for _, o := range out {
+
+		temp := chatRoom.ChatRoomMemberReadDateDto{
+			MemberHash: o.MemberHash,
+			ReadDate:   o.ReadDate,
+		}
+
+		memberReadDate = append(memberReadDate, temp)
+	}
+
+	res := chatRoom.GetChatRoomMemberReadDateResponse{
+		MemberReadDate: memberReadDate,
+	}
+
+	response.SendSuccess(c, res)
+
+}

@@ -10,4 +10,5 @@ type ChatRoomRepository interface {
 	GetChatRoomDetail(ctx context.Context, entity entity.GetChatRoomDetailEntity) ([]entity.ChatRoomDetailEntity, error)
 	GetChatRoomList(ctx context.Context, entity entity.GetChatRoomListEntity) ([]entity.ChatRoomDetailEntity, error)
 	GetChatRoomUpdateDate(ctx context.Context, entity entity.GetChatRoomUpdateDateEntity) ([]entity.ChatRoomUpdateDateEntity, error)
+	GetChatRoomMemberReadDate(ctx context.Context, entity entity.GetChatRoomMemberReadDateEntity) ([]entity.ChatRoomMemberReadDateEntity, error)
 }

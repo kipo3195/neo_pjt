@@ -27,6 +27,7 @@ type ChatRoomUsecase interface {
 	GetChatRoomDetail(ctx context.Context, input input.GetChatRoomDetailInput) ([]output.GetChatRoomDetailOutput, error)
 	GetChatRoomList(ctx context.Context, input input.GetChatRoomListInput) ([]output.GetChatRoomListOutput, error)
 	GetChatRoomUpdateDate(ctx context.Context, input input.GetChatRoomUpdateInput) ([]output.GetChatRoomUpdateDateOutput, error)
+	GetChatRoomMemberReadDate(ctx context.Context, input input.GetChatRoomMemberReadDateInput) ([]output.GetChatRoomMemberReadDateOutput, error)
 }
 
 func NewChatRoomUsecase(repository repository.ChatRoomRepository, connector *nats.Conn, storage storage.ChatRoomStorage) ChatRoomUsecase {
@@ -273,6 +274,30 @@ func (r *chatRoomUsecase) GetChatRoomUpdateDate(ctx context.Context, input input
 			Unread:   rd.Unread,
 			Owner:    rd.Owner,
 			Title:    rd.Title,
+		}
+
+		result = append(result, temp)
+	}
+
+	return result, nil
+}
+
+func (r *chatRoomUsecase) GetChatRoomMemberReadDate(ctx context.Context, input input.GetChatRoomMemberReadDateInput) ([]output.GetChatRoomMemberReadDateOutput, error) {
+
+	en := entity.MakeGetChatRoomMemberReadDateEntity(input.RoomKey, input.RoomType, input.UserHash)
+	memberReadDate, err := r.repository.GetChatRoomMemberReadDate(ctx, en)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]output.GetChatRoomMemberReadDateOutput, 0)
+
+	for _, m := range memberReadDate {
+
+		temp := output.GetChatRoomMemberReadDateOutput{
+			MemberHash: m.MemberHash,
+			ReadDate:   m.ReadDate,
 		}
 
 		result = append(result, temp)

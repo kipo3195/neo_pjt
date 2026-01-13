@@ -291,3 +291,25 @@ func (r *chatRoomRepositoryImpl) GetChatRoomUpdateDate(ctx context.Context, en e
 
 	return result, nil
 }
+
+func (r *chatRoomRepositoryImpl) GetChatRoomMemberReadDate(ctx context.Context, en entity.GetChatRoomMemberReadDateEntity) ([]entity.ChatRoomMemberReadDateEntity, error) {
+
+	var result []entity.ChatRoomMemberReadDateEntity
+
+	err := r.db.Raw(
+		`select 
+			member.member_hash, case when member.member_read_date is null or member.member_read_date = '' then 'N' else  member.member_read_date end as read_date
+		from chat_room_member as member 
+		join service_users as su 
+			on member.member_hash = su.user_hash and member.member_state = '1' and su.use_yn = 'Y'
+		where member.room_key = ?`,
+		en.RoomKey,
+	).Scan(&result).Error
+
+	if err != nil {
+		log.Println("[GetChatRoomMemberReadDate] DB error :", err)
+		return nil, err
+	}
+
+	return result, nil
+}

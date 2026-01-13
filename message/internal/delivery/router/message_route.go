@@ -94,5 +94,6 @@ func (r *messageRouter) SetChatRoomServiceRoutes(handler *handler.ChatRoomServic
 	client.POST("", handler.CreateChatRoom)
 	client.POST("/detail", handler.GetChatRoomDetail)
 	client.POST("/list", handler.GetChatRoomList)
-	client.POST("update-date", handler.GetChatRoomUpdateDate)
+	client.POST("/update-date", handler.GetChatRoomUpdateDate)
+	client.POST("/member/read-date", handler.GetChatRoomMemberReadDate)
 }
