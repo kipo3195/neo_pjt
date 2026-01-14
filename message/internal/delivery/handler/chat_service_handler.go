@@ -84,6 +84,10 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	// 라인키 생성
 	lineKey, sendDate := r.svc.LineKey.GetLineKey(ctx)
 
+	if req.TestSender != "" {
+		sendUserHash = req.TestSender
+	}
+
 	// Message Broker에 publish
 	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine)
 	err := r.svc.Chat.SendChat(ctx, input)

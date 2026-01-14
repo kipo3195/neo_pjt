@@ -5,4 +5,5 @@ type SendChatRequest struct {
 	ChatLine    ChatLineData `json:"chatLineData"`
 	ChatRoom    ChatRoomData `json:"chatRoomData"`
 	ChatSession string       `json:"chatSession"`
+	TestSender  string       `json:"testSender"`
 }
