@@ -2,8 +2,10 @@ package workerPool
 
 import (
 	"log"
+	"message/internal/consts"
 	"message/internal/domain/chat/job"
 	"message/internal/domain/chat/repository"
+	"message/internal/util"
 	"sync"
 )
 
@@ -28,7 +30,7 @@ func NewChatWorkerPool(count int, repository repository.ChatRepository) ChatWork
 	// NewChatWorkerPool 함수가 구조체 포인터(*chatWorkerPool)를 생성한 후,
 	// 이를 인터페이스 타입(ChatWorkerPool)으로 반환하는 방식은 Go에서 Factory 함수를 구현하는 표준적인 방법입니다.
 	return &chatWorkerPool{
-		jobs:       make(chan *job.ChatLineJob, count),
+		jobs:       make(chan *job.ChatLineJob, 100),
 		count:      count,
 		repository: repository,
 	}
@@ -36,16 +38,30 @@ func NewChatWorkerPool(count int, repository repository.ChatRepository) ChatWork
 
 func (p *chatWorkerPool) AddTask(j *job.ChatLineJob) {
 
-	p.mu.Lock()         // 잠금 시작
+	p.mu.Lock() // 잠금 시작
+	closed := p.isClosed
 	defer p.mu.Unlock() // 함수가 끝날 때 잠금 해제
 
-	if p.isClosed {
+	if closed {
 		log.Println("ChatWorkerPool Stopped.")
+		if j.Cancel != nil {
+			j.Cancel()
+		}
 		return
 	}
 
 	// 실제 jobs 채널에 job을 넣는 로직
 	p.jobs <- j
+
+	// Non-blocking 고려 시..
+	// select {
+	// case p.jobs <- j:
+	//     // 성공
+	// default:
+	//     log.Println("Worker pool channel is full! Job dropped.")
+	//     if j.Cancel != nil { j.Cancel() }
+	//     // 필요 시 여기서 에러 응답이나 재시도 로직
+	// }
 }
 
 func (p *chatWorkerPool) Init() {
@@ -85,6 +101,39 @@ func (p *chatWorkerPool) worker(id int) {
 	defer p.wg.Done()
 	for job := range p.jobs {
 		log.Println("data 수신 worker id ", id)
-		job.Execute(p.repository) // DB 처리 로직 수행 호출
+		p.Execute(job) // DB 처리 로직 수행 호출
 	}
+}
+
+// Execute 메서드는 워커 풀이 주입해준 Repository를 사용하여 작업을 수행합니다.
+// LineKey는 Job 자체에 이미 포함되어 있으므로 인자로 받지 않습니다.
+func (p *chatWorkerPool) Execute(job *job.ChatLineJob) error {
+	if job.Cancel != nil {
+		defer job.Cancel() // 작업 완료 후 반드시 리소스 해제
+	}
+
+	// 실제 DB 저장 로직 (가장 무거운 작업)을 여기서 호출합니다.
+	// 예시: LineKey를 사용하여 데이터를 찾거나 저장합니다.
+	err := p.repository.SaveChatLine(job.Ctx, job.SendChatEntity)
+	if err != nil {
+		return err
+	}
+
+	log.Println("[SendChatUnread] send entity : ", job.ChatCountEventEntity)
+
+	data, err := util.EntityMarshal(job.ChatCountEventEntity)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	/* 미확인 건수 발송 Message Broker */
+	err = job.Connector.Publish("chat.count.broadcast", data)
+	if err != nil {
+		log.Println("NATS publish failed:", err)
+		return consts.ErrPublishToMessageBrokerError
+		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
+	}
+
+	return nil
 }

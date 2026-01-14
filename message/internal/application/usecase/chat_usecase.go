@@ -23,7 +23,7 @@ type chatUsecase struct {
 
 type ChatUsecase interface {
 	SendChat(ctx context.Context, in input.SendChatInput) error
-	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity, workerPool workerPool.ChatWorkerPool) error
+	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity) error
 	ReadChat(ctx context.Context, in input.ReadChatInput) error
 }
 
@@ -50,14 +50,14 @@ func (u *chatUsecase) ReadChat(ctx context.Context, in input.ReadChatInput) erro
 
 	data, err := util.EntityMarshal(chatCountEventEntity)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	/* 미확인 건수 발송 Message Broker */
 	err = u.connector.Publish("chat.count.broadcast", data)
 	if err != nil {
-		log.Fatal("NATS publish failed:", err)
+		log.Println("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError
 		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
 	}
@@ -90,23 +90,23 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	/* 채팅 발송 Message Broker */
 	err = u.connector.Publish("chat.broadcast", data)
 	if err != nil {
-		log.Fatal("NATS publish failed:", err)
+		log.Println("NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError
 
 		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
 	}
 
 	/* DB 저장 Task */
-	err = u.addTaskChatLineJob(chatEntity, chatCountEventEntity, u.workerPool)
+	err = u.addTaskChatLineJob(chatEntity, chatCountEventEntity)
 	return nil
 }
 
-func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity, workerPool workerPool.ChatWorkerPool) error {
+func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity) error {
 
 	// Context 전달
 	// ※ http의 context 전달시 job 에서 repository 호출하는 DB 처리 프로세스에서 context canceled 발생.
 	// 백그라운드 처리이므로 실제 http 요청에 대한 context가 아니기 때문
-	// 그러므로 새로운 context 생성하여 전달하고 job의 호출이 끝난 시점에 cancel 호출로 수명 주기 관리
+	// 그러므로 새로운 context 생성하여 전달하고 job의 호출이 끝난 시점에 cancel 호출로 수명 주기 관리 = AddTask 내부에서 defer cancle 필수!
 	// 이후 다른 비동기 처리가 추가될때 context 를 밖에서 생성하고 각각의 task에 주입하므로써 하나의 context로 모든 task를 아우를수 있는지 점검해보기
 	jobCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	job := &job.ChatLineJob{
@@ -117,6 +117,6 @@ func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatCount
 		Connector:            u.connector,
 	}
 
-	workerPool.AddTask(job)
+	u.workerPool.AddTask(job)
 	return nil
 }

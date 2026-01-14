@@ -2,11 +2,7 @@ package job
 
 import (
 	"context"
-	"log"
-	"message/internal/consts"
 	"message/internal/domain/chat/entity"
-	"message/internal/domain/chat/repository"
-	"message/internal/util"
 
 	"github.com/nats-io/nats.go"
 )
@@ -23,35 +19,4 @@ type ChatLineJob struct {
 	Ctx       context.Context
 	Cancel    context.CancelFunc // 👈 Cancel 함수를 Job에 포함
 	Connector *nats.Conn
-}
-
-// Execute 메서드는 워커 풀이 주입해준 Repository를 사용하여 작업을 수행합니다.
-// LineKey는 Job 자체에 이미 포함되어 있으므로 인자로 받지 않습니다.
-func (j *ChatLineJob) Execute(repository repository.ChatRepository) error {
-	defer j.Cancel()
-
-	// 실제 DB 저장 로직 (가장 무거운 작업)을 여기서 호출합니다.
-	// 예시: LineKey를 사용하여 데이터를 찾거나 저장합니다.
-	err := repository.SaveChatLine(j.Ctx, j.SendChatEntity)
-	if err != nil {
-		return err
-	}
-
-	log.Println("[SendChatUnread] send entity : ", j.ChatCountEventEntity)
-
-	data, err := util.EntityMarshal(j.ChatCountEventEntity)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	/* 미확인 건수 발송 Message Broker */
-	err = j.Connector.Publish("chat.count.broadcast", data)
-	if err != nil {
-		log.Fatal("NATS publish failed:", err)
-		return consts.ErrPublishToMessageBrokerError
-		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
-	}
-
-	return nil
 }
