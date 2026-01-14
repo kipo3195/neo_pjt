@@ -11,6 +11,7 @@ import (
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/repository"
 	"notificator/internal/infrastructure/storage"
+	"notificator/internal/infrastructure/workerPool"
 )
 
 const (
@@ -21,7 +22,7 @@ type chatUsecase struct {
 	repo            repository.ChatRepository
 	chatRoomStorage storage.ChatRoomStorage
 	messageSender   port.MessageSender
-	chatDebouncer   port.ChatCountDebouncer
+	workerPool      workerPool.ChatWorkerPool
 }
 
 type ChatUsecase interface {
@@ -29,12 +30,12 @@ type ChatUsecase interface {
 	RecvChatCountMessage(ctx context.Context, in input.ChatCountMessageInput)
 }
 
-func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.ChatRepository, messageSender port.MessageSender, chatDebouncer port.ChatCountDebouncer) ChatUsecase {
+func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.ChatRepository, messageSender port.MessageSender, workerPool workerPool.ChatWorkerPool) ChatUsecase {
 	return &chatUsecase{
 		chatRoomStorage: chatRoomStorage,
 		repo:            repo,
 		messageSender:   messageSender,
-		chatDebouncer:   chatDebouncer,
+		workerPool:      workerPool,
 	}
 }
 
@@ -84,7 +85,7 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 		Delta:    chatCountEntity.Delta,
 	}
 
-	chatCountMessageEntity := &entity.ChatCountMessageEntity{
+	chatCountMessageEntity := entity.ChatCountMessageEntity{
 		Type:          consts.CHATUNREAD,
 		EventType:     in.EventType,
 		ChatCountData: chatCountData,
@@ -92,14 +93,14 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 
 	if chatCountEntity.EventType == consts.READ {
 		// 읽음처리 - 나에게 발송
-		r.chatDebouncer.AddChatCount(chatCountEntity.SendUserHash, chatCountMessageEntity)
+		r.workerPool.AddTask(in.SendUserHash, chatCountMessageEntity)
 	} else if chatCountEntity.EventType == consts.UNREAD {
 		// 신규 라인 발생 - 발신자를 제외하고 보냄.
 		recvUserHash := r.chatRoomStorage.GetChatRoomMember(in.RoomKey)
 		for _, recvUser := range recvUserHash {
-			if recvUser != chatCountEntity.SendUserHash {
-				r.chatDebouncer.AddChatCount(recvUser, chatCountMessageEntity)
-			}
+			//if recvUser != chatCountEntity.SendUserHash {
+			r.workerPool.AddTask(recvUser, chatCountMessageEntity)
+			//}
 		}
 	}
 

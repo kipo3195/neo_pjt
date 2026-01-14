@@ -4,7 +4,9 @@ import (
 	"notificator/internal/application/usecase"
 	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/repository"
+
 	"notificator/internal/infrastructure/storage"
+	"notificator/internal/infrastructure/workerPool"
 
 	"gorm.io/gorm"
 )
@@ -13,10 +15,13 @@ type ChatModule struct {
 	Usecase usecase.ChatUsecase
 }
 
-func InitChatModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, messageSender port.MessageSender, chatDebouncer port.ChatCountDebouncer) *ChatModule {
+func InitChatModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, messageSender port.MessageSender) *ChatModule {
 
 	repo := repository.NewChatRepository(db)
-	usecase := usecase.NewChatUsecase(chatRoomStorage, repo, messageSender, chatDebouncer)
+
+	workerPool := workerPool.NewChatWorkerPool(10, messageSender)
+	workerPool.Init()
+	usecase := usecase.NewChatUsecase(chatRoomStorage, repo, messageSender, workerPool)
 
 	return &ChatModule{
 		Usecase: usecase,
