@@ -145,7 +145,7 @@ func (p *chatWorkerPool) handleMessage(ch chan *job.ChatCountJob, j *job.ChatCou
 		}
 		pendingMap[j.UserHash] = item
 
-		item.Timer = time.AfterFunc(20000*time.Millisecond, func() {
+		item.Timer = time.AfterFunc(500*time.Millisecond, func() {
 			// 중요: 워커 자신의 채널로 Flush 작업을 다시 던집니다.
 			ch <- &job.ChatCountJob{
 				UserHash: j.UserHash,
