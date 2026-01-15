@@ -87,14 +87,14 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 
 	chatCountMessageEntity := entity.ChatCountMessageEntity{
 		Type:          consts.CHATUNREAD,
-		EventType:     in.EventType,
+		EventType:     chatCountEntity.EventType,
 		ChatCountData: chatCountData,
 	}
 
-	if chatCountEntity.EventType == consts.READ {
+	if chatCountMessageEntity.EventType == consts.READ {
 		// 읽음처리 - 나에게 발송
 		r.workerPool.AddTask(in.SendUserHash, chatCountMessageEntity)
-	} else if chatCountEntity.EventType == consts.UNREAD {
+	} else if chatCountMessageEntity.EventType == consts.UNREAD {
 		// 신규 라인 발생 - 발신자를 제외하고 보냄.
 		recvUserHash := r.chatRoomStorage.GetChatRoomMember(in.RoomKey)
 		for _, recvUser := range recvUserHash {

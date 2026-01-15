@@ -134,6 +134,7 @@ func (p *chatWorkerPool) handleMessage(ch chan *job.ChatCountJob, j *job.ChatCou
 
 		// 누적된 delta 무시하고 read 이벤트 즉시 전송 (보통 read는 delta가 0이거나 특정 고정값임)
 		p.messageSender.SendToClient(j.UserHash, chatCountMessage)
+		return
 	}
 
 	if !exists {
