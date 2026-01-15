@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	natsBrocker "notificator/internal/delivery/adapter/nats"
@@ -10,20 +11,53 @@ import (
 	"notificator/internal/infrastructure/migration"
 	"notificator/internal/infrastructure/sender"
 	"notificator/internal/infrastructure/storage"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
-	server := InitServer()
-	if server != nil {
+	// 1. 서버 및 모듈 초기화
+	server, modules := InitServer()
+
+	// 2. 서버 실행 (비동기)
+	go func() {
 		log.Println("Notificator service is running on :8082")
-		log.Fatal(server.ListenAndServe())
-	} else {
-		log.Println("[ERROR] Notificator service is not available")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// 3. 시스템 시그널 대기 (SIGINT, SIGTERM)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutdown Notificator service ...")
+
+	// 4. Graceful Shutdown 실행
+	// HTTP 서버 먼저 종료 (새로운 요청 차단)
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Notificator service shutdown:", err)
 	}
 
+	// 5. 비동기 워커 풀 종료 (남은 작업 처리)
+	modules.ChatModule.Cleanup()
+	// 필요하다면 다른 모듈의 Cleanup도 호출
+	// modules.NoteModule.Cleanup()
+
+	log.Println("Notificator service exiting")
 }
 
-func InitServer() *http.Server {
+// 모듈들을 묶어서 반환하기 위한 구조체
+type AppModules struct {
+	ChatModule *di.ChatModule
+	// 다른 모듈들도 Cleanup이 필요하면 여기에 추가
+}
+
+func InitServer() (*http.Server, *AppModules) {
 
 	// ---- Server Config Init -----
 	sfg := config.NewServerConfig()
@@ -77,8 +111,11 @@ func InitServer() *http.Server {
 	chatRoomSub.AddSubscribe("chat.room.broadcast")
 	chatRoomSub.AddQueueSubscribe("create.chat.room")
 
-	return &http.Server{
+	server := &http.Server{
 		Addr:    ":8082",
 		Handler: router.R,
+	}
+	return server, &AppModules{
+		ChatModule: chatModule,
 	}
 }

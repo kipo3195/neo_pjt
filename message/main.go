@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"message/internal/delivery/router"
 	"message/internal/di"
@@ -8,15 +9,54 @@ import (
 	"message/internal/infrastructure/migration"
 	"message/internal/infrastructure/storage"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
-	log.Println("User service is running on :8084")
-	server := InitServer()
-	log.Fatal(server.ListenAndServe())
+
+	// 1. 서버 및 모듈 초기화
+	server, modules := InitServer()
+
+	// 2. 서버 실행 (비동기)
+	go func() {
+		log.Println("Message service is running on :8083")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// 3. 시스템 시그널 대기 (SIGINT, SIGTERM)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutdown Message service ...")
+
+	// 4. Graceful Shutdown 실행
+	// HTTP 서버 먼저 종료 (새로운 요청 차단)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Message service shutdown:", err)
+	}
+
+	// 5. 비동기 워커 풀 종료 (남은 작업 처리)
+	modules.ChatModule.Cleanup()
+	// 필요하다면 다른 모듈의 Cleanup도 호출
+	// modules.NoteModule.Cleanup()
+
+	log.Println("Message service exiting")
 }
 
-func InitServer() *http.Server {
+// 모듈들을 묶어서 반환하기 위한 구조체
+type AppModules struct {
+	ChatModule *di.ChatModule
+	// 다른 모듈들도 Cleanup이 필요하면 여기에 추가
+}
+
+func InitServer() (*http.Server, *AppModules) {
 
 	// ---- Server Config Init -----
 	sfg := config.NewServerConfig()
@@ -76,8 +116,12 @@ func InitServer() *http.Server {
 	chatRoomServiceModule := di.InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
 	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
 
-	return &http.Server{
+	server := &http.Server{
 		Addr:    ":8083",
 		Handler: router.GetEngine(),
+	}
+
+	return server, &AppModules{
+		ChatModule: chatModule,
 	}
 }

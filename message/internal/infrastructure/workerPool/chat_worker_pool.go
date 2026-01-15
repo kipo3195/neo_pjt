@@ -1,12 +1,14 @@
 package workerPool
 
 import (
+	"context"
 	"log"
 	"message/internal/consts"
 	"message/internal/domain/chat/job"
 	"message/internal/domain/chat/repository"
 	"message/internal/util"
 	"sync"
+	"time"
 )
 
 type chatWorkerPool struct {
@@ -88,10 +90,34 @@ func (p *chatWorkerPool) Stop() {
 	close(p.jobs) // for job := range p.jobs 루프를 종료
 	p.mu.Unlock() // 잠금 해제 (이제부터 AddTask는 위에서 차단됨)
 
-	log.Println("ChatWorkerPool Stopped. All jobs channel closed.")
+	// close(ch)나 p.wg.Wait()을 Lock() 내부에 넣게 되면,
+	// 워커들이 종료되면서 혹시라도 뮤텍스에 접근해야 하는 상황이 생길 때
+	// 데드락이 발생할 위험이 있습니다
 
-	// NOTE: 실제 운영 환경에서는 모든 워커 고루틴이 종료될 때까지 기다리는 (예: sync.WaitGroup 사용) 로직이 추가되어야 합니다.
-	p.wg.Wait()
+	// 타임아웃 컨텍스트 생성
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// WaitGroup 완료를 감지할 채널
+	done := make(chan struct{})
+	go func() {
+		p.wg.Wait() // 워커 p.wg.Add(1) 더해지는 수 만큼 defer p.wg.Done()가 실행될때까지 블로킹
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// 모든 고루틴이 종료되어 close(done)이 실행됨.
+		log.Println("[chatWorkerPool] All workers stopped gracefully.")
+	case <-ctx.Done():
+		// 모든 고루틴이 종료되어 close(done)이 실행되기 전에 ctx의 timeout이 발생함.
+		log.Printf("[chatWorkerPool] Stop timed out after %v. Forcing shutdown.", 30)
+		// 여기서 필요하다면 강제 종료를 위한 추가 로직 수행
+	}
+
+	// ctx 타임아웃에 의해 즉시 종료 되길 원한다면 해당 로직 주석처리 필수
+	// p.wg.Wait()
 	log.Println("ChatWorkerPool Stopped. All workers finished safely.")
 }
 

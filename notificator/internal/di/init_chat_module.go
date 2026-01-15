@@ -1,6 +1,7 @@
 package di
 
 import (
+	"log"
 	"notificator/internal/application/usecase"
 	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/repository"
@@ -12,7 +13,8 @@ import (
 )
 
 type ChatModule struct {
-	Usecase usecase.ChatUsecase
+	Usecase    usecase.ChatUsecase
+	workerPool workerPool.ChatWorkerPool
 }
 
 func InitChatModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, messageSender port.MessageSender) *ChatModule {
@@ -24,6 +26,16 @@ func InitChatModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, messag
 	usecase := usecase.NewChatUsecase(chatRoomStorage, repo, messageSender, workerPool)
 
 	return &ChatModule{
-		Usecase: usecase,
+		Usecase:    usecase,
+		workerPool: workerPool,
 	}
+}
+
+func (m *ChatModule) Cleanup() {
+	log.Println("Cleaning up ChatModule...")
+	// WorkerPool 종료 (채널 닫기 및 대기)
+	m.workerPool.Stop()
+
+	// 추가적으로 NATS 연결 종료 등이 필요하다면 여기서 수행
+	// m.Connector.Close()
 }

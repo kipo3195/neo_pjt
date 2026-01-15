@@ -212,6 +212,9 @@ func (p *chatWorkerPool) Stop() {
 	}
 	p.isClosed = true // 1. 새로운 AddTask 호출 차단
 	p.mu.Unlock()
+	// close(ch)나 p.wg.Wait()을 Lock() 내부에 넣게 되면,
+	// 워커들이 종료되면서 혹시라도 뮤텍스에 접근해야 하는 상황이 생길 때
+	// 데드락이 발생할 위험이 있습니다
 
 	log.Println("[chatWorkerPool] Stopping all workers...")
 
@@ -221,7 +224,7 @@ func (p *chatWorkerPool) Stop() {
 	}
 
 	// 2. 타임아웃 컨텍스트 생성
-	ctx, cancel := context.WithTimeout(context.Background(), 30)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	// 3. WaitGroup 완료를 감지할 채널
