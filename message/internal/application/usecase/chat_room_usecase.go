@@ -28,6 +28,7 @@ type ChatRoomUsecase interface {
 	GetChatRoomList(ctx context.Context, input input.GetChatRoomListInput) ([]output.GetChatRoomListOutput, error)
 	GetChatRoomUpdateDate(ctx context.Context, input input.GetChatRoomUpdateInput) ([]output.GetChatRoomUpdateDateOutput, error)
 	GetChatRoomMemberReadDate(ctx context.Context, input input.GetChatRoomMemberReadDateInput) ([]output.GetChatRoomMemberReadDateOutput, error)
+	GetChatRoomMy(ctx context.Context, input input.GetChatRoomMyInput) ([]output.GetChatRoomMyOutput, error)
 }
 
 func NewChatRoomUsecase(repository repository.ChatRoomRepository, connector *nats.Conn, storage storage.ChatRoomStorage) ChatRoomUsecase {
@@ -298,6 +299,32 @@ func (r *chatRoomUsecase) GetChatRoomMemberReadDate(ctx context.Context, input i
 		temp := output.GetChatRoomMemberReadDateOutput{
 			MemberHash: m.MemberHash,
 			ReadDate:   m.ReadDate,
+		}
+
+		result = append(result, temp)
+	}
+
+	return result, nil
+}
+
+func (r *chatRoomUsecase) GetChatRoomMy(ctx context.Context, input input.GetChatRoomMyInput) ([]output.GetChatRoomMyOutput, error) {
+
+	entity := entity.MakeGetChatRoomMyEntity(input.ReqUserHash, input.WorksCode)
+	myChatRoomInfo, err := r.repository.GetChatRoomMy(ctx, entity)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]output.GetChatRoomMyOutput, 0)
+
+	for _, m := range myChatRoomInfo {
+
+		temp := output.GetChatRoomMyOutput{
+			RoomKey:     m.RoomKey,
+			UnreadCount: m.UnreadCount,
+			ReadDate:    m.ReadDate,
+			RoomType:    m.RoomType, // roomType을 구분해서 줘야되나?
 		}
 
 		result = append(result, temp)

@@ -352,3 +352,48 @@ func (r *ChatRoomServiceHandler) GetChatRoomMemberReadDate(c *gin.Context) {
 	response.SendSuccess(c, res)
 
 }
+
+func (r *ChatRoomServiceHandler) GetChatRoomMy(c *gin.Context) {
+
+	ctx := c.Request.Context()
+
+	reqUserHash := util.GetUserHashByAccessToken(c)
+	if reqUserHash == "" {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+		return
+	}
+
+	var req chatRoom.GetChatRoomMyRequest
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	input := adapter.MakeGetChatRoomMyInput(reqUserHash, req.WorksCode)
+	output, err := r.svc.ChatRoom.GetChatRoomMy(ctx, input)
+
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
+
+	myRoom := make([]chatRoom.GetChatRoomMyDto, 0)
+
+	for _, o := range output {
+
+		temp := chatRoom.GetChatRoomMyDto{
+			RoomKey:     o.RoomKey,
+			RoomType:    o.RoomType,
+			ReadDate:    o.ReadDate,
+			UnreadCount: o.UnreadCount,
+		}
+
+		myRoom = append(myRoom, temp)
+	}
+
+	res := chatRoom.GetChatRoomMyResponse{
+		MyRoomData: myRoom,
+	}
+
+	response.SendSuccess(c, res)
+}

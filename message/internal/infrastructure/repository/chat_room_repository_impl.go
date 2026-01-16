@@ -313,3 +313,32 @@ func (r *chatRoomRepositoryImpl) GetChatRoomMemberReadDate(ctx context.Context, 
 
 	return result, nil
 }
+
+func (r *chatRoomRepositoryImpl) GetChatRoomMy(ctx context.Context, en entity.GetChatRoomMyEntity) ([]entity.ChatRoomMyEntity, error) {
+
+	var result []entity.ChatRoomMyEntity
+
+	err := r.db.Raw(
+		`select 
+			member.room_key, member.member_read_date as read_date,  member.member_unread_count as unread_count,
+			room.room_type
+		from chat_room_member as member join service_users as su 
+			on member.member_hash = su.user_hash
+		left join chat_room_detail as detail
+			on member.room_key = detail.room_key
+		left join chat_room as room 
+			on member.room_key = room.room_key
+		where 
+			member.member_hash = ? 
+		and detail.room_state ='1' 
+		and member_state ='1'`,
+		en.ReqUserHash,
+	).Scan(&result).Error
+
+	if err != nil {
+		log.Println("[GetChatRoomMy] DB error :", err)
+		return nil, err
+	}
+
+	return result, nil
+}
