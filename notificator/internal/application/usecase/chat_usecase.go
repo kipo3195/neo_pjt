@@ -7,6 +7,7 @@ import (
 	"notificator/internal/application/usecase/output"
 	"notificator/internal/consts"
 	"notificator/internal/domain/port"
+	"notificator/pkg/dto"
 
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/repository"
@@ -61,12 +62,17 @@ func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessa
 		SendDate:      chatLineEntity.SendDate,
 	}
 
-	out := output.ChatMessageOutput{
-		Type:         consts.CHAT,
-		EventType:    input.EventType,
+	chatMessageOutput := output.ChatMessageOutput{
 		ChatSession:  input.ChatSession,
 		ChatRoomData: chatRoomOutput,
 		ChatLineData: chatLintOutput,
+	}
+
+	// 이 시점부터는 “이벤트 → 패킷” 변환
+	out := dto.WsResponseDTO[output.ChatMessageOutput]{
+		Type:      consts.CHAT,
+		EventType: input.EventType,
+		Data:      chatMessageOutput,
 	}
 
 	for _, recvUser := range RecvUserHash {
@@ -98,9 +104,9 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 		// 신규 라인 발생 - 발신자를 제외하고 보냄.
 		recvUserHash := r.chatRoomStorage.GetChatRoomMember(in.RoomKey)
 		for _, recvUser := range recvUserHash {
-			//if recvUser != chatCountEntity.SendUserHash {
-			r.workerPool.AddTask(recvUser, chatCountMessageEntity)
-			//}
+			if recvUser != chatCountEntity.SendUserHash {
+				r.workerPool.AddTask(recvUser, chatCountMessageEntity)
+			}
 		}
 	}
 

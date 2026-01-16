@@ -11,6 +11,7 @@ import (
 	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/storage"
 	"notificator/internal/util"
+	"notificator/pkg/dto"
 
 	"github.com/nats-io/nats.go"
 )
@@ -150,11 +151,14 @@ func (r *chatRoomUsecase) SendChatRoomEvent(ctx context.Context, input input.Cha
 		WorksCode:      chatRoomEntity.ChatRoomData.WorksCode,
 	}
 
-	// dto 생성
-	out := output.ChatRoomMessageOutput{
-		Type:              consts.CHATROOM,
-		EventType:         input.EventType,
+	chatRoomMessageOutput := output.ChatRoomMessageOutput{
 		ChatRoomEventData: chatRoomEventData,
+	}
+
+	out := dto.WsResponseDTO[output.ChatRoomMessageOutput]{
+		Type:      consts.CHATROOM,
+		EventType: input.EventType,
+		Data:      chatRoomMessageOutput,
 	}
 
 	/* 웹소켓 연결된 사용자에게만 write */

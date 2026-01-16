@@ -9,6 +9,7 @@ import (
 	"notificator/internal/domain/chat/job"
 	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/dto"
+	response "notificator/pkg/dto"
 	"sync"
 	"time"
 )
@@ -126,14 +127,18 @@ func (p *chatWorkerPool) handleMessage(ch chan *job.ChatCountJob, j *job.ChatCou
 			Delta:    j.En.ChatCountData.Delta,
 		}
 
-		chatCountMessage := dto.ChatCountMessageResponse{
-			Type:          j.En.Type,
-			EventType:     j.En.EventType,
+		chatCountDataResponse := dto.ChatCountDataResponse{
 			ChatCountData: chatCountData,
 		}
 
+		out := response.WsResponseDTO[dto.ChatCountDataResponse]{
+			Type:      j.En.Type,
+			EventType: j.En.EventType,
+			Data:      chatCountDataResponse,
+		}
+
 		// 누적된 delta 무시하고 read 이벤트 즉시 전송 (보통 read는 delta가 0이거나 특정 고정값임)
-		p.messageSender.SendToClient(j.UserHash, chatCountMessage)
+		p.messageSender.SendToClient(j.UserHash, out)
 		return
 	}
 
@@ -192,14 +197,18 @@ func (p *chatWorkerPool) handleFlush(userHash string, pendingMap map[string]*ent
 		Delta:    finalDelta,
 	}
 
-	response := dto.ChatCountMessageResponse{
-		Type:          consts.CHATUNREAD,
-		EventType:     consts.UNREAD,
+	chatCountDataResponse := dto.ChatCountDataResponse{
 		ChatCountData: chatCountData,
 	}
 
+	out := response.WsResponseDTO[dto.ChatCountDataResponse]{
+		Type:      consts.CHATUNREAD,
+		EventType: consts.UNREAD,
+		Data:      chatCountDataResponse,
+	}
+
 	// 5. 클라이언트 전송 (Non-blocking 채널 전송이므로 워커가 멈추지 않음)
-	p.messageSender.SendToClient(userHash, response)
+	p.messageSender.SendToClient(userHash, out)
 
 	log.Printf("[Flush] User: %s, Final Delta: %d 전송 완료", userHash, finalDelta)
 }
