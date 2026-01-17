@@ -57,6 +57,9 @@ func (r *ServiceUserAuthRegisterHandler) RegistServiceUser(c *gin.Context) {
 		return
 	}
 
+	publishServiceUserInput := adapter.MakePublishServiceUserInput(req.Org, serviceUserOutput)
+	err = r.svc.ServiceUser.PublishServiceUser(ctx, publishServiceUserInput)
+
 	user := make([]serviceUser.ServiceUser, 0)
 
 	for _, s := range serviceUserOutput.ServiceUser {

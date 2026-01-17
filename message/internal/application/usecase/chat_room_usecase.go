@@ -99,7 +99,7 @@ func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.Create
 
 	data, err := util.EntityMarshal(CreateChatRoomEntity)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return "", err
 	}
 

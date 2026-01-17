@@ -8,4 +8,5 @@ import (
 
 func RunAll(db *gorm.DB) {
 	repository.ChatMigrate(db)
+	repository.ServiceUsersMigrate(db)
 }

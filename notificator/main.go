@@ -92,6 +92,7 @@ func InitServer() (*http.Server, *AppModules) {
 	noteModule := di.InitNoteModule(db)
 	loginModule := di.InitLoginModule(db)
 	socketSendModule := di.InitSocketSendModule(sendConnectionStorage)
+	serviceUsersModule := di.InitServiceUsersModule(db)
 
 	// ---- Service Handler Init ----
 	notificatorServiceModule := di.InitNotificatorServiceModule(chatRoomModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
@@ -102,6 +103,7 @@ func InitServer() (*http.Server, *AppModules) {
 	chatSub := natsBrocker.NewNatsChatSubscriber(conn, chatModule.Usecase, messageSender)
 	noteSub := natsBrocker.NewNatsNoteSubscriber(conn, noteModule.Usecase, socketSendModule.Usecase)
 	chatRoomSub := natsBrocker.NewNatsChatRoomSubscriber(conn, chatRoomModule.Usecase, socketSendModule.Usecase)
+	serviceUsersSub := natsBrocker.NewNatsServiceUsersSubscriber(conn, serviceUsersModule.Usecase)
 
 	// ---- NATS Subscribe ----
 	// 도메인별 토픽만 구독
@@ -110,6 +112,7 @@ func InitServer() (*http.Server, *AppModules) {
 	noteSub.AddSubscribe("note.broadcast")
 	chatRoomSub.AddSubscribe("chat.room.broadcast")
 	chatRoomSub.AddQueueSubscribe("create.chat.room")
+	serviceUsersSub.AddQueueSubscribe("users.registered")
 
 	server := &http.Server{
 		Addr:    ":8082",

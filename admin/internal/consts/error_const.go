@@ -13,3 +13,6 @@ var ErrServerApiCallError = errors.New("server api call error")
 
 var ErrUserAuthRegisterEntitySizeError = errors.New("user auth register entity size error")
 var ErrUserAuthRegisterFail = errors.New("user auth register fail")
+
+// nats
+var ErrPublishToMessageBrokerError = errors.New("publish to message broker failed")

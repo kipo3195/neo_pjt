@@ -29,6 +29,9 @@ func InitServer() *http.Server {
 		migration.RunAll(db)
 	}
 
+	// ---- Message Broker init ----
+	mb := config.ConnectMessageBroker(sfg)
+
 	// ---- Storage Init -----
 
 	// ---- Data Loader -----
@@ -56,7 +59,7 @@ func InitServer() *http.Server {
 
 	userAuthRegisterModule := di.InitUserAuthRegisterModule(sfg.Domain)
 
-	serviceUserModule := di.InitServiceUserModule(db)
+	serviceUserModule := di.InitServiceUserModule(db, mb)
 	router.SetServiceUserRoutes(serviceUserModule.Handler)
 
 	// 사용자 등록 (service User) + userAuth (salt, authHash) 생성
