@@ -165,7 +165,7 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 
 		// member 를 ','로 split하여 리스트 생성
 		memberSet := util.SplitAndMakeSet(r.Member, ",")
-		owner := util.SplitAndMakeSet(r.Owner, ",")
+		ownerSet := util.SplitAndMakeSet(r.Owner, ",")
 
 		temp := output.ChatRoomDetail{
 			RoomKey:     r.RoomKey,
@@ -177,9 +177,15 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 			WorksCode:   r.WorksCode,
 			CreateDate:  r.CreateDate,
 			CreateUser:  r.CreateUser,
-			Hash:        r.Hash,
-			Owner:       owner,
 			Type:        r.Type,
+		}
+
+		line := output.ChatLineOutput{
+			LineKey:   r.LineKey,
+			Contents:  r.Contents,
+			EventType: r.EventType,
+			Cmd:       r.Cmd,
+			SendDate:  r.SendDate,
 		}
 
 		title := output.ChatRoomTitleOutput{
@@ -188,10 +194,23 @@ func (r *chatRoomUsecase) GetChatRoomDetail(ctx context.Context, input input.Get
 			UpdateDate: r.TitleUpdateDate,
 		}
 
+		owner := output.ChatRoomOwnerOutput{
+			ChatRoomOwner: ownerSet,
+		}
+
+		unread := output.ChatUnreadOutput{
+			LastReadDate:    r.LastReadDate,
+			UnreadCount:     r.UnreadCount,
+			UnreadCountDate: r.UnreadCountDate,
+		}
+
 		roomInfo := output.GetChatRoomDetailOutput{
 			ChatRoomDetail:  temp,
 			Member:          memberSet,
 			MyChatRoomTitle: title,
+			Owner:           owner,
+			Line:            line,
+			Unread:          unread,
 		}
 
 		result = append(result, roomInfo)
@@ -217,7 +236,7 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 
 		// member 를 ','로 split하여 리스트 생성
 		memberSet := util.SplitAndMakeSet(r.Member, ",")
-		owner := util.SplitAndMakeSet(r.Owner, ",")
+		ownerSet := util.SplitAndMakeSet(r.Owner, ",")
 
 		temp := output.ChatRoomDetail{
 			RoomKey:     r.RoomKey,
@@ -229,9 +248,15 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 			WorksCode:   r.WorksCode,
 			CreateDate:  r.CreateDate,
 			CreateUser:  r.CreateUser,
-			Hash:        r.Hash,
-			Owner:       owner,
 			Type:        r.Type,
+		}
+
+		line := output.ChatLineOutput{
+			LineKey:   r.LineKey,
+			Contents:  r.Contents,
+			EventType: r.EventType,
+			Cmd:       r.Cmd,
+			SendDate:  r.SendDate,
 		}
 
 		title := output.ChatRoomTitleOutput{
@@ -240,10 +265,23 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 			UpdateDate: r.TitleUpdateDate,
 		}
 
+		owner := output.ChatRoomOwnerOutput{
+			ChatRoomOwner: ownerSet,
+		}
+
+		unread := output.ChatUnreadOutput{
+			LastReadDate:    r.LastReadDate,
+			UnreadCount:     r.UnreadCount,
+			UnreadCountDate: r.UnreadCountDate,
+		}
+
 		roomInfo := output.GetChatRoomListOutput{
 			ChatRoomDetail:  temp,
 			Member:          memberSet,
 			MyChatRoomTitle: title,
+			Owner:           owner,
+			Line:            line,
+			Unread:          unread,
 		}
 
 		result = append(result, roomInfo)

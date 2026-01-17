@@ -5,10 +5,12 @@ import (
 	"message/internal/application/orchestrator"
 	"message/internal/consts"
 	"message/internal/delivery/adapter"
+	"message/internal/delivery/dto/chatLine"
 	"message/internal/delivery/dto/chatRoom"
 	"message/internal/delivery/dto/chatRoomConfig"
 	"message/internal/delivery/dto/chatRoomFixed"
 	"message/internal/delivery/dto/chatRoomTitle"
+	"message/internal/delivery/dto/chatUnread"
 	"message/internal/delivery/util"
 	commonConsts "message/pkg/consts"
 	response "message/pkg/response"
@@ -105,6 +107,8 @@ func (r *ChatRoomServiceHandler) GetChatRoomDetail(c *gin.Context) {
 		return
 	}
 
+	// 사실 도메인이 다른데.. line, member, fixed다 각각의 usecase에서 따로받아야함.
+
 	// 필수 데이터 검증
 	validate := validator.New()
 	if err := validate.Struct(req); err != nil {
@@ -133,8 +137,6 @@ func (r *ChatRoomServiceHandler) GetChatRoomDetail(c *gin.Context) {
 			WorksCode:   o.ChatRoomDetail.WorksCode,
 			CreateDate:  o.ChatRoomDetail.CreateDate,
 			CreateUser:  o.ChatRoomDetail.CreateUser,
-			Hash:        o.ChatRoomDetail.Hash,
-			Owner:       o.ChatRoomDetail.Owner,
 			Type:        o.ChatRoomDetail.Type,
 		}
 
@@ -154,12 +156,29 @@ func (r *ChatRoomServiceHandler) GetChatRoomDetail(c *gin.Context) {
 			AttentionFlag: "N",
 		}
 
+		line := chatLine.ChatLineDto{
+			LineKey:   o.Line.LineKey,
+			EventType: o.Line.EventType,
+			Cmd:       o.Line.Cmd,
+			Contents:  o.Line.Contents,
+			SendDate:  o.Line.SendDate,
+		}
+
+		unread := chatUnread.ChatUnreadDto{
+			//LastReadDate:    o.Unread.LastReadDate,
+			UnreadCount: o.Unread.UnreadCount,
+			//UnreadCountDate: o.Unread.UnreadCountDate,
+		}
+
 		dto := chatRoom.GetChatRoomDetailDto{
 			ChatRoomDetail:   detail,
 			ChatRoomFixed:    chatRoomFixed,
 			MyChatRoomTitle:  myChatRoomTitle,
 			MyChatRoomConfig: myChatRoomConfig,
 			Member:           o.Member,
+			Owner:            o.Owner.ChatRoomOwner,
+			Line:             line,
+			Unread:           unread,
 		}
 		room = append(room, dto)
 	}
@@ -216,8 +235,6 @@ func (r *ChatRoomServiceHandler) GetChatRoomList(c *gin.Context) {
 			WorksCode:   o.ChatRoomDetail.WorksCode,
 			CreateDate:  o.ChatRoomDetail.CreateDate,
 			CreateUser:  o.ChatRoomDetail.CreateUser,
-			Hash:        o.ChatRoomDetail.Hash,
-			Owner:       o.ChatRoomDetail.Owner,
 			Type:        o.ChatRoomDetail.Type,
 		}
 
@@ -237,12 +254,29 @@ func (r *ChatRoomServiceHandler) GetChatRoomList(c *gin.Context) {
 			AttentionFlag: "N",
 		}
 
+		line := chatLine.ChatLineDto{
+			LineKey:   o.Line.LineKey,
+			EventType: o.Line.EventType,
+			Cmd:       o.Line.Cmd,
+			Contents:  o.Line.Contents,
+			SendDate:  o.Line.SendDate,
+		}
+
+		unread := chatUnread.ChatUnreadDto{
+			//LastReadDate:    o.Unread.LastReadDate,
+			UnreadCount: o.Unread.UnreadCount,
+			//UnreadCountDate: o.Unread.UnreadCountDate,
+		}
+
 		dto := chatRoom.GetChatRoomListDto{
 			ChatRoomDetail:   detail,
 			ChatRoomFixed:    chatRoomFixed,
 			MyChatRoomTitle:  myChatRoomTitle,
 			MyChatRoomConfig: myChatRoomConfig,
 			Member:           o.Member,
+			Owner:            o.Owner.ChatRoomOwner,
+			Line:             line,
+			Unread:           unread,
 		}
 
 		room = append(room, dto)
