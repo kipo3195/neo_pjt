@@ -2,30 +2,36 @@ package middleware
 
 import (
 	"context"
-	"net/http"
+	"message/internal/domain/logger"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func LoggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func LoggingMiddleware(logger logger.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		start := time.Now()
 		traceID := uuid.New().String()
 
-		// TraceID를 Context에 주입하여 하위 레이어로 전달
-		ctx := context.WithValue(r.Context(), "trace_id", traceID)
+		// 1. TraceID를 표준 context에 주입
+		ctx := context.WithValue(c.Request.Context(), "trace_id", traceID)
 
-		// 실제 핸들러 수행 (defer를 통해 응답 후 로그 출력)
+		// 2. Gin Context의 Request를 새로운 context로 교체
+		c.Request = c.Request.WithContext(ctx)
+
+		// defer를 통해 모든 핸들러가 끝난 후 로그 출력
 		defer func() {
-			logger.InfoContext(ctx, "request_completed",
+			logger.Info(ctx, "request_completed",
 				"trace_id", traceID,
-				"method", r.Method,
-				"path", r.URL.Path,
+				"method", c.Request.Method,
+				"path", c.Request.URL.Path,
+				"status", c.Writer.Status(), // 응답 상태 코드
 				"latency", time.Since(start),
 			)
 		}()
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+		// 다음 미들웨어 또는 핸들러 실행
+		c.Next()
+	}
 }

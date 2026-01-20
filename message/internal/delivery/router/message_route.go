@@ -3,6 +3,7 @@ package router
 import (
 	"message/internal/delivery/handler"
 	"message/internal/delivery/middleware"
+	"message/internal/domain/logger"
 	"message/internal/infrastructure/config"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ type MessageRouter interface {
 	SetNoteRoutes(handler *handler.NoteHandler)
 	SetOtpRoutes(handler *handler.OtpHandler)
 	SetChatRoomRoutes(handler *handler.ChatRoomHandler)
-	SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler)
+	SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler, logger logger.Logger)
 	SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHandler)
 }
 
@@ -88,9 +89,11 @@ func (r *messageRouter) SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHan
 
 }
 
-func (r *messageRouter) SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler) {
+func (r *messageRouter) SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler, logger logger.Logger) {
 	client := r.parent.Group("/client/v1/chat/room")
+	client.Use(middleware.LoggingMiddleware(logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig))
+	// client.Use(middleware.AuthMiddleware(logger, r.tokenConfig))
 	client.POST("", handler.CreateChatRoom)
 	client.POST("/detail", handler.GetChatRoomDetail)
 	client.POST("/list", handler.GetChatRoomList)

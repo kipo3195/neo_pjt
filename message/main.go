@@ -6,6 +6,7 @@ import (
 	"message/internal/delivery/router"
 	"message/internal/di"
 	"message/internal/infrastructure/config"
+	"message/internal/infrastructure/logger"
 	"message/internal/infrastructure/migration"
 	"message/internal/infrastructure/storage"
 	"net/http"
@@ -72,6 +73,9 @@ func InitServer() (*http.Server, *AppModules) {
 	// ---- Message Broker init ----
 	mb := config.ConnectMessageBroker(sfg)
 
+	// ---- LOGGER Init ----
+	logger := logger.NewslogLogger()
+
 	// ---- Storage Init -----
 	otpStorage := storage.NewOtpStorage()
 	chatRoomStorage := storage.NewChatRoomStorage()
@@ -114,7 +118,7 @@ func InitServer() (*http.Server, *AppModules) {
 	router.SetChatServiceRoutes(chatServiceModule)
 
 	chatRoomServiceModule := di.InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
-	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
+	router.SetChatRoomServiceRoutes(chatRoomServiceModule, logger)
 
 	server := &http.Server{
 		Addr:    ":8083",
