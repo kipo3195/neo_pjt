@@ -66,6 +66,7 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 				return
 			}
 
+			log.Printf("여기서 write. userHash:%s, message:%s", userHash, message)
 			if err := conn.WriteJSON(message); err != nil {
 				log.Printf("[SaveConnection] WriteJSON error: %v", err)
 				return // 에러 발생 시 고루틴 종료 (defer 실행)

@@ -42,7 +42,7 @@ func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.Cha
 
 func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessageInput) {
 
-	chatRoomEntity := entity.MakeChatRoomEntity(input.ChatRoomData.RoomKey, input.ChatRoomData.RoomType, input.ChatRoomData.SecretFlag)
+	chatRoomEntity := entity.MakeChatRoomEntity(input.ChatRoomData.RoomType, input.ChatRoomData.RoomKey, input.ChatRoomData.SecretFlag)
 	chatLineEntity := entity.MakeChatLineEntity(input.ChatLineData.Cmd, input.ChatLineData.Contents, input.ChatLineData.LineKey, input.ChatLineData.TargetLineKey, input.ChatLineData.SendUserHash, input.ChatLineData.SendDate)
 
 	RecvUserHash := r.chatRoomStorage.GetChatRoomMember(input.ChatRoomData.RoomKey)
