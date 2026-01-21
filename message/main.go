@@ -74,7 +74,7 @@ func InitServer() (*http.Server, *AppModules) {
 	mb := config.ConnectMessageBroker(sfg)
 
 	// ---- LOGGER Init ----
-	logger := logger.NewslogLogger()
+	logger := logger.NewSlogLogger()
 
 	// ---- Storage Init -----
 	otpStorage := storage.NewOtpStorage()
@@ -86,7 +86,7 @@ func InitServer() (*http.Server, *AppModules) {
 	// ---- Router Init -----
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
-	router := router.NewMessageRouter("message", sfg.TokenConfig)
+	router := router.NewMessageRouter("message", sfg.TokenConfig, logger)
 
 	// ---- Domain Handler Init -----
 
@@ -102,7 +102,7 @@ func InitServer() (*http.Server, *AppModules) {
 	otpModule := di.InitOtpModule(db, otpStorage)
 	router.SetOtpRoutes(otpModule.Handler)
 
-	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage, mb)
+	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage, mb, logger)
 	router.SetChatRoomRoutes(chatRoomModule.Handler)
 
 	chatRoomFixedModule := di.InitChatRoomFixedModule(db)
@@ -118,7 +118,7 @@ func InitServer() (*http.Server, *AppModules) {
 	router.SetChatServiceRoutes(chatServiceModule)
 
 	chatRoomServiceModule := di.InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
-	router.SetChatRoomServiceRoutes(chatRoomServiceModule, logger)
+	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
 
 	server := &http.Server{
 		Addr:    ":8083",

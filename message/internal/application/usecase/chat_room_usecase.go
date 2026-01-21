@@ -8,6 +8,7 @@ import (
 	"message/internal/consts"
 	"message/internal/domain/chatRoom/entity"
 	"message/internal/domain/chatRoom/repository"
+	"message/internal/domain/logger"
 	"message/internal/infrastructure/storage"
 	"message/internal/util"
 	"strings"
@@ -20,6 +21,7 @@ type chatRoomUsecase struct {
 	repository repository.ChatRoomRepository
 	connector  *nats.Conn
 	storage    storage.ChatRoomStorage
+	logger     logger.Logger
 }
 
 type ChatRoomUsecase interface {
@@ -31,12 +33,13 @@ type ChatRoomUsecase interface {
 	GetChatRoomMy(ctx context.Context, input input.GetChatRoomMyInput) ([]output.GetChatRoomMyOutput, error)
 }
 
-func NewChatRoomUsecase(repository repository.ChatRoomRepository, connector *nats.Conn, storage storage.ChatRoomStorage) ChatRoomUsecase {
+func NewChatRoomUsecase(repository repository.ChatRoomRepository, connector *nats.Conn, storage storage.ChatRoomStorage, logger logger.Logger) ChatRoomUsecase {
 
 	return &chatRoomUsecase{
 		repository: repository,
 		storage:    storage,
 		connector:  connector,
+		logger:     logger,
 	}
 
 }
@@ -228,6 +231,7 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 
 	list, err := r.repository.GetChatRoomList(ctx, entity)
 	if err != nil {
+		r.logger.Error(ctx, "failed to update user profile", "error", err.Error(), "user_id", input.ReqUserHash)
 		return nil, err
 	}
 

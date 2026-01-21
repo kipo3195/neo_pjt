@@ -9,6 +9,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type ServerConfig struct {
@@ -124,7 +125,10 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	//log.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
 	dsn := sfg.dbConfig.Id + ":" + sfg.dbConfig.Pw + "@tcp(" + sfg.dbConfig.Host + ":" + sfg.dbConfig.Port + ")/" + sfg.dbConfig.Database + "?charset=utf8mb4&parseTime=True&loc=Local"
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{}) // MYSQL
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		// 로거 레벨을 Silent로 설정하면 에러 로그를 직접 출력하지 않습니다.
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 
 	if err != nil {
 		log.Fatal("Failed to connect to database!")

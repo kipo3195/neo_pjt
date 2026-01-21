@@ -3,6 +3,7 @@ package di
 import (
 	"message/internal/application/usecase"
 	"message/internal/delivery/handler"
+	"message/internal/domain/logger"
 	"message/internal/infrastructure/repository"
 	"message/internal/infrastructure/storage"
 
@@ -15,10 +16,10 @@ type chatRoomModule struct {
 	Usecase usecase.ChatRoomUsecase
 }
 
-func InitChatRoomModule(db *gorm.DB, storage storage.ChatRoomStorage, connector *nats.Conn) *chatRoomModule {
+func InitChatRoomModule(db *gorm.DB, storage storage.ChatRoomStorage, connector *nats.Conn, logger logger.Logger) *chatRoomModule {
 
 	repository := repository.NewChatRoomRepository(db)
-	usecase := usecase.NewChatRoomUsecase(repository, connector, storage)
+	usecase := usecase.NewChatRoomUsecase(repository, connector, storage, logger)
 	handler := handler.NewChatRoomHandler(usecase)
 
 	return &chatRoomModule{

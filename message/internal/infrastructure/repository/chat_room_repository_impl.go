@@ -212,7 +212,6 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 			room.room_type = ? order by line.line_key desc, detail.room_create_date desc limit ?`, en.ReqUserHash, en.ReqUserHash, en.ReqUserHash, en.RoomType, en.ReqCount).Scan(&result).Error
 
 	if err != nil {
-		log.Println("[GetChatRoomList] DB error :", err)
 		return nil, err
 	}
 

@@ -3,9 +3,9 @@ package middleware
 import (
 	"errors"
 	"fmt"
-	"log"
 	"message/internal/consts"
 	"message/internal/delivery/middleware/claims"
+	"message/internal/domain/logger"
 	"message/internal/infrastructure/config"
 	commonConsts "message/pkg/consts"
 	"message/pkg/response"
@@ -19,7 +19,7 @@ import (
 
 // 토큰 생성시 사용한 key와 동일해야함.
 
-func AuthMiddleware(tokenConfig config.TokenHashConfig) gin.HandlerFunc {
+func AuthMiddleware(tokenConfig config.TokenHashConfig, logger logger.Logger) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -34,12 +34,13 @@ func AuthMiddleware(tokenConfig config.TokenHashConfig) gin.HandlerFunc {
 		// 토큰 검증
 		id, hash, err := verifyJWT(tokenStr, tokenConfig)
 		if err != nil {
-			log.Println(err, err.Error())
 			if errors.Is(err, consts.ErrTokenExpired) {
-				log.Println("토큰 만료")
+				// 토큰 만료 ..
+				logger.Error(c, "authentication token expired.", "error", err.Error(), "path", c.Request.URL.Path)
 				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
 			} else {
-				log.Println("토큰 검증 실패")
+				// 토큰 인증 실패 규격이 다르거나 정상적인 발급이 아님
+				logger.Error(c, "authentication failed.", "error", err.Error(), "path", c.Request.URL.Path)
 				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
 				c.Abort() // 다음 핸들러 중단
 			}
@@ -71,7 +72,6 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
-	log.Println("[AuthMiddleware] tokenHash : ", tokenHash)
 
 	token, err := parser.ParseWithClaims(tokenStr, &claims.DeviceJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -94,8 +94,6 @@ func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, strin
 	if parsedClaims.ExpiresAt != nil && parsedClaims.ExpiresAt.Time.Before(time.Now()) {
 		return "", "", consts.ErrTokenExpired
 	}
-
-	log.Printf("[AuthMiddleware] verifyJWT id : %s, hash : %s \n", parsedClaims.Id, parsedClaims.Hash)
 
 	return parsedClaims.Id, parsedClaims.Hash, nil
 }
