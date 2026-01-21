@@ -26,10 +26,13 @@ func (l *slogLogger) log(ctx context.Context, level slog.Level, msg string, args
 	// 레코드 생성 (pcs[0]를 통해 호출지점 주입)
 	r := slog.NewRecord(time.Now(), level, msg, pcs[0])
 
-	// [추가] 컨텍스트에서 trace_id를 추출하여 로그 레코드에 추가
+	// 컨텍스트에서 trace_id를 추출하여 로그 레코드에 추가
 	if tid, ok := ctx.Value("trace_id").(string); ok {
 		r.AddAttrs(slog.String("trace_id", tid))
 	}
+
+	// 외부에서 넘겨준 args(method, status, latency 등)를 레코드에 추가
+	r.Add(args...)
 
 	// 핸들러를 통해 최종 출력
 	_ = l.handler.Handle(ctx, r)

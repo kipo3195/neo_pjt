@@ -231,7 +231,7 @@ func (r *chatRoomUsecase) GetChatRoomList(ctx context.Context, input input.GetCh
 
 	list, err := r.repository.GetChatRoomList(ctx, entity)
 	if err != nil {
-		r.logger.Error(ctx, "failed to update user profile", "error", err.Error(), "user_id", input.ReqUserHash)
+		r.logger.Error(ctx, "failed to select user chat room list", "error", err.Error(), "user_id", input.ReqUserHash)
 		return nil, err
 	}
 

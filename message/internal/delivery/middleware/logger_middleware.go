@@ -23,23 +23,15 @@ func LoggingMiddleware(logger logger.Logger) gin.HandlerFunc {
 		// defer를 통해 모든 핸들러가 끝난 후 로그 출력
 		defer func() {
 
-			// Gin context에서 발생한 에러들을 가져옴
-			if len(c.Errors) > 0 {
-				err := c.Errors.Last().Err
-				logger.Error(c.Request.Context(), "request_failed",
-					"error", err.Error(),
-					// 만약 스택트레이스를 지원하는 에러라면 여기에 상세 위치 노출 가능
-				)
-				// slog_logger.go 기준으로 3뎁스 호출자
-			} else {
-				logger.Info(ctx, "request_completed",
-					"trace_id", traceID,
-					"method", c.Request.Method,
-					"path", c.Request.URL.Path,
-					"status", c.Writer.Status(), // 응답 상태 코드
-					"latency", time.Since(start),
-				)
-			}
+			// 성공이든 실패든 무조건 실행되는 '최종 결과 요약'
+			// 상태 코드가 400, 500이면 실패인 걸 이미 status 필드가 말해주고 있습니다.
+			logger.Info(ctx, "access_log",
+				"trace_id", traceID,
+				"method", c.Request.Method,
+				"path", c.Request.URL.Path,
+				"status", c.Writer.Status(), // 여기서 200인지 500인지 찍힘
+				"latency", time.Since(start),
+			)
 		}()
 
 		// 다음 미들웨어 또는 핸들러 실행
