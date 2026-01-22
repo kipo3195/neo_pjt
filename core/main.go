@@ -4,6 +4,7 @@ import (
 	"core/internal/delivery/router"
 	"core/internal/di"
 	"core/internal/infrastructure/config"
+	"core/internal/infrastructure/logger"
 	"core/internal/infrastructure/migration"
 	"core/internal/infrastructure/storage"
 	"log"
@@ -30,10 +31,13 @@ func InitServer() *http.Server {
 	// ---- Storage Init -----
 	serverInfoStorage := storage.NewServerInfoStorage()
 
+	// ---- LOGGER Init ----
+	logger := logger.NewSlogLogger()
+
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-	router := router.NewCoreRouter("core")
+	router := router.NewCoreRouter("core", logger)
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
