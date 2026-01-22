@@ -2,6 +2,8 @@ package router
 
 import (
 	"admin/internal/delivery/handler"
+	"admin/internal/delivery/middleware"
+	"admin/internal/domain/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,6 +11,7 @@ import (
 type adminRouter struct {
 	R      *gin.Engine
 	parent *gin.RouterGroup
+	logger logger.Logger
 }
 
 type AdminRouter interface {
@@ -21,12 +24,13 @@ type AdminRouter interface {
 	GetEngine() *gin.Engine
 }
 
-func NewAdminRouter(serviceName string) AdminRouter {
+func NewAdminRouter(serviceName string, logger logger.Logger) AdminRouter {
 	r := gin.Default()
 	parent := r.Group("/" + serviceName)
 	return &adminRouter{
 		R:      r,
 		parent: parent,
+		logger: logger, // 인증 미들웨어에 주입 하기 위함
 	}
 }
 
@@ -37,35 +41,39 @@ func (r *adminRouter) GetEngine() *gin.Engine {
 func (r *adminRouter) SetOrgDeptUserRoutes(handler *handler.OrgDeptUserHandler) {
 
 	client := r.parent.Group("/client/v1/org/dept/user")
-	client.GET("/", handler.GetDeptUser) // 전체 조회 (특정 조회도 필요하다면? )
-	client.POST("/", handler.RegistDeptUser)
-	client.PUT("/", handler.UpdateDeptUser)
-	client.DELETE("/", handler.DeleteDeptUser)
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.GET("", handler.GetDeptUser) // 전체 조회 (특정 조회도 필요하다면? )
+	client.POST("", handler.RegistDeptUser)
+	client.PUT("", handler.UpdateDeptUser)
+	client.DELETE("", handler.DeleteDeptUser)
 
 }
 
 func (r *adminRouter) SetOrgDeptRoutes(handler *handler.OrgDeptHandler) {
 
 	client := r.parent.Group("/client/v1/org/dept")
-	client.GET("/", handler.GetDept) // 전체 조회 (특정 조회도 필요하다면? )
-	client.POST("/", handler.RegisterDept)
-	client.PUT("/", handler.UpdateDept)
-	client.DELETE("/", handler.DeleteDept)
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.GET("", handler.GetDept) // 전체 조회 (특정 조회도 필요하다면? )
+	client.POST("", handler.RegisterDept)
+	client.PUT("", handler.UpdateDept)
+	client.DELETE("", handler.DeleteDept)
 
 }
 
 func (r *adminRouter) SetOrgFileRoutes(handler *handler.OrgFileHandler) {
 
 	client := r.parent.Group("/client/v1/org/file")
-	client.POST("/", handler.CreateOrgFile)
-	client.GET("/", handler.GetOrgFile)
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.POST("", handler.CreateOrgFile)
+	client.GET("", handler.GetOrgFile)
 
 }
 
 func (r *adminRouter) SetSkinRoutes(handler *handler.SkinImgHandler) {
 
 	client := r.parent.Group("/client/v1/skinImg")
-	client.POST("/", handler.CreateSkinImg)
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.POST("", handler.CreateSkinImg)
 
 }
 
@@ -77,5 +85,6 @@ func (r *adminRouter) SetServiceUserRoutes(handler *handler.ServiceUserHandler) 
 
 func (r *adminRouter) SetServiceUserAuthRegisterServiceRoutes(handler *handler.ServiceUserAuthRegisterHandler) {
 	client := r.parent.Group("/client/v1/serviceUser")
-	client.POST("/", handler.RegistServiceUser)
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.POST("", handler.RegistServiceUser)
 }

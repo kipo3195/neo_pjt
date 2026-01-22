@@ -46,6 +46,7 @@ func NewMessageRouter(serviceName string, tokenConfig config.TokenHashConfig, lo
 func (r *messageRouter) SetLineKeyRoutes(handler *handler.LineKeyHandler) {
 
 	client := r.parent.Group("/client/v1/line-key")
+	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.GET("/", handler.GetLineKey)
 }
@@ -56,6 +57,7 @@ func (r *messageRouter) SetChatRoutes(handler *handler.ChatHandler) {
 
 func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler) {
 	client := r.parent.Group("/client/v1/chat")
+	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("", handler.SendChat)
 	client.POST("/read", handler.ReadChat)
@@ -64,6 +66,7 @@ func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler
 func (r *messageRouter) SetNoteRoutes(handler *handler.NoteHandler) {
 
 	client := r.parent.Group("/client/v1/note")
+	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("", handler.SendNote)
 
@@ -74,6 +77,7 @@ func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 	server.POST("/regist", handler.OtpKeyRegist)
 
 	client := r.parent.Group("/client/v1/otp")
+	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("/info", handler.GetMyOtpInfo)
 }
@@ -85,6 +89,7 @@ func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
 func (r *messageRouter) SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHandler) {
 
 	client := r.parent.Group("client/v1/chat/room/title")
+	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("", handler.UpdateChatRoomTitle)
 	client.DELETE("", handler.DeleteChatRoomTitle)

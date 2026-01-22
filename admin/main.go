@@ -4,6 +4,7 @@ import (
 	"admin/internal/delivery/router"
 	"admin/internal/di"
 	"admin/internal/infrastructure/config"
+	"admin/internal/infrastructure/logger"
 	"admin/internal/infrastructure/migration"
 	"log"
 	"net/http"
@@ -32,12 +33,16 @@ func InitServer() *http.Server {
 	// ---- Message Broker init ----
 	mb := config.ConnectMessageBroker(sfg)
 
+	// ---- LOGGER Init ----
+	// 추후 각 InitXXXModule에 주입하여 사용
+	logger := logger.NewSlogLogger()
+
 	// ---- Storage Init -----
 
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-	router := router.NewAdminRouter("admin")
+	router := router.NewAdminRouter("admin", logger)
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 

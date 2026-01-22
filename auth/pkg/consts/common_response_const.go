@@ -9,6 +9,7 @@ const (
 const (
 	BAD_REQUEST  = 400
 	SERVER_ERROR = 500
+	UNAUTHORIZED = 401
 )
 
 const (

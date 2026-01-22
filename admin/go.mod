@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats.go v1.48.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12

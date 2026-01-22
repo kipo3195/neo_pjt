@@ -5,6 +5,7 @@ import (
 	"auth/internal/di"
 	"auth/internal/infrastructure/config"
 	"auth/internal/infrastructure/loader"
+	"auth/internal/infrastructure/logger"
 	"auth/internal/infrastructure/migration"
 	"auth/internal/infrastructure/storage"
 	"context"
@@ -32,6 +33,9 @@ func InitServer() *http.Server {
 		migration.RunAll(db)
 	}
 
+	// ---- LOGGER Init ----
+	logger := logger.NewSlogLogger()
+
 	// ---- Storage Init -----
 	serviceUserStorage := storage.NewServiceUserStorage()
 	userAuthStorage := storage.NewUserAuthStorage()
@@ -52,7 +56,7 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-	router := router.NewAuthRouter("auth", sfg.TokenConfig)
+	router := router.NewAuthRouter("auth", sfg.TokenConfig, logger)
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
