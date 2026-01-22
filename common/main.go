@@ -5,6 +5,7 @@ import (
 	"common/internal/di"
 	"common/internal/infrastructure/config"
 	"common/internal/infrastructure/loader"
+	"common/internal/infrastructure/logger"
 	"common/internal/infrastructure/migration"
 	"common/internal/infrastructure/storage"
 	"context"
@@ -28,6 +29,9 @@ func InitServer() *http.Server {
 	if sfg.AutoMigrate {
 		migration.RunAll(db)
 	}
+
+	// ---- LOGGER Init ----
+	logger := logger.NewSlogLogger()
 
 	// ---- Storage Init -----
 	configHashStorage := storage.NewConfigHashStorage()
@@ -56,7 +60,7 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-	router := router.NewCommonRouter("common", sfg.TokenConfig)
+	router := router.NewCommonRouter("common", sfg.TokenConfig, logger)
 
 	skinModule := di.InitSkinModule(db, skinStorage)
 	router.SetSkinRoutes(skinModule.Handler)

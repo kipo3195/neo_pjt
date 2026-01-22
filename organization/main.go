@@ -8,6 +8,7 @@ import (
 	"org/internal/di"
 	"org/internal/infrastructure/config"
 	"org/internal/infrastructure/loader"
+	"org/internal/infrastructure/logger"
 	"org/internal/infrastructure/migration"
 	"org/internal/infrastructure/storage"
 	"time"
@@ -32,6 +33,9 @@ func InitServer() *http.Server {
 		migration.RunAll(db)
 	}
 
+	// ---- LOGGER Init ----
+	logger := logger.NewSlogLogger()
+
 	// ---- Storage Init -----
 	orgFileStorage := storage.NewOrgFileStorage() // 조직도 메모리 관리
 	orgStorage := storage.NewOrgStorage()
@@ -48,26 +52,26 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-	router := router.NewOrgRoute("org")
+	router := router.NewOrgRoute("org", sfg.TokenConfig, logger)
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
 	// ---- Domain Handler Init -----
 	departmentModule := di.InitDepartmentModule(db)
-	router.SetDepartmentRoutes(departmentModule.Handler, sfg.TokenConfig)
+	router.SetDepartmentRoutes(departmentModule.Handler)
 
 	orgModule := di.InitOrgModule(db, orgFileStorage, orgStorage)
-	router.SetOrgRoute(orgModule.Handler, sfg.TokenConfig)
+	router.SetOrgRoute(orgModule.Handler)
 
 	userModule := di.InitUserModule(db)
-	router.SetUserRoute(userModule.Handler, sfg.TokenConfig)
+	router.SetUserRoute(userModule.Handler)
 
 	// ---- Orchestrator Init -----
 	dummyDataInitServiceModule := di.InitDummyDataServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
 	router.SetDummyDataServiceRoute(dummyDataInitServiceModule)
 
 	orgUserServiceModule := di.InitOrgUserServiceModule(orgModule.Usecase, userModule.Usecase)
-	router.SetOrgUserServiceRoute(orgUserServiceModule, sfg.TokenConfig)
+	router.SetOrgUserServiceRoute(orgUserServiceModule)
 
 	orgBatchServiceModule := di.InitOrgBatchServiceModule(departmentModule.Usecase, orgModule.Usecase, userModule.Usecase)
 	router.SetOrgBatchServiceRoute(orgBatchServiceModule)

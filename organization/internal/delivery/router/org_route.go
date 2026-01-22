@@ -3,34 +3,39 @@ package router
 import (
 	"org/internal/delivery/handler"
 	"org/internal/delivery/middleware"
+	"org/internal/domain/logger"
 	"org/internal/infrastructure/config"
 
 	"github.com/gin-gonic/gin"
 )
 
 type orgRouter struct {
-	R      *gin.Engine
-	parent *gin.RouterGroup
+	R           *gin.Engine
+	parent      *gin.RouterGroup
+	tokenConfig config.TokenHashConfig
+	logger      logger.Logger
 }
 
 type OrgRouter interface {
-	SetDepartmentRoutes(handler *handler.DepartmentHandler, tokenConfig config.TokenHashConfig)
-	SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.TokenHashConfig)
-	SetUserRoute(handler *handler.UserHandler, tokenConfig config.TokenHashConfig)
+	SetDepartmentRoutes(handler *handler.DepartmentHandler)
+	SetOrgRoute(handler *handler.OrgHandler)
+	SetUserRoute(handler *handler.UserHandler)
 	SetDummyDataServiceRoute(handler *handler.DummyDataServiceHandler)
 	SetOrgBatchServiceRoute(handler *handler.OrgBatchServiceHandler)
-	SetOrgUserServiceRoute(handler *handler.OrgUserServiceHandler, tokenConfig config.TokenHashConfig)
+	SetOrgUserServiceRoute(handler *handler.OrgUserServiceHandler)
 	GetEngine() *gin.Engine
 }
 
-func NewOrgRoute(serviceName string) OrgRouter {
+func NewOrgRoute(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) OrgRouter {
 
 	r := gin.Default()
 	parent := r.Group("/" + serviceName)
 
 	return &orgRouter{
-		R:      r,
-		parent: parent,
+		R:           r,
+		parent:      parent,
+		tokenConfig: tokenConfig,
+		logger:      logger,
 	}
 }
 
@@ -38,10 +43,11 @@ func (r *orgRouter) GetEngine() *gin.Engine {
 	return r.R
 }
 
-func (r *orgRouter) SetDepartmentRoutes(handler *handler.DepartmentHandler, tokenConfig config.TokenHashConfig) {
-	clientApi := r.parent.Group("/client/v1/department")
-	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
-	clientApi.GET("/", handler.GetDept) //
+func (r *orgRouter) SetDepartmentRoutes(handler *handler.DepartmentHandler) {
+	client := r.parent.Group("/client/v1/department")
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
+	client.GET("/", handler.GetDept) //
 
 	serverApi := r.parent.Group("/server/v1/department")
 	serverApi.Use(middleware.ServerAuthMiddleware())
@@ -52,12 +58,13 @@ func (r *orgRouter) SetDepartmentRoutes(handler *handler.DepartmentHandler, toke
 
 }
 
-func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.TokenHashConfig) {
+func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler) {
 
-	clientApi := r.parent.Group("/client/v1/org")
-	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
-	clientApi.GET("/hash", handler.GetOrgHash)
-	clientApi.GET("/data", handler.GetOrgData)
+	client := r.parent.Group("/client/v1/org")
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
+	client.GET("/hash", handler.GetOrgHash)
+	client.GET("/data", handler.GetOrgData)
 
 	serverApi := r.parent.Group("/server/v1/org")
 	//serverApi.Use(middleware.ServerAuthMiddleware())
@@ -65,7 +72,7 @@ func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler, tokenConfig config.
 
 }
 
-func (r *orgRouter) SetUserRoute(handler *handler.UserHandler, tokenConfig config.TokenHashConfig) {
+func (r *orgRouter) SetUserRoute(handler *handler.UserHandler) {
 	// clientApi := r.parent.Group("/client/v1/user")
 
 	// clientApi.Use(middleware.AuthMiddleware(tokenConfig))
@@ -77,11 +84,13 @@ func (r *orgRouter) SetUserRoute(handler *handler.UserHandler, tokenConfig confi
 func (r *orgRouter) SetDummyDataServiceRoute(handler *handler.DummyDataServiceHandler) {
 
 	user := r.parent.Group("/test/v1/user")
+	user.Use(middleware.LoggingMiddleware(r.logger))
 	user.POST("/init/service-user/", handler.InitServiceUser)
 	user.POST("/init/user-detail/", handler.InitUserDetail)
 	user.POST("/init/user-multi-lang", handler.InitUserMultiLang)
 
 	department := r.parent.Group("/test/v1/department")
+	department.Use(middleware.LoggingMiddleware(r.logger))
 	department.POST("/init/works-dept", handler.InitWorksDept)
 	department.POST("/init/works-dept-multi-lang", handler.InitWorksDeptMultiLang)
 	department.POST("/init/works-dept-user", handler.InitWorksDeptUser)
@@ -95,12 +104,12 @@ func (r *orgRouter) SetOrgBatchServiceRoute(handler *handler.OrgBatchServiceHand
 
 }
 
-func (r *orgRouter) SetOrgUserServiceRoute(handler *handler.OrgUserServiceHandler, tokenConfig config.TokenHashConfig) {
+func (r *orgRouter) SetOrgUserServiceRoute(handler *handler.OrgUserServiceHandler) {
 
-	clientApi := r.parent.Group("/client/v1/user")
-
-	clientApi.Use(middleware.AuthMiddleware(tokenConfig))
-	clientApi.GET("/my-info", handler.GetMyInfo)
-	clientApi.POST("/info", handler.GetUserInfo)
+	client := r.parent.Group("/client/v1/user")
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
+	client.GET("/my-info", handler.GetMyInfo)
+	client.POST("/info", handler.GetUserInfo)
 
 }
