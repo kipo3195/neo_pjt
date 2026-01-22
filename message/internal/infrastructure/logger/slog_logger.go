@@ -26,9 +26,14 @@ func (l *slogLogger) log(ctx context.Context, level slog.Level, msg string, args
 	// 레코드 생성 (pcs[0]를 통해 호출지점 주입)
 	r := slog.NewRecord(time.Now(), level, msg, pcs[0])
 
-	// 컨텍스트에서 trace_id를 추출하여 로그 레코드에 추가
+	// 컨텍스트에서 trace_id를 추출하여 로그 레코드에 추가 - 모든 로깅에 공통적으로 추가됨.
 	if tid, ok := ctx.Value("trace_id").(string); ok {
 		r.AddAttrs(slog.String("trace_id", tid))
+	}
+
+	// 사용자 hash정보를 담아서 비즈니스로직에서 로깅 하도록 레코드에 추가
+	if userHash, ok := ctx.Value("user_hash").(string); ok {
+		r.AddAttrs(slog.String("user_hash", userHash))
 	}
 
 	// 외부에서 넘겨준 args(method, status, latency 등)를 레코드에 추가

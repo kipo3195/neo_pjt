@@ -23,10 +23,12 @@ func LoggingMiddleware(logger logger.Logger) gin.HandlerFunc {
 		// defer를 통해 모든 핸들러가 끝난 후 로그 출력
 		defer func() {
 
+			// c.Next()를 거치며 미들웨어가 추가하더라도 그 미들웨어에서 업데이트한 데이터를 꺼내 오기 위함
+			latestCtx := c.Request.Context()
+
 			// 성공이든 실패든 무조건 실행되는 '최종 결과 요약'
 			// 상태 코드가 400, 500이면 실패인 걸 이미 status 필드가 말해주고 있습니다.
-			logger.Info(ctx, "access_log",
-				"trace_id", traceID,
+			logger.Info(latestCtx, "request_finished",
 				"method", c.Request.Method,
 				"path", c.Request.URL.Path,
 				"status", c.Writer.Status(), // 여기서 200인지 500인지 찍힘

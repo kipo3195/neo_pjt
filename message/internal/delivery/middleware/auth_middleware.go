@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"message/internal/consts"
@@ -23,10 +24,13 @@ func AuthMiddleware(tokenConfig config.TokenHashConfig, logger logger.Logger) gi
 
 	return func(c *gin.Context) {
 
+		// 이전 미들웨어에서 주입된 context
+		ctx := c.Request.Context()
+
 		// 토큰 추출
 		tokenStr, err := extractTokenFromHeader(c.Request.Header)
 		if err != nil {
-			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
+			response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
 			c.Abort() // 다음 핸들러 중단
 			return
 		}
@@ -36,22 +40,31 @@ func AuthMiddleware(tokenConfig config.TokenHashConfig, logger logger.Logger) gi
 		if err != nil {
 			if errors.Is(err, consts.ErrTokenExpired) {
 				// 토큰 만료 ..
-				logger.Error(c, "authentication token expired.", "error", err.Error(), "path", c.Request.URL.Path)
-				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
+				logger.Error(ctx, "at_verification_fail",
+					"detail_msg", err.Error(),
+					"option", "expired")
+				response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
 			} else {
 				// 토큰 인증 실패 규격이 다르거나 정상적인 발급이 아님
-				logger.Error(c, "authentication failed.", "error", err.Error(), "path", c.Request.URL.Path)
-				response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
+				logger.Error(ctx, "at_verification_fail",
+					"detail_msg", err.Error(),
+					"option", "invalid")
+				response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
 				c.Abort() // 다음 핸들러 중단
 			}
 			return
 		}
 
+		// 기존 ctx를 감싸서 user_hash 추가
+		ctx = context.WithValue(ctx, "user_hash", hash)
+
+		// 다시 request에 주입
+		c.Request = c.Request.WithContext(ctx)
+
 		// handler에서 값을 꺼낼 수 있게 하려면
 		c.Set(consts.USER_ID, id)
 		c.Set(consts.USER_HASH, hash)
 
-		// 정상 처리 = 검증 성공 → 다음 핸들러 호출
 		c.Next()
 	}
 }

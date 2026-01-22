@@ -170,7 +170,6 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 		en.ReqUserHash, en.ReqUserHash, en.ReqUserHash, en.RoomKey, en.RoomType).Scan(&result).Error
 
 	if err != nil {
-		log.Println("[GetChatRoomDetail] DB error :", err)
 		return nil, err
 	}
 
