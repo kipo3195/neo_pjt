@@ -8,6 +8,7 @@ import (
 	router "notificator/internal/delivery/router"
 	"notificator/internal/di"
 	"notificator/internal/infrastructure/config"
+	"notificator/internal/infrastructure/logger"
 	"notificator/internal/infrastructure/migration"
 	"notificator/internal/infrastructure/sender"
 	"notificator/internal/infrastructure/storage"
@@ -74,6 +75,9 @@ func InitServer() (*http.Server, *AppModules) {
 	mb := config.ConnectMessageBroker(sfg)
 	conn := mb
 
+	// ---- LOGGER Init ----
+	logger := logger.NewSlogLogger()
+
 	// ---- Storage Init -----
 	chatRoomStorage := storage.NewChatRoomStorage()
 	sendConnectionStorage := storage.NewSendConnectionStorage()
@@ -84,7 +88,7 @@ func InitServer() (*http.Server, *AppModules) {
 	// ---- Data Loader -----
 
 	// ---- Router Init -----
-	router := router.NewNotificatorRouter("notificator", sfg.TokenConfig)
+	router := router.NewNotificatorRouter("notificator", sfg.TokenConfig, logger)
 
 	// ---- Domain Handler Init -----
 	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage, sendConnectionStorage, conn, messageSender)

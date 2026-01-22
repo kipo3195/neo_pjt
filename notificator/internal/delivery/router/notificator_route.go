@@ -1,8 +1,10 @@
 package router
 
 import (
+	"net/http"
 	"notificator/internal/delivery/handler"
 	"notificator/internal/delivery/middleware"
+	"notificator/internal/domain/logger"
 	"notificator/internal/infrastructure/config"
 
 	"github.com/gorilla/mux"
@@ -11,23 +13,28 @@ import (
 type notificatorRouter struct {
 	R           *mux.Router
 	tokenConfig config.TokenHashConfig
+	logger      logger.Logger
 }
 
 type NotificatorRouter interface {
 	SetNotificatorServiceRoutes(handler *handler.NotificatorServiceHandler)
 }
 
-func NewNotificatorRouter(serviceName string, tokenConfig config.TokenHashConfig) notificatorRouter {
+func NewNotificatorRouter(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) notificatorRouter {
 	router := mux.NewRouter()
 	sub := router.PathPrefix("/" + serviceName).Subrouter()
 	return notificatorRouter{
 		R:           sub,
 		tokenConfig: tokenConfig,
+		logger:      logger,
 	}
 }
 
 func (r *notificatorRouter) SetNotificatorServiceRoutes(handler *handler.NotificatorServiceHandler) {
 
-	// REST API와는 다른 인증 middleware 구조
-	r.R.HandleFunc("/ws/connect", middleware.AuthMiddleware(handler.NotificatorConnect, r.tokenConfig))
+	client := r.R.PathPrefix("/ws").Subrouter()
+	client.Use(middleware.LoggingMiddleware(r.logger))
+	client.Use(middleware.AuthMiddleware(r.logger, r.tokenConfig))
+	client.HandleFunc("/connect", handler.NotificatorConnect).Methods(http.MethodGet)
+
 }

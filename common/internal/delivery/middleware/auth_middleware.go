@@ -37,6 +37,9 @@ func AuthMiddleware(tokenConfig config.TokenHashConfig, logger logger.Logger) gi
 		tokenStr, err := extractTokenFromHeader(c.Request.Header)
 		if err != nil {
 			response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
+			logger.Error(ctx, "at_verification_fail",
+				"detail_msg", err.Error(),
+				"option", "not exist")
 			c.Abort() // 다음 핸들러 중단
 			return
 		}
