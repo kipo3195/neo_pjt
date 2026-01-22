@@ -30,6 +30,10 @@ func (r *userRouter) GetEngine() *gin.Engine {
 
 func NewUserRouter(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) UserRouter {
 	r := gin.Default()
+
+	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
+	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
+	r.Use(middleware.LoggingMiddleware(logger))
 	parent := r.Group("/" + serviceName)
 	return &userRouter{
 		tokenConfig: tokenConfig,
@@ -41,7 +45,6 @@ func NewUserRouter(serviceName string, tokenConfig config.TokenHashConfig, logge
 
 func (r *userRouter) SetProfileRoutes(handler *handler.ProfileHandler) {
 	client := r.parent.Group("/client/v1/profile")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 
 	client.POST("/img/upload", handler.UploadProfileImg)
@@ -56,7 +59,6 @@ func (r *userRouter) SetUserDetailRoutes(handler *handler.UserDetailHandler) {
 
 	// 사용자의 ID가 아닌 HASH 정보로 요청해야하므로 부담스러운 GET보다는 POST로 요청
 	client := r.parent.Group("/client/v1/detail")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	//client.GET("/my-info", handler.GetMyDetailInfo) // 정보 조회
 	//client.POST("/info", handler.GetUserDetailInfo) // 정보 조회
@@ -68,7 +70,6 @@ func (r *userRouter) SetUserDetailRoutes(handler *handler.UserDetailHandler) {
 
 func (r *userRouter) SetUserInfoServiceRoutes(handler *handler.UserInfoServiceHandler) {
 	client := r.parent.Group("/client/v1/detail")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.GET("/my", handler.GetMyDetailInfo) // 내 정보 조회
 	client.POST("/user", handler.GetUserInfo)  // 사용자 정보 조회

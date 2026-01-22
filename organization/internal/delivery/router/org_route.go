@@ -29,6 +29,10 @@ type OrgRouter interface {
 func NewOrgRoute(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) OrgRouter {
 
 	r := gin.Default()
+
+	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
+	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
+	r.Use(middleware.LoggingMiddleware(logger))
 	parent := r.Group("/" + serviceName)
 
 	return &orgRouter{
@@ -45,7 +49,6 @@ func (r *orgRouter) GetEngine() *gin.Engine {
 
 func (r *orgRouter) SetDepartmentRoutes(handler *handler.DepartmentHandler) {
 	client := r.parent.Group("/client/v1/department")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.GET("/", handler.GetDept) //
 
@@ -61,7 +64,6 @@ func (r *orgRouter) SetDepartmentRoutes(handler *handler.DepartmentHandler) {
 func (r *orgRouter) SetOrgRoute(handler *handler.OrgHandler) {
 
 	client := r.parent.Group("/client/v1/org")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.GET("/hash", handler.GetOrgHash)
 	client.GET("/data", handler.GetOrgData)
@@ -84,13 +86,11 @@ func (r *orgRouter) SetUserRoute(handler *handler.UserHandler) {
 func (r *orgRouter) SetDummyDataServiceRoute(handler *handler.DummyDataServiceHandler) {
 
 	user := r.parent.Group("/test/v1/user")
-	user.Use(middleware.LoggingMiddleware(r.logger))
 	user.POST("/init/service-user/", handler.InitServiceUser)
 	user.POST("/init/user-detail/", handler.InitUserDetail)
 	user.POST("/init/user-multi-lang", handler.InitUserMultiLang)
 
 	department := r.parent.Group("/test/v1/department")
-	department.Use(middleware.LoggingMiddleware(r.logger))
 	department.POST("/init/works-dept", handler.InitWorksDept)
 	department.POST("/init/works-dept-multi-lang", handler.InitWorksDeptMultiLang)
 	department.POST("/init/works-dept-user", handler.InitWorksDeptUser)
@@ -107,7 +107,6 @@ func (r *orgRouter) SetOrgBatchServiceRoute(handler *handler.OrgBatchServiceHand
 func (r *orgRouter) SetOrgUserServiceRoute(handler *handler.OrgUserServiceHandler) {
 
 	client := r.parent.Group("/client/v1/user")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.GET("/my-info", handler.GetMyInfo)
 	client.POST("/info", handler.GetUserInfo)

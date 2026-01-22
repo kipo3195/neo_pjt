@@ -10,7 +10,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -94,7 +93,6 @@ func extractTokenFromHeader(header http.Header) (string, error) {
 func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, string, error) {
 
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
-	log.Println("[AuthMiddleware] tokenHash : ", tokenHash)
 
 	token, err := parser.ParseWithClaims(tokenStr, &claims.DeviceJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -117,8 +115,6 @@ func verifyJWT(tokenStr string, tokenHash config.TokenHashConfig) (string, strin
 	if parsedClaims.ExpiresAt != nil && parsedClaims.ExpiresAt.Time.Before(time.Now()) {
 		return "", "", consts.ErrTokenExpired
 	}
-
-	log.Println("[AuthMiddleware] verifyJWT id : ", parsedClaims.Id)
 
 	return parsedClaims.Id, parsedClaims.Hash, nil
 }

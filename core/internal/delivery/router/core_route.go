@@ -22,6 +22,10 @@ type CoreRouter interface {
 
 func NewCoreRouter(serviceName string, logger logger.Logger) CoreRouter {
 	r := gin.Default()
+
+	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
+	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
+	r.Use(middleware.LoggingMiddleware(logger))
 	parent := r.Group("/" + serviceName)
 	return &coreRouter{
 		R:      r,
@@ -37,7 +41,6 @@ func (r *coreRouter) GetEngine() *gin.Engine {
 func (r *coreRouter) SetAppValidationRoute(handler *handler.AppValidationHandler) {
 
 	client := r.parent.Group("/client/v1/app-validation")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("/validate", handler.ValidateApp)
 
 }

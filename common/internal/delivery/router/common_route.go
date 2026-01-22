@@ -31,6 +31,10 @@ type CommonRouter interface {
 
 func NewCommonRouter(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) CommonRouter {
 	r := gin.Default()
+
+	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
+	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
+	r.Use(middleware.LoggingMiddleware(logger))
 	parent := r.Group("/" + serviceName)
 	return &commonRouter{
 		R:           r,
@@ -55,7 +59,6 @@ func (r *commonRouter) SetAppValidationRoutes(handler *handler.AppValidationServ
 func (r *commonRouter) SetAppTokenRoutes(handler *handler.AppTokenHandler) {
 
 	client := r.parent.Group("/client/v1/app-token")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	//client.Use(middleware.AuthMiddleware(r.tokenConfig)) // JWT 적용
 	client.POST("/refresh", handler.AppTokenRefresh)
 
@@ -63,7 +66,6 @@ func (r *commonRouter) SetAppTokenRoutes(handler *handler.AppTokenHandler) {
 
 func (r *commonRouter) SetSkinRoutes(handler *handler.SkinHandler) {
 	client := r.parent.Group("/client/v1/skin-img")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger)) // JWT 적용
 	client.GET("", handler.GetSkinImage)
 
@@ -81,7 +83,6 @@ func (r *commonRouter) SetConfigurationRoutes(handlers *handler.ConfigurationHan
 func (r *commonRouter) SetUserRoutes(handler *handler.UserHandler) {
 	// http://bookstack.ucware.local/books/neo-erd/page/5ef05에 등록된 사용자 등록 요청 (회원가입)
 	client := r.parent.Group("/client/v1/user/register")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("", handler.UserRegister)
 	client.GET("/challenge", handler.GetUserRegisterChallenge)
 
@@ -89,7 +90,6 @@ func (r *commonRouter) SetUserRoutes(handler *handler.UserHandler) {
 
 func (r *commonRouter) SetInitAppValidtaionRoutes(handler *handler.AppValidationServiceHandler) {
 	client := r.parent.Group("/client/v1/app-validation")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.GET("", handler.GetAppValidation)
 }
 

@@ -34,6 +34,10 @@ func (r *messageRouter) GetEngine() *gin.Engine {
 
 func NewMessageRouter(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) MessageRouter {
 	r := gin.Default()
+
+	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
+	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
+	r.Use(middleware.LoggingMiddleware(logger))
 	parent := r.Group("/" + serviceName)
 	return &messageRouter{
 		parent:      parent,
@@ -46,7 +50,6 @@ func NewMessageRouter(serviceName string, tokenConfig config.TokenHashConfig, lo
 func (r *messageRouter) SetLineKeyRoutes(handler *handler.LineKeyHandler) {
 
 	client := r.parent.Group("/client/v1/line-key")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.GET("/", handler.GetLineKey)
 }
@@ -57,7 +60,6 @@ func (r *messageRouter) SetChatRoutes(handler *handler.ChatHandler) {
 
 func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler) {
 	client := r.parent.Group("/client/v1/chat")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("", handler.SendChat)
 	client.POST("/read", handler.ReadChat)
@@ -66,7 +68,6 @@ func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler
 func (r *messageRouter) SetNoteRoutes(handler *handler.NoteHandler) {
 
 	client := r.parent.Group("/client/v1/note")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("", handler.SendNote)
 
@@ -77,7 +78,6 @@ func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 	server.POST("/regist", handler.OtpKeyRegist)
 
 	client := r.parent.Group("/client/v1/otp")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("/info", handler.GetMyOtpInfo)
 }
@@ -89,7 +89,6 @@ func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
 func (r *messageRouter) SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHandler) {
 
 	client := r.parent.Group("client/v1/chat/room/title")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("", handler.UpdateChatRoomTitle)
 	client.DELETE("", handler.DeleteChatRoomTitle)
@@ -98,9 +97,7 @@ func (r *messageRouter) SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHan
 
 func (r *messageRouter) SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler) {
 	client := r.parent.Group("/client/v1/chat/room")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
-	// client.Use(middleware.AuthMiddleware(logger, r.tokenConfig))
 	client.POST("", handler.CreateChatRoom)
 	client.POST("/detail", handler.GetChatRoomDetail)
 	client.POST("/list", handler.GetChatRoomList)

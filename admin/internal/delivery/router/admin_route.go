@@ -26,6 +26,10 @@ type AdminRouter interface {
 
 func NewAdminRouter(serviceName string, logger logger.Logger) AdminRouter {
 	r := gin.Default()
+
+	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
+	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
+	r.Use(middleware.LoggingMiddleware(logger))
 	parent := r.Group("/" + serviceName)
 	return &adminRouter{
 		R:      r,
@@ -41,7 +45,6 @@ func (r *adminRouter) GetEngine() *gin.Engine {
 func (r *adminRouter) SetOrgDeptUserRoutes(handler *handler.OrgDeptUserHandler) {
 
 	client := r.parent.Group("/client/v1/org/dept/user")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.GET("", handler.GetDeptUser) // 전체 조회 (특정 조회도 필요하다면? )
 	client.POST("", handler.RegistDeptUser)
 	client.PUT("", handler.UpdateDeptUser)
@@ -52,7 +55,6 @@ func (r *adminRouter) SetOrgDeptUserRoutes(handler *handler.OrgDeptUserHandler) 
 func (r *adminRouter) SetOrgDeptRoutes(handler *handler.OrgDeptHandler) {
 
 	client := r.parent.Group("/client/v1/org/dept")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.GET("", handler.GetDept) // 전체 조회 (특정 조회도 필요하다면? )
 	client.POST("", handler.RegisterDept)
 	client.PUT("", handler.UpdateDept)
@@ -63,7 +65,6 @@ func (r *adminRouter) SetOrgDeptRoutes(handler *handler.OrgDeptHandler) {
 func (r *adminRouter) SetOrgFileRoutes(handler *handler.OrgFileHandler) {
 
 	client := r.parent.Group("/client/v1/org/file")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("", handler.CreateOrgFile)
 	client.GET("", handler.GetOrgFile)
 
@@ -72,7 +73,6 @@ func (r *adminRouter) SetOrgFileRoutes(handler *handler.OrgFileHandler) {
 func (r *adminRouter) SetSkinRoutes(handler *handler.SkinImgHandler) {
 
 	client := r.parent.Group("/client/v1/skinImg")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("", handler.CreateSkinImg)
 
 }
@@ -85,6 +85,5 @@ func (r *adminRouter) SetServiceUserRoutes(handler *handler.ServiceUserHandler) 
 
 func (r *adminRouter) SetServiceUserAuthRegisterServiceRoutes(handler *handler.ServiceUserAuthRegisterHandler) {
 	client := r.parent.Group("/client/v1/serviceUser")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("", handler.RegistServiceUser)
 }

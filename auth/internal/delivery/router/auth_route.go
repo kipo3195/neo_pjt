@@ -31,6 +31,10 @@ func (r *authRouter) GetEngine() *gin.Engine {
 
 func NewAuthRouter(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) AuthRouter {
 	r := gin.Default()
+
+	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
+	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
+	r.Use(middleware.LoggingMiddleware(logger))
 	parent := r.Group("/" + serviceName)
 	return &authRouter{
 		tokenConfig: tokenConfig,
@@ -48,7 +52,6 @@ func NewAuthRouter(serviceName string, tokenConfig config.TokenHashConfig, logge
 func (r *authRouter) SetTokenRoutes(handler *handler.TokenHandler) {
 
 	client := r.parent.Group("/client/v1/token")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	// AuthWithoutExpMiddleware at의 만료시간은 체크하지않고 사용자 아이디만 파싱처리하기 위함
 	// 20251018 주석 처리한 이유 : AT를 클라이언트에서 읽어버린 경우 대비
 	//client.Use(middleware.AuthWithoutExpMiddleware(r.tokenConfig))
@@ -64,7 +67,6 @@ func (r *authRouter) SetTokenRoutes(handler *handler.TokenHandler) {
 
 func (r *authRouter) SetUserAuthRoutes(handler *handler.UserAuthHandler) {
 	client := r.parent.Group("/client/v1/user/auth")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("/challenge", handler.GenerateAuthChallenge)
 	//client.POST("/", handler.GetUserAuth) // 서비스로 이관
 
@@ -76,20 +78,17 @@ func (r *authRouter) SetUserAuthRoutes(handler *handler.UserAuthHandler) {
 
 func (r *authRouter) SetUserAuthServiceRoutes(handler *handler.UserAuthServiceHandler) {
 	client := r.parent.Group("/client/v1/user/auth")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("/", handler.UserAuthAndDeviceCheck)
 }
 
 func (r *authRouter) SetUserAuthDeviceServiceRoutes(handler *handler.DeviceAuthServiceHandler) {
 	client := r.parent.Group("/client/v1/device")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.POST("/regist", handler.DeviceRegist)
 	client.POST("/refresh", handler.DeviceRefresh)
 }
 
 func (r *authRouter) SetDeviceRoutes(handler *handler.DeviceHandler) {
 	client := r.parent.Group("/client/v1/device")
-	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.GET("/my-info", handler.GetMyDeviceInfo)
 }
