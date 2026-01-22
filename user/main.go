@@ -9,6 +9,7 @@ import (
 	"user/internal/di"
 	"user/internal/infrastructure/config"
 	"user/internal/infrastructure/loader"
+	"user/internal/infrastructure/logger"
 	"user/internal/infrastructure/migration"
 	"user/internal/infrastructure/storage"
 )
@@ -26,6 +27,9 @@ func InitServer() *http.Server {
 
 	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
+
+	// ---- LOGGER Init ----
+	logger := logger.NewSlogLogger()
 
 	// ---- DB Migration -----
 	if sfg.AutoMigrate {
@@ -51,7 +55,7 @@ func InitServer() *http.Server {
 	}
 
 	// ---- Router Init -----
-	router := router.NewUserRouter("user", sfg.TokenConfig)
+	router := router.NewUserRouter("user", sfg.TokenConfig, logger)
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 
