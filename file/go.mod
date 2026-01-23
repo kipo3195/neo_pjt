@@ -1,6 +1,6 @@
 module file
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/gin-gonic/gin v1.11.0
