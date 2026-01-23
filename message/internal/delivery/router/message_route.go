@@ -51,7 +51,7 @@ func (r *messageRouter) SetLineKeyRoutes(handler *handler.LineKeyHandler) {
 
 	client := r.parent.Group("/client/v1/line-key")
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
-	client.GET("/", handler.GetLineKey)
+	client.GET("", handler.GetLineKey)
 }
 
 func (r *messageRouter) SetChatRoutes(handler *handler.ChatHandler) {

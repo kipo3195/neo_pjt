@@ -5,11 +5,11 @@ import (
 	"log"
 	"message/internal/application/usecase/input"
 	"message/internal/consts"
-	"message/internal/delivery/util"
 	"message/internal/domain/chat/entity"
 	"message/internal/domain/chat/job"
 	"message/internal/domain/chat/repository"
 	"message/internal/infrastructure/workerPool"
+	"message/internal/util"
 	"time"
 
 	"github.com/nats-io/nats.go"
