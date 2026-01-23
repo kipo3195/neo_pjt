@@ -12,6 +12,7 @@ func MakeCreateFileUrlInput(reqUserHash string, eventType string, org string, fi
 	for _, f := range fileInfo {
 
 		temp := input.FileInfo{
+			FileId:   f.FileId,
 			FileName: f.FileName,
 			FileSize: f.FileSize,
 			FileExt:  f.FileExt,
@@ -21,7 +22,6 @@ func MakeCreateFileUrlInput(reqUserHash string, eventType string, org string, fi
 	}
 
 	return input.CreateFileUrlInput{
-
 		ReqUserHash: reqUserHash,
 		EventType:   eventType,
 		Org:         org,

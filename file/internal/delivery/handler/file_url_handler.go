@@ -48,7 +48,6 @@ func (r *FileUrlHandler) CreateFileUrl(c *gin.Context) {
 	}
 
 	input := adapter.MakeCreateFileUrlInput(reqUserHash, req.EventType, req.Org, req.FileInfo)
-
 	output, err := r.usecase.CreateFileUrl(ctx, input)
 
 	if err != nil {
@@ -61,12 +60,12 @@ func (r *FileUrlHandler) CreateFileUrl(c *gin.Context) {
 	for _, f := range output.FileUrlInfo {
 
 		temp := fileUrl.FileUrlInfoDto{
+			FileId:   f.FileId,
 			FileName: f.FileName,
 			Url:      f.Url,
 		}
 
 		fileUrlInfo = append(fileUrlInfo, temp)
-
 	}
 
 	res := fileUrl.CreateFileUrlResponse{

@@ -13,7 +13,22 @@ func NewFileUrlApiRepository() repository.FileUrlApiRepository {
 	return &fileUrlApiRepositoryImpl{}
 }
 
-func (r *fileUrlApiRepositoryImpl) CreateFileUrl(ctx context.Context, entity entity.CreateFileUrlEntity) ([]entity.CreateFileUrlResultEntity, error) {
+func (r *fileUrlApiRepositoryImpl) CreateFileUrl(ctx context.Context, en entity.CreateFileUrlEntity) ([]entity.CreateFileUrlResultEntity, error) {
 
-	return nil, nil
+	result := make([]entity.CreateFileUrlResultEntity, 0)
+
+	for key := range en.FileInfoMap {
+
+		fileInfoEntity := en.FileInfoMap[key]
+
+		temp := entity.CreateFileUrlResultEntity{
+			FileId:     key,
+			FileName:   fileInfoEntity.FileName,
+			CreatedUrl: key + " url",
+		}
+
+		result = append(result, temp)
+	}
+
+	return result, nil
 }

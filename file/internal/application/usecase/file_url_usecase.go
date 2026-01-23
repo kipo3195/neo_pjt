@@ -4,8 +4,10 @@ import (
 	"context"
 	"file/internal/application/usecase/input"
 	"file/internal/application/usecase/output"
+	"file/internal/consts"
 	"file/internal/domain/fileUrl/entity"
 	"file/internal/domain/fileUrl/repository"
+	"file/pkg/util"
 )
 
 type fileUrlUsecase struct {
@@ -30,23 +32,37 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 
 	for _, v := range input.Files {
 
-		temp := entity.FileInfoEntity{
-			FileName: v.FileName,
-			FileSize: v.FileSize,
-			FileExt:  v.FileExt,
+		if v.FileId == "" || v.FileName == "" || v.FileExt == "" || v.FileSize <= 0 {
+			// 유효성 검증
+			continue
 		}
 
-		_, exists := fileInfoMap[temp.FileName]
+		_, exists := fileInfoMap[v.FileName]
 		if exists {
 			// 파일 명이 존재하는지 검증
 			continue
 		}
 
-		fileInfoMap[temp.FileName] = temp
+		temp := entity.FileInfoEntity{
+			FileId:   v.FileId,
+			FileName: v.FileName,
+			FileSize: v.FileSize,
+			FileExt:  v.FileExt,
+		}
+
+		// 동일한 파일명이 있을 수 있으므로
+		fileInfoMap[temp.FileId] = temp
 	}
 
-	entity := entity.MakeCreateFileUrlEntity(input.ReqUserHash, input.Org, fileInfoMap)
+	// transactionId 는 ULID로 사용함
+	ulidGen, err := util.NewULIDGenerator()
+	transactionId := ulidGen.New()
+	if err != nil {
+		return output.CreateFileUrlOutput{}, consts.ErrULIDGeneratorError
+	}
 
+	// url 생성
+	entity := entity.MakeCreateFileUrlEntity(input.ReqUserHash, input.Org, fileInfoMap)
 	result, err := r.apiRepo.CreateFileUrl(ctx, entity)
 
 	if err != nil {
@@ -57,12 +73,13 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 	for _, v := range result {
 
 		// 파일 명이 존재하는지 검증
-		_, exists := fileInfoMap[v.FileName]
+		_, exists := fileInfoMap[v.FileId]
 		if !exists {
 			continue
 		}
 
 		temp := output.FileUrlInfo{
+			FileId:   v.FileId,
 			FileName: v.FileName,
 			Url:      v.CreatedUrl,
 		}
@@ -71,7 +88,7 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 	}
 
 	out := output.CreateFileUrlOutput{
-		TransactionId: "",
+		TransactionId: transactionId,
 		FileUrlInfo:   fileUrlOutput,
 	}
 

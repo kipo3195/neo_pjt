@@ -1,6 +1,7 @@
 package output
 
 type FileUrlInfo struct {
-	FileName string `json:"fileName"`
-	Url      string `json:"url"`
+	FileId   string
+	FileName string
+	Url      string
 }
