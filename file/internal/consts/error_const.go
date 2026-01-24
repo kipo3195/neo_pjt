@@ -17,3 +17,6 @@ var ErrRefreshTokenAuthError = errors.New("refreshToken authentication failed")
 
 // ULID gen
 var ErrULIDGeneratorError = errors.New("ulid generator error")
+
+// file url
+var ErrFileUrlCreateError = errors.New("file url create error")

@@ -8,6 +8,7 @@ import (
 	"file/internal/infrastructure/migration"
 	"log"
 	"net/http"
+	// OCI SDK 필수 패키지
 )
 
 func main() {
@@ -43,7 +44,7 @@ func InitServer() *http.Server {
 	router := router.NewFileRouter("file", sfg.TokenConfig, logger)
 
 	// ---- Domain Handler Init -----
-	fileUrlModule := di.InitFileUrlModule(db)
+	fileUrlModule := di.InitFileUrlModule(db, sfg.OracleStorageConfig)
 	router.SetFileUrlRoutes(fileUrlModule.Handler)
 
 	return &http.Server{

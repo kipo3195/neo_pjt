@@ -5,6 +5,6 @@ import (
 	"file/internal/domain/fileUrl/entity"
 )
 
-type FileUrlApiRepository interface {
+type FileUrlStorageRepository interface {
 	CreateFileUrl(ctx context.Context, entity entity.CreateFileUrlEntity) ([]entity.CreateFileUrlResultEntity, error)
 }

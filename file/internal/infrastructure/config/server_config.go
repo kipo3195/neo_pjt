@@ -7,13 +7,24 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+
+	// OCI SDK 필수 패키지
+	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 )
 
 type ServerConfig struct {
-	Domain      string
-	dbConfig    *DBConfig
-	AutoMigrate bool
-	TokenConfig TokenHashConfig
+	Domain              string
+	dbConfig            *DBConfig
+	AutoMigrate         bool
+	TokenConfig         TokenHashConfig
+	OracleStorageConfig OracleStorageConfig
+}
+
+type OracleStorageConfig struct {
+	Namespace  string
+	BucketName string
+	OciClient  objectstorage.ObjectStorageClient
 }
 
 type TokenHashConfig struct {
@@ -48,11 +59,37 @@ func NewServerConfig() *ServerConfig {
 
 	tokenConfig := initTokenHash()
 
-	return &ServerConfig{
-		dbConfig:    dbConfig,
-		AutoMigrate: autoMigrate,
-		TokenConfig: tokenConfig,
+	oracleStorageConfig, err := initOracleStorageConfig()
+
+	if err != nil {
+		log.Panic(err)
 	}
+
+	return &ServerConfig{
+		dbConfig:            dbConfig,
+		AutoMigrate:         autoMigrate,
+		TokenConfig:         tokenConfig,
+		OracleStorageConfig: oracleStorageConfig,
+	}
+}
+
+func initOracleStorageConfig() (OracleStorageConfig, error) {
+
+	client, err := initOCIFromEnv()
+
+	if err != nil {
+		return OracleStorageConfig{}, err
+	}
+
+	namespace := os.Getenv("OCI_NAMESPACE")
+	bucketName := os.Getenv("OCI_BUCKET_NAME")
+
+	return OracleStorageConfig{
+		OciClient:  client,
+		Namespace:  namespace,
+		BucketName: bucketName,
+	}, nil
+
 }
 
 /* DB Config Area*/
@@ -72,6 +109,39 @@ func initDBConfig() *DBConfig {
 	}
 }
 
+/* oracle cloud */
+func initOCIFromEnv() (objectstorage.ObjectStorageClient, error) {
+	// 환경 변수에서 직접 읽어서 설정 구성
+	tenancy := os.Getenv("OCI_TENANCY_OCID")
+	user := os.Getenv("OCI_USER_OCID")
+	region := os.Getenv("OCI_REGION")
+	fingerprint := os.Getenv("OCI_FINGERPRINT")
+
+	privateKey := LoadPrivateKeyString()
+
+	provider := common.NewRawConfigurationProvider(
+		tenancy,
+		user,
+		region,
+		fingerprint,
+		privateKey,
+		nil, // Passphrase가 없다면 nil
+	)
+
+	return objectstorage.NewObjectStorageClientWithConfigurationProvider(provider)
+}
+
+func LoadPrivateKeyString() string {
+	keyPath := "/run/secrets/jwt_private_key"
+
+	keyBytes, err := os.ReadFile(keyPath)
+	if err != nil {
+		log.Fatalf("failed to read private key: %v", err)
+	}
+
+	return string(keyBytes)
+}
+
 func initTokenHash() TokenHashConfig {
 	accessTokenHash := os.Getenv("ACCESS_TOKEN_HASH")
 	refreshTokenHash := os.Getenv("REFRESH_TOKEN_HASH")
@@ -89,6 +159,7 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{}) // MYSQL
 
 	if err != nil {
+		log.Println(err)
 		log.Fatal("Failed to connect to database!")
 	}
 

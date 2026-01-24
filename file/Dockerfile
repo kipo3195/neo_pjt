@@ -28,6 +28,10 @@ COPY ./internal/infrastructure/config ./internal/infrastructure/config
 # 실행 권한 부여
 RUN chmod +x ./file-server
 
+# HTTPS 통신을 위한 인증서 패키지 설치
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+
 EXPOSE 8091
 
 # CMD를 리스트 형식으로 작성

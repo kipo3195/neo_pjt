@@ -11,18 +11,18 @@ import (
 )
 
 type fileUrlUsecase struct {
-	repo    repository.FileUrlRepository
-	apiRepo repository.FileUrlApiRepository
+	repo        repository.FileUrlRepository
+	storageRepo repository.FileUrlStorageRepository
 }
 
 type FileUrlUsecase interface {
 	CreateFileUrl(ctx context.Context, input input.CreateFileUrlInput) (output.CreateFileUrlOutput, error)
 }
 
-func NewFileUrlUsecase(repo repository.FileUrlRepository, apiRepo repository.FileUrlApiRepository) FileUrlUsecase {
+func NewFileUrlUsecase(repo repository.FileUrlRepository, storageRepo repository.FileUrlStorageRepository) FileUrlUsecase {
 	return &fileUrlUsecase{
-		repo:    repo,
-		apiRepo: apiRepo,
+		repo:        repo,
+		storageRepo: storageRepo,
 	}
 }
 
@@ -63,7 +63,7 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 
 	// url 생성
 	entity := entity.MakeCreateFileUrlEntity(input.ReqUserHash, input.Org, fileInfoMap)
-	result, err := r.apiRepo.CreateFileUrl(ctx, entity)
+	result, err := r.storageRepo.CreateFileUrl(ctx, entity)
 
 	if err != nil {
 		return output.CreateFileUrlOutput{}, err

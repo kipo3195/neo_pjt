@@ -3,6 +3,7 @@ package di
 import (
 	"file/internal/application/usecase"
 	"file/internal/delivery/handler"
+	"file/internal/infrastructure/config"
 	"file/internal/infrastructure/repository"
 
 	"gorm.io/gorm"
@@ -12,11 +13,11 @@ type FileUrlModule struct {
 	Handler *handler.FileUrlHandler
 }
 
-func InitFileUrlModule(db *gorm.DB) *FileUrlModule {
+func InitFileUrlModule(db *gorm.DB, oracleStorageConfig config.OracleStorageConfig) *FileUrlModule {
 
 	repo := repository.NewFileUrlRepository(db)
-	apiRepo := repository.NewFileUrlApiRepository()
-	usecase := usecase.NewFileUrlUsecase(repo, apiRepo)
+	storageRepo := repository.NewFileUrlStorageRepository(oracleStorageConfig.OciClient, oracleStorageConfig.Namespace, oracleStorageConfig.BucketName)
+	usecase := usecase.NewFileUrlUsecase(repo, storageRepo)
 	handler := handler.NewFileUrlHandler(usecase)
 
 	return &FileUrlModule{
