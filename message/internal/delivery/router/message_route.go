@@ -26,6 +26,7 @@ type MessageRouter interface {
 	SetChatRoomRoutes(handler *handler.ChatRoomHandler)
 	SetChatRoomServiceRoutes(handler *handler.ChatRoomServiceHandler)
 	SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHandler)
+	SetChatLineServiceRoutes(handler *handler.ChatLineServiceHandler)
 }
 
 func (r *messageRouter) GetEngine() *gin.Engine {
@@ -104,4 +105,12 @@ func (r *messageRouter) SetChatRoomServiceRoutes(handler *handler.ChatRoomServic
 	client.POST("/update-date", handler.GetChatRoomUpdateDate)
 	client.POST("/member/read-date", handler.GetChatRoomMemberReadDate)
 	client.POST("/my", handler.GetChatRoomMy)
+	client.POST("/sync, ")
+}
+
+func (r *messageRouter) SetChatLineServiceRoutes(handler *handler.ChatLineServiceHandler) {
+
+	client := r.parent.Group("/client/v1/chat/line")
+	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
+	client.POST("/event", handler.GetChatLineEvent)
 }

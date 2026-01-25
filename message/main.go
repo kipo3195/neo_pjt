@@ -96,7 +96,7 @@ func InitServer() (*http.Server, *AppModules) {
 	lineKeyModule := di.InitLineKeyModule(db)
 	router.SetLineKeyRoutes(lineKeyModule.Handler)
 
-	chatModule := di.InitChatModule(db, mb)
+	chatModule := di.InitChatModule(db, mb, logger)
 	router.SetChatRoutes(chatModule.Handler)
 
 	otpModule := di.InitOtpModule(db, otpStorage)
@@ -119,6 +119,9 @@ func InitServer() (*http.Server, *AppModules) {
 
 	chatRoomServiceModule := di.InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
 	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
+
+	chatLineServiceModule := di.InitChatLineServiceModule(chatModule.Usecase, chatRoomModule.Usecase)
+	router.SetChatLineServiceRoutes(chatLineServiceModule)
 
 	server := &http.Server{
 		Addr:    ":8083",

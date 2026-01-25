@@ -35,7 +35,7 @@ func (r *oraclefileUrlStorageRepositoryImpl) CreateFileUrl(ctx context.Context, 
 
 		fileInfoEntity := en.FileInfoMap[key]
 
-		createdUrl, err := r.getUploadUrl(ctx, r.bucketName, fileInfoEntity.FileId, time.Minute*60)
+		createdUrl, err := r.getUploadUrl(ctx, r.bucketName, fileInfoEntity.FileId, time.Minute*10)
 
 		if err != nil {
 			return nil, consts.ErrFileUrlCreateError
@@ -57,8 +57,9 @@ func (o *oraclefileUrlStorageRepositoryImpl) getUploadUrl(ctx context.Context, b
 		NamespaceName: &o.namespace,
 		BucketName:    &bucketName,
 		CreatePreauthenticatedRequestDetails: objectstorage.CreatePreauthenticatedRequestDetails{
-			Name:        common.String("upload_" + objectName),
-			AccessType:  objectstorage.CreatePreauthenticatedRequestDetailsAccessTypeObjectreadwrite,
+			Name: common.String("upload_" + objectName),
+			// AccessTypeObjectwrite - 등록 권한의 url 발급, AccessTypeObjecrtreadwrite - 조회 + 등록 권한의 url 발급, AccessTypeObjectread - 조회 권한의 url 발급
+			AccessType:  objectstorage.CreatePreauthenticatedRequestDetailsAccessTypeObjectwrite,
 			ObjectName:  &objectName,
 			TimeExpires: &common.SDKTime{Time: time.Now().Add(expiry)},
 		},

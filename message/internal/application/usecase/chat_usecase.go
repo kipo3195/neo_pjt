@@ -4,10 +4,12 @@ import (
 	"context"
 	"log"
 	"message/internal/application/usecase/input"
+	"message/internal/application/usecase/output"
 	"message/internal/consts"
 	"message/internal/domain/chat/entity"
 	"message/internal/domain/chat/job"
 	"message/internal/domain/chat/repository"
+	"message/internal/domain/logger"
 	"message/internal/infrastructure/workerPool"
 	"message/internal/util"
 	"time"
@@ -19,20 +21,23 @@ type chatUsecase struct {
 	repository repository.ChatRepository
 	connector  *nats.Conn
 	workerPool workerPool.ChatWorkerPool
+	logger     logger.Logger
 }
 
 type ChatUsecase interface {
 	SendChat(ctx context.Context, in input.SendChatInput) error
 	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity) error
 	ReadChat(ctx context.Context, in input.ReadChatInput) error
+	GetChatLineEvent(ctx context.Context, in input.GetChatLineEventInput) ([]output.GetChatLineEventOutput, error)
 }
 
-func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool) ChatUsecase {
+func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool, logger logger.Logger) ChatUsecase {
 	// domain layer
 	return &chatUsecase{
 		repository: repository,
 		connector:  connector,
 		workerPool: workerPool, // Usecase는 ChatWorkerPool이라는 인터페이스에 의존하고, 이 인터페이스의 구현체가 chatWorkerPool 구조체라는 사실을 전혀 알지 못합니다.
+		logger:     logger,
 	}
 }
 func (u *chatUsecase) ReadChat(ctx context.Context, in input.ReadChatInput) error {
@@ -119,4 +124,36 @@ func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatCount
 
 	u.workerPool.AddTask(job)
 	return nil
+}
+
+func (r *chatUsecase) GetChatLineEvent(ctx context.Context, in input.GetChatLineEventInput) ([]output.GetChatLineEventOutput, error) {
+
+	entity := entity.MakeGetChatLineEventEntity(in.ReqUserHash, in.Org, in.RoomType, in.RoomKey, in.LineKey)
+
+	lineEvent, err := r.repository.GetChatLineEvent(ctx, entity)
+
+	if err != nil {
+		r.logger.Error(ctx, "chat_line_event_select_fail",
+			"line_event", err.Error())
+		return nil, consts.ErrDB
+	}
+
+	result := make([]output.GetChatLineEventOutput, 0)
+
+	for _, v := range lineEvent {
+
+		temp := output.GetChatLineEventOutput{
+			EventType:     v.EventType,
+			Cmd:           v.Cmd,
+			LineKey:       v.LineKey,
+			TargetLineKey: v.TargetLineKey,
+			Contents:      v.Contents,
+			SendUserHash:  v.SendUserHash,
+			SendDate:      v.SendDate,
+		}
+
+		result = append(result, temp)
+	}
+
+	return result, nil
 }

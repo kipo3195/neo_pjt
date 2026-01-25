@@ -105,3 +105,31 @@ func (r *chatRepository) ReadChatLine(ctx context.Context, readChatEntity entity
 	log.Println("[ReadChatLine] - DB process Success userHash: ", readChatEntity.UserHash)
 	return nil
 }
+
+func (r *chatRepository) GetChatLineEvent(ctx context.Context, en entity.GetChatLineEventEntity) ([]entity.ChatLineEventEntity, error) {
+
+	var result []entity.ChatLineEventEntity
+
+	err := r.db.Raw(
+		`select 
+			event_type, cmd, line_key, target_line_key, contents, send_user_hash, send_date 
+		from 
+			chat_line_event as event join (select 
+												room.room_key
+										    from 
+										   		chat_room as room join chat_room_member as member 
+										    on
+										   	 	room.room_key = member.room_key and member.member_hash = ?
+											where 
+												room.room_key = ?) as room_view 
+		on 
+			event.room_key = room_view.room_key
+		where 
+			line_key > ? order by send_date asc`, en.ReqUserHash, en.RoomKey, en.LineKey).Scan(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -4,6 +4,7 @@ import (
 	"log"
 	"message/internal/application/usecase"
 	"message/internal/delivery/handler"
+	"message/internal/domain/logger"
 	"message/internal/infrastructure/repository"
 	"message/internal/infrastructure/workerPool"
 	"time"
@@ -18,14 +19,14 @@ type ChatModule struct {
 	WorkerPool workerPool.ChatWorkerPool
 }
 
-func InitChatModule(db *gorm.DB, connector *nats.Conn) *ChatModule {
+func InitChatModule(db *gorm.DB, connector *nats.Conn, logger logger.Logger) *ChatModule {
 
 	repository := repository.NewChatRepository(db)
 
 	// 이 영역에서 구현체를 생성하고 인터페이스 타입으로 Usecase에 주입합니다.
 	workerPool := workerPool.NewChatWorkerPool(10, repository)
 	workerPool.Init()
-	usecase := usecase.NewChatUsecase(repository, connector, workerPool)
+	usecase := usecase.NewChatUsecase(repository, connector, workerPool, logger)
 	handler := handler.NewChatHandler(usecase)
 
 	return &ChatModule{
