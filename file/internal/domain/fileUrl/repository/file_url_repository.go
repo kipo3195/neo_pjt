@@ -7,4 +7,5 @@ import (
 
 type FileUrlRepository interface {
 	SaveCreateFileUrl(context context.Context, reqUserId string, transactionId string, en []entity.CreateFileUrlResultEntity) error
+	GetFileId(ctx context.Context, en entity.FileUrlUploadEndEntity) ([]string, error)
 }

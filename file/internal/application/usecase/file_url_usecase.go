@@ -9,6 +9,7 @@ import (
 	"file/internal/domain/fileUrl/repository"
 	"file/internal/domain/logger"
 	"file/pkg/util"
+	"log"
 )
 
 type fileUrlUsecase struct {
@@ -19,6 +20,7 @@ type fileUrlUsecase struct {
 
 type FileUrlUsecase interface {
 	CreateFileUrl(ctx context.Context, input input.CreateFileUrlInput) (output.CreateFileUrlOutput, error)
+	FileUrlUploadEnd(ctx context.Context, input input.FileUrlUploadEndInput) error
 }
 
 func NewFileUrlUsecase(repo repository.FileUrlRepository, storageRepo repository.FileUrlStorageRepository, logger logger.Logger) FileUrlUsecase {
@@ -104,4 +106,32 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 	}
 
 	return out, nil
+}
+
+func (r *fileUrlUsecase) FileUrlUploadEnd(ctx context.Context, input input.FileUrlUploadEndInput) error {
+
+	en := entity.MakeFileUrlUploadEndEntity(input.ReqUserHash, input.TransactionId)
+
+	fileIds, err := r.repo.GetFileId(ctx, en)
+
+	if err != nil {
+		r.logger.Error(ctx, "upload_file_id_select_fail",
+			"save_url", err.Error())
+		return err
+	}
+
+	for _, f := range fileIds {
+		result, err := r.storageRepo.CheckFileExists(ctx, f)
+		if err != nil {
+			log.Printf("fileId : %s invalid.. err :%s", f, err)
+			return err
+		}
+
+		if !result {
+			log.Printf("fileId : %s not regist storage", f)
+			return err
+		}
+	}
+
+	return nil
 }

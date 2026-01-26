@@ -5,6 +5,7 @@ import (
 	"file/internal/consts"
 	"file/internal/domain/fileUrl/entity"
 	"file/internal/domain/fileUrl/repository"
+	"fmt"
 	"log"
 	"time"
 
@@ -71,4 +72,26 @@ func (o *oraclefileUrlStorageRepositoryImpl) getUploadUrl(ctx context.Context, b
 		return "", err
 	}
 	return "https://objectstorage.ap-chuncheon-1.oraclecloud.com" + *resp.AccessUri, nil
+}
+
+func (o *oraclefileUrlStorageRepositoryImpl) CheckFileExists(ctx context.Context, objectName string) (bool, error) {
+	request := objectstorage.HeadObjectRequest{
+		NamespaceName: common.String(o.namespace),
+		BucketName:    common.String(o.bucketName),
+		ObjectName:    common.String(objectName),
+	}
+
+	response, err := o.client.HeadObject(context.Background(), request)
+	if err != nil {
+		// 404 에러인 경우 파일이 없는 것임
+		return false, err
+	}
+
+	// HTTP 200 OK이면 파일이 정상적으로 존재함
+	if response.RawResponse.StatusCode == 200 {
+		fmt.Printf("파일 확인 완료! 크기: %v bytes\n", *response.ContentLength)
+		return true, nil
+	}
+
+	return false, nil
 }

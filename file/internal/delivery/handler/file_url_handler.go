@@ -75,3 +75,43 @@ func (r *FileUrlHandler) CreateFileUrl(c *gin.Context) {
 	response.SendSuccess(c, res)
 
 }
+
+func (r *FileUrlHandler) FileUrlUploadEnd(c *gin.Context) {
+
+	ctx := c.Request.Context()
+
+	// 사용자 정보 파싱
+	reqUserHash := util.GetUserHashByAccessToken(c)
+	if reqUserHash == "" {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_110, commonConsts.E_110_MSG)
+		return
+	}
+
+	var req fileUrl.FileUrlUploadEndRequest
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	input := adapter.MakeFileUrlUploadEndInput(reqUserHash, req.TransactionId)
+	err := r.usecase.FileUrlUploadEnd(ctx, input)
+
+	if err != nil {
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
+
+	res := fileUrl.FileUrlUploadEndResponse{
+		TransactionId: req.TransactionId,
+	}
+
+	response.SendSuccess(c, res)
+
+}

@@ -46,4 +46,5 @@ func (r *fileRouter) SetFileUrlRoutes(handler *handler.FileUrlHandler) {
 	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 
 	client.POST("", handler.CreateFileUrl)
+	client.POST("/upload-end", handler.FileUrlUploadEnd)
 }
