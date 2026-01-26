@@ -64,7 +64,6 @@ func (r *FileUrlHandler) CreateFileUrl(c *gin.Context) {
 			FileName: f.FileName,
 			Url:      f.Url,
 		}
-
 		fileUrlInfo = append(fileUrlInfo, temp)
 	}
 

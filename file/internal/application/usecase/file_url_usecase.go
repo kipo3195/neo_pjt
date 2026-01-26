@@ -7,22 +7,25 @@ import (
 	"file/internal/consts"
 	"file/internal/domain/fileUrl/entity"
 	"file/internal/domain/fileUrl/repository"
+	"file/internal/domain/logger"
 	"file/pkg/util"
 )
 
 type fileUrlUsecase struct {
 	repo        repository.FileUrlRepository
 	storageRepo repository.FileUrlStorageRepository
+	logger      logger.Logger
 }
 
 type FileUrlUsecase interface {
 	CreateFileUrl(ctx context.Context, input input.CreateFileUrlInput) (output.CreateFileUrlOutput, error)
 }
 
-func NewFileUrlUsecase(repo repository.FileUrlRepository, storageRepo repository.FileUrlStorageRepository) FileUrlUsecase {
+func NewFileUrlUsecase(repo repository.FileUrlRepository, storageRepo repository.FileUrlStorageRepository, logger logger.Logger) FileUrlUsecase {
 	return &fileUrlUsecase{
 		repo:        repo,
 		storageRepo: storageRepo,
+		logger:      logger,
 	}
 }
 
@@ -66,6 +69,14 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 	result, err := r.storageRepo.CreateFileUrl(ctx, entity)
 
 	if err != nil {
+		return output.CreateFileUrlOutput{}, err
+	}
+
+	// DB 저장
+	err = r.repo.SaveCreateFileUrl(ctx, input.ReqUserHash, transactionId, result)
+	if err != nil {
+		r.logger.Error(ctx, "file_url_save_fail",
+			"save_url", err.Error())
 		return output.CreateFileUrlOutput{}, err
 	}
 

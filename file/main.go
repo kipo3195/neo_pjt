@@ -44,7 +44,7 @@ func InitServer() *http.Server {
 	router := router.NewFileRouter("file", sfg.TokenConfig, logger)
 
 	// ---- Domain Handler Init -----
-	fileUrlModule := di.InitFileUrlModule(db, sfg.OracleStorageConfig)
+	fileUrlModule := di.InitFileUrlModule(db, sfg.OracleStorageConfig, logger)
 	router.SetFileUrlRoutes(fileUrlModule.Handler)
 
 	return &http.Server{
