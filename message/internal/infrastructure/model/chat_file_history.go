@@ -2,6 +2,7 @@ package model
 
 type ChatFileHistory struct {
 	FileId      string `gorm:"column:file_id;primaryKey;type:varchar(100);not null;comment:file id"`
+	RoomKey     string `gorm:"column:room_key;type:varchar(50);not null;comment:룸 키"`
 	LineKey     string `gorm:"column:line_key;type:varchar(50);not null;comment:라인 키"`
 	FileName    string `gorm:"column:file_name;type:varchar(200);not null;comment:file 명"`
 	ReqUserHash string `gorm:"column:req_user_hash;varchar(191);not null;comment:요청 사용자 hash"`

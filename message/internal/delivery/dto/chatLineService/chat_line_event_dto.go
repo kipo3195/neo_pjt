@@ -8,4 +8,8 @@ type ChatLIneEventDto struct {
 	Contents      string `json:"contents"`
 	SendUserHash  string `json:"sendUserHash"`
 	SendDate      string `json:"sendDate"`
+	FileId        string `json:"fileId,omitempty"`
+	FileName      string `json:"fileName,omitempty"`
+	FileType      string `json:"fileType,omitempty"`
+	ThumbnailUrl  string `json:"thumbnailUrl,omitempty"`
 }

@@ -49,6 +49,7 @@ func (r *ChatLineServiceHandler) GetChatLineEvent(c *gin.Context) {
 
 	if err != nil {
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
 	}
 
 	data := make([]chatLineService.ChatLIneEventDto, 0)
@@ -63,6 +64,10 @@ func (r *ChatLineServiceHandler) GetChatLineEvent(c *gin.Context) {
 			Contents:      o.Contents,
 			SendUserHash:  o.SendUserHash,
 			SendDate:      o.SendDate,
+			FileId:        o.FileId,
+			FileName:      o.FileName,
+			FileType:      o.FileType,
+			ThumbnailUrl:  o.ThumbnailUrl,
 		}
 		data = append(data, temp)
 	}

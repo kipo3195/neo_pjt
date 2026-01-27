@@ -8,4 +8,7 @@ type ChatLineEventEntity struct {
 	Contents      string `gorm:"contents"`
 	SendUserHash  string `gorm:"send_user_hash"`
 	SendDate      string `gorm:"send_date"`
+	FileId        string `gorm:"file_id"`
+	FileName      string `gorm:"file_name"`
+	FileType      string `gorm:"file_type"`
 }

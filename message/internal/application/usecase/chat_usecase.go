@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"log"
 	"message/internal/application/usecase/input"
 	"message/internal/application/usecase/output"
@@ -85,6 +88,9 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 			FileName: f.FileName,
 			FileExt:  f.FileExt,
 		}
+		if temp.FileId != "" && (temp.FileExt == "jpg" || temp.FileExt == "jpeg" || temp.FileExt == "png") {
+			temp.ThumbnailUrl = generateThumborURL("uc898911", temp.FileId, "300x300")
+		}
 		chatFileEntity = append(chatFileEntity, temp)
 	}
 	// 채팅 전송용 entity
@@ -161,10 +167,30 @@ func (r *chatUsecase) GetChatLineEvent(ctx context.Context, in input.GetChatLine
 			Contents:      v.Contents,
 			SendUserHash:  v.SendUserHash,
 			SendDate:      v.SendDate,
+			FileId:        v.FileId,
+			FileName:      v.FileName,
+			FileType:      v.FileType,
+		}
+
+		if temp.FileId != "" && temp.FileType == "img" {
+			temp.ThumbnailUrl = generateThumborURL("uc898911", v.FileId, "300x300")
+			log.Println("thumbnailurl : ", temp.ThumbnailUrl)
 		}
 
 		result = append(result, temp)
 	}
 
 	return result, nil
+}
+
+func generateThumborURL(key string, imagePath string, options string) string {
+	// 1. 보안 키와 경로를 조합해 HMAC-SHA1 연산 (이 과정이 매우 빠름)
+	mac := hmac.New(sha1.New, []byte(key))
+	mac.Write([]byte(options + "/" + imagePath))
+
+	// 2. 결과를 Base64로 인코딩 (Thumbor 표준 규격)
+	signature := base64.URLEncoding.EncodeToString(mac.Sum(nil))
+
+	// 3. 최종 URL 완성
+	return "http://172.16.10.114/thumbnail/" + signature + "/" + options + "/" + imagePath
 }

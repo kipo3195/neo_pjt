@@ -84,6 +84,7 @@ func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity
 			}
 
 			chatFileHistory[i] = model.ChatFileHistory{
+				RoomKey:     sendChatEntity.ChatRoomEntity.RoomKey,
 				LineKey:     sendChatEntity.ChatLineEntity.LineKey,
 				FileId:      file.FileId,
 				FileName:    file.FileName,
@@ -141,20 +142,25 @@ func (r *chatRepository) GetChatLineEvent(ctx context.Context, en entity.GetChat
 
 	err := r.db.Raw(
 		`select 
-			event_type, cmd, line_key, target_line_key, contents, send_user_hash, send_date 
+			event_type, cmd, event.line_key, target_line_key, contents, send_user_hash, event.send_date,
+			file.file_id, file.file_name, file.file_type
 		from 
-			chat_line_event as event join (select 
-												room.room_key
-										    from 
-										   		chat_room as room join chat_room_member as member 
-										    on
-										   	 	room.room_key = member.room_key and member.member_hash = ?
-											where 
-												room.room_key = ?) as room_view 
-		on 
+			chat_line_event as event 
+		join 
+			(select room.room_key
+			from chat_room as room join chat_room_member as member 
+			on room.room_key = member.room_key and member.member_hash = ?
+			where room.room_key = ? ) as room_view 
+		on
 			event.room_key = room_view.room_key
+		left join 
+			(select room_key, line_key, file_id, file_name, file_type
+			from chat_file_history 
+			where room_key = ? ) as file
+		on 
+			event.line_key = file.line_key
 		where 
-			line_key > ? order by send_date asc`, en.ReqUserHash, en.RoomKey, en.LineKey).Scan(&result).Error
+			event.line_key > ? order by send_date asc`, en.ReqUserHash, en.RoomKey, en.RoomKey, en.LineKey).Scan(&result).Error
 
 	if err != nil {
 		return nil, err
