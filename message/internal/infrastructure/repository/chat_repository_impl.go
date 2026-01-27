@@ -70,6 +70,35 @@ func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity
 		return err
 	}
 
+	if len(sendChatEntity.ChatFileEntity) > 0 {
+
+		// 채팅 파일
+		chatFileHistory := make([]model.ChatFileHistory, len(sendChatEntity.ChatFileEntity))
+		for i, file := range sendChatEntity.ChatFileEntity {
+
+			var fileType string
+			if file.FileExt == "jpg" || file.FileExt == "jpeg" || file.FileExt == "png" || file.FileExt == "webp" {
+				fileType = "img"
+			} else {
+				fileType = "file"
+			}
+
+			chatFileHistory[i] = model.ChatFileHistory{
+				LineKey:     sendChatEntity.ChatLineEntity.LineKey,
+				FileId:      file.FileId,
+				FileName:    file.FileName,
+				FileType:    fileType,
+				ReqUserHash: sendChatEntity.ChatLineEntity.SendUserHash,
+			}
+		}
+
+		if err := tx.Create(chatFileHistory).Error; err != nil {
+			tx.Rollback()
+			log.Println("[SaveChatLine] unread update failed:", err)
+			return err
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		return err
 	}

@@ -74,15 +74,24 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 
 	// 채팅 라인 entity
 	chatLineEntity := entity.MakeChatLineEntity(in.ChatLine.Cmd, in.ChatLine.Contents, in.ChatLine.LineKey, in.ChatLine.TargetLineKey, in.ChatLine.SendUserHash, in.ChatLine.SendDate)
-
 	// 채팅 룸 entity
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType, in.ChatRoom.SecretFlag)
+	// 채팅 파일 entity
+	chatFileEntity := make([]entity.ChatFileEntity, 0)
+	for _, f := range in.ChatFile {
+
+		temp := entity.ChatFileEntity{
+			FileId:   f.FileId,
+			FileName: f.FileName,
+			FileExt:  f.FileExt,
+		}
+		chatFileEntity = append(chatFileEntity, temp)
+	}
+	// 채팅 전송용 entity
+	chatEntity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity, chatFileEntity)
 
 	// 미확인 건수 전송용 entity
 	chatCountEventEntity := entity.MakeChatCountEventEntity(in.ChatRoom.RoomKey, chatRoomEntity.RoomType, "unread", in.ChatLine.SendUserHash, 1)
-
-	// 채팅 전송용 entity
-	chatEntity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity)
 
 	log.Println("[SendChat] entity : ", chatEntity)
 
@@ -91,6 +100,8 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 		log.Fatal(err)
 		return err
 	}
+
+	log.Println("[SendChat] data : ", data)
 
 	/* 채팅 발송 Message Broker */
 	err = u.connector.Publish("chat.broadcast", data)

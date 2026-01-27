@@ -96,6 +96,8 @@ func InitServer() (*http.Server, *AppModules) {
 	lineKeyModule := di.InitLineKeyModule(db)
 	router.SetLineKeyRoutes(lineKeyModule.Handler)
 
+	chatFileModule := di.InitChatFileModule(db)
+
 	chatModule := di.InitChatModule(db, mb, logger)
 	router.SetChatRoutes(chatModule.Handler)
 
@@ -120,7 +122,7 @@ func InitServer() (*http.Server, *AppModules) {
 	chatRoomServiceModule := di.InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
 	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
 
-	chatLineServiceModule := di.InitChatLineServiceModule(chatModule.Usecase, chatRoomModule.Usecase)
+	chatLineServiceModule := di.InitChatLineServiceModule(chatModule.Usecase, chatRoomModule.Usecase, chatFileModule.Usecase)
 	router.SetChatLineServiceRoutes(chatLineServiceModule)
 
 	server := &http.Server{

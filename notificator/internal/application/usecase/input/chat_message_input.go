@@ -5,4 +5,5 @@ type ChatMessageInput struct {
 	ChatSession  string            `json:"chatSession"`
 	ChatRoomData ChatRoomDataInput `json:"chatRoomData"`
 	ChatLineData ChatLineDataInput `json:"chatLineData"`
+	ChatFileData []ChatFileInput   `json:"chatFileData"`
 }

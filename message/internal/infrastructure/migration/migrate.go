@@ -12,4 +12,5 @@ func RunAll(db *gorm.DB) {
 	repository.ChatRoomMigrate(db)
 	repository.ChatLineEventMigrate(db)
 	repository.ChatRoomTitleMigrate(db)
+	repository.ChatFileMigrate(db)
 }

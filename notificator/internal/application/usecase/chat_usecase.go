@@ -44,6 +44,16 @@ func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessa
 
 	chatRoomEntity := entity.MakeChatRoomEntity(input.ChatRoomData.RoomType, input.ChatRoomData.RoomKey, input.ChatRoomData.SecretFlag)
 	chatLineEntity := entity.MakeChatLineEntity(input.ChatLineData.Cmd, input.ChatLineData.Contents, input.ChatLineData.LineKey, input.ChatLineData.TargetLineKey, input.ChatLineData.SendUserHash, input.ChatLineData.SendDate)
+	chatFileEntity := make([]entity.ChatFileEntity, 0)
+	for _, f := range input.ChatFileData {
+
+		temp := entity.ChatFileEntity{
+			FileId:   f.FileId,
+			FileName: f.FileName,
+			FileExt:  f.FileExt,
+		}
+		chatFileEntity = append(chatFileEntity, temp)
+	}
 
 	RecvUserHash := r.chatRoomStorage.GetChatRoomMember(input.ChatRoomData.RoomKey)
 
@@ -62,10 +72,23 @@ func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessa
 		SendDate:      chatLineEntity.SendDate,
 	}
 
+	chatFileOutput := make([]output.ChatFileDataOutput, 0)
+	for _, f := range chatFileEntity {
+
+		temp := output.ChatFileDataOutput{
+			FileId:   f.FileId,
+			FileName: f.FileName,
+			FileExt:  f.FileExt,
+		}
+
+		chatFileOutput = append(chatFileOutput, temp)
+	}
+
 	chatMessageOutput := output.ChatMessageOutput{
 		ChatSession:  input.ChatSession,
 		ChatRoomData: chatRoomOutput,
 		ChatLineData: chatLintOutput,
+		ChatFileData: chatFileOutput,
 	}
 
 	// 이 시점부터는 “이벤트 → 패킷” 변환

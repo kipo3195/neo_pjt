@@ -5,4 +5,5 @@ type SendChatInput struct {
 	ChatLine    ChatLineInput
 	EventType   string
 	ChatSession string
+	ChatFile    []ChatFileInput
 }

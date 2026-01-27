@@ -89,7 +89,7 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	// Message Broker에 publish
-	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine)
+	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine, req.ChatFile)
 	err := r.svc.Chat.SendChat(ctx, input)
 
 	if err != nil {
@@ -116,11 +116,23 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		TargetLineKey: input.ChatLine.TargetLineKey,
 	}
 
+	chatFile := make([]chatService.ChatFileData, 0)
+	for _, f := range input.ChatFile {
+
+		temp := chatService.ChatFileData{
+			FileId:   f.FileId,
+			FileExt:  f.FileExt,
+			FileName: f.FileName,
+		}
+		chatFile = append(chatFile, temp)
+	}
+
 	res := chatService.SendChatResponse{
 		ChatRoom:    chatRoom,
 		ChatLine:    chatLine,
 		EventType:   input.EventType,
 		ChatSession: input.ChatSession,
+		ChatFile:    chatFile,
 	}
 
 	response.SendSuccess(c, res)
