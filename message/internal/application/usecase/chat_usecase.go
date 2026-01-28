@@ -55,17 +55,32 @@ func (u *chatUsecase) ReadChat(ctx context.Context, in input.ReadChatInput) erro
 	}
 
 	chatCountEventEntity := entity.MakeChatCountEventEntity(readChatEntity.RoomKey, readChatEntity.RoomType, "read", readChatEntity.UserHash, 0)
-
-	data, err := util.EntityMarshal(chatCountEventEntity)
+	chatCountEventData, err := util.EntityMarshal(chatCountEventEntity)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
 	/* 미확인 건수 발송 Message Broker */
-	err = u.connector.Publish("chat.count.broadcast", data)
+	err = u.connector.Publish("chat.count.broadcast", chatCountEventData)
 	if err != nil {
-		log.Println("NATS publish failed:", err)
+		log.Println("[chat.count.broadcast] NATS publish failed:", err)
+		return consts.ErrPublishToMessageBrokerError
+		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
+	}
+
+	/* 읽음 처리 데이터 발송 Message Broker*/
+	chatReadEventEntity := entity.MakeChatReadEventEntity(readChatEntity.RoomKey, readChatEntity.RoomType, readChatEntity.UserHash, readChatEntity.ReadDate)
+	chatReadEventData, err := util.EntityMarshal(chatReadEventEntity)
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	err = u.connector.Publish("chat.read.broadcast", chatReadEventData)
+	if err != nil {
+		log.Println("[chat.read.broadcast] NATS publish failed:", err)
 		return consts.ErrPublishToMessageBrokerError
 		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
 	}

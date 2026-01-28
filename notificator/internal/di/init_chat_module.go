@@ -13,28 +13,30 @@ import (
 )
 
 type ChatModule struct {
-	Usecase    usecase.ChatUsecase
-	workerPool workerPool.ChatWorkerPool
+	Usecase             usecase.ChatUsecase
+	chatCountWorkerPool workerPool.ChatCountWorkerPool
 }
 
 func InitChatModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, messageSender port.MessageSender) *ChatModule {
 
 	repo := repository.NewChatRepository(db)
 
-	workerPool := workerPool.NewChatWorkerPool(10, messageSender)
-	workerPool.Init()
-	usecase := usecase.NewChatUsecase(chatRoomStorage, repo, messageSender, workerPool)
+	chatCountWorkerPool := workerPool.NewChatCountWorkerPool(10, messageSender)
+	chatCountWorkerPool.Init()
+
+	chatReadDateWorkerPool := workerPool.NewChatReadDateWorkerPool(10, messageSender)
+	usecase := usecase.NewChatUsecase(chatRoomStorage, repo, messageSender, chatCountWorkerPool, chatReadDateWorkerPool)
 
 	return &ChatModule{
-		Usecase:    usecase,
-		workerPool: workerPool,
+		Usecase:             usecase,
+		chatCountWorkerPool: chatCountWorkerPool,
 	}
 }
 
 func (m *ChatModule) Cleanup() {
 	log.Println("Cleaning up ChatModule...")
 	// WorkerPool 종료 (채널 닫기 및 대기)
-	m.workerPool.Stop()
+	m.chatCountWorkerPool.Stop()
 
 	// 추가적으로 NATS 연결 종료 등이 필요하다면 여기서 수행
 	// m.Connector.Close()

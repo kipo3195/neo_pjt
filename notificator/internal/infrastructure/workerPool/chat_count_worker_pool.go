@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type chatWorkerPool struct {
+type chatCountWorkerPool struct {
 	workerChans []chan *job.ChatCountJob
 	numWorkers  int
 
@@ -24,13 +24,13 @@ type chatWorkerPool struct {
 	isClosed      bool
 }
 
-type ChatWorkerPool interface {
+type ChatCountWorkerPool interface {
 	AddTask(userHash string, en entity.ChatCountMessageEntity)
 	Init()
 	Stop() // 리소스 정리용 (선택적이지만 권장됨)
 }
 
-func NewChatWorkerPool(count int, messageSender port.MessageSender) *chatWorkerPool {
+func NewChatCountWorkerPool(count int, messageSender port.MessageSender) *chatCountWorkerPool {
 
 	// 각각의 워커가 자신만의 채널을 갖도록
 	chans := make([]chan *job.ChatCountJob, count)
@@ -38,30 +38,30 @@ func NewChatWorkerPool(count int, messageSender port.MessageSender) *chatWorkerP
 		chans[i] = make(chan *job.ChatCountJob, 100) // 적절한 버퍼 크기
 	}
 
-	return &chatWorkerPool{
+	return &chatCountWorkerPool{
 		workerChans:   chans,
 		numWorkers:    count,
 		messageSender: messageSender,
 	}
 }
 
-func (p *chatWorkerPool) Init() {
+func (p *chatCountWorkerPool) Init() {
 	for i := 0; i < p.numWorkers; i++ {
 		p.wg.Add(1)
 		// 각 워커에게 고유 ID와 전용 채널을 할당하여 실행
 		go p.worker(i, p.workerChans[i])
 	}
-	log.Printf("[chatWorkerPool] %d worker init.", p.numWorkers)
+	log.Printf("[chatCountWorkerPool] %d worker init.", p.numWorkers)
 }
 
-func (p *chatWorkerPool) worker(id int, ch chan *job.ChatCountJob) {
+func (p *chatCountWorkerPool) worker(id int, ch chan *job.ChatCountJob) {
 	defer p.wg.Done()
 
 	// 워커마다 독립적인 맵을 생성합니다. (Lock-Free의 핵심)
 	pendingMap := make(map[string]*entity.ChatCountJobEntity)
 
 	for j := range ch {
-		log.Printf("[chatWorker %d] recv user : %s, isFlush : %v", id, j.UserHash, j.IsFlush)
+		log.Printf("[chat count Worker %d] recv user : %s, isFlush : %v", id, j.UserHash, j.IsFlush)
 
 		if j.IsFlush {
 			// 타이머에 의한 전송 처리 로직
@@ -73,7 +73,7 @@ func (p *chatWorkerPool) worker(id int, ch chan *job.ChatCountJob) {
 	}
 }
 
-func (p *chatWorkerPool) AddTask(userHash string, en entity.ChatCountMessageEntity) {
+func (p *chatCountWorkerPool) AddTask(userHash string, en entity.ChatCountMessageEntity) {
 
 	// 빠르게 던지고 빠짐
 	p.mu.Lock()
@@ -98,14 +98,14 @@ func (p *chatWorkerPool) AddTask(userHash string, en entity.ChatCountMessageEnti
 	}
 }
 
-func (p *chatWorkerPool) getWorkerIdx(userHash string) int {
+func (p *chatCountWorkerPool) getWorkerIdx(userHash string) int {
 	h := fnv.New32a()
 	h.Write([]byte(userHash))
 	// 32비트 해시 결과값을 워커 개수로 나눈 나머지(Modulo)를 구합니다.
 	return int(h.Sum32()) % p.numWorkers
 }
 
-func (p *chatWorkerPool) handleMessage(ch chan *job.ChatCountJob, j *job.ChatCountJob, pendingMap map[string]*entity.ChatCountJobEntity) {
+func (p *chatCountWorkerPool) handleMessage(ch chan *job.ChatCountJob, j *job.ChatCountJob, pendingMap map[string]*entity.ChatCountJobEntity) {
 
 	item, exists := pendingMap[j.UserHash]
 
@@ -174,7 +174,7 @@ func (p *chatWorkerPool) handleMessage(ch chan *job.ChatCountJob, j *job.ChatCou
 	}
 }
 
-func (p *chatWorkerPool) handleFlush(userHash string, pendingMap map[string]*entity.ChatCountJobEntity, en entity.ChatCountMessageEntity) {
+func (p *chatCountWorkerPool) handleFlush(userHash string, pendingMap map[string]*entity.ChatCountJobEntity, en entity.ChatCountMessageEntity) {
 	// 1. 해당 유저의 펜딩 데이터가 있는지 확인
 	item, exists := pendingMap[userHash]
 	if !exists {
@@ -214,7 +214,7 @@ func (p *chatWorkerPool) handleFlush(userHash string, pendingMap map[string]*ent
 }
 
 // 만들어 놓고 사용하지 않게 되있으므로 이후 호출 부분 추가하기
-func (p *chatWorkerPool) Stop() {
+func (p *chatCountWorkerPool) Stop() {
 	p.mu.Lock()
 	if p.isClosed {
 		p.mu.Unlock()

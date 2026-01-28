@@ -20,23 +20,26 @@ const (
 )
 
 type chatUsecase struct {
-	repo            repository.ChatRepository
-	chatRoomStorage storage.ChatRoomStorage
-	messageSender   port.MessageSender
-	workerPool      workerPool.ChatWorkerPool
+	repo                   repository.ChatRepository
+	chatRoomStorage        storage.ChatRoomStorage
+	messageSender          port.MessageSender
+	chatCountWorkerPool    workerPool.ChatCountWorkerPool
+	chatReadDateWorkerPool workerPool.ChatReadDateWorkerPool
 }
 
 type ChatUsecase interface {
 	RecvChatMessage(ctx context.Context, in input.ChatMessageInput)
 	RecvChatCountMessage(ctx context.Context, in input.ChatCountMessageInput)
+	RecvChatReadMessage(ctx context.Context, in input.ChatReadMessageInput)
 }
 
-func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.ChatRepository, messageSender port.MessageSender, workerPool workerPool.ChatWorkerPool) ChatUsecase {
+func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.ChatRepository, messageSender port.MessageSender, chatCountWorkerPool workerPool.ChatCountWorkerPool, chatReadDateWorkerPool workerPool.ChatReadDateWorkerPool) ChatUsecase {
 	return &chatUsecase{
-		chatRoomStorage: chatRoomStorage,
-		repo:            repo,
-		messageSender:   messageSender,
-		workerPool:      workerPool,
+		chatRoomStorage:        chatRoomStorage,
+		repo:                   repo,
+		messageSender:          messageSender,
+		chatCountWorkerPool:    chatCountWorkerPool,
+		chatReadDateWorkerPool: chatReadDateWorkerPool,
 	}
 }
 
@@ -124,14 +127,33 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 
 	if chatCountMessageEntity.EventType == consts.READ {
 		// 읽음처리 - 나에게 발송
-		r.workerPool.AddTask(in.SendUserHash, chatCountMessageEntity)
+		r.chatCountWorkerPool.AddTask(in.SendUserHash, chatCountMessageEntity)
 	} else if chatCountMessageEntity.EventType == consts.UNREAD {
 		// 신규 라인 발생 - 발신자를 제외하고 보냄.
 		recvUserHash := r.chatRoomStorage.GetChatRoomMember(in.RoomKey)
 		for _, recvUser := range recvUserHash {
 			if recvUser != chatCountEntity.SendUserHash {
-				r.workerPool.AddTask(recvUser, chatCountMessageEntity)
+				r.chatCountWorkerPool.AddTask(recvUser, chatCountMessageEntity)
 			}
+		}
+	}
+
+}
+
+func (r *chatUsecase) RecvChatReadMessage(ctx context.Context, in input.ChatReadMessageInput) {
+
+	chatReadEntity := entity.MakeChatReadEntity(in.RoomKey, in.RoomType, in.MemberHash, in.ReadDate)
+	log.Println("[RecvChatReadMessage] chatReadEntity: ", chatReadEntity)
+
+	chatReadMessageEntity := entity.ChatReadMessageEntity{
+		Type:         "readDate",
+		ChatReadData: chatReadEntity,
+	}
+	recvUserHash := r.chatRoomStorage.GetChatRoomMember(chatReadMessageEntity.ChatReadData.RoomKey)
+
+	for _, recvUser := range recvUserHash {
+		if recvUser != chatReadEntity.MemberHash {
+			r.chatReadDateWorkerPool.AddTask(recvUser, chatReadMessageEntity)
 		}
 	}
 

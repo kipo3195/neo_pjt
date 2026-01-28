@@ -113,6 +113,7 @@ func InitServer() (*http.Server, *AppModules) {
 	// 도메인별 토픽만 구독
 	chatSub.AddSubscribe("chat.broadcast")
 	chatSub.AddSubscribe("chat.count.broadcast")
+	chatSub.AddSubscribe("chat.read.broadcast")
 	noteSub.AddSubscribe("note.broadcast")
 	chatRoomSub.AddSubscribe("chat.room.broadcast")
 	chatRoomSub.AddQueueSubscribe("create.chat.room")

@@ -73,5 +73,15 @@ func (s *NatsChatSubscriber) handleNatsMessage(kind string, data []byte) {
 
 		// 실시간 발송 처리를 위한 도메인 구분 (chatUsecase, socketSenderUsecase)
 		s.chatUsecase.RecvChatCountMessage(ctx, input)
+	case "chat.read.broadcast":
+
+		var input input.ChatReadMessageInput
+		if err := json.Unmarshal(data, &input); err != nil {
+			log.Printf("invalid message: %v", err)
+			return
+		}
+
+		// 실시간 발송 처리를 위한 도메인 구분 (chatUsecase, socketSenderUsecase)
+		s.chatUsecase.RecvChatReadMessage(ctx, input)
 	}
 }
