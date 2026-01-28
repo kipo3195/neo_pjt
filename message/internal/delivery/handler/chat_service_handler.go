@@ -90,7 +90,7 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 
 	// Message Broker에 publish
 	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine, req.ChatFile)
-	err := r.svc.Chat.SendChat(ctx, input)
+	output, err := r.svc.Chat.SendChat(ctx, input)
 
 	if err != nil {
 		if err == consts.ErrPublishToMessageBrokerError {
@@ -119,10 +119,19 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	chatFile := make([]chatService.ChatFileData, 0)
 	for _, f := range input.ChatFile {
 
+		var thumbnailUrl string
+
+		// 생성된 썸네일 url이 있는 경우
+		v, exists := output.ThumbnailMap[f.FileId]
+		if exists {
+			thumbnailUrl = v
+		}
+
 		temp := chatService.ChatFileData{
-			FileId:   f.FileId,
-			FileExt:  f.FileExt,
-			FileName: f.FileName,
+			FileId:       f.FileId,
+			FileExt:      f.FileExt,
+			FileName:     f.FileName,
+			ThumbnailUrl: thumbnailUrl,
 		}
 		chatFile = append(chatFile, temp)
 	}

@@ -28,7 +28,7 @@ type chatUsecase struct {
 }
 
 type ChatUsecase interface {
-	SendChat(ctx context.Context, in input.SendChatInput) error
+	SendChat(ctx context.Context, in input.SendChatInput) (output.SendChatOutput, error)
 	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity) error
 	ReadChat(ctx context.Context, in input.ReadChatInput) error
 	GetChatLineEvent(ctx context.Context, in input.GetChatLineEventInput) ([]output.GetChatLineEventOutput, error)
@@ -73,7 +73,7 @@ func (u *chatUsecase) ReadChat(ctx context.Context, in input.ReadChatInput) erro
 	return nil
 }
 
-func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) error {
+func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) (output.SendChatOutput, error) {
 
 	// 채팅 라인 entity
 	chatLineEntity := entity.MakeChatLineEntity(in.ChatLine.Cmd, in.ChatLine.Contents, in.ChatLine.LineKey, in.ChatLine.TargetLineKey, in.ChatLine.SendUserHash, in.ChatLine.SendDate)
@@ -81,6 +81,10 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType, in.ChatRoom.SecretFlag)
 	// 채팅 파일 entity
 	chatFileEntity := make([]entity.ChatFileEntity, 0)
+
+	// 썸네일 url output용 map
+	thumbnailMap := make(map[string]string)
+
 	for _, f := range in.ChatFile {
 
 		temp := entity.ChatFileEntity{
@@ -92,6 +96,7 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 			temp.ThumbnailUrl = generateThumborURL("uc898911", temp.FileId, "300x300")
 		}
 		chatFileEntity = append(chatFileEntity, temp)
+		thumbnailMap[temp.FileId] = temp.ThumbnailUrl
 	}
 	// 채팅 전송용 entity
 	chatEntity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity, chatFileEntity)
@@ -104,7 +109,7 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	data, err := util.EntityMarshal(chatEntity)
 	if err != nil {
 		log.Fatal(err)
-		return err
+		return output.SendChatOutput{}, err
 	}
 
 	log.Println("[SendChat] data : ", data)
@@ -113,14 +118,20 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) erro
 	err = u.connector.Publish("chat.broadcast", data)
 	if err != nil {
 		log.Println("NATS publish failed:", err)
-		return consts.ErrPublishToMessageBrokerError
+		return output.SendChatOutput{}, consts.ErrPublishToMessageBrokerError
 
 		// 이후에 server to server rest로 전송하는 API 추가 TODO 아마도 별도의 비동기 처리로?
 	}
 
 	/* DB 저장 Task */
 	err = u.addTaskChatLineJob(chatEntity, chatCountEventEntity)
-	return nil
+
+	// output 생성
+	out := output.SendChatOutput{
+		ThumbnailMap: thumbnailMap,
+	}
+
+	return out, nil
 }
 
 func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity) error {
