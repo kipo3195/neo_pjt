@@ -112,16 +112,19 @@ func (r *fileUrlUsecase) FileUrlUploadEnd(ctx context.Context, input input.FileU
 
 	en := entity.MakeFileUrlUploadEndEntity(input.ReqUserHash, input.TransactionId)
 
-	fileIds, err := r.repo.GetFileId(ctx, en)
+	files, err := r.repo.GetFileId(ctx, en)
 
 	if err != nil {
 		r.logger.Error(ctx, "upload_file_id_select_fail",
-			"save_url", err.Error())
+			"transactionId", err.Error())
 		return err
 	}
 
-	for _, f := range fileIds {
-		result, err := r.storageRepo.CheckFileExists(ctx, f)
+	fileIds := make([]string, 0)
+	for _, f := range files {
+
+		result, err := r.storageRepo.CheckFileExists(ctx, f.FileId)
+
 		if err != nil {
 			log.Printf("fileId : %s invalid.. err :%s", f, err)
 			return err
@@ -131,7 +134,20 @@ func (r *fileUrlUsecase) FileUrlUploadEnd(ctx context.Context, input input.FileU
 			log.Printf("fileId : %s not regist storage", f)
 			return err
 		}
+
+		fileIds = append(fileIds, f.FileId)
 	}
 
+	// 업로드 한 파일 upload_flag 변경
+	err = r.repo.UploadFlagUpdate(ctx, en.ReqUserHash, fileIds)
+	if err != nil {
+		return err
+	}
+
+	// 업로드 완료 후 transaction id 저장 - message 서비스 조회용
+	err = r.repo.PutUploadEndFileInfo(ctx, en.TransactionId, files)
+	if err != nil {
+		return err
+	}
 	return nil
 }

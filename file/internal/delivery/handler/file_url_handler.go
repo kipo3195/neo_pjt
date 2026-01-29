@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"file/internal/application/usecase"
+	"file/internal/consts"
 	"file/internal/delivery/adapter"
 	"file/internal/delivery/dto/fileUrl"
 	"file/internal/delivery/util"
@@ -104,7 +105,11 @@ func (r *FileUrlHandler) FileUrlUploadEnd(c *gin.Context) {
 	err := r.usecase.FileUrlUploadEnd(ctx, input)
 
 	if err != nil {
-		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		if err == consts.ErrCacheResultNotFound {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.FILE_F001, consts.FILE_F001_MSG)
+		} else {
+			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		}
 		return
 	}
 

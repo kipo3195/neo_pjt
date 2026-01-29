@@ -7,6 +7,9 @@ var ErrDBresultNotFound = errors.New("db result not found")
 var ErrDB = errors.New("db error")
 var ErrDBResultNotUpdate = errors.New("db result not update")
 
+// cache
+var ErrCacheResultNotFound = errors.New("cache result not found")
+
 // token
 var ErrTokenParsing = errors.New("token parsing failed")
 var ErrTokenExpired = errors.New("token has expired")

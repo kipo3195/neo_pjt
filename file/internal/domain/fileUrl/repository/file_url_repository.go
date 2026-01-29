@@ -6,6 +6,8 @@ import (
 )
 
 type FileUrlRepository interface {
-	SaveCreateFileUrl(context context.Context, reqUserId string, transactionId string, en []entity.CreateFileUrlResultEntity) error
-	GetFileId(ctx context.Context, en entity.FileUrlUploadEndEntity) ([]string, error)
+	SaveCreateFileUrl(context context.Context, reqUserHash string, transactionId string, en []entity.CreateFileUrlResultEntity) error
+	GetFileId(ctx context.Context, en entity.FileUrlUploadEndEntity) ([]entity.CreateFileUrlResultEntity, error)
+	UploadFlagUpdate(ctx context.Context, reqUserHash string, fileIds []string) error
+	PutUploadEndFileInfo(ctx context.Context, transactionId string, entity []entity.CreateFileUrlResultEntity) error
 }

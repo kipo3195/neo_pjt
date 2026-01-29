@@ -52,28 +52,29 @@ func (r *fileUrlRepositoryImpl) SaveCreateFileUrl(context context.Context, reqUs
 	return nil
 }
 
-func (r *fileUrlRepositoryImpl) GetFileId(ctx context.Context, en entity.FileUrlUploadEndEntity) ([]string, error) {
+func (r *fileUrlRepositoryImpl) GetFileId(ctx context.Context, en entity.FileUrlUploadEndEntity) ([]entity.CreateFileUrlResultEntity, error) {
 
-	var m []entity.FileUploadUrlHistoryEntity
-
-	err := r.db.WithContext(ctx).Raw(
-		`select file_id, upload_flag, error_flag from file_upload_url_history where t_id = ? and req_user_hash = ?`, en.TransactionId, en.ReqUserHash,
-	).Scan(&m).Error
+	fileInfo, err := r.cacheStorage.GetFileUrlInfo(ctx, en.TransactionId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]string, 0)
+	return fileInfo, nil
+}
 
-	for _, v := range m {
+func (r *fileUrlRepositoryImpl) UploadFlagUpdate(ctx context.Context, reqUserHash string, fileIds []string) error {
 
-		if v.UploadFlag == "Y" && v.ErrorFlag == "Y" {
-			return nil, consts.ErrULIDGeneratorError
-		}
+	err := r.db.WithContext(ctx).Model(&model.FileUploadUrlHistory{}).Where(`file_id in ?`, fileIds).Update("upload_flag", "Y").Error
 
-		result = append(result, v.FileId)
+	if err != nil {
+		return err
 	}
 
-	return result, nil
+	return nil
+}
+
+func (r *fileUrlRepositoryImpl) PutUploadEndFileInfo(ctx context.Context, transactionId string, entity []entity.CreateFileUrlResultEntity) error {
+
+	return r.cacheStorage.PutUploadEndFileInfo(ctx, transactionId, entity)
 }
