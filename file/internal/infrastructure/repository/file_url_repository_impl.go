@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"file/internal/consts"
+	"file/internal/domain/fileUrl/cache"
 	"file/internal/domain/fileUrl/entity"
 	"file/internal/domain/fileUrl/repository"
 	"file/internal/infrastructure/model"
@@ -11,17 +12,19 @@ import (
 )
 
 type fileUrlRepositoryImpl struct {
-	db *gorm.DB
+	db           *gorm.DB
+	cacheStorage cache.FileUrlCache
 }
 
 func FileUrlMigrate(db *gorm.DB) {
 	db.AutoMigrate(&model.FileUploadUrlHistory{})
 }
 
-func NewFileUrlRepository(db *gorm.DB) repository.FileUrlRepository {
+func NewFileUrlRepository(db *gorm.DB, cacheStorage cache.FileUrlCache) repository.FileUrlRepository {
 
 	return &fileUrlRepositoryImpl{
-		db: db,
+		db:           db,
+		cacheStorage: cacheStorage,
 	}
 }
 
@@ -39,7 +42,14 @@ func (r *fileUrlRepositoryImpl) SaveCreateFileUrl(context context.Context, reqUs
 		}
 	}
 
-	return r.db.WithContext(context).Create(fileUrlHistoryModels).Error
+	err := r.db.WithContext(context).Create(fileUrlHistoryModels).Error
+	if err != nil {
+		return consts.ErrDB
+	}
+
+	r.cacheStorage.PutFileUrlInfo(context, transactionId, en)
+
+	return nil
 }
 
 func (r *fileUrlRepositoryImpl) GetFileId(ctx context.Context, en entity.FileUrlUploadEndEntity) ([]string, error) {

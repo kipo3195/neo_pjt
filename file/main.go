@@ -25,6 +25,7 @@ func InitServer() *http.Server {
 
 	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
+	cacheClient := config.ConnectCacheDataBase(sfg)
 
 	// ---- DB Migration -----
 	if sfg.AutoMigrate {
@@ -44,7 +45,7 @@ func InitServer() *http.Server {
 	router := router.NewFileRouter("file", sfg.TokenConfig, logger)
 
 	// ---- Domain Handler Init -----
-	fileUrlModule := di.InitFileUrlModule(db, sfg.OracleStorageConfig, logger)
+	fileUrlModule := di.InitFileUrlModule(db, cacheClient, sfg.OracleStorageConfig, logger)
 	router.SetFileUrlRoutes(fileUrlModule.Handler)
 
 	return &http.Server{

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/go-redis/redis"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -176,4 +177,11 @@ func initAutoMigrate() bool {
 	} else {
 		return false
 	}
+}
+
+func ConnectCacheDataBase(sfg *ServerConfig) *redis.Client {
+
+	return redis.NewClient(&redis.Options{
+		Addr: "140.245.73.74:7001",
+	})
 }
