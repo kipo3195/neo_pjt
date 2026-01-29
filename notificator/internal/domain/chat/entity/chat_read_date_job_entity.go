@@ -5,5 +5,6 @@ import "time"
 type ChatReadDateJobEntity struct {
 	UserHash    string
 	Timer       *time.Timer
-	RoomReadMap map[string][]ChatReadDateEntity
+	Count       int64
+	RoomReadMap map[string]map[string]string
 }

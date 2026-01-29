@@ -25,6 +25,7 @@ func InitChatModule(db *gorm.DB, chatRoomStorage storage.ChatRoomStorage, messag
 	chatCountWorkerPool.Init()
 
 	chatReadDateWorkerPool := workerPool.NewChatReadDateWorkerPool(10, messageSender)
+	chatReadDateWorkerPool.Init()
 	usecase := usecase.NewChatUsecase(chatRoomStorage, repo, messageSender, chatCountWorkerPool, chatReadDateWorkerPool)
 
 	return &ChatModule{

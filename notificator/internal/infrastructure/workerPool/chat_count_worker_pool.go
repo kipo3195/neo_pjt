@@ -151,10 +151,13 @@ func (p *chatCountWorkerPool) handleMessage(ch chan *job.ChatCountJob, j *job.Ch
 		}
 		pendingMap[j.UserHash] = item
 
+		// 클로저 이슈 방지를 위한 값 복사
+		targetUserHash := j.UserHash
+
 		item.Timer = time.AfterFunc(500*time.Millisecond, func() {
 			// 중요: 워커 자신의 채널로 Flush 작업을 다시 던집니다.
 			ch <- &job.ChatCountJob{
-				UserHash: j.UserHash,
+				UserHash: targetUserHash,
 				En:       j.En,
 				IsFlush:  true,
 			}
@@ -247,11 +250,11 @@ func (p *chatCountWorkerPool) Stop() {
 	// 4. 완료되었거나 시간이 다 되었거나
 	select {
 	case <-done:
-		log.Println("[chatWorkerPool] All workers stopped gracefully.")
+		log.Println("[chatCountWorkerPool] All workers stopped gracefully.")
 	case <-ctx.Done():
-		log.Printf("[chatWorkerPool] Stop timed out after %v. Forcing shutdown.", 30)
+		log.Printf("[chatCountWorkerPool] Stop timed out after %v. Forcing shutdown.", 30)
 		// 여기서 필요하다면 강제 종료를 위한 추가 로직 수행
 	}
 
-	log.Println("[chatWorkerPool] All workers finished safely. Pool stopped.")
+	log.Println("[chatWorkchatCountWorkerPoolerPool] All workers finished safely. Pool stopped.")
 }

@@ -151,10 +151,10 @@ func (r *chatUsecase) RecvChatReadMessage(ctx context.Context, in input.ChatRead
 	}
 	recvUserHash := r.chatRoomStorage.GetChatRoomMember(chatReadMessageEntity.ChatReadData.RoomKey)
 
+	// 나를 포함하여 보내야 중복 로그인 시 동일 사용자의 다른 클라이언트에 response 함.
+	log.Println("1")
 	for _, recvUser := range recvUserHash {
-		if recvUser != chatReadEntity.MemberHash {
-			r.chatReadDateWorkerPool.AddTask(recvUser, chatReadMessageEntity)
-		}
+		r.chatReadDateWorkerPool.AddTask(recvUser, chatReadMessageEntity)
 	}
 
 }
