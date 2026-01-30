@@ -8,7 +8,7 @@ import (
 	"file/internal/infrastructure/config"
 	"file/internal/infrastructure/repository"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +16,7 @@ type FileUrlModule struct {
 	Handler *handler.FileUrlHandler
 }
 
-func InitFileUrlModule(db *gorm.DB, cacheClient *redis.Client, oracleStorageConfig config.OracleStorageConfig, logger logger.Logger) *FileUrlModule {
+func InitFileUrlModule(db *gorm.DB, cacheClient *redis.ClusterClient, oracleStorageConfig config.OracleStorageConfig, logger logger.Logger) *FileUrlModule {
 
 	cacheStorage := cache.NewFileUrlCache(cacheClient)
 	repo := repository.NewFileUrlRepository(db, cacheStorage)

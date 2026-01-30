@@ -9,14 +9,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 type fileUrlCacheImpl struct {
-	cacheClient *redis.Client
+	cacheClient *redis.ClusterClient
 }
 
-func NewFileUrlCache(cacheClient *redis.Client) cache.FileUrlCache {
+func NewFileUrlCache(cacheClient *redis.ClusterClient) cache.FileUrlCache {
 	return &fileUrlCacheImpl{
 		cacheClient: cacheClient,
 	}
@@ -32,7 +32,17 @@ func (r *fileUrlCacheImpl) PutFileUrlInfo(ctx context.Context, transactionId str
 		return err
 	}
 
-	return r.cacheClient.WithContext(ctx).Set(cacheKey, data, time.Hour).Err()
+	log.Println("[PutFileUrlInfo] redis save cacheKey :", cacheKey)
+	log.Println("[PutFileUrlInfo] redis save tid :", transactionId)
+	log.Println("[PutFileUrlInfo] redis save entity :", data)
+
+	err = r.cacheClient.Set(ctx, cacheKey, data, time.Hour).Err()
+
+	if err != nil {
+		log.Println("err : ", err)
+	}
+
+	return err
 
 }
 
@@ -40,7 +50,9 @@ func (r *fileUrlCacheImpl) GetFileUrlInfo(ctx context.Context, transactionId str
 
 	cacheKey := consts.RedisFileUrlPrefix + transactionId
 
-	val, err := r.cacheClient.WithContext(ctx).Get(cacheKey).Result()
+	log.Println("[GetFileUrlInfo] redis tid :", transactionId)
+	log.Println("[GetFileUrlInfo] redis cacheKey :", cacheKey)
+	val, err := r.cacheClient.Get(ctx, cacheKey).Result()
 	log.Println("## val :", val)
 	if err == redis.Nil || val == "" {
 		log.Println("## nil")
@@ -74,12 +86,12 @@ func (r *fileUrlCacheImpl) PutUploadEndFileInfo(ctx context.Context, transaction
 
 	oldCacheKey := consts.RedisFileUrlPrefix + transactionId
 	// 세 번째 인자인 expiration에 0을 전달하면 만료 시간이 설정되지 않습니다.
-	err = r.cacheClient.WithContext(ctx).Set(successCacheKey, data, 0).Err()
+	err = r.cacheClient.Set(ctx, successCacheKey, data, 0).Err()
 	if err != nil {
 		return err
 	}
 
-	err = r.cacheClient.WithContext(ctx).Del(oldCacheKey).Err()
+	err = r.cacheClient.Del(ctx, oldCacheKey).Err()
 	if err != nil {
 		return err
 	}

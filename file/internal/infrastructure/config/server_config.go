@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/go-redis/redis"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -179,9 +179,16 @@ func initAutoMigrate() bool {
 	}
 }
 
-func ConnectCacheDataBase(sfg *ServerConfig) *redis.Client {
-
-	return redis.NewClient(&redis.Options{
-		Addr: "140.245.73.74:7001",
+func ConnectCacheDataBase(sfg *ServerConfig) *redis.ClusterClient { // 반환 타입 변경
+	return redis.NewClusterClient(&redis.ClusterOptions{
+		// 클러스터 노드 주소들을 슬라이스로 입력 (여러 개 넣을수록 안정적입니다)
+		Addrs: []string{
+			"140.245.73.74:7001",
+			"140.245.73.74:7002",
+			"140.245.73.74:7003",
+			"140.245.73.74:7004",
+			"140.245.73.74:7005",
+			"140.245.73.74:7006",
+		},
 	})
 }

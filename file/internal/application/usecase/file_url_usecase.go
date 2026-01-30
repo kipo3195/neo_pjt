@@ -74,7 +74,7 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 		return output.CreateFileUrlOutput{}, err
 	}
 
-	// DB 저장
+	// DB 저장 & redis 저장
 	err = r.repo.SaveCreateFileUrl(ctx, input.ReqUserHash, transactionId, result)
 	if err != nil {
 		r.logger.Error(ctx, "file_url_save_fail",
@@ -84,12 +84,6 @@ func (r *fileUrlUsecase) CreateFileUrl(ctx context.Context, input input.CreateFi
 
 	fileUrlOutput := make([]output.FileUrlInfo, 0)
 	for _, v := range result {
-
-		// 파일 명이 존재하는지 검증
-		_, exists := fileInfoMap[v.FileId]
-		if !exists {
-			continue
-		}
 
 		temp := output.FileUrlInfo{
 			FileId:   v.FileId,
