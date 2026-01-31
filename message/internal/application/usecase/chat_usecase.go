@@ -32,6 +32,7 @@ type ChatUsecase interface {
 	addTaskChatLineJob(chatEntity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity) error
 	ReadChat(ctx context.Context, in input.ReadChatInput) error
 	GetChatLineEvent(ctx context.Context, in input.GetChatLineEventInput) ([]output.GetChatLineEventOutput, error)
+	InitChatFileEntity(ctx context.Context, transactionId string) ([]*entity.ChatFileEntity, error)
 }
 
 func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool, logger logger.Logger) ChatUsecase {
@@ -94,25 +95,19 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) (out
 	chatLineEntity := entity.MakeChatLineEntity(in.ChatLine.Cmd, in.ChatLine.Contents, in.ChatLine.LineKey, in.ChatLine.TargetLineKey, in.ChatLine.SendUserHash, in.ChatLine.SendDate)
 	// 채팅 룸 entity
 	chatRoomEntity := entity.MakeChatRoomEntity(in.ChatRoom.RoomKey, in.ChatRoom.RoomType, in.ChatRoom.SecretFlag)
-	// 채팅 파일 entity
-	chatFileEntity := make([]entity.ChatFileEntity, 0)
 
-	// 썸네일 url output용 map
-	thumbnailMap := make(map[string]string)
+	// 채팅 파일 entity - transaction id가 있는 경우에만 생성
+	var chatFileEntity []*entity.ChatFileEntity
+	if in.TransactionId != "" {
 
-	for _, f := range in.ChatFile {
-
-		temp := entity.ChatFileEntity{
-			FileId:   f.FileId,
-			FileName: f.FileName,
-			FileExt:  f.FileExt,
+		out, err := u.InitChatFileEntity(ctx, in.TransactionId)
+		if err != nil {
+			// transaction id에 매핑된 파일에 대한 에러 발생시
+			return output.SendChatOutput{}, err
 		}
-		if temp.FileId != "" && (temp.FileExt == "jpg" || temp.FileExt == "jpeg" || temp.FileExt == "png") {
-			temp.ThumbnailUrl = generateThumborURL("uc898911", temp.FileId, "300x300")
-		}
-		chatFileEntity = append(chatFileEntity, temp)
-		thumbnailMap[temp.FileId] = temp.ThumbnailUrl
+		chatFileEntity = out
 	}
+
 	// 채팅 전송용 entity
 	chatEntity := entity.MakeSendChatEntity(in.EventType, in.ChatSession, chatLineEntity, chatRoomEntity, chatFileEntity)
 
@@ -127,8 +122,6 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) (out
 		return output.SendChatOutput{}, err
 	}
 
-	log.Println("[SendChat] data : ", data)
-
 	/* 채팅 발송 Message Broker */
 	err = u.connector.Publish("chat.broadcast", data)
 	if err != nil {
@@ -141,12 +134,47 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) (out
 	/* DB 저장 Task */
 	err = u.addTaskChatLineJob(chatEntity, chatCountEventEntity)
 
+	var sendChatFileOutput []output.SendChatFileOutput
+
+	if chatFileEntity != nil {
+		sendChatFileOutput = make([]output.SendChatFileOutput, 0)
+		for _, v := range chatFileEntity {
+
+			temp := output.SendChatFileOutput{
+				FileId:       v.FileId,
+				FileName:     v.FileName,
+				FileType:     v.FileType,
+				ThumbnailUrl: v.ThumbnailUrl,
+			}
+
+			sendChatFileOutput = append(sendChatFileOutput, temp)
+		}
+	}
+
 	// output 생성
 	out := output.SendChatOutput{
-		ThumbnailMap: thumbnailMap,
+		SendChatFileOutput: sendChatFileOutput,
 	}
 
 	return out, nil
+}
+
+func (u *chatUsecase) InitChatFileEntity(ctx context.Context, transactionId string) ([]*entity.ChatFileEntity, error) {
+
+	fileEntity, err := u.repository.GetChatFileEntity(ctx, transactionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(fileEntity); i++ {
+		//썸네일 생성
+		if fileEntity[i].FileType == consts.IMAGE {
+			fileEntity[i].ThumbnailUrl = generateThumborURL("uc898911", fileEntity[i].FileId, "300x300")
+		}
+	}
+
+	return fileEntity, nil
 }
 
 func (u *chatUsecase) addTaskChatLineJob(entity entity.SendChatEntity, chatCountEventEntity entity.ChatCountEventEntity) error {

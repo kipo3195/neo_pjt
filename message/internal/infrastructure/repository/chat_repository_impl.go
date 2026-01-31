@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"message/internal/consts"
+	"message/internal/domain/chat/cache"
 	"message/internal/domain/chat/entity"
 	"message/internal/domain/chat/repository"
 	"message/internal/infrastructure/model"
@@ -12,12 +13,14 @@ import (
 )
 
 type chatRepository struct {
-	db *gorm.DB
+	db           *gorm.DB
+	cacheStorage cache.ChatCache
 }
 
-func NewChatRepository(db *gorm.DB) repository.ChatRepository {
+func NewChatRepository(db *gorm.DB, cacheStorage cache.ChatCache) repository.ChatRepository {
 	return &chatRepository{
-		db: db,
+		db:           db,
+		cacheStorage: cacheStorage,
 	}
 }
 
@@ -77,7 +80,7 @@ func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity
 		for i, file := range sendChatEntity.ChatFileEntity {
 
 			var fileType string
-			if file.FileExt == "jpg" || file.FileExt == "jpeg" || file.FileExt == "png" || file.FileExt == "webp" {
+			if file.FileType == consts.IMAGE {
 				fileType = "img"
 			} else {
 				fileType = "file"
@@ -167,4 +170,9 @@ func (r *chatRepository) GetChatLineEvent(ctx context.Context, en entity.GetChat
 	}
 
 	return result, nil
+}
+
+func (r *chatRepository) GetChatFileEntity(ctx context.Context, transactionId string) ([]*entity.ChatFileEntity, error) {
+
+	return r.cacheStorage.GetFileEntity(ctx, transactionId)
 }

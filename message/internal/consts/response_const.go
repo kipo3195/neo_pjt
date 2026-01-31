@@ -53,4 +53,7 @@ const (
 	// 방 read count 갱신 실패 (모두 읽은 상황)
 	MESSAGE_F013     = "MESSAGE_F013"
 	MESSAGE_F013_MSG = "Already read chat all."
+
+	MESSAGE_F014     = "MESSAGE_F014"
+	MESSAGE_F014_MSG = "Transaction id is not regist or expired upload file info."
 )

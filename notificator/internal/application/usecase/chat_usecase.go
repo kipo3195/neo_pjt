@@ -53,7 +53,7 @@ func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessa
 		temp := entity.ChatFileEntity{
 			FileId:       f.FileId,
 			FileName:     f.FileName,
-			FileExt:      f.FileExt,
+			FileType:     f.FileType,
 			ThumbnailUrl: f.ThumbnailUrl,
 		}
 		chatFileEntity = append(chatFileEntity, temp)
@@ -82,7 +82,7 @@ func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessa
 		temp := output.ChatFileDataOutput{
 			FileId:       f.FileId,
 			FileName:     f.FileName,
-			FileExt:      f.FileExt,
+			FileType:     f.FileType,
 			ThumbnailUrl: f.ThumbnailUrl,
 		}
 

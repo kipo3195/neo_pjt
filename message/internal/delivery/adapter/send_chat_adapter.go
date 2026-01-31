@@ -5,7 +5,7 @@ import (
 	"message/internal/delivery/dto/chatService"
 )
 
-func MakeSendChatInput(sendUserHash string, lineKey string, sendDate string, eventType string, chatSession string, chatRoom chatService.ChatRoomData, chatLine chatService.ChatLineData, chatFile []chatService.ChatFileData) input.SendChatInput {
+func MakeSendChatInput(sendUserHash string, lineKey string, sendDate string, eventType string, chatSession string, chatRoom chatService.ChatRoomData, chatLine chatService.ChatLineData, transactionId string) input.SendChatInput {
 
 	room := input.ChatRoomInput{
 		RoomKey:    chatRoom.RoomKey,
@@ -22,23 +22,11 @@ func MakeSendChatInput(sendUserHash string, lineKey string, sendDate string, eve
 		SendDate:      sendDate,
 	}
 
-	file := make([]input.ChatFileInput, 0)
-
-	for _, f := range chatFile {
-
-		temp := input.ChatFileInput{
-			FileId:   f.FileId,
-			FileExt:  f.FileExt,
-			FileName: f.FileName,
-		}
-		file = append(file, temp)
-	}
-
 	return input.SendChatInput{
-		ChatRoom:    room,
-		ChatLine:    line,
-		ChatSession: chatSession,
-		EventType:   eventType,
-		ChatFile:    file,
+		ChatRoom:      room,
+		ChatLine:      line,
+		ChatSession:   chatSession,
+		EventType:     eventType,
+		TransactionId: transactionId,
 	}
 }

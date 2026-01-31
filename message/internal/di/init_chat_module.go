@@ -5,11 +5,13 @@ import (
 	"message/internal/application/usecase"
 	"message/internal/delivery/handler"
 	"message/internal/domain/logger"
+	"message/internal/infrastructure/cache"
 	"message/internal/infrastructure/repository"
 	"message/internal/infrastructure/workerPool"
 	"time"
 
 	"github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -19,9 +21,10 @@ type ChatModule struct {
 	WorkerPool workerPool.ChatWorkerPool
 }
 
-func InitChatModule(db *gorm.DB, connector *nats.Conn, logger logger.Logger) *ChatModule {
+func InitChatModule(db *gorm.DB, connector *nats.Conn, cacheClient *redis.ClusterClient, logger logger.Logger) *ChatModule {
 
-	repository := repository.NewChatRepository(db)
+	cacheStorage := cache.NewChatCache(cacheClient)
+	repository := repository.NewChatRepository(db, cacheStorage)
 
 	// 이 영역에서 구현체를 생성하고 인터페이스 타입으로 Usecase에 주입합니다.
 	workerPool := workerPool.NewChatWorkerPool(10, repository)

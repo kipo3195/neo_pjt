@@ -25,18 +25,18 @@ func NewFileUrlCache(cacheClient *redis.ClusterClient) cache.FileUrlCache {
 func (r *fileUrlCacheImpl) PutFileUrlInfo(ctx context.Context, transactionId string, entity []entity.CreateFileUrlResultEntity) error {
 	// 1. 데이터를 JSON 문자열로 변환
 	// 키워드 + 트랜잭션 ID 결합
-	cacheKey := consts.RedisFileUrlPrefix + transactionId
+	key := consts.RedisFileUrlPrefix + transactionId
 
 	data, err := json.Marshal(entity)
 	if err != nil {
 		return err
 	}
 
-	log.Println("[PutFileUrlInfo] redis save cacheKey :", cacheKey)
+	log.Println("[PutFileUrlInfo] redis save cacheKey :", key)
 	log.Println("[PutFileUrlInfo] redis save tid :", transactionId)
 	log.Println("[PutFileUrlInfo] redis save entity :", data)
 
-	err = r.cacheClient.Set(ctx, cacheKey, data, time.Hour).Err()
+	err = r.cacheClient.Set(ctx, key, data, time.Hour).Err()
 
 	if err != nil {
 		log.Println("err : ", err)
@@ -48,11 +48,11 @@ func (r *fileUrlCacheImpl) PutFileUrlInfo(ctx context.Context, transactionId str
 
 func (r *fileUrlCacheImpl) GetFileUrlInfo(ctx context.Context, transactionId string) ([]entity.CreateFileUrlResultEntity, error) {
 
-	cacheKey := consts.RedisFileUrlPrefix + transactionId
+	key := consts.RedisFileUrlPrefix + transactionId
 
 	log.Println("[GetFileUrlInfo] redis tid :", transactionId)
-	log.Println("[GetFileUrlInfo] redis cacheKey :", cacheKey)
-	val, err := r.cacheClient.Get(ctx, cacheKey).Result()
+	log.Println("[GetFileUrlInfo] redis cacheKey :", key)
+	val, err := r.cacheClient.Get(ctx, key).Result()
 	log.Println("## val :", val)
 	if err == redis.Nil || val == "" {
 		log.Println("## nil")

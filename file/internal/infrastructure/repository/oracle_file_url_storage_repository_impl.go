@@ -5,6 +5,7 @@ import (
 	"file/internal/consts"
 	"file/internal/domain/fileUrl/entity"
 	"file/internal/domain/fileUrl/repository"
+	"file/internal/util"
 	"fmt"
 	"log"
 	"time"
@@ -41,9 +42,12 @@ func (r *oraclefileUrlStorageRepositoryImpl) CreateFileUrl(ctx context.Context, 
 		if err != nil {
 			return nil, consts.ErrFileUrlCreateError
 		}
+		fileType := util.GetFileType(fileInfoEntity.FileExt)
+
 		temp := entity.CreateFileUrlResultEntity{
 			FileId:     key,
 			FileName:   fileInfoEntity.FileName,
+			FileType:   fileType,
 			CreatedUrl: createdUrl,
 		}
 		result = append(result, temp)

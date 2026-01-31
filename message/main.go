@@ -64,6 +64,7 @@ func InitServer() (*http.Server, *AppModules) {
 
 	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
+	cacheClient := config.ConnectCacheDataBase(sfg)
 
 	// ---- DB Migration -----
 	if sfg.AutoMigrate {
@@ -98,7 +99,7 @@ func InitServer() (*http.Server, *AppModules) {
 
 	chatFileModule := di.InitChatFileModule(db)
 
-	chatModule := di.InitChatModule(db, mb, logger)
+	chatModule := di.InitChatModule(db, mb, cacheClient, logger)
 	router.SetChatRoutes(chatModule.Handler)
 
 	otpModule := di.InitOtpModule(db, otpStorage)

@@ -89,12 +89,15 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	// Message Broker에 publish
-	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine, req.ChatFile)
+	input := adapter.MakeSendChatInput(sendUserHash, lineKey, sendDate, req.EventType, req.ChatSession, req.ChatRoom, req.ChatLine, req.TransactionId)
 	output, err := r.svc.Chat.SendChat(ctx, input)
 
 	if err != nil {
+
 		if err == consts.ErrPublishToMessageBrokerError {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F001, consts.MESSAGE_F001_MSG)
+		} else if err == consts.ErrCacheResultNotFound {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F014, consts.MESSAGE_F014_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}
@@ -117,21 +120,13 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	chatFile := make([]chatService.ChatFileData, 0)
-	for _, f := range input.ChatFile {
-
-		var thumbnailUrl string
-
-		// 생성된 썸네일 url이 있는 경우
-		v, exists := output.ThumbnailMap[f.FileId]
-		if exists {
-			thumbnailUrl = v
-		}
+	for _, f := range output.SendChatFileOutput {
 
 		temp := chatService.ChatFileData{
 			FileId:       f.FileId,
-			FileExt:      f.FileExt,
+			FileType:     f.FileType,
 			FileName:     f.FileName,
-			ThumbnailUrl: thumbnailUrl,
+			ThumbnailUrl: f.ThumbnailUrl,
 		}
 		chatFile = append(chatFile, temp)
 	}

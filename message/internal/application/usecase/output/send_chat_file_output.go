@@ -1,6 +1,6 @@
-package entity
+package output
 
-type ChatFileEntity struct {
+type SendChatFileOutput struct {
 	FileId       string
 	FileName     string
 	FileType     string

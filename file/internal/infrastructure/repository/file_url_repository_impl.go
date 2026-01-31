@@ -38,7 +38,6 @@ func (r *fileUrlRepositoryImpl) SaveCreateFileUrl(context context.Context, reqUs
 			ReqUserHash:   reqUserId,
 			TransactionId: transactionId,
 			FileName:      file.FileName,
-			UploadUrl:     file.CreatedUrl,
 		}
 	}
 
