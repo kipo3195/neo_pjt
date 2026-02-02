@@ -8,6 +8,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -186,6 +188,10 @@ func ConnectCacheDataBase(sfg *ServerConfig) *redis.ClusterClient { // 반환 �
 			"140.245.73.74:7006",
 		},
 	})
+}
+
+func NewProtocolBufferClient() (*grpc.ClientConn, error) {
+	return grpc.NewClient("172.16.10.114:50001", grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
 
 const (

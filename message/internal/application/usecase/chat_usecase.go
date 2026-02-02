@@ -21,10 +21,11 @@ import (
 )
 
 type chatUsecase struct {
-	repository repository.ChatRepository
-	connector  *nats.Conn
-	workerPool workerPool.ChatWorkerPool
-	logger     logger.Logger
+	repository    repository.ChatRepository
+	connector     *nats.Conn
+	workerPool    workerPool.ChatWorkerPool
+	logger        logger.Logger
+	apiRepository repository.ChatApiRepository
 }
 
 type ChatUsecase interface {
@@ -35,13 +36,14 @@ type ChatUsecase interface {
 	InitChatFileEntity(ctx context.Context, transactionId string) ([]*entity.ChatFileEntity, error)
 }
 
-func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool, logger logger.Logger) ChatUsecase {
+func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool, logger logger.Logger, apiRepository repository.ChatApiRepository) ChatUsecase {
 	// domain layer
 	return &chatUsecase{
-		repository: repository,
-		connector:  connector,
-		workerPool: workerPool, // Usecase는 ChatWorkerPool이라는 인터페이스에 의존하고, 이 인터페이스의 구현체가 chatWorkerPool 구조체라는 사실을 전혀 알지 못합니다.
-		logger:     logger,
+		repository:    repository,
+		connector:     connector,
+		workerPool:    workerPool, // Usecase는 ChatWorkerPool이라는 인터페이스에 의존하고, 이 인터페이스의 구현체가 chatWorkerPool 구조체라는 사실을 전혀 알지 못합니다.
+		logger:        logger,
+		apiRepository: apiRepository,
 	}
 }
 func (u *chatUsecase) ReadChat(ctx context.Context, in input.ReadChatInput) error {
@@ -148,6 +150,13 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) (out
 			}
 
 			sendChatFileOutput = append(sendChatFileOutput, temp)
+		}
+
+		// 외부 API를 호출을 통해 file 서비스의 send_flag 변경처리
+		err = u.apiRepository.NotifySendChatFile(ctx, in.TransactionId)
+		if err != nil {
+			log.Println("NotifySendChatFile error :", err)
+			return output.SendChatOutput{}, err
 		}
 	}
 

@@ -21,7 +21,9 @@ COPY --from=builder /app/main .
 COPY ./internal/infrastructure/config ./internal/infrastructure/config
 
 EXPOSE 8083
-CMD ["./main"]
 
+EXPOSE 50001
+
+CMD ["./main"]
 
 # 20251105 message

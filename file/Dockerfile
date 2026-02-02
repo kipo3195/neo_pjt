@@ -34,5 +34,7 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 
 EXPOSE 8091
 
+EXPOSE 50001
+
 # CMD를 리스트 형식으로 작성
 CMD ["./file-server"]
