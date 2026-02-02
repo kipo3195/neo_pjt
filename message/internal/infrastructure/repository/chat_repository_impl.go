@@ -30,80 +30,76 @@ func ChatLineEventMigrate(db *gorm.DB) {
 
 func (r *chatRepository) SaveChatLine(ctx context.Context, sendChatEntity entity.SendChatEntity) error {
 
-	// 트랜잭션 시작
-	tx := r.db.WithContext(ctx).Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
+	// db.Transaction의 핵심은 클로저 내부에서 error가 반환되면 GORM이 알아서 롤백을 수행한다는 점입니다.
+	// 에러가 발생했을 때 그냥 return err만 해주시면 됩니다.
+	// WithContext(ctx)를 먼저 호출하고 Transaction을 실행하면, 내부의 tx는 이미 해당 ctx를 가진 상태입니다.
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-	// 실패 시 롤백 보장
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		} else if tx.Error != nil {
-			tx.Rollback()
-		}
-	}()
+		// ❌ 틀림: r.db는 트랜잭션 외부에 있는 객체입니다.
+		// r.db.WithContext(ctx).Create(&data) <- 이렇게 쓰면 트랜잭션에 포함되지 않습니다. 반드시 클로저의 인자로 들어온 tx를 사용해야만, 해당 tx가 관리하는 동일한 데이터베이스 커넥션과 컨텍스트 안에서 모든 작업이 안전하게 묶이게 됩니다.
 
-	if err := tx.Create(&model.ChatLineEvent{
-		EventType:     sendChatEntity.EventType,
-		Cmd:           sendChatEntity.ChatLineEntity.Cmd,
-		RoomKey:       sendChatEntity.ChatRoomEntity.RoomKey,
-		TargetLineKey: sendChatEntity.ChatLineEntity.TargetLineKey,
-		LineKey:       sendChatEntity.ChatLineEntity.LineKey,
-		Contents:      sendChatEntity.ChatLineEntity.Contents,
-		SendUserHash:  sendChatEntity.ChatLineEntity.SendUserHash,
-		SendDate:      sendChatEntity.ChatLineEntity.SendDate,
-	}).Error; err != nil {
-		tx.Rollback()
-		log.Println("[SaveChatLine] line insert failed:", err)
-		return err
-	}
-
-	if err := tx.Model(&model.ChatRoomMember{}).
-		Where("room_key = ?", sendChatEntity.ChatRoomEntity.RoomKey).
-		Where("member_hash != ?", sendChatEntity.ChatLineEntity.SendUserHash).
-		Where("member_state = ?", "1").
-		Updates(map[string]interface{}{
-			"member_unread_count":      gorm.Expr("member_unread_count + 1"),
-			"member_unread_count_date": sendChatEntity.ChatLineEntity.SendDate,
+		// 채팅 라인 저장
+		if err := tx.Create(&model.ChatLineEvent{
+			EventType:     sendChatEntity.EventType,
+			Cmd:           sendChatEntity.ChatLineEntity.Cmd,
+			RoomKey:       sendChatEntity.ChatRoomEntity.RoomKey,
+			TargetLineKey: sendChatEntity.ChatLineEntity.TargetLineKey,
+			LineKey:       sendChatEntity.ChatLineEntity.LineKey,
+			Contents:      sendChatEntity.ChatLineEntity.Contents,
+			SendUserHash:  sendChatEntity.ChatLineEntity.SendUserHash,
+			SendDate:      sendChatEntity.ChatLineEntity.SendDate,
 		}).Error; err != nil {
-		tx.Rollback()
-		log.Println("[SaveChatLine] unread update failed:", err)
-		return err
-	}
-
-	if len(sendChatEntity.ChatFileEntity) > 0 {
-
-		// 채팅 파일
-		chatFileHistory := make([]model.ChatFileHistory, len(sendChatEntity.ChatFileEntity))
-		for i, file := range sendChatEntity.ChatFileEntity {
-
-			var fileType string
-			if file.FileType == consts.IMAGE {
-				fileType = "img"
-			} else {
-				fileType = "file"
-			}
-
-			chatFileHistory[i] = model.ChatFileHistory{
-				RoomKey:     sendChatEntity.ChatRoomEntity.RoomKey,
-				LineKey:     sendChatEntity.ChatLineEntity.LineKey,
-				FileId:      file.FileId,
-				FileName:    file.FileName,
-				FileType:    fileType,
-				ReqUserHash: sendChatEntity.ChatLineEntity.SendUserHash,
-			}
+			log.Println("[SaveChatLine] line insert failed:", err)
+			return err
 		}
 
-		if err := tx.Create(chatFileHistory).Error; err != nil {
-			tx.Rollback()
+		// 읽지 않은 메시지 수 업데이트
+		if err := tx.Model(&model.ChatRoomMember{}).
+			Where("room_key = ?", sendChatEntity.ChatRoomEntity.RoomKey).
+			Where("member_hash != ?", sendChatEntity.ChatLineEntity.SendUserHash).
+			Where("member_state = ?", "1").
+			Updates(map[string]interface{}{
+				"member_unread_count":      gorm.Expr("member_unread_count + 1"),
+				"member_unread_count_date": sendChatEntity.ChatLineEntity.SendDate,
+			}).Error; err != nil {
 			log.Println("[SaveChatLine] unread update failed:", err)
 			return err
 		}
-	}
 
-	if err := tx.Commit().Error; err != nil {
+		// 채팅 파일 히스토리 저장
+		if len(sendChatEntity.ChatFileEntity) > 0 {
+
+			chatFileHistory := make([]model.ChatFileHistory, len(sendChatEntity.ChatFileEntity))
+			for i, file := range sendChatEntity.ChatFileEntity {
+
+				var fileType string
+				if file.FileType == consts.IMAGE {
+					fileType = "img"
+				} else {
+					fileType = "file"
+				}
+
+				chatFileHistory[i] = model.ChatFileHistory{
+					RoomKey:     sendChatEntity.ChatRoomEntity.RoomKey,
+					LineKey:     sendChatEntity.ChatLineEntity.LineKey,
+					FileId:      file.FileId,
+					FileName:    file.FileName,
+					FileType:    fileType,
+					ReqUserHash: sendChatEntity.ChatLineEntity.SendUserHash,
+				}
+			}
+
+			if err := tx.Create(chatFileHistory).Error; err != nil {
+				log.Println("[SaveChatLine] unread update failed:", err)
+				return err
+			}
+		}
+		return nil // nil을 반환하면 자동 Commit 됩니다.
+	})
+
+	// 트랜잭션 내부에서 발생한 에러가 여기까지 전달됩니다.
+	if err != nil {
+		log.Println(err)
 		return err
 	}
 
