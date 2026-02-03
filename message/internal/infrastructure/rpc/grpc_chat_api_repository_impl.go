@@ -1,4 +1,4 @@
-package grpc
+package rpc
 
 import (
 	"context"
@@ -25,6 +25,15 @@ func (r *grpcChatApiRepositoryImpl) NotifySendChatFile(ctx context.Context, tran
 	}
 
 	// 실제 gRPC 호출
-	_, err := r.client.UpdateFileStatus(ctx, req)
-	return err
+	res, err := r.client.UpdateFileStatus(ctx, req)
+
+	if err != nil {
+		return err
+	}
+
+	if res.Success {
+		return nil
+	} else {
+		return err
+	}
 }

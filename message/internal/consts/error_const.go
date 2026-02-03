@@ -10,6 +10,9 @@ var ErrDBResultNotUpdate = errors.New("db result not update")
 // cache
 var ErrCacheResultNotFound = errors.New("cache result not found")
 
+// grpc
+var ErrFileServiceGrpcCallErr = errors.New("file service grpc call error")
+
 // token
 var ErrTokenParsing = errors.New("token parsing failed")
 var ErrTokenExpired = errors.New("token has expired")

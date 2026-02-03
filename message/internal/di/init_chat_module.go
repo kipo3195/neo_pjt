@@ -6,8 +6,8 @@ import (
 	"message/internal/delivery/handler"
 	"message/internal/domain/logger"
 	"message/internal/infrastructure/cache"
-	g "message/internal/infrastructure/grpc"
 	"message/internal/infrastructure/repository"
+	"message/internal/infrastructure/rpc"
 	"message/internal/infrastructure/workerPool"
 	"time"
 
@@ -23,7 +23,7 @@ type ChatModule struct {
 	WorkerPool workerPool.ChatWorkerPool
 }
 
-func InitChatModule(db *gorm.DB, connector *nats.Conn, cacheClient *redis.ClusterClient, logger logger.Logger, protocolBufferClient *grpc.ClientConn) *ChatModule {
+func InitChatModule(db *gorm.DB, connector *nats.Conn, cacheClient *redis.ClusterClient, logger logger.Logger, gRPCClient *grpc.ClientConn) *ChatModule {
 
 	cacheStorage := cache.NewChatCache(cacheClient)
 	repository := repository.NewChatRepository(db, cacheStorage)
@@ -31,7 +31,7 @@ func InitChatModule(db *gorm.DB, connector *nats.Conn, cacheClient *redis.Cluste
 	// 이 영역에서 구현체를 생성하고 인터페이스 타입으로 Usecase에 주입합니다.
 	workerPool := workerPool.NewChatWorkerPool(10, repository)
 	workerPool.Init()
-	apiRepository := g.NewGrpcChatApiRepositoryImpl(protocolBufferClient)
+	apiRepository := rpc.NewGrpcChatApiRepositoryImpl(gRPCClient)
 	usecase := usecase.NewChatUsecase(repository, connector, workerPool, logger, apiRepository)
 	handler := handler.NewChatHandler(usecase)
 

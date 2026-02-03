@@ -21,6 +21,7 @@ type ServerConfig struct {
 	AutoMigrate bool
 	TokenConfig TokenHashConfig
 	mbConfig    *MessageBrokerConfig
+	GrpcConfig  *GrpcConfig
 }
 
 type TokenHashConfig struct {
@@ -48,6 +49,11 @@ type JWTConfig struct {
 	AppRefreshTokenExp int
 }
 
+type GrpcConfig struct {
+	Host string
+	Port string
+}
+
 func isLocal() bool {
 	// Getenv는 로컬과 운영(k8s)환경에서 다르게 동작함.
 	// k8s에서는 이미 환경변수로 주입되어 있기 때문에 godotenv.Load()를 하지않아도 os.Getenv("값")을 호출해서 접근 할 수 있는 반면
@@ -69,13 +75,27 @@ func NewServerConfig() *ServerConfig {
 
 	tokenConfig := initTokenHash()
 
+	grpcConfig := initGrpcConfig()
+
 	return &ServerConfig{
 		dbConfig:    dbConfig,
 		jwtConfig:   jwtConfig,
 		AutoMigrate: autoMigrate,
 		TokenConfig: tokenConfig,
+		GrpcConfig:  grpcConfig,
 	}
 }
+
+func initGrpcConfig() *GrpcConfig {
+	host := os.Getenv("GRPC_HOST")
+	port := os.Getenv("GRPC_PORT")
+
+	return &GrpcConfig{
+		Host: host,
+		Port: port,
+	}
+}
+
 func initDBConfig() *DBConfig {
 	host := os.Getenv("HOST")
 	id := os.Getenv("ID")
@@ -190,8 +210,8 @@ func ConnectCacheDataBase(sfg *ServerConfig) *redis.ClusterClient { // 반환 �
 	})
 }
 
-func NewProtocolBufferClient() (*grpc.ClientConn, error) {
-	return grpc.NewClient("172.16.10.114:50001", grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {
+	return grpc.NewClient(sfg.GrpcConfig.Host+":"+sfg.GrpcConfig.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
 
 const (

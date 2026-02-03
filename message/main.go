@@ -64,9 +64,12 @@ func InitServer() (*http.Server, *AppModules) {
 
 	// ---- DB Connect -----
 	db := config.ConnectDatabase(sfg)
+
+	// ---- Redis Connect -----
 	cacheClient := config.ConnectCacheDataBase(sfg)
 
-	protocolBufferClient, err := config.NewProtocolBufferClient()
+	// ---- gRPC Connect -----
+	gRPCClient, err := config.NewProtocolBufferClient(sfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -104,7 +107,7 @@ func InitServer() (*http.Server, *AppModules) {
 
 	chatFileModule := di.InitChatFileModule(db)
 
-	chatModule := di.InitChatModule(db, mb, cacheClient, logger, protocolBufferClient)
+	chatModule := di.InitChatModule(db, mb, cacheClient, logger, gRPCClient)
 	router.SetChatRoutes(chatModule.Handler)
 
 	otpModule := di.InitOtpModule(db, otpStorage)

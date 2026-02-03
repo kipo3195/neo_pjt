@@ -13,11 +13,11 @@ import (
 	"net/http"
 
 	"google.golang.org/grpc"
-	// OCI SDK 필수 패키지
 )
 
 func main() {
 
+	// TODO graceful
 	go func() {
 		startGRPCServer()
 	}()

@@ -54,6 +54,11 @@ const (
 	MESSAGE_F013     = "MESSAGE_F013"
 	MESSAGE_F013_MSG = "Already read chat all."
 
+	// 채팅에 파일을 첨부하여 전송시 transactionId에 등록된 파일이 존재하지 않거나 만료된 transacionId
 	MESSAGE_F014     = "MESSAGE_F014"
 	MESSAGE_F014_MSG = "Transaction id is not regist or expired upload file info."
+
+	// 채팅에 파일을 첨부하여 전송한 후, 전송한 파일의 정보를 file 서비스에 호출.
+	MESSAGE_F015     = "MESSAGE_F015"
+	MESSAGE_F015_MSG = "Send chat file transactionId sending error to file service."
 )

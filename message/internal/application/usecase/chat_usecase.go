@@ -156,7 +156,9 @@ func (u *chatUsecase) SendChat(ctx context.Context, in input.SendChatInput) (out
 		err = u.apiRepository.NotifySendChatFile(ctx, in.TransactionId)
 		if err != nil {
 			log.Println("NotifySendChatFile error :", err)
-			return output.SendChatOutput{}, err
+			return output.SendChatOutput{}, consts.ErrFileServiceGrpcCallErr
+		} else {
+			log.Printf("NotifySendChatFile success ! transactionId :%s \n", in.TransactionId)
 		}
 	}
 

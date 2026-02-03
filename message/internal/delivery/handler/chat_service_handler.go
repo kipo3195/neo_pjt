@@ -98,6 +98,8 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F001, consts.MESSAGE_F001_MSG)
 		} else if err == consts.ErrCacheResultNotFound {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F014, consts.MESSAGE_F014_MSG)
+		} else if err == consts.ErrFileServiceGrpcCallErr {
+			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F015, consts.MESSAGE_F015_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		}
