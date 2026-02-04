@@ -2,9 +2,9 @@ package di
 
 import (
 	"log"
+	"message/internal/adapter/http/handler"
 	"message/internal/application/usecase"
-	"message/internal/delivery/handler"
-	"message/internal/infrastructure/repository"
+	"message/internal/infrastructure/persistence/repository"
 	"message/pkg/util"
 
 	"gorm.io/gorm"

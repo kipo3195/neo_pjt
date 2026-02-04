@@ -2,7 +2,7 @@ package di
 
 import (
 	"message/internal/application/usecase"
-	"message/internal/infrastructure/repository"
+	"message/internal/infrastructure/persistence/repository"
 
 	"gorm.io/gorm"
 )

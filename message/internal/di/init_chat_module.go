@@ -2,12 +2,12 @@ package di
 
 import (
 	"log"
+	"message/internal/adapter/http/handler"
 	"message/internal/application/usecase"
-	"message/internal/delivery/handler"
 	"message/internal/domain/logger"
-	"message/internal/infrastructure/cache"
-	"message/internal/infrastructure/repository"
-	"message/internal/infrastructure/rpc"
+	"message/internal/infrastructure/external/rpc"
+	"message/internal/infrastructure/persistence/cacheStorage"
+	"message/internal/infrastructure/persistence/repository"
 	"message/internal/infrastructure/workerPool"
 	"time"
 
@@ -25,7 +25,7 @@ type ChatModule struct {
 
 func InitChatModule(db *gorm.DB, connector *nats.Conn, cacheClient *redis.ClusterClient, logger logger.Logger, gRPCClient *grpc.ClientConn) *ChatModule {
 
-	cacheStorage := cache.NewChatCache(cacheClient)
+	cacheStorage := cacheStorage.NewChatCache(cacheClient)
 	repository := repository.NewChatRepository(db, cacheStorage)
 
 	// 이 영역에서 구현체를 생성하고 인터페이스 타입으로 Usecase에 주입합니다.

@@ -1,10 +1,10 @@
 package di
 
 import (
+	"message/internal/adapter/http/handler"
 	"message/internal/application/usecase"
-	"message/internal/delivery/handler"
 	"message/internal/domain/logger"
-	"message/internal/infrastructure/repository"
+	"message/internal/infrastructure/persistence/repository"
 	"message/internal/infrastructure/storage"
 
 	"github.com/nats-io/nats.go"

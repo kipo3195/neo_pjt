@@ -1,9 +1,9 @@
 package di
 
 import (
+	"message/internal/adapter/http/handler"
 	"message/internal/application/usecase"
-	"message/internal/delivery/handler"
-	"message/internal/infrastructure/repository"
+	"message/internal/infrastructure/persistence/repository"
 
 	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"

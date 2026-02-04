@@ -9,10 +9,10 @@ import (
 	"encoding/pem"
 	"errors"
 	"log"
+	"message/internal/adapter/http/mapper"
 	"message/internal/application/usecase/input"
 	"message/internal/application/usecase/output"
-	"message/internal/delivery/adapter"
-	"message/internal/domain/otp/consts"
+	"message/internal/consts"
 	"message/internal/domain/otp/entity"
 	"message/internal/domain/otp/repository"
 	"message/internal/infrastructure/storage"
@@ -96,7 +96,7 @@ func (u *otpUsecase) OtpKeyRegist(ctx context.Context, input input.OtpKeyRegistI
 
 	log.Printf("[OtpKeyRegist] id:%s, uuid:%s, regDate:%s, success.\n", id, uuid, nowUTC)
 
-	output := adapter.MakeOtpKeyRegistOutput(nowUTC, u.svChKeyVersion, u.svNoKeyVersion)
+	output := mapper.MakeOtpKeyRegistOutput(nowUTC, u.svChKeyVersion, u.svNoKeyVersion)
 	return output, nil
 }
 
