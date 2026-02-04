@@ -13,6 +13,12 @@ const (
 )
 
 const (
+	VERSION_TYPE_SPECIFIC = "specific"
+	VERSION_TYPE_LATEST   = "latest"
+	VERSION_TYPE_ALL      = "all"
+)
+
+const (
 	IMAGE = "image"
 	VIDEO = "video"
 )
