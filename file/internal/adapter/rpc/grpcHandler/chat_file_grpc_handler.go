@@ -30,10 +30,19 @@ func (h *ChatFileGrpcHandler) UpdateFileStatus(ctx context.Context, req *pb.Upda
 	// 여기서 비즈니스 로직(UseCase)을 호출하면 됩니다.
 	log.Printf("gRPC 요청 수신! TransactionId: %s", req.TransactionId)
 
-	// 예: 파일 상태를 '전송완료'로 업데이트하는 UseCase 호출 로직...
+	err := h.usecase.UpDateFileStatus(ctx, req.TransactionId)
 
-	return &pb.UpdateFileResponse{
-		Success: true,
-		Message: "File status updated successfully",
-	}, nil
+	if err != nil {
+		log.Println("[UpdateFileStatus] err :", err)
+		return &pb.UpdateFileResponse{
+			Success: false,
+			Message: "File status updated fail",
+		}, nil
+	} else {
+		log.Println("[UpdateFileStatus] update success transactionId  :", req.TransactionId)
+		return &pb.UpdateFileResponse{
+			Success: true,
+			Message: "File status updated successfully",
+		}, nil
+	}
 }
