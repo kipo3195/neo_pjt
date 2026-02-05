@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"log"
-	"message/internal/delivery/router"
+	"message/internal/adapter/http/router"
 	"message/internal/di"
 	"message/internal/infrastructure/config"
 	"message/internal/infrastructure/logger"
-	"message/internal/infrastructure/migration"
+	"message/internal/infrastructure/persistence/migration"
 	"message/internal/infrastructure/storage"
 	"net/http"
 	"os"

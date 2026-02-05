@@ -3,7 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"message/internal/adapter/http/dto/chatLineService"
-	"message/internal/adapter/mapper"
+	"message/internal/adapter/http/mapper"
 	"message/internal/adapter/util"
 	"message/internal/application/service"
 	commonConsts "message/pkg/consts"
