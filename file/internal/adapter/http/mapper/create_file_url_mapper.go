@@ -1,8 +1,8 @@
-package adapter
+package mapper
 
 import (
+	"file/internal/adapter/http/dto/fileUrl"
 	"file/internal/application/usecase/input"
-	"file/internal/delivery/dto/fileUrl"
 )
 
 func MakeCreateFileUrlInput(reqUserHash string, eventType string, org string, fileInfo []fileUrl.FileInfoDto) input.CreateFileUrlInput {

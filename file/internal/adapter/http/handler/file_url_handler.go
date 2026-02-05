@@ -2,11 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+	"file/internal/adapter/http/dto/fileUrl"
+	"file/internal/adapter/http/mapper"
+	"file/internal/adapter/util"
 	"file/internal/application/usecase"
 	"file/internal/consts"
-	"file/internal/delivery/adapter"
-	"file/internal/delivery/dto/fileUrl"
-	"file/internal/delivery/util"
 	commonConsts "file/pkg/consts"
 	"file/pkg/response"
 
@@ -48,7 +48,7 @@ func (r *FileUrlHandler) CreateFileUrl(c *gin.Context) {
 		return
 	}
 
-	input := adapter.MakeCreateFileUrlInput(reqUserHash, req.EventType, req.Org, req.FileInfo)
+	input := mapper.MakeCreateFileUrlInput(reqUserHash, req.EventType, req.Org, req.FileInfo)
 	output, err := r.usecase.CreateFileUrl(ctx, input)
 
 	if err != nil {
@@ -101,7 +101,7 @@ func (r *FileUrlHandler) FileUrlUploadEnd(c *gin.Context) {
 		return
 	}
 
-	input := adapter.MakeFileUrlUploadEndInput(reqUserHash, req.TransactionId)
+	input := mapper.MakeFileUrlUploadEndInput(reqUserHash, req.TransactionId)
 	err := r.usecase.FileUrlUploadEnd(ctx, input)
 
 	if err != nil {

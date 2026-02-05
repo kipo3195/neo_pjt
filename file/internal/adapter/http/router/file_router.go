@@ -1,8 +1,8 @@
 package router
 
 import (
-	"file/internal/delivery/handler"
-	"file/internal/delivery/middleware"
+	"file/internal/adapter/http/handler"
+	"file/internal/adapter/http/middleware"
 	"file/internal/domain/logger"
 	"file/internal/infrastructure/config"
 

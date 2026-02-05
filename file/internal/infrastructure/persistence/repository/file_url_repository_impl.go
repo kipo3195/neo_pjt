@@ -6,7 +6,7 @@ import (
 	"file/internal/domain/fileUrl/cache"
 	"file/internal/domain/fileUrl/entity"
 	"file/internal/domain/fileUrl/repository"
-	"file/internal/infrastructure/model"
+	"file/internal/infrastructure/persistence/model"
 
 	"gorm.io/gorm"
 )

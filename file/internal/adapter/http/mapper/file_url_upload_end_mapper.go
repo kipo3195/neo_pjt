@@ -1,4 +1,4 @@
-package adapter
+package mapper
 
 import "file/internal/application/usecase/input"
 

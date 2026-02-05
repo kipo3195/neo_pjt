@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"errors"
+	"file/internal/adapter/http/middleware/claims"
 	"file/internal/consts"
-	"file/internal/delivery/middleware/claims"
 	"file/internal/domain/logger"
 	"file/internal/infrastructure/config"
 	commonConsts "file/pkg/consts"
