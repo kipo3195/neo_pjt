@@ -5,9 +5,11 @@ import (
 	"file/internal/app/loader"
 	"file/internal/infrastructure/config"
 	"file/internal/infrastructure/logger"
+	"file/internal/infrastructure/pb"
 	"file/internal/infrastructure/persistence/migration"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 
 	"google.golang.org/grpc"
@@ -17,6 +19,8 @@ type AppContainer struct {
 	Server     *http.Server
 	Cleanup    func()
 	DataLoader *loader.DataLoader
+	GrpcServer *grpc.Server
+	Listener   net.Listener
 }
 
 func InitApp() (*AppContainer, error) {
@@ -42,6 +46,12 @@ func InitApp() (*AppContainer, error) {
 		return nil, fmt.Errorf("grpc client failed: %w", err)
 	}
 
+	// ---- gRPC Listener Init -----
+	lis, err := config.GetGrpcListener(sfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen gRPC port: %w", err)
+	}
+
 	// ---- DB Migration -----
 	if sfg.AutoMigrate {
 		migration.RunAll(db)
@@ -58,6 +68,11 @@ func InitApp() (*AppContainer, error) {
 		migration.RunAll(db)
 	}
 
+	grpcServer := grpc.NewServer(
+	// 필요 시 인터셉터(Middleware) 추가 가능
+	// grpc.UnaryInterceptor(authInterceptor),
+	)
+
 	// ---- LOGGER Init ----
 	logger := logger.NewSlogLogger()
 
@@ -72,11 +87,15 @@ func InitApp() (*AppContainer, error) {
 
 	// ---- Domain Module Init -----
 	fileUrlModule := InitFileUrlModule(db, cacheClient, sfg.OracleStorageConfig, logger)
+	chatFileModule := InitChatFileModule(db)
 
 	// ---- Domain Service Module Init -----
 
 	// ---- Router Init -----
 	router.SetFileUrlRoutes(fileUrlModule.Handler)
+
+	// ---- gRPC Init -----
+	pb.RegisterFileServiceServer(grpcServer, chatFileModule.ChatFileGrpcHandler)
 
 	// 자원 해제 - 실행 순서의 역순으로 종료 필요
 	cleanup := func() {
@@ -104,15 +123,11 @@ func InitApp() (*AppContainer, error) {
 		Handler: router.GetEngine(),
 	}
 
-	grpcServer := grpc.NewServer(
-	// 필요 시 인터셉터(Middleware) 추가 가능
-	// grpc.UnaryInterceptor(authInterceptor),
-	)
-
 	return &AppContainer{
 		Server:  server,
 		Cleanup: cleanup,
 		//DataLoader: dataLoader,
+		Listener:   lis,
 		GrpcServer: grpcServer,
 	}, nil
 

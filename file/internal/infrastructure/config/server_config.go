@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"time"
 
@@ -26,7 +27,7 @@ type ServerConfig struct {
 	AutoMigrate         bool
 	TokenConfig         TokenHashConfig
 	OracleStorageConfig OracleStorageConfig
-	GrpcConfig          *GrpcConfig
+	GrpcConfig          GrpcConfig
 }
 
 type OracleStorageConfig struct {
@@ -74,6 +75,8 @@ func NewServerConfig() *ServerConfig {
 
 	oracleStorageConfig, err := initOracleStorageConfig()
 
+	grpcConfig := initGrpcConfig()
+
 	if err != nil {
 		log.Panic(err)
 	}
@@ -83,6 +86,7 @@ func NewServerConfig() *ServerConfig {
 		AutoMigrate:         autoMigrate,
 		TokenConfig:         tokenConfig,
 		OracleStorageConfig: oracleStorageConfig,
+		GrpcConfig:          grpcConfig,
 	}
 }
 
@@ -224,4 +228,17 @@ func ConnectCacheDataBase(sfg *ServerConfig) (*redis.ClusterClient, error) { // 
 
 func NewProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {
 	return grpc.NewClient(sfg.GrpcConfig.Host+":"+sfg.GrpcConfig.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+}
+
+func GetGrpcListener(sfg *ServerConfig) (net.Listener, error) {
+	return net.Listen("tcp", ":"+sfg.GrpcConfig.Port)
+}
+
+func initGrpcConfig() GrpcConfig {
+	host := os.Getenv("GRPC_HOST")
+	port := os.Getenv("GRPC_PORT")
+	return GrpcConfig{
+		Host: host,
+		Port: port,
+	}
 }

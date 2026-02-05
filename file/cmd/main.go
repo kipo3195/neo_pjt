@@ -34,7 +34,7 @@ func main() {
 	go func() {
 		log.Println("File service gRPC is running..")
 		// Serve는 서버가 종료될때까지 대기상태로 블로킹 단, 별도 고루틴으로 실행시켰으므로 아래 로직으로 내려감  ---------------------- 2
-		if err := modules.GrpcServer.Serve(lis); err != nil {
+		if err := modules.GrpcServer.Serve(modules.Listener); err != nil {
 			// for select문에서 모든 처리가 완료되어 stopped 데이터가 들어오거나, time out 됬을때 ---------------------- 8-1
 			log.Fatalf("gRPC serve error: %v", err)
 		}
@@ -58,7 +58,7 @@ func main() {
 	}
 
 	// gRPC GracefulStop 실행
-	// GracefulStop은 처리가 완료될때까지 무기한 대기. 별도의 고루틴으로 실행하여 타임아웃을 걸어서 일정 시간 동안만 유지.
+	// GracefulStop은 처리가 완료될때까지 무기한 대기 별도의 자체 타임아웃 없음 그러므로, 별도의 고루틴으로 실행하고 타임아웃을 걸어서 일정 시간 동안만 유지.
 	stopped := make(chan struct{})
 	go func() {
 		modules.GrpcServer.GracefulStop() // GracefulStop 호출되는 즉시, 서버는 더 이상 새로운 gRPC 연결을 받지 않음. -------------------------- 7
@@ -66,9 +66,9 @@ func main() {
 	}()
 
 	select { // ---------------------- 8
-	case <-stopped: // 모든 처리가 완료 되거나
+	case <-stopped: // gRPC의 모든 처리가 완료 되거나 close(stopped)
 		log.Println("gRPC server stopped gracefully")
-	case <-time.After(5 * time.Second): // gRPC 전용 타임아웃이 만료되거나 -> Stop()은 즉시 종료
+	case <-time.After(5 * time.Second): // gRPC 전용 타임아웃이 만료되어 Stop() 호출(즉시 종료)하거나
 		log.Println("gRPC stop timeout, forcing stop")
 		modules.GrpcServer.Stop()
 	}
@@ -77,5 +77,6 @@ func main() {
 	// ctx의 시간 (최대 10초 동안) 최대한 남은 일을 처리하려고 시간을 줘놓고 cleanup을 먼저 수행해버리면 안됨.
 	modules.Cleanup()
 
+	// -------------------------------- 10
 	log.Println("File service exiting.")
 }

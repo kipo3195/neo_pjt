@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # [수정] 빌드 대상을 명확히 하고, 불필요한 심볼 제거(-s -w)로 용량 최적화
-RUN go build -ldflags '-s -w' -o /app/file-server main.go
+RUN go build -ldflags '-s -w' -o /file-server ./cmd/main.go
 
 # 2. 실행 스테이지
 FROM debian:bookworm-slim
@@ -22,8 +22,7 @@ FROM debian:bookworm-slim
 WORKDIR /root/
 
 # 빌드된 바이너리만 복사 (이름을 다르게 해서 찌꺼기와 혼동 방지)
-COPY --from=builder /app/file-server .
-COPY ./internal/infrastructure/config ./internal/infrastructure/config
+COPY --from=builder /file-server .
 
 # 실행 권한 부여
 RUN chmod +x ./file-server
@@ -32,9 +31,9 @@ RUN chmod +x ./file-server
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 
-EXPOSE 8091
-
-EXPOSE 50001
+EXPOSE 8091 50001
 
 # CMD를 리스트 형식으로 작성
 CMD ["./file-server"]
+
+# 20260205 file
