@@ -56,10 +56,8 @@ func main() {
 		log.Fatal("Message service shutdown:", err)
 	}
 
-	// 비동기 워커 풀 종료 (남은 작업 처리)
-	modules.Cleanup()
+	// 자원 해제 호출
+	defer modules.Cleanup()
 
-	// 필요하다면 다른 모듈의 Cleanup도 호출
-	// modules.NoteModule.Cleanup()
 	log.Println("Message service exiting.")
 }

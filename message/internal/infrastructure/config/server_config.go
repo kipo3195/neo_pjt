@@ -1,9 +1,13 @@
 package config
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
@@ -143,7 +147,7 @@ func (s *ServerConfig) GetJWTConfig() *JWTConfig {
 	return s.jwtConfig
 }
 
-func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
+func ConnectDatabase(sfg *ServerConfig) (*gorm.DB, error) {
 
 	//log.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
 	dsn := sfg.dbConfig.Id + ":" + sfg.dbConfig.Pw + "@tcp(" + sfg.dbConfig.Host + ":" + sfg.dbConfig.Port + ")/" + sfg.dbConfig.Database + "?charset=utf8mb4&parseTime=True&loc=Local"
@@ -154,13 +158,13 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	})
 
 	if err != nil {
-		log.Fatal("Failed to connect to database!")
+		return nil, err
 	}
 
 	//db.AutoMigrate(&sharedModels.ServiceUsers{})
 
 	log.Println("Message Database Connected !")
-	return db
+	return db, nil
 }
 
 func initAutoMigrate() bool {
@@ -172,7 +176,7 @@ func initAutoMigrate() bool {
 	}
 }
 
-func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
+func ConnectMessageBroker(sfg *ServerConfig) (*nats.Conn, error) {
 
 	// 메시지 브로커 분기처리
 	// switch sfg.mbConfig.Mb {
@@ -180,25 +184,23 @@ func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
 	nc, err := nats.Connect(nats.DefaultURL)
 
 	if err != nil {
-		log.Println("Failed to connect to NATS:", err)
-		return nil
+		return nil, err
 	}
-	return nc
-	// 	return &broker.NatsBroker{
-	// 		Nc:        nc,
-	// 		ChatUsers: make(map[string]*broker.ChatUser),
-	// 	}
-	// case KAFKA:
-	// 	log.Println("kafka is not available.")
-	// case RABBITMQ:
-	// 	log.Println("RabbitMQ is not available.")
-	// }
-	// return nil
+
+	return nc, nil
 }
 
-func ConnectCacheDataBase(sfg *ServerConfig) *redis.ClusterClient { // 반환 타입 변경
-	return redis.NewClusterClient(&redis.ClusterOptions{
-		// 클러스터 노드 주소들을 슬라이스로 입력 (여러 개 넣을수록 안정적입니다)
+func ConnectCacheDataBase(sfg *ServerConfig) (*redis.ClusterClient, error) { // 반환 타입 변경
+
+	// NewClusterClient는 바로 panic을 실행 시키지만,
+	// Redis 서버 주소가 틀렸거나 서버가 꺼져 있는 경우 redis.ClusterClient 는 잘 만들어지므로 정상적으로 연결이 되었는지 검증 하는 걸 통해 error를 반환할 수 있도록 수정.
+
+	if sfg == nil {
+		return nil, errors.New("server config is nil")
+	}
+
+	// 추후 아래 설정을 sfg에서 불러오도록 수정필요.
+	client := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: []string{
 			"140.245.73.74:7001",
 			"140.245.73.74:7002",
@@ -208,6 +210,16 @@ func ConnectCacheDataBase(sfg *ServerConfig) *redis.ClusterClient { // 반환 �
 			"140.245.73.74:7006",
 		},
 	})
+
+	// 2. 런타임 연결 확인 (패닉은 안 나지만 연결은 안 됐을 수 있음)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis connection error: %w", err)
+	}
+
+	return client, nil
 }
 
 func NewProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {

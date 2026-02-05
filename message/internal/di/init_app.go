@@ -1,6 +1,7 @@
 package di
 
 import (
+	"fmt"
 	"log"
 	"message/internal/adapter/http/router"
 	"message/internal/app/loader"
@@ -25,15 +26,27 @@ func InitApp() (*AppContainer, error) {
 	sfg := config.NewServerConfig()
 
 	// ---- DB Connect -----
-	db := config.ConnectDatabase(sfg)
+	db, err := config.ConnectDatabase(sfg)
+	if err != nil {
+		return nil, fmt.Errorf("db connection failed: %w", err)
+	}
 
 	// ---- Redis Connect -----
-	cacheClient := config.ConnectCacheDataBase(sfg)
+	cacheClient, err := config.ConnectCacheDataBase(sfg)
+	if err != nil {
+		return nil, fmt.Errorf("redis connection failed: %w", err)
+	}
 
 	// ---- gRPC Connect -----
 	gRPCClient, err := config.NewProtocolBufferClient(sfg)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("grpc client failed: %w", err)
+	}
+
+	// ---- Message Broker init ----
+	mb, err := config.ConnectMessageBroker(sfg)
+	if err != nil {
+		return nil, fmt.Errorf("message broker failed: %w", err)
 	}
 
 	// ---- DB Migration -----
@@ -41,63 +54,84 @@ func InitApp() (*AppContainer, error) {
 		migration.RunAll(db)
 	}
 
-	// ---- Message Broker init ----
-	mb := config.ConnectMessageBroker(sfg)
-
 	// ---- LOGGER Init ----
 	logger := logger.NewSlogLogger()
 
 	// ---- Storage Init -----
 	otpStorage := storage.NewOtpStorage()
 	chatRoomStorage := storage.NewChatRoomStorage()
+
 	// ---- Data Loader -----
 	dataLoader := loader.NewDataLoader()
 	//dataLoader.Register(loader.NewDeviceTokenInfoLoader(db, deviceStorage)) 혹은 생성자 주입
+
+	// ---- Domain Module Init -----
+	noteModule := InitNoteModule(db, mb)
+	lineKeyModule := InitLineKeyModule(db)
+	chatFileModule := InitChatFileModule(db)
+	chatModule := InitChatModule(db, mb, cacheClient, logger, gRPCClient)
+	otpModule := InitOtpModule(db, otpStorage)
+	chatRoomModule := InitChatRoomModule(db, chatRoomStorage, mb, logger)
+	chatRoomTitleModule := InitChatRoomTitleModule(db)
+	chatRoomFixedModule := InitChatRoomFixedModule(db)
+	chatRoomConfigModule := InitChatRoomConfigModule(db)
+
+	// ---- Domain Service Module Init -----
+	chatServiceModule := InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase, chatRoomModule.Usecase)
+	chatRoomServiceModule := InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
+	chatLineServiceModule := InitChatLineServiceModule(chatModule.Usecase, chatRoomModule.Usecase, chatFileModule.Usecase)
 
 	// ---- Router Init -----
 	// SetDefaultRoutes() 안에서 새로운 gin.Engine을 매번 생성하면 각기 다른 서버 인스턴스가 됩니다.
 	// 이런 경우는 서버를 2개 띄우는 것과 같으므로 주의.
 	router := router.NewMessageRouter("message", sfg.TokenConfig, logger)
 
-	// ---- Domain Handler Init -----
-
-	noteModule := InitNoteModule(db, mb)
 	router.SetNoteRoutes(noteModule.Handler)
-
-	lineKeyModule := InitLineKeyModule(db)
 	router.SetLineKeyRoutes(lineKeyModule.Handler)
-
-	chatFileModule := InitChatFileModule(db)
-
-	chatModule := InitChatModule(db, mb, cacheClient, logger, gRPCClient)
 	router.SetChatRoutes(chatModule.Handler)
-
-	otpModule := InitOtpModule(db, otpStorage)
 	router.SetOtpRoutes(otpModule.Handler)
-
-	chatRoomModule := InitChatRoomModule(db, chatRoomStorage, mb, logger)
 	router.SetChatRoomRoutes(chatRoomModule.Handler)
-
-	chatRoomFixedModule := InitChatRoomFixedModule(db)
-
-	chatRoomTitleModule := InitChatRoomTitleModule(db)
 	router.SetChatRoomTitleRoutes(chatRoomTitleModule.Handler)
-
-	chatRoomConfigModule := InitChatRoomConfigModule(db)
 
 	// chatService에도 chatRoom이 들어가지만, 다른 usecase의 조합으로 처리해야 할 수 있으므로 chat과 chatRoom을 분리.
 	// usecase의 조합이지만 메인이 뭐냐? 라고 생각하고 작업하기
-	chatServiceModule := InitChatServiceModule(chatModule.Usecase, lineKeyModule.Usecase, chatRoomModule.Usecase)
 	router.SetChatServiceRoutes(chatServiceModule)
-
-	chatRoomServiceModule := InitChatRoomServiceModule(chatRoomModule.Usecase, lineKeyModule.Usecase, chatModule.Usecase, chatRoomFixedModule.Usecase, chatRoomTitleModule.Usecase, chatRoomConfigModule.Usecase)
 	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
-
-	chatLineServiceModule := InitChatLineServiceModule(chatModule.Usecase, chatRoomModule.Usecase, chatFileModule.Usecase)
 	router.SetChatLineServiceRoutes(chatLineServiceModule)
 
+	// 자원 해제 - 실행 순서의 역순으로 종료 필요
 	cleanup := func() {
-		// 자원 해제 로직
+		log.Println("--- Graceful Cleanup Start ---")
+
+		if chatModule != nil {
+			log.Println("Closing chatModule workers...")
+			chatModule.Cleanup() // module에 있는 cleanup은 내부에 별도 고루틴을 통한 workerpool이 존재하는 경우 호출한다.
+		}
+
+		if mb != nil {
+			log.Println("Closing Message Broker...")
+			mb.Close()
+		}
+
+		if gRPCClient != nil {
+			log.Println("Closing gRPC client...")
+			gRPCClient.Close()
+		}
+
+		if cacheClient != nil {
+			log.Println("Closing Redis client...")
+			cacheClient.Close()
+		}
+
+		if db != nil {
+			sqlDB, _ := db.DB()
+			if sqlDB != nil {
+				log.Println("Closing Database connection...")
+				sqlDB.Close()
+			}
+		}
+
+		log.Println("--- Graceful Cleanup Finished ---")
 	}
 
 	server := &http.Server{
