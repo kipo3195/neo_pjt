@@ -15,6 +15,7 @@ type ServerConfig struct {
 	TokenConfig           TokenHashConfig
 	OrgInfoBatchConfig    *BatchConfig
 	UserDetailBatchConfig *BatchConfig
+	ChatFileConfig        ChatFileConfig
 }
 
 type TokenHashConfig struct {
@@ -36,6 +37,14 @@ type BatchConfig struct {
 	Cron             string         // 실행 주기 데이터
 	ExtendDBSyncFlag bool           // 외부 DB 연동 설정
 	ExtendDBConfig   ExtendDBConfig // 외부 DB 연결 정보
+}
+
+type ChatFileConfig struct {
+	FileServiceGrpcHost    string
+	FileServiceGrpcPort    string
+	MessageServiceGrpcHost string
+	MessageServiceGrpcPort string
+	ChatFileBatchConfig    *BatchConfig
 }
 
 // 공통 - 외부 DB 연동을 위한 정보
@@ -72,6 +81,8 @@ func NewServerConfig() *ServerConfig {
 
 	userDetailBatchConfig := initUserDetailBatchConfig()
 
+	chatFileConfig := initChatFileConfig()
+
 	return &ServerConfig{
 		dbConfig:              dbConfig,
 		AutoMigrate:           autoMigrate,
@@ -79,6 +90,7 @@ func NewServerConfig() *ServerConfig {
 		OrgInfoBatchConfig:    &orgInfoBatchConfig,
 		UserDetailBatchConfig: &userDetailBatchConfig,
 		Domain:                domain,
+		ChatFileConfig:        chatFileConfig,
 	}
 }
 func initDBConfig() *DBConfig {
@@ -188,6 +200,40 @@ func initOrgInfoBatchConfig() BatchConfig {
 		ExtendDBSyncFlag: extendDbSyncFlag,
 		ExtendDBConfig:   extendDBConfig,
 	}
+}
+
+func initChatFileConfig() ChatFileConfig {
+
+	fileServiceGrpcHost := os.Getenv("FILE_SERVICE_GRPC_HOST")
+	fileServiceGrpcPort := os.Getenv("FILE_SERVICE_GRPC_PORT")
+	messageServiceGrpcHost := os.Getenv("MESSAGE_SERVICE_GRPC_HOST")
+	messageServiceGrpcPort := os.Getenv("MESSAGE_SERVICE_GRPC_PORT")
+
+	org := os.Getenv("CHAT_FILE_ORG")
+	flag := os.Getenv("CHAT_FILE_CRON_BATCH_FLAG")
+	var batchFlag bool
+	if flag == "true" {
+		batchFlag = true
+	} else {
+		batchFlag = false
+	}
+	cron := os.Getenv("CHAT_FILE_CRON")
+
+	batchConfig := &BatchConfig{
+		Org:       org,
+		BatchFlag: batchFlag,
+		Cron:      cron,
+	}
+
+	return ChatFileConfig{
+
+		FileServiceGrpcHost:    fileServiceGrpcHost,
+		FileServiceGrpcPort:    fileServiceGrpcPort,
+		MessageServiceGrpcHost: messageServiceGrpcHost,
+		MessageServiceGrpcPort: messageServiceGrpcPort,
+		ChatFileBatchConfig:    batchConfig,
+	}
+
 }
 
 func ConnectDatabase(sfg *ServerConfig) (*gorm.DB, error) {

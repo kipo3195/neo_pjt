@@ -44,16 +44,20 @@ func InitApp() (*AppContainer, error) {
 	// ---- Domain Module Init -----
 	orgInfoModule := InitOrgInfoModule(db, orgInfoStorage, sfg.Domain)
 	userDetailModule := InitUserDetailModule(db, userDetailStorage, sfg.Domain)
+	messageGrpcModule := InitMessageGrpcModule(db, sfg.ChatFileConfig)
+	fileGrpcModule := InitFileGrpcModule(db, sfg.ChatFileConfig)
 
 	extendDBConnectModule := InitExtendDBConnectModule(db)
 
 	// ----- Service Orchestrator -----
 	orgInfoBatchServiceModule := InitOrgInfoBatchServiceModule(orgInfoModule.Task, extendDBConnectModule.Task, sfg.OrgInfoBatchConfig)
 	userDetailBatchServiceModule := InitUserDetailBatchserviceModule(userDetailModule.Task, extendDBConnectModule.Task, sfg.UserDetailBatchConfig)
+	chatFileBatchServiceModule := InitChatFileBatchServiceModule(messageGrpcModule.Task, fileGrpcModule.Task)
 
 	// ----- Scheduler Regist -----
 	scheduler.RegistOrgInfoBatchService(orgInfoBatchServiceModule)
 	scheduler.RegistUserDetailBatchService(userDetailBatchServiceModule)
+	scheduler.RegistChatFileBatchService(chatFileBatchServiceModule)
 
 	// ----- Scheduler Start -----
 	scheduler.Start()

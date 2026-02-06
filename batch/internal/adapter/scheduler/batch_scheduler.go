@@ -17,6 +17,7 @@ type batchScheduler struct {
 type BatchScheduler interface {
 	RegistOrgInfoBatchService(svc service.OrgInfoBatchService)
 	RegistUserDetailBatchService(svc service.UserDetailBatchService)
+	RegistChatFileBatchService(svc service.ChatFileBatchService)
 	Start()
 	Stop()
 }
@@ -87,4 +88,30 @@ func (r *batchScheduler) RegistUserDetailBatchService(svc service.UserDetailBatc
 	} else {
 		log.Println("[SetUserDetailBatch] batch not used")
 	}
+}
+
+func (r *batchScheduler) RegistChatFileBatchService(svc service.ChatFileBatchService) {
+
+	if r.sfg.ChatFileConfig.ChatFileBatchConfig.BatchFlag {
+
+		cronExpr := r.sfg.ChatFileConfig.ChatFileBatchConfig.Cron // 예: "0 */5 * * *"
+		log.Println("[SetChatFileBatch] cronExpr :", cronExpr)
+
+		_, err := r.cr.AddFunc(cronExpr, func() {
+
+			ctx := context.Background()
+			if err := svc.Run(ctx); err != nil {
+				log.Println("[SetChatFileBatch] cron sync error : ", err)
+			}
+		})
+
+		if err != nil {
+			log.Println("[SetChatFileBatch] cron config error : ", err)
+		}
+
+	} else {
+
+		log.Println("[SetChatFileBatch] batch not used")
+	}
+
 }
