@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -191,7 +190,7 @@ func initOrgInfoBatchConfig() BatchConfig {
 	}
 }
 
-func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
+func ConnectDatabase(sfg *ServerConfig) (*gorm.DB, error) {
 
 	//log.Println("env 읽음 " + sfg.dbConfig.Id + " : " + sfg.dbConfig.Pw + " : " + sfg.dbConfig.Host + " : " + sfg.dbConfig.Port + " : " + sfg.dbConfig.Database)
 	dsn := sfg.dbConfig.Id + ":" + sfg.dbConfig.Pw + "@tcp(" + sfg.dbConfig.Host + ":" + sfg.dbConfig.Port + ")/" + sfg.dbConfig.Database + "?charset=utf8mb4&parseTime=True&loc=Local"
@@ -199,13 +198,12 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{}) // MYSQL
 
 	if err != nil {
-		log.Fatal("Failed to connect to database!")
+		return nil, err
 	}
 
 	//db.AutoMigrate(&sharedModels.ServiceUsers{})
 
-	log.Println("Batch Database Connected !")
-	return db
+	return db, nil
 }
 
 func initAutoMigrate() bool {

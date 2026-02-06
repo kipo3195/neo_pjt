@@ -3,7 +3,7 @@ package repository
 import (
 	"batch/internal/domain/userDetail/entity"
 	"batch/internal/domain/userDetail/repository"
-	"batch/internal/infrastructure/model"
+	"batch/internal/infrastructure/persistence/model"
 	"context"
 	"log"
 
@@ -14,8 +14,8 @@ type userDetailRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func UserDetailMigrate(db *gorm.DB) {
-	db.AutoMigrate(model.UserDetail{})
+func UserDetailMigrate(db *gorm.DB) error {
+	return db.AutoMigrate(model.UserDetail{})
 }
 
 func NewUserDetailRepository(db *gorm.DB) repository.UserDetailRepository {

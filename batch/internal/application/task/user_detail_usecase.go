@@ -1,4 +1,4 @@
-package usecase
+package task
 
 import (
 	"batch/internal/application/util"
@@ -8,23 +8,23 @@ import (
 	"log"
 )
 
-type userDetailUsecase struct {
+type userDetailTask struct {
 	repo    repository.UserDetailRepository
 	apiRepo repository.UserDetailApiRepository
 }
 
-type UserDetailUsecase interface {
+type UserDetailTask interface {
 	SendUserDetailToUser(ctx context.Context, org string) error
 }
 
-func NewUserDetailUsecase(repo repository.UserDetailRepository, apiRepo repository.UserDetailApiRepository) UserDetailUsecase {
-	return &userDetailUsecase{
+func NewUserDetailTask(repo repository.UserDetailRepository, apiRepo repository.UserDetailApiRepository) UserDetailTask {
+	return &userDetailTask{
 		repo:    repo,
 		apiRepo: apiRepo,
 	}
 }
 
-func (r *userDetailUsecase) SendUserDetailToUser(ctx context.Context, org string) error {
+func (r *userDetailTask) SendUserDetailToUser(ctx context.Context, org string) error {
 
 	// 현재 데이터 조회
 	userDetail, err := r.repo.GetUserDetail(ctx, org)

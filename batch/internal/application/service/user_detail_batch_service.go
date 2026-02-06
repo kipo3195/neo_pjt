@@ -1,7 +1,7 @@
-package orchestrator
+package service
 
 import (
-	"batch/internal/application/usecase"
+	"batch/internal/application/task"
 	"batch/internal/infrastructure/config"
 	"context"
 	"log"
@@ -10,12 +10,12 @@ import (
 )
 
 type UserDetailBatchService struct {
-	ExtendDBConnect usecase.ExtendDBConnectUsecase
-	UserDetail      usecase.UserDetailUsecase
+	ExtendDBConnect task.ExtendDBConnectTask
+	UserDetail      task.UserDetailTask
 	serviceConfig   *config.BatchConfig
 }
 
-func NewUserDetailBatchServiceModule(userDetail usecase.UserDetailUsecase, extendDBConnection usecase.ExtendDBConnectUsecase, serviceConfig *config.BatchConfig) UserDetailBatchService {
+func NewUserDetailBatchServiceModule(userDetail task.UserDetailTask, extendDBConnection task.ExtendDBConnectTask, serviceConfig *config.BatchConfig) UserDetailBatchService {
 	return UserDetailBatchService{
 		UserDetail:      userDetail,
 		ExtendDBConnect: extendDBConnection,

@@ -1,12 +1,12 @@
 package di
 
 import (
-	"batch/internal/application/orchestrator"
-	"batch/internal/application/usecase"
+	orchestrator "batch/internal/application/service"
+	"batch/internal/application/task"
 	"batch/internal/infrastructure/config"
 )
 
-func InitOrgInfoBatchServiceModule(orgInfo usecase.OrgInfoUsecase, extendDbConnect usecase.ExtendDBConnectUsecase, serviceConfig *config.BatchConfig) orchestrator.OrgInfoBatchService {
+func InitOrgInfoBatchServiceModule(orgInfo task.OrgInfoTask, extendDbConnect task.ExtendDBConnectTask, serviceConfig *config.BatchConfig) orchestrator.OrgInfoBatchService {
 
 	return orchestrator.NewOrgInfoBatchServiceModule(orgInfo, extendDbConnect, serviceConfig)
 }

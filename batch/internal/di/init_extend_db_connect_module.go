@@ -1,22 +1,22 @@
 package di
 
 import (
-	"batch/internal/application/usecase"
-	"batch/internal/infrastructure/repository"
+	"batch/internal/application/task"
+	"batch/internal/infrastructure/persistence/repository"
 
 	"gorm.io/gorm"
 )
 
 type ExtendDbConnectModule struct {
-	Usecase usecase.ExtendDBConnectUsecase
+	Task task.ExtendDBConnectTask
 }
 
 func InitExtendDBConnectModule(db *gorm.DB) *ExtendDbConnectModule {
 
 	repo := repository.NewExtendDBConnectRepository(db)
-	usecase := usecase.NewExtendDBConnectUsecase(repo)
+	task := task.NewExtendDBConnectTask(repo)
 
 	return &ExtendDbConnectModule{
-		Usecase: usecase,
+		Task: task,
 	}
 }

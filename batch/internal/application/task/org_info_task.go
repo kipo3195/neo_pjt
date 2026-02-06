@@ -1,38 +1,38 @@
-package usecase
+package task
 
 import (
 	"archive/zip"
 	"batch/internal/application/util"
 	"batch/internal/domain/orgInfo/entity"
 	"batch/internal/domain/orgInfo/repository"
-	"batch/internal/infrastructure/storage"
+	"batch/internal/infrastructure/persistence/storage"
 	"bytes"
 	"context"
 	"encoding/json"
 	"log"
 )
 
-type orgInfoUsecase struct {
+type orgInfoTask struct {
 	orgInfoStorage storage.OrgInfoStorage
 	repo           repository.OrgInfoRepository
 	apiRepo        repository.OrgInfoApiRepository
 }
 
-type OrgInfoUsecase interface {
+type OrgInfoTask interface {
 	SendOrgInfoToOrg(ctx context.Context, org string) error
 	PutSnapShotJson(ctx context.Context, org string, orgInfo []entity.OrgInfoEntity, fileName string) error
 }
 
-func NewOrgInfoUsecase(repo repository.OrgInfoRepository, apiRepo repository.OrgInfoApiRepository, orgInfoStorage storage.OrgInfoStorage) OrgInfoUsecase {
+func NewOrgInfoTask(repo repository.OrgInfoRepository, apiRepo repository.OrgInfoApiRepository, orgInfoStorage storage.OrgInfoStorage) OrgInfoTask {
 
-	return &orgInfoUsecase{
+	return &orgInfoTask{
 		orgInfoStorage: orgInfoStorage,
 		repo:           repo,
 		apiRepo:        apiRepo,
 	}
 }
 
-func (r *orgInfoUsecase) SendOrgInfoToOrg(ctx context.Context, org string) error {
+func (r *orgInfoTask) SendOrgInfoToOrg(ctx context.Context, org string) error {
 
 	// 현재 DB 조회 - 현재 조직도 json 파일 생성 zip 파일 생성 - 이걸 batch 서비스가 해야되는지 고민..
 
@@ -177,7 +177,7 @@ func buildZipInMemory(fileName string, content []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (r *orgInfoUsecase) PutSnapShotJson(ctx context.Context, org string, orgInfo []entity.OrgInfoEntity, fileName string) error {
+func (r *orgInfoTask) PutSnapShotJson(ctx context.Context, org string, orgInfo []entity.OrgInfoEntity, fileName string) error {
 
 	// 스냅샷 json 생성 (DB 저장용)
 	orgInfoSnapShot := parseOrgTree(orgInfo)

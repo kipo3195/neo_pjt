@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"batch/internal/application/orchestrator"
+	"batch/internal/application/service"
 	"batch/internal/infrastructure/config"
 	"context"
 	"log"
@@ -15,9 +15,10 @@ type batchScheduler struct {
 }
 
 type BatchScheduler interface {
-	RegistOrgInfoBatchService(svc orchestrator.OrgInfoBatchService)
-	RegistUserDetailBatchService(svc orchestrator.UserDetailBatchService)
+	RegistOrgInfoBatchService(svc service.OrgInfoBatchService)
+	RegistUserDetailBatchService(svc service.UserDetailBatchService)
 	Start()
+	Stop()
 }
 
 func NewBatchScheduler(sfg *config.ServerConfig) BatchScheduler {
@@ -26,6 +27,9 @@ func NewBatchScheduler(sfg *config.ServerConfig) BatchScheduler {
 		cr:  cron.New(cron.WithSeconds()),
 	}
 }
+func (r *batchScheduler) Stop() {
+	r.cr.Stop()
+}
 
 // 등록과 실행의 책임을 완전히 분리
 func (r *batchScheduler) Start() {
@@ -33,7 +37,7 @@ func (r *batchScheduler) Start() {
 }
 
 // 20251213 스케쥴러는 어떤 동작을 처리하는지 모르고 언제 스케쥴러를 등록하고 실행하는 책임만 갖도록..
-func (r *batchScheduler) RegistOrgInfoBatchService(svc orchestrator.OrgInfoBatchService) {
+func (r *batchScheduler) RegistOrgInfoBatchService(svc service.OrgInfoBatchService) {
 
 	if r.sfg.OrgInfoBatchConfig.BatchFlag {
 
@@ -60,7 +64,7 @@ func (r *batchScheduler) RegistOrgInfoBatchService(svc orchestrator.OrgInfoBatch
 
 }
 
-func (r *batchScheduler) RegistUserDetailBatchService(svc orchestrator.UserDetailBatchService) {
+func (r *batchScheduler) RegistUserDetailBatchService(svc service.UserDetailBatchService) {
 
 	// sfg(서버 환경변수)에 있는 크론 실행 주기를 가지고 usecase 실행
 	if r.sfg.UserDetailBatchConfig.BatchFlag {

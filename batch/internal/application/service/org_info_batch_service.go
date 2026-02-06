@@ -1,7 +1,7 @@
-package orchestrator
+package service
 
 import (
-	"batch/internal/application/usecase"
+	"batch/internal/application/task"
 	"batch/internal/infrastructure/config"
 	"context"
 	"log"
@@ -10,12 +10,12 @@ import (
 )
 
 type OrgInfoBatchService struct {
-	ExtendDBConnect usecase.ExtendDBConnectUsecase
-	OrgInfo         usecase.OrgInfoUsecase
+	ExtendDBConnect task.ExtendDBConnectTask
+	OrgInfo         task.OrgInfoTask
 	serviceConfig   *config.BatchConfig
 }
 
-func NewOrgInfoBatchServiceModule(orgInfo usecase.OrgInfoUsecase, extendDBConnection usecase.ExtendDBConnectUsecase, serviceConfig *config.BatchConfig) OrgInfoBatchService {
+func NewOrgInfoBatchServiceModule(orgInfo task.OrgInfoTask, extendDBConnection task.ExtendDBConnectTask, serviceConfig *config.BatchConfig) OrgInfoBatchService {
 
 	return OrgInfoBatchService{
 		OrgInfo:         orgInfo,

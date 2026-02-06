@@ -3,7 +3,7 @@ package repository
 import (
 	"batch/internal/domain/orgInfo/entity"
 	"batch/internal/domain/orgInfo/repository"
-	"batch/internal/infrastructure/model"
+	"batch/internal/infrastructure/persistence/model"
 	"context"
 	"log"
 
@@ -14,9 +14,16 @@ type orgInfoRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func OrgInfoMigrate(db *gorm.DB) {
-	db.AutoMigrate(model.OrgInfo{})
-	db.AutoMigrate(model.OrgInfoJsonHistory{})
+func OrgInfoMigrate(db *gorm.DB) error {
+	err := db.AutoMigrate(model.OrgInfo{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(model.OrgInfoJsonHistory{})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewOrgInfoRepository(db *gorm.DB) repository.OrgInfoRepository {

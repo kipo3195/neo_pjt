@@ -1,12 +1,12 @@
 package di
 
 import (
-	"batch/internal/application/orchestrator"
-	"batch/internal/application/usecase"
+	"batch/internal/application/service"
+	"batch/internal/application/task"
 	"batch/internal/infrastructure/config"
 )
 
-func InitUserDetailBatchserviceModule(userDetail usecase.UserDetailUsecase, extendDbConnect usecase.ExtendDBConnectUsecase, serviceConfig *config.BatchConfig) orchestrator.UserDetailBatchService {
+func InitUserDetailBatchserviceModule(userDetail task.UserDetailTask, extendDbConnect task.ExtendDBConnectTask, serviceConfig *config.BatchConfig) service.UserDetailBatchService {
 
-	return orchestrator.NewUserDetailBatchServiceModule(userDetail, extendDbConnect, serviceConfig)
+	return service.NewUserDetailBatchServiceModule(userDetail, extendDbConnect, serviceConfig)
 }

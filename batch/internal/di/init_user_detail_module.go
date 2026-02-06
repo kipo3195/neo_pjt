@@ -1,25 +1,25 @@
 package di
 
 import (
-	"batch/internal/application/usecase"
-	"batch/internal/infrastructure/repository"
-	"batch/internal/infrastructure/storage"
+	"batch/internal/application/task"
+	"batch/internal/infrastructure/persistence/repository"
+	"batch/internal/infrastructure/persistence/storage"
 
 	"gorm.io/gorm"
 )
 
 type UserDetailModule struct {
-	Usecase usecase.UserDetailUsecase
+	Task task.UserDetailTask
 }
 
 func InitUserDetailModule(db *gorm.DB, storage storage.UserDetailStorage, domain string) *UserDetailModule {
 
 	repo := repository.NewUserDetailRepository(db)
 	apiRepo := repository.NewUserDetailApiRepository(domain)
-	usecase := usecase.NewUserDetailUsecase(repo, apiRepo)
 
+	task := task.NewUserDetailTask(repo, apiRepo)
 	return &UserDetailModule{
-		Usecase: usecase,
+		Task: task,
 	}
 
 }
