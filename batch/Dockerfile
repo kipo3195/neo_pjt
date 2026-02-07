@@ -23,7 +23,7 @@ WORKDIR /root/
 COPY --from=builder /batch-service .
 
 
-EXPOSE 8081
+EXPOSE 8081 50001
 CMD ["./batch-service"]
 
 

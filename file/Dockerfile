@@ -31,7 +31,7 @@ RUN chmod +x ./file-server
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 
-EXPOSE 8091 50001
+EXPOSE 8091 50001 50002
 
 # CMD를 리스트 형식으로 작성
 CMD ["./file-server"]

@@ -11,8 +11,6 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -22,12 +20,13 @@ import (
 )
 
 type ServerConfig struct {
-	Domain              string
-	dbConfig            *DBConfig
-	AutoMigrate         bool
-	TokenConfig         TokenHashConfig
-	OracleStorageConfig OracleStorageConfig
-	GrpcConfig          GrpcConfig
+	Domain                string
+	dbConfig              *DBConfig
+	AutoMigrate           bool
+	TokenConfig           TokenHashConfig
+	OracleStorageConfig   OracleStorageConfig
+	MessageFileGrpcConfig GrpcConfig
+	BatchFileGrpcConfig   GrpcConfig
 }
 
 type OracleStorageConfig struct {
@@ -75,18 +74,21 @@ func NewServerConfig() *ServerConfig {
 
 	oracleStorageConfig, err := initOracleStorageConfig()
 
-	grpcConfig := initGrpcConfig()
+	batchFileGrpcConfig := initBatchFileGrpcConfig()
+
+	messageFileGrpcConfig := initMessageFileGrpcConfig()
 
 	if err != nil {
 		log.Panic(err)
 	}
 
 	return &ServerConfig{
-		dbConfig:            dbConfig,
-		AutoMigrate:         autoMigrate,
-		TokenConfig:         tokenConfig,
-		OracleStorageConfig: oracleStorageConfig,
-		GrpcConfig:          grpcConfig,
+		dbConfig:              dbConfig,
+		AutoMigrate:           autoMigrate,
+		TokenConfig:           tokenConfig,
+		OracleStorageConfig:   oracleStorageConfig,
+		BatchFileGrpcConfig:   batchFileGrpcConfig,
+		MessageFileGrpcConfig: messageFileGrpcConfig,
 	}
 }
 
@@ -226,17 +228,28 @@ func ConnectCacheDataBase(sfg *ServerConfig) (*redis.ClusterClient, error) { // 
 	return client, nil
 }
 
-func NewProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {
-	return grpc.NewClient(sfg.GrpcConfig.Host+":"+sfg.GrpcConfig.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func GetMessageFileLis() (net.Listener, error) {
+	port := os.Getenv("MESSAGE_FILE_GRPC_PORT")
+	return net.Listen("tcp", ":"+port)
 }
 
-func GetGrpcListener(sfg *ServerConfig) (net.Listener, error) {
-	return net.Listen("tcp", ":"+sfg.GrpcConfig.Port)
+func initMessageFileGrpcConfig() GrpcConfig {
+	host := os.Getenv("MESSAGE_FILE_GRPC_HOST")
+	port := os.Getenv("MESSAGE_FILE_GRPC_PORT")
+	return GrpcConfig{
+		Host: host,
+		Port: port,
+	}
 }
 
-func initGrpcConfig() GrpcConfig {
-	host := os.Getenv("GRPC_HOST")
-	port := os.Getenv("GRPC_PORT")
+func GetBatchFileLis() (net.Listener, error) {
+	port := os.Getenv("BATCH_FILE_GRPC_PORT")
+	return net.Listen("tcp", ":"+port)
+}
+
+func initBatchFileGrpcConfig() GrpcConfig {
+	host := os.Getenv("BATCH_FILE_GRPC_HOST")
+	port := os.Getenv("BATCH_FILE_GRPC_PORT")
 	return GrpcConfig{
 		Host: host,
 		Port: port,

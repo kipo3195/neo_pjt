@@ -22,6 +22,8 @@ func NewChatFileBatchService(messageTask task.MessageGrpcTask, fileTask task.Fil
 func (r *ChatFileBatchService) Run(ctx context.Context) error {
 	log.Println("ChatFileBatchService start. time : ", time.Now().Format("2006-01-02 15:04:05"))
 
+	r.fileTask.UploadFileCheck(ctx)
+
 	log.Println("ChatFileBatchService end. time : ", time.Now().Format("2006-01-02 15:04:05"))
 	return nil
 }

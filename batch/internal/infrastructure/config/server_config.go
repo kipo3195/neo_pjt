@@ -4,6 +4,8 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -263,4 +265,12 @@ func initAutoMigrate() bool {
 
 func initDomain() string {
 	return os.Getenv("DOMAIN")
+}
+
+func NewFileServiceProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {
+	return grpc.NewClient(sfg.ChatFileConfig.FileServiceGrpcHost+":"+sfg.ChatFileConfig.FileServiceGrpcPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
+}
+
+func NewMessageServiceProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {
+	return grpc.NewClient(sfg.ChatFileConfig.MessageServiceGrpcHost+":"+sfg.ChatFileConfig.MessageServiceGrpcPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
 }

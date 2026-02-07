@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+// 이 패키지 이름은 Go 코드에서 import 경로가 됩니다.
+option go_package = "file/internal/infrastructure/pb";
+
+// package는 **"이 대화(API)의 주제가 무엇인가"**를 정의하는 것이지, 현재 내가 작업 중인 서비스 이름을 적는 게 아닙니다.
+package uploadFileCheck;
+
+// 파일 서비스가 외부(Message 서비스 등)에 제공할 기능들
+service UploadFileCheckService {
+  // 파일 전송 상태를 업데이트하는 함수 (쪽지 전송 시 호출)
+  rpc UploadFileCheck (UploadFileCheckRequest) returns (UploadFileCheckResponse);
+}
+
+// 요청할 때 보낼 데이터
+message UploadFileCheckRequest {
+  string checkDate = 1;
+}
+
+// 응답으로 받을 데이터
+message UploadFileCheckResponse {
+  bool success = 1;
+  string message = 2;
+}

@@ -16,11 +16,13 @@ import (
 )
 
 type AppContainer struct {
-	Server     *http.Server
-	Cleanup    func()
-	DataLoader *loader.DataLoader
-	GrpcServer *grpc.Server
-	Listener   net.Listener
+	Server                *http.Server
+	Cleanup               func()
+	DataLoader            *loader.DataLoader
+	MessageFileGrpcServer *grpc.Server
+	MessageFileListener   net.Listener
+	BatchFileGrpcServer   *grpc.Server
+	BatchFileListener     net.Listener
 }
 
 func InitApp() (*AppContainer, error) {
@@ -40,14 +42,15 @@ func InitApp() (*AppContainer, error) {
 		return nil, fmt.Errorf("redis connection failed: %w", err)
 	}
 
-	// ---- gRPC Connect -----
-	_, err = config.NewProtocolBufferClient(sfg)
+	// ---- gRPC Listener Init -----
+	messageFileLis, err := config.GetMessageFileLis()
+	log.Printf("message - file 실제 바인딩된 주소: %s", messageFileLis.Addr().String())
 	if err != nil {
-		return nil, fmt.Errorf("grpc client failed: %w", err)
+		return nil, fmt.Errorf("failed to listen gRPC port: %w", err)
 	}
 
-	// ---- gRPC Listener Init -----
-	lis, err := config.GetGrpcListener(sfg)
+	batchFileLis, err := config.GetBatchFileLis()
+	log.Printf("batch - file 실제 바인딩된 주소: %s", batchFileLis.Addr().String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to listen gRPC port: %w", err)
 	}
@@ -68,7 +71,12 @@ func InitApp() (*AppContainer, error) {
 		migration.RunAll(db)
 	}
 
-	grpcServer := grpc.NewServer(
+	messageFileGrpcServer := grpc.NewServer(
+	// 필요 시 인터셉터(Middleware) 추가 가능
+	// grpc.UnaryInterceptor(authInterceptor),
+	)
+
+	batchFileGrpcServer := grpc.NewServer(
 	// 필요 시 인터셉터(Middleware) 추가 가능
 	// grpc.UnaryInterceptor(authInterceptor),
 	)
@@ -88,14 +96,16 @@ func InitApp() (*AppContainer, error) {
 	// ---- Domain Module Init -----
 	fileUrlModule := InitFileUrlModule(db, cacheClient, sfg.OracleStorageConfig, logger)
 	chatFileModule := InitChatFileModule(db)
+	uploadFileCheckModule := InitUploadFileCheckModule(db)
 
 	// ---- Domain Service Module Init -----
 
 	// ---- Router Init -----
 	router.SetFileUrlRoutes(fileUrlModule.Handler)
 
-	// ---- gRPC Init -----
-	pb.RegisterFileServiceServer(grpcServer, chatFileModule.ChatFileGrpcHandler)
+	// ---- gRPC Init 서비스를 다른걸로 띄워줘야함.. 필수 -----
+	pb.RegisterFileServiceServer(messageFileGrpcServer, chatFileModule.ChatFileGrpcHandler)
+	pb.RegisterUploadFileCheckServiceServer(batchFileGrpcServer, uploadFileCheckModule.UploadFilecheckGrpcHandler)
 
 	// 자원 해제 - 실행 순서의 역순으로 종료 필요
 	cleanup := func() {
@@ -127,8 +137,10 @@ func InitApp() (*AppContainer, error) {
 		Server:  server,
 		Cleanup: cleanup,
 		//DataLoader: dataLoader,
-		Listener:   lis,
-		GrpcServer: grpcServer,
+		MessageFileGrpcServer: messageFileGrpcServer,
+		MessageFileListener:   messageFileLis,
+		BatchFileGrpcServer:   batchFileGrpcServer,
+		BatchFileListener:     batchFileLis,
 	}, nil
 
 }
