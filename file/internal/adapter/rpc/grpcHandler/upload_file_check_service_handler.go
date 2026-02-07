@@ -1,0 +1,40 @@
+package grpcHandler
+
+import (
+	"context"
+	"file/internal/application/service"
+	"file/internal/infrastructure/pb"
+	"log"
+)
+
+type UploadFileCheckServiceHandler struct {
+	pb.UnimplementedUploadFileCheckServiceServer
+	svc service.UploadFilecheckService
+}
+
+func NewUploadFileCheckServiceHandler(svc service.UploadFilecheckService) *UploadFileCheckServiceHandler {
+	return &UploadFileCheckServiceHandler{
+		svc: svc,
+	}
+}
+
+func (h *UploadFileCheckServiceHandler) UploadFileCheck(ctx context.Context, req *pb.UploadFileCheckRequest) (*pb.UploadFileCheckResponse, error) {
+
+	log.Println("변경된 handler ")
+	log.Println("gRPC 요청 수신! checkDate :", req.CheckDate)
+
+	err := h.svc.UploadFileCheck.UploadFileCheck(ctx, req.CheckDate)
+
+	if err != nil {
+		return &pb.UploadFileCheckResponse{
+			Success: false,
+			Message: "upload file check fail.",
+		}, nil
+	}
+
+	return &pb.UploadFileCheckResponse{
+		Success: true,
+		Message: "upload file check success.",
+	}, nil
+
+}

@@ -32,7 +32,7 @@ func main() {
 
 	// gRPC 서버 실행 (비동기)
 	go func() {
-		log.Println("Message - File service gRPC is running..")
+		log.Println("[Message - File] gRPC is running..")
 		// Serve는 서버가 종료될때까지 대기상태로 블로킹 단, 별도 고루틴으로 실행시켰으므로 아래 로직으로 내려감  ---------------------- 2
 		if err := modules.MessageFileGrpcServer.Serve(modules.MessageFileListener); err != nil {
 			// for select문에서 모든 처리가 완료되어 stopped 데이터가 들어오거나, time out 됬을때 ---------------------- 8-1
@@ -41,7 +41,7 @@ func main() {
 	}()
 
 	go func() {
-		log.Println("Batch - File service gRPC is running..")
+		log.Println("[Batch - File] gRPC is running..")
 		// Serve는 서버가 종료될때까지 대기상태로 블로킹 단, 별도 고루틴으로 실행시켰으므로 아래 로직으로 내려감  ---------------------- 2
 		if err := modules.BatchFileGrpcServer.Serve(modules.BatchFileListener); err != nil {
 			// for select문에서 모든 처리가 완료되어 stopped 데이터가 들어오거나, time out 됬을때 ---------------------- 8-1

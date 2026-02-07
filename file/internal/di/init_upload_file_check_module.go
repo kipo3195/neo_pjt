@@ -1,7 +1,6 @@
 package di
 
 import (
-	"file/internal/adapter/rpc/grpcHandler"
 	"file/internal/application/usecase"
 	"file/internal/infrastructure/persistence/repository"
 
@@ -9,16 +8,18 @@ import (
 )
 
 type UploadFileCheckModule struct {
-	UploadFilecheckGrpcHandler *grpcHandler.UploadFileCheckGrpcHandler
+	//UploadFilecheckGrpcHandler *grpcHandler.UploadFileCheckGrpcHandler
+	Usecase usecase.UploadFileCheckUsecase
 }
 
 func InitUploadFileCheckModule(db *gorm.DB) UploadFileCheckModule {
 
 	repository := repository.NewUploadFileCheckRepository(db)
 	usecase := usecase.NewUploadFileCheckUsecase(repository)
-	grpcHandler := grpcHandler.NewUploadFileCheckGrpcHandler(usecase)
+	//grpcHandler := grpcHandler.NewUploadFileCheckGrpcHandler(usecase)
 
 	return UploadFileCheckModule{
-		UploadFilecheckGrpcHandler: grpcHandler,
+		//UploadFilecheckGrpcHandler: grpcHandler,
+		Usecase: usecase,
 	}
 }

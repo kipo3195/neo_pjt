@@ -12,6 +12,7 @@ import (
 type ChatFileModule struct {
 	ChatFileHandler     *handler.ChatFileHandler
 	ChatFileGrpcHandler *grpcHandler.ChatFileGrpcHandler
+	Usecase             usecase.ChatFileUsecase
 }
 
 func InitChatFileModule(db *gorm.DB) *ChatFileModule {
@@ -25,5 +26,6 @@ func InitChatFileModule(db *gorm.DB) *ChatFileModule {
 	return &ChatFileModule{
 		ChatFileHandler:     handler,
 		ChatFileGrpcHandler: grpcHandler,
+		Usecase:             usecase,
 	}
 }

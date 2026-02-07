@@ -100,12 +100,14 @@ func InitApp() (*AppContainer, error) {
 
 	// ---- Domain Service Module Init -----
 
+	uploadFileCheckServiceModule := InitUploadFileCheckServiceModule(chatFileModule.Usecase, uploadFileCheckModule.Usecase)
+
 	// ---- Router Init -----
 	router.SetFileUrlRoutes(fileUrlModule.Handler)
 
 	// ---- gRPC Init 서비스를 다른걸로 띄워줘야함.. 필수 -----
 	pb.RegisterFileServiceServer(messageFileGrpcServer, chatFileModule.ChatFileGrpcHandler)
-	pb.RegisterUploadFileCheckServiceServer(batchFileGrpcServer, uploadFileCheckModule.UploadFilecheckGrpcHandler)
+	pb.RegisterUploadFileCheckServiceServer(batchFileGrpcServer, uploadFileCheckServiceModule)
 
 	// 자원 해제 - 실행 순서의 역순으로 종료 필요
 	cleanup := func() {

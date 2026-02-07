@@ -22,6 +22,15 @@ func (h *UploadFileCheckGrpcHandler) UploadFileCheck(ctx context.Context, req *p
 
 	log.Println("gRPC 요청 수신! checkDate :", req.CheckDate)
 
+	err := h.usecase.UploadFileCheck(ctx, req.CheckDate)
+
+	if err != nil {
+		return &pb.UploadFileCheckResponse{
+			Success: false,
+			Message: "upload file check fail.",
+		}, nil
+	}
+
 	return &pb.UploadFileCheckResponse{
 		Success: true,
 		Message: "upload file check success.",
