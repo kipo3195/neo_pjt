@@ -99,7 +99,6 @@ func InitApp() (*AppContainer, error) {
 	uploadFileCheckModule := InitUploadFileCheckModule(db)
 
 	// ---- Domain Service Module Init -----
-
 	uploadFileCheckServiceModule := InitUploadFileCheckServiceModule(chatFileModule.Usecase, uploadFileCheckModule.Usecase)
 
 	// ---- Router Init -----

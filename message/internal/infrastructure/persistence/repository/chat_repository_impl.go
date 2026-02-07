@@ -172,3 +172,25 @@ func (r *chatRepository) GetChatFileEntity(ctx context.Context, transactionId st
 
 	return r.cacheStorage.GetFileEntity(ctx, transactionId)
 }
+
+func (r *chatRepository) GetSendFileInfo(ctx context.Context, in []string) ([]entity.SendFileInfo, error) {
+
+	var result []entity.SendFileInfo
+
+	err := r.db.WithContext(ctx).Raw(
+		`select 
+			file_id, line.line_key 
+		from 
+			chat_line_event as line 
+		join 
+			chat_file_history as file on line.line_key = file.line_key 
+		where 
+			file.file_id in ? `, in,
+	).Scan(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

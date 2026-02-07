@@ -45,6 +45,15 @@ func main() {
 		}
 	}()
 
+	go func() {
+		log.Println("[Batch - Message] gRPC is running..")
+		// Serve는 서버가 종료될때까지 대기상태로 블로킹 단, 별도 고루틴으로 실행시켰으므로 아래 로직으로 내려감  ---------------------- 2
+		if err := modules.BatchMessageGrpcServer.Serve(modules.BatchMessageListener); err != nil {
+			// for select문에서 모든 처리가 완료되어 stopped 데이터가 들어오거나, time out 됬을때 ---------------------- 8-1
+			log.Fatalf("Batch - Message gRPC serve error: %v", err)
+		}
+	}()
+
 	// 시스템 시그널 대기 (SIGINT, SIGTERM) --------------------------------- 2
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -58,9 +67,26 @@ func main() {
 	// HTTP 서버 먼저 종료 (새로운 요청 차단)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
 	if err := modules.Server.Shutdown(ctx); err != nil { // Shutdown이 호출되는 즉시, 서버는 더 이상 새로운 HTTP 연결을 받지 않음. -------------------------- 5
 		log.Fatal("Message service shutdown:", err)
+	}
+
+	// gRPC GracefulStop 실행
+	// GracefulStop은 처리가 완료될때까지 무기한 대기 별도의 자체 타임아웃 없음 그러므로, 별도의 고루틴으로 실행하고 타임아웃을 걸어서 일정 시간 동안만 유지.
+	batchMessageStopped := make(chan struct{})
+	go func() {
+		modules.BatchMessageGrpcServer.GracefulStop() // GracefulStop 호출되는 즉시, 서버는 더 이상 새로운 gRPC 연결을 받지 않음. -------------------------- 7
+		close(batchMessageStopped)
+	}()
+
+	// 서버가 모두 끝날 때까지 대기 (타임아웃 적용)
+	timeout := time.After(5 * time.Second)
+	select {
+	case <-batchMessageStopped:
+		log.Println("Batch - Message gRPC server stopped")
+	case <-timeout:
+		log.Println("gRPC stop timeout, forcing stop")
+		modules.BatchMessageGrpcServer.Stop()
 	}
 
 	// 자원 해제 호출  -------------------------------------- 7

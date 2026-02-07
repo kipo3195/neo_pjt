@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"strconv"
 	"time"
@@ -20,12 +21,13 @@ import (
 )
 
 type ServerConfig struct {
-	dbConfig    *DBConfig
-	jwtConfig   *JWTConfig // jwt를 소문자로 정의했으므로 외부에서 접근할 수 없음 = 그래서 GetJWTConfig 메소드를 만들어서 외부에서 사용 할 수 있게함.
-	AutoMigrate bool
-	TokenConfig TokenHashConfig
-	mbConfig    *MessageBrokerConfig
-	GrpcConfig  *GrpcConfig
+	dbConfig               *DBConfig
+	jwtConfig              *JWTConfig // jwt를 소문자로 정의했으므로 외부에서 접근할 수 없음 = 그래서 GetJWTConfig 메소드를 만들어서 외부에서 사용 할 수 있게함.
+	AutoMigrate            bool
+	TokenConfig            TokenHashConfig
+	mbConfig               *MessageBrokerConfig
+	BatchMessageGrpcConfig *GrpcConfig
+	MessageFileGrpcConfig  *GrpcConfig
 }
 
 type TokenHashConfig struct {
@@ -79,20 +81,33 @@ func NewServerConfig() *ServerConfig {
 
 	tokenConfig := initTokenHash()
 
-	grpcConfig := initGrpcConfig()
+	batchMessageGrpcConfig := initBatchMessageGrpcConfig()
+
+	messageFileGrpcConfig := initMessageFileGrpcConfig()
 
 	return &ServerConfig{
-		dbConfig:    dbConfig,
-		jwtConfig:   jwtConfig,
-		AutoMigrate: autoMigrate,
-		TokenConfig: tokenConfig,
-		GrpcConfig:  grpcConfig,
+		dbConfig:               dbConfig,
+		jwtConfig:              jwtConfig,
+		AutoMigrate:            autoMigrate,
+		TokenConfig:            tokenConfig,
+		BatchMessageGrpcConfig: batchMessageGrpcConfig,
+		MessageFileGrpcConfig:  messageFileGrpcConfig,
 	}
 }
 
-func initGrpcConfig() *GrpcConfig {
-	host := os.Getenv("GRPC_HOST")
-	port := os.Getenv("GRPC_PORT")
+func initBatchMessageGrpcConfig() *GrpcConfig {
+	host := os.Getenv("BATCH_MESSAGE_GRPC_HOST")
+	port := os.Getenv("BATCH_MESSAGE_GRPC_PORT")
+
+	return &GrpcConfig{
+		Host: host,
+		Port: port,
+	}
+}
+
+func initMessageFileGrpcConfig() *GrpcConfig {
+	host := os.Getenv("MESSAGE_FILE_GRPC_HOST")
+	port := os.Getenv("MESSAGE_FILE_GRPC_PORT")
 
 	return &GrpcConfig{
 		Host: host,
@@ -222,8 +237,8 @@ func ConnectCacheDataBase(sfg *ServerConfig) (*redis.ClusterClient, error) { // 
 	return client, nil
 }
 
-func NewProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {
-	return grpc.NewClient(sfg.GrpcConfig.Host+":"+sfg.GrpcConfig.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewFileServiceProtocolBufferClient(sfg *ServerConfig) (*grpc.ClientConn, error) {
+	return grpc.NewClient(sfg.MessageFileGrpcConfig.Host+":"+sfg.MessageFileGrpcConfig.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
 
 const (
@@ -231,3 +246,8 @@ const (
 	KAFKA    = "KAFKA"
 	RABBITMQ = "RABBITMQ"
 )
+
+func GetBatchMessageLis() (net.Listener, error) {
+	port := os.Getenv("BATCH_MESSAGE_GRPC_PORT")
+	return net.Listen("tcp", ":"+port)
+}

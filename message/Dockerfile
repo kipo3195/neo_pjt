@@ -23,7 +23,7 @@ WORKDIR /root/
 # 빌드된 바이너리만 복사
 COPY --from=builder /message-service .
 
-EXPOSE 8083 50001
+EXPOSE 8083 50003
 
 CMD ["./message-service"]
 

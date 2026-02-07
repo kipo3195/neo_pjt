@@ -24,6 +24,12 @@ func (r *ChatFileBatchService) Run(ctx context.Context) error {
 
 	r.fileTask.UploadFileCheck(ctx)
 
+	// ---------------------------
+	fileIds := make([]string, 0)
+	fileIds = append(fileIds, "imgimg3")
+
+	r.messageTask.GetSendFileInfo(ctx, fileIds)
+
 	log.Println("ChatFileBatchService end. time : ", time.Now().Format("2006-01-02 15:04:05"))
 	return nil
 }

@@ -31,6 +31,10 @@ func InitApp() (*AppContainer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("grpc client failed: %w", err)
 	}
+	messageServiceGrpcClient, err := config.NewMessageServiceProtocolBufferClient(sfg)
+	if err != nil {
+		return nil, fmt.Errorf("grpc client failed: %w", err)
+	}
 
 	// ---- DB Migration -----
 	if sfg.AutoMigrate {
@@ -50,7 +54,7 @@ func InitApp() (*AppContainer, error) {
 	// ---- Domain Module Init -----
 	orgInfoModule := InitOrgInfoModule(db, orgInfoStorage, sfg.Domain)
 	userDetailModule := InitUserDetailModule(db, userDetailStorage, sfg.Domain)
-	messageGrpcModule := InitMessageGrpcModule(db, sfg.ChatFileConfig)
+	messageGrpcModule := InitMessageGrpcModule(db, sfg.ChatFileConfig, messageServiceGrpcClient)
 	fileGrpcModule := InitFileGrpcModule(db, sfg.ChatFileConfig, fileServiceGrpcClient)
 
 	extendDBConnectModule := InitExtendDBConnectModule(db)

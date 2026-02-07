@@ -34,6 +34,7 @@ type ChatUsecase interface {
 	ReadChat(ctx context.Context, in input.ReadChatInput) error
 	GetChatLineEvent(ctx context.Context, in input.GetChatLineEventInput) ([]output.GetChatLineEventOutput, error)
 	InitChatFileEntity(ctx context.Context, transactionId string) ([]*entity.ChatFileEntity, error)
+	GetSendFileInfo(ctx context.Context, in []string) ([]entity.SendFileInfo, error)
 }
 
 func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool, logger logger.Logger, apiRepository repository.ChatApiRepository) ChatUsecase {
@@ -258,4 +259,24 @@ func generateThumborURL(key string, imagePath string, options string) string {
 
 	// 3. 최종 URL 완성
 	return "http://172.16.10.114/thumbnail/" + signature + "/" + options + "/" + imagePath
+}
+func (r *chatUsecase) GetSendFileInfo(ctx context.Context, in []string) ([]entity.SendFileInfo, error) {
+
+	result, err := r.repository.GetSendFileInfo(ctx, in)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sendFileInfos := make([]entity.SendFileInfo, 0)
+
+	for _, value := range result {
+		temp := entity.SendFileInfo{
+			FileId:  value.FileId,
+			LineKey: value.LineKey,
+		}
+		sendFileInfos = append(sendFileInfos, temp)
+	}
+
+	return sendFileInfos, nil
 }

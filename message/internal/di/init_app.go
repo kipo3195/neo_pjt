@@ -7,16 +7,22 @@ import (
 	"message/internal/app/loader"
 	"message/internal/infrastructure/config"
 	"message/internal/infrastructure/logger"
+	"message/internal/infrastructure/pb"
 	"message/internal/infrastructure/persistence/migration"
 	"message/internal/infrastructure/storage"
+	"net"
 	"net/http"
+
+	"google.golang.org/grpc"
 	// ... 필요한 임포트들
 )
 
 type AppContainer struct {
-	Server     *http.Server
-	Cleanup    func()
-	DataLoader *loader.DataLoader
+	Server                 *http.Server
+	Cleanup                func()
+	DataLoader             *loader.DataLoader
+	BatchMessageGrpcServer *grpc.Server
+	BatchMessageListener   net.Listener
 }
 
 // InitApp: main.go에서 호출할 최종 조립 함수
@@ -38,9 +44,15 @@ func InitApp() (*AppContainer, error) {
 	}
 
 	// ---- gRPC Connect -----
-	gRPCClient, err := config.NewProtocolBufferClient(sfg)
+	fileServiceGrpcClient, err := config.NewFileServiceProtocolBufferClient(sfg)
 	if err != nil {
 		return nil, fmt.Errorf("grpc client failed: %w", err)
+	}
+
+	// ---- gRPC Server Port Listener
+	batchMessageListener, err := config.GetBatchMessageLis()
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen gRPC port: %w", err)
 	}
 
 	// ---- Message Broker init ----
@@ -53,6 +65,9 @@ func InitApp() (*AppContainer, error) {
 	if sfg.AutoMigrate {
 		migration.RunAll(db)
 	}
+
+	// ---- gRPC Server -----
+	batchMessageGrpcServer := grpc.NewServer()
 
 	// ---- LOGGER Init ----
 	logger := logger.NewSlogLogger()
@@ -69,7 +84,7 @@ func InitApp() (*AppContainer, error) {
 	noteModule := InitNoteModule(db, mb)
 	lineKeyModule := InitLineKeyModule(db)
 	chatFileModule := InitChatFileModule(db)
-	chatModule := InitChatModule(db, mb, cacheClient, logger, gRPCClient)
+	chatModule := InitChatModule(db, mb, cacheClient, logger, fileServiceGrpcClient)
 	otpModule := InitOtpModule(db, otpStorage)
 	chatRoomModule := InitChatRoomModule(db, chatRoomStorage, mb, logger)
 	chatRoomTitleModule := InitChatRoomTitleModule(db)
@@ -91,13 +106,17 @@ func InitApp() (*AppContainer, error) {
 	router.SetChatRoutes(chatModule.Handler)
 	router.SetOtpRoutes(otpModule.Handler)
 	router.SetChatRoomRoutes(chatRoomModule.Handler)
+
 	router.SetChatRoomTitleRoutes(chatRoomTitleModule.Handler)
 
 	// chatService에도 chatRoom이 들어가지만, 다른 usecase의 조합으로 처리해야 할 수 있으므로 chat과 chatRoom을 분리.
 	// usecase의 조합이지만 메인이 뭐냐? 라고 생각하고 작업하기
 	router.SetChatServiceRoutes(chatServiceModule)
 	router.SetChatRoomServiceRoutes(chatRoomServiceModule)
-	router.SetChatLineServiceRoutes(chatLineServiceModule)
+	router.SetChatLineServiceRoutes(chatLineServiceModule.Handler)
+
+	// chatLineServiceModule는 하나의 서비스이지만 두개의 handler(http, gRPC)를 갖는다 -> 핵심 비즈니스 로직은 하나이며 분리될 수 없다.
+	pb.RegisterBatchMessageServiceServer(batchMessageGrpcServer, chatLineServiceModule.GrpcHandler)
 
 	// 자원 해제 - 실행 순서의 역순으로 종료 필요
 	cleanup := func() {
@@ -113,9 +132,9 @@ func InitApp() (*AppContainer, error) {
 			mb.Close()
 		}
 
-		if gRPCClient != nil {
+		if fileServiceGrpcClient != nil {
 			log.Println("Closing gRPC client...")
-			gRPCClient.Close()
+			fileServiceGrpcClient.Close()
 		}
 
 		if cacheClient != nil {
@@ -140,8 +159,10 @@ func InitApp() (*AppContainer, error) {
 	}
 
 	return &AppContainer{
-		Server:     server,
-		Cleanup:    cleanup,
-		DataLoader: dataLoader,
+		Server:                 server,
+		Cleanup:                cleanup,
+		DataLoader:             dataLoader,
+		BatchMessageGrpcServer: batchMessageGrpcServer,
+		BatchMessageListener:   batchMessageListener,
 	}, nil
 }
