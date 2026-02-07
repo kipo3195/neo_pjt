@@ -23,16 +23,33 @@ func (h *UploadFileCheckServiceHandler) UploadFileCheck(ctx context.Context, req
 	log.Println("변경된 handler ")
 	log.Println("gRPC 요청 수신! checkDate :", req.CheckDate)
 
-	err := h.svc.UploadFileCheck.UploadFileCheck(ctx, req.CheckDate)
+	invalidFileIds, err := h.svc.UploadFileCheck.InvalidFileCheck(ctx, req.CheckDate)
+	if err != nil {
+		return &pb.UploadFileCheckResponse{
+			Success: false,
+			Message: "upload file check fail 1",
+		}, nil
+	}
+
+	if len(invalidFileIds) == 0 {
+		// 비정상 파일 존재 X
+		return &pb.UploadFileCheckResponse{
+			Success: true,
+			Message: "There are not invalid file at " + req.CheckDate,
+		}, nil
+	}
+
+	err = h.svc.UploadFileCheck.UpDateInvalidFileState(ctx, invalidFileIds)
 
 	if err != nil {
 		return &pb.UploadFileCheckResponse{
 			Success: false,
-			Message: "upload file check fail.",
+			Message: "upload file check fail 2",
 		}, nil
 	}
 
 	return &pb.UploadFileCheckResponse{
+		// 모든 과정 처리 완료
 		Success: true,
 		Message: "upload file check success.",
 	}, nil

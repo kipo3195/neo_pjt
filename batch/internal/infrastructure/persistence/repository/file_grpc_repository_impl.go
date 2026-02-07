@@ -36,6 +36,7 @@ func (r *fileGrpcRepository) CheckUploadFile(ctx context.Context, checkDate stri
 	}
 
 	log.Println("[CheckUploadFile] res : ", res.Success)
+	log.Println("[CheckUploadFile] res message : ", res.Message)
 
 	if res.Success {
 		return nil
