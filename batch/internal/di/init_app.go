@@ -59,7 +59,7 @@ func InitApp() (*AppContainer, error) {
 
 	extendDBConnectModule := InitExtendDBConnectModule(db)
 
-	// ----- Service Orchestrator -----
+	// ----- Service Init -----
 	orgInfoBatchServiceModule := InitOrgInfoBatchServiceModule(orgInfoModule.Task, extendDBConnectModule.Task, sfg.OrgInfoBatchConfig)
 	userDetailBatchServiceModule := InitUserDetailBatchserviceModule(userDetailModule.Task, extendDBConnectModule.Task, sfg.UserDetailBatchConfig)
 	chatFileBatchServiceModule := InitChatFileBatchServiceModule(messageGrpcModule.Task, fileGrpcModule.Task)

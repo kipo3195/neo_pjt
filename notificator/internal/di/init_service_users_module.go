@@ -2,7 +2,7 @@ package di
 
 import (
 	"notificator/internal/application/usecase"
-	"notificator/internal/infrastructure/repository"
+	"notificator/internal/infrastructure/persistence/repository"
 
 	"gorm.io/gorm"
 )

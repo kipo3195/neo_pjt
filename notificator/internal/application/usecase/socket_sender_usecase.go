@@ -4,7 +4,7 @@ import (
 	"log"
 	"notificator/internal/domain/socketSender/entity"
 	"notificator/internal/infrastructure/config"
-	"notificator/internal/infrastructure/storage"
+	"notificator/internal/infrastructure/persistence/storage"
 	"time"
 
 	"github.com/gorilla/websocket"

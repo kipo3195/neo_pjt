@@ -2,8 +2,8 @@ package router
 
 import (
 	"net/http"
-	"notificator/internal/delivery/handler"
-	"notificator/internal/delivery/middleware"
+	"notificator/internal/adapter/http/handler"
+	"notificator/internal/adapter/http/middleware"
 	"notificator/internal/domain/logger"
 	"notificator/internal/infrastructure/config"
 

@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"notificator/internal/infrastructure/repository"
+	"notificator/internal/infrastructure/persistence/repository"
 
 	"gorm.io/gorm"
 )

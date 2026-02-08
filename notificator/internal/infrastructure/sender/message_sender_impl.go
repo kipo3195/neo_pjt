@@ -3,7 +3,7 @@ package sender
 import (
 	"notificator/internal/consts"
 	"notificator/internal/domain/port"
-	"notificator/internal/infrastructure/storage"
+	"notificator/internal/infrastructure/persistence/storage"
 )
 
 type messageSenderImpl struct {

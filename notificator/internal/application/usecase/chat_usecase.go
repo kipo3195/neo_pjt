@@ -11,7 +11,7 @@ import (
 
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/repository"
-	"notificator/internal/infrastructure/storage"
+	"notificator/internal/infrastructure/persistence/storage"
 	"notificator/internal/infrastructure/workerPool"
 )
 

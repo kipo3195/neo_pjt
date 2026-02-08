@@ -2,7 +2,7 @@ package di
 
 import (
 	"notificator/internal/application/usecase"
-	"notificator/internal/infrastructure/storage"
+	"notificator/internal/infrastructure/persistence/storage"
 )
 
 type SocketSendModule struct {

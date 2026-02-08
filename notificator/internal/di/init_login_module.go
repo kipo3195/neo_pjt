@@ -1,9 +1,9 @@
 package di
 
 import (
+	"notificator/internal/adapter/http/handler"
 	"notificator/internal/application/usecase"
-	"notificator/internal/delivery/handler"
-	"notificator/internal/infrastructure/repository"
+	"notificator/internal/infrastructure/persistence/repository"
 
 	"gorm.io/gorm"
 )

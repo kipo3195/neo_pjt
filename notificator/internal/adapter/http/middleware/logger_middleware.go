@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
-	"notificator/internal/delivery/middleware/wrapper"
+	"notificator/internal/adapter/http/middleware/wrapper"
 	"notificator/internal/domain/logger"
 	"time"
 

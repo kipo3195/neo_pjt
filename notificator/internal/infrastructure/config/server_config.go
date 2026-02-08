@@ -89,7 +89,7 @@ func initDBConfig() *DBConfig {
 		Host: host, Id: id, Pw: pw, Port: port, Database: database}
 }
 
-func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
+func ConnectDatabase(sfg *ServerConfig) (*gorm.DB, error) {
 
 	dsn := sfg.dbConfig.Id + ":" + sfg.dbConfig.Pw + "@tcp(" + sfg.dbConfig.Host + ":" + sfg.dbConfig.Port + ")/" + sfg.dbConfig.Database + "?charset=utf8mb4&parseTime=True&loc=Local"
 
@@ -97,10 +97,11 @@ func ConnectDatabase(sfg *ServerConfig) *gorm.DB {
 
 	if err != nil {
 		log.Fatal("Failed to connect to database!")
+		return nil, err
 	}
 
 	log.Println("Notificator Database Connected !")
-	return db
+	return db, nil
 }
 
 /* MESSAGE BROKER */
@@ -129,7 +130,7 @@ func initAutoMigrate() bool {
 		return false
 	}
 }
-func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
+func ConnectMessageBroker(sfg *ServerConfig) (*nats.Conn, error) {
 	//broker.Broker {
 
 	// 메시지 브로커 분기처리
@@ -138,11 +139,10 @@ func ConnectMessageBroker(sfg *ServerConfig) *nats.Conn {
 
 	connector, err := nats.Connect(nats.DefaultURL)
 	if err != nil {
-		log.Println("Failed to connect to NATS:", err)
-		return nil
+		return nil, err
 	}
 
-	return connector
+	return connector, nil
 	// return &broker.NatsBroker{
 	// 	Connector: connector,
 	// }

@@ -5,7 +5,7 @@ import (
 	"log"
 	"notificator/internal/domain/chatRoom/entity"
 	"notificator/internal/domain/chatRoom/repository"
-	"notificator/internal/infrastructure/model"
+	"notificator/internal/infrastructure/persistence/model"
 
 	"gorm.io/gorm"
 )

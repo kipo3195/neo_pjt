@@ -1,4 +1,4 @@
-package adapter
+package mapper
 
 import "notificator/internal/application/usecase/input"
 

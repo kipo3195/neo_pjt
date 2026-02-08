@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"notificator/internal/application/orchestrator"
+
+	"notificator/internal/adapter/http/dto/notificatorService"
+	"notificator/internal/adapter/http/mapper"
+	"notificator/internal/application/service"
 	"notificator/internal/consts"
-	"notificator/internal/delivery/adapter"
-	"notificator/internal/delivery/dto/notificatorService"
 	"notificator/internal/infrastructure/config"
 	commonConsts "notificator/pkg/consts"
 	"notificator/pkg/response"
@@ -17,11 +18,11 @@ import (
 )
 
 type NotificatorServiceHandler struct {
-	svc             *orchestrator.NotificatorService
+	svc             *service.NotificatorService
 	websocketConfig config.WebsocketConnectionConfig
 }
 
-func NewNotificatorServiceHandler(svc *orchestrator.NotificatorService, websocketConfig config.WebsocketConnectionConfig) *NotificatorServiceHandler {
+func NewNotificatorServiceHandler(svc *service.NotificatorService, websocketConfig config.WebsocketConnectionConfig) *NotificatorServiceHandler {
 	return &NotificatorServiceHandler{
 		svc:             svc,
 		websocketConfig: websocketConfig,
@@ -131,7 +132,7 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 				return
 			}
 
-			input := adapter.MakeLoginInput(body.Uuid, body.DeviceType)
+			input := mapper.MakeLoginInput(body.Uuid, body.DeviceType)
 			h.svc.Login.LoginProcess(input)
 
 		default:

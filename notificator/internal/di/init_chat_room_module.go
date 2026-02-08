@@ -3,8 +3,8 @@ package di
 import (
 	"notificator/internal/application/usecase"
 	"notificator/internal/domain/port"
-	"notificator/internal/infrastructure/repository"
-	"notificator/internal/infrastructure/storage"
+	"notificator/internal/infrastructure/persistence/repository"
+	"notificator/internal/infrastructure/persistence/storage"
 
 	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
