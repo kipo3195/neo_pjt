@@ -6,7 +6,7 @@ import (
 	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/persistence/repository"
 
-	"notificator/internal/infrastructure/persistence/storage"
+	"notificator/internal/infrastructure/storage"
 	"notificator/internal/infrastructure/workerPool"
 
 	"gorm.io/gorm"

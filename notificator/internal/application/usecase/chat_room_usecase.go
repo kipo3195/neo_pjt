@@ -9,7 +9,7 @@ import (
 	"notificator/internal/domain/chatRoom/entity"
 	"notificator/internal/domain/chatRoom/repository"
 	"notificator/internal/domain/port"
-	"notificator/internal/infrastructure/persistence/storage"
+	"notificator/internal/infrastructure/storage"
 	"notificator/internal/util"
 	"notificator/pkg/dto"
 

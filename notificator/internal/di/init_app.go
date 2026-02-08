@@ -6,10 +6,10 @@ import (
 	"notificator/internal/adapter/http/router"
 	"notificator/internal/adapter/nats/subscriber"
 	"notificator/internal/infrastructure/config"
+	"notificator/internal/infrastructure/external/ws/sender"
 	"notificator/internal/infrastructure/logger"
 	"notificator/internal/infrastructure/persistence/migration"
-	"notificator/internal/infrastructure/persistence/storage"
-	"notificator/internal/infrastructure/sender"
+	"notificator/internal/infrastructure/storage"
 )
 
 // 모듈들을 묶어서 반환하기 위한 구조체

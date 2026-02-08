@@ -7,7 +7,7 @@ import (
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/job"
 	"notificator/internal/domain/port"
-	"notificator/internal/infrastructure/dto"
+	"notificator/internal/infrastructure/external/ws/dto"
 	response "notificator/pkg/dto"
 	"sync"
 	"time"

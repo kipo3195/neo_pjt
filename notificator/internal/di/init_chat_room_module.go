@@ -4,7 +4,7 @@ import (
 	"notificator/internal/application/usecase"
 	"notificator/internal/domain/port"
 	"notificator/internal/infrastructure/persistence/repository"
-	"notificator/internal/infrastructure/persistence/storage"
+	"notificator/internal/infrastructure/storage"
 
 	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
