@@ -1,4 +1,4 @@
-package repository
+package rpc
 
 import (
 	"batch/internal/domain/fileGrpc/repository"
@@ -7,18 +7,15 @@ import (
 	"log"
 
 	"google.golang.org/grpc"
-	"gorm.io/gorm"
 )
 
 type fileGrpcRepository struct {
-	db                    *gorm.DB
-	fileServiceGrpcClient pb.UploadFileCheckServiceClient
+	fileServiceGrpcClient pb.BatchFileServiceClient
 }
 
-func NewFileGrpcRepository(db *gorm.DB, conn *grpc.ClientConn) repository.FileGrpcRepository {
+func NewFileGrpcRepository(conn *grpc.ClientConn) repository.FileGrpcRepository {
 	return &fileGrpcRepository{
-		db:                    db,
-		fileServiceGrpcClient: pb.NewUploadFileCheckServiceClient(conn),
+		fileServiceGrpcClient: pb.NewBatchFileServiceClient(conn),
 	}
 }
 

@@ -3,19 +3,18 @@ package di
 import (
 	"batch/internal/application/task"
 	"batch/internal/infrastructure/config"
-	"batch/internal/infrastructure/persistence/repository"
+	"batch/internal/infrastructure/external/rpc"
 
 	"google.golang.org/grpc"
-	"gorm.io/gorm"
 )
 
 type MessageGrpcModule struct {
 	Task task.MessageGrpcTask
 }
 
-func InitMessageGrpcModule(db *gorm.DB, chatFileConfig config.ChatFileConfig, messageServiceGrpcClient *grpc.ClientConn) MessageGrpcModule {
+func InitMessageGrpcModule(chatFileConfig config.ChatFileConfig, messageServiceGrpcClient *grpc.ClientConn) MessageGrpcModule {
 
-	repository := repository.NewChatFileRepository(db, messageServiceGrpcClient)
+	repository := rpc.NewChatFileRepository(messageServiceGrpcClient)
 	task := task.NewMessageGrpcTask(repository)
 
 	return MessageGrpcModule{

@@ -1,4 +1,4 @@
-package repository
+package rpc
 
 import (
 	"batch/internal/consts"
@@ -8,17 +8,14 @@ import (
 	"log"
 
 	"google.golang.org/grpc"
-	"gorm.io/gorm"
 )
 
 type messageGrpcRepository struct {
-	db                       *gorm.DB
 	messageServiceGrpcClient pb.BatchMessageServiceClient
 }
 
-func NewChatFileRepository(db *gorm.DB, messageServiceGrpcClient *grpc.ClientConn) repository.MessageGrpcRepository {
+func NewChatFileRepository(messageServiceGrpcClient *grpc.ClientConn) repository.MessageGrpcRepository {
 	return &messageGrpcRepository{
-		db:                       db,
 		messageServiceGrpcClient: pb.NewBatchMessageServiceClient(messageServiceGrpcClient),
 	}
 }

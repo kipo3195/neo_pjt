@@ -8,7 +8,7 @@ import (
 )
 
 type UploadFileCheckServiceHandler struct {
-	pb.UnimplementedUploadFileCheckServiceServer
+	pb.UnimplementedBatchFileServiceServer
 	svc service.UploadFilecheckService
 }
 

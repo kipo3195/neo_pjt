@@ -54,8 +54,8 @@ func InitApp() (*AppContainer, error) {
 	// ---- Domain Module Init -----
 	orgInfoModule := InitOrgInfoModule(db, orgInfoStorage, sfg.Domain)
 	userDetailModule := InitUserDetailModule(db, userDetailStorage, sfg.Domain)
-	messageGrpcModule := InitMessageGrpcModule(db, sfg.ChatFileConfig, messageServiceGrpcClient)
-	fileGrpcModule := InitFileGrpcModule(db, sfg.ChatFileConfig, fileServiceGrpcClient)
+	messageGrpcModule := InitMessageGrpcModule(sfg.ChatFileConfig, messageServiceGrpcClient)
+	fileGrpcModule := InitFileGrpcModule(sfg.ChatFileConfig, fileServiceGrpcClient)
 
 	extendDBConnectModule := InitExtendDBConnectModule(db)
 

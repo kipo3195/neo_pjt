@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.30.2
-// source: proto/file_service_upload_file_check.proto
+// source: proto/batch_file.proto
 
 // package는 **"이 대화(API)의 주제가 무엇인가"**를 정의하는 것이지, 현재 내가 작업 중인 서비스 이름을 적는 게 아닙니다.
 
@@ -23,7 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// 요청할 때 보낼 데이터
+// UploadFileCheck 요청할 때 보낼 데이터
 type UploadFileCheckRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CheckDate     string                 `protobuf:"bytes,1,opt,name=checkDate,proto3" json:"checkDate,omitempty"`
@@ -33,7 +33,7 @@ type UploadFileCheckRequest struct {
 
 func (x *UploadFileCheckRequest) Reset() {
 	*x = UploadFileCheckRequest{}
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[0]
+	mi := &file_proto_batch_file_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +45,7 @@ func (x *UploadFileCheckRequest) String() string {
 func (*UploadFileCheckRequest) ProtoMessage() {}
 
 func (x *UploadFileCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[0]
+	mi := &file_proto_batch_file_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +58,7 @@ func (x *UploadFileCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadFileCheckRequest.ProtoReflect.Descriptor instead.
 func (*UploadFileCheckRequest) Descriptor() ([]byte, []int) {
-	return file_proto_file_service_upload_file_check_proto_rawDescGZIP(), []int{0}
+	return file_proto_batch_file_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *UploadFileCheckRequest) GetCheckDate() string {
@@ -68,7 +68,7 @@ func (x *UploadFileCheckRequest) GetCheckDate() string {
 	return ""
 }
 
-// 응답으로 받을 데이터
+// UploadFileCheck 응답으로 받을 데이터
 type UploadFileCheckResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -79,7 +79,7 @@ type UploadFileCheckResponse struct {
 
 func (x *UploadFileCheckResponse) Reset() {
 	*x = UploadFileCheckResponse{}
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[1]
+	mi := &file_proto_batch_file_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -91,7 +91,7 @@ func (x *UploadFileCheckResponse) String() string {
 func (*UploadFileCheckResponse) ProtoMessage() {}
 
 func (x *UploadFileCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[1]
+	mi := &file_proto_batch_file_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -104,7 +104,7 @@ func (x *UploadFileCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadFileCheckResponse.ProtoReflect.Descriptor instead.
 func (*UploadFileCheckResponse) Descriptor() ([]byte, []int) {
-	return file_proto_file_service_upload_file_check_proto_rawDescGZIP(), []int{1}
+	return file_proto_batch_file_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *UploadFileCheckResponse) GetSuccess() bool {
@@ -121,7 +121,7 @@ func (x *UploadFileCheckResponse) GetMessage() string {
 	return ""
 }
 
-// 요청할 때 보낼 데이터
+// ClearFileStorage 요청할 때 보낼 데이터
 type ClearFileStorageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ClearFileIds  []string               `protobuf:"bytes,1,rep,name=clear_file_ids,json=clearFileIds,proto3" json:"clear_file_ids,omitempty"`
@@ -132,7 +132,7 @@ type ClearFileStorageRequest struct {
 
 func (x *ClearFileStorageRequest) Reset() {
 	*x = ClearFileStorageRequest{}
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[2]
+	mi := &file_proto_batch_file_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -144,7 +144,7 @@ func (x *ClearFileStorageRequest) String() string {
 func (*ClearFileStorageRequest) ProtoMessage() {}
 
 func (x *ClearFileStorageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[2]
+	mi := &file_proto_batch_file_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -157,7 +157,7 @@ func (x *ClearFileStorageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearFileStorageRequest.ProtoReflect.Descriptor instead.
 func (*ClearFileStorageRequest) Descriptor() ([]byte, []int) {
-	return file_proto_file_service_upload_file_check_proto_rawDescGZIP(), []int{2}
+	return file_proto_batch_file_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ClearFileStorageRequest) GetClearFileIds() []string {
@@ -174,7 +174,7 @@ func (x *ClearFileStorageRequest) GetSendedFileIds() []string {
 	return nil
 }
 
-// 응답으로 받을 데이터
+// ClearFileStorage 응답으로 받을 데이터
 type ClearFileStorageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -185,7 +185,7 @@ type ClearFileStorageResponse struct {
 
 func (x *ClearFileStorageResponse) Reset() {
 	*x = ClearFileStorageResponse{}
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[3]
+	mi := &file_proto_batch_file_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -197,7 +197,7 @@ func (x *ClearFileStorageResponse) String() string {
 func (*ClearFileStorageResponse) ProtoMessage() {}
 
 func (x *ClearFileStorageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[3]
+	mi := &file_proto_batch_file_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -210,7 +210,7 @@ func (x *ClearFileStorageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearFileStorageResponse.ProtoReflect.Descriptor instead.
 func (*ClearFileStorageResponse) Descriptor() ([]byte, []int) {
-	return file_proto_file_service_upload_file_check_proto_rawDescGZIP(), []int{3}
+	return file_proto_batch_file_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ClearFileStorageResponse) GetSuccess() bool {
@@ -227,7 +227,7 @@ func (x *ClearFileStorageResponse) GetMessage() string {
 	return ""
 }
 
-// 요청할 때 보낼 데이터
+// GetInvalidFileInfo 요청할 때 보낼 데이터
 type GetInvalidFileInfoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Yesterday     string                 `protobuf:"bytes,1,opt,name=yesterday,proto3" json:"yesterday,omitempty"`
@@ -237,7 +237,7 @@ type GetInvalidFileInfoRequest struct {
 
 func (x *GetInvalidFileInfoRequest) Reset() {
 	*x = GetInvalidFileInfoRequest{}
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[4]
+	mi := &file_proto_batch_file_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -249,7 +249,7 @@ func (x *GetInvalidFileInfoRequest) String() string {
 func (*GetInvalidFileInfoRequest) ProtoMessage() {}
 
 func (x *GetInvalidFileInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[4]
+	mi := &file_proto_batch_file_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -262,7 +262,7 @@ func (x *GetInvalidFileInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInvalidFileInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetInvalidFileInfoRequest) Descriptor() ([]byte, []int) {
-	return file_proto_file_service_upload_file_check_proto_rawDescGZIP(), []int{4}
+	return file_proto_batch_file_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetInvalidFileInfoRequest) GetYesterday() string {
@@ -272,7 +272,7 @@ func (x *GetInvalidFileInfoRequest) GetYesterday() string {
 	return ""
 }
 
-// 응답으로 받을 데이터
+// GetInvalidFileInfo 응답으로 받을 데이터
 type GetInvalidFileInfoResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	InvalidFileId []string               `protobuf:"bytes,1,rep,name=invalid_file_id,json=invalidFileId,proto3" json:"invalid_file_id,omitempty"`
@@ -283,7 +283,7 @@ type GetInvalidFileInfoResponse struct {
 
 func (x *GetInvalidFileInfoResponse) Reset() {
 	*x = GetInvalidFileInfoResponse{}
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[5]
+	mi := &file_proto_batch_file_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +295,7 @@ func (x *GetInvalidFileInfoResponse) String() string {
 func (*GetInvalidFileInfoResponse) ProtoMessage() {}
 
 func (x *GetInvalidFileInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_file_service_upload_file_check_proto_msgTypes[5]
+	mi := &file_proto_batch_file_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +308,7 @@ func (x *GetInvalidFileInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInvalidFileInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetInvalidFileInfoResponse) Descriptor() ([]byte, []int) {
-	return file_proto_file_service_upload_file_check_proto_rawDescGZIP(), []int{5}
+	return file_proto_batch_file_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetInvalidFileInfoResponse) GetInvalidFileId() []string {
@@ -325,11 +325,11 @@ func (x *GetInvalidFileInfoResponse) GetMessage() string {
 	return ""
 }
 
-var File_proto_file_service_upload_file_check_proto protoreflect.FileDescriptor
+var File_proto_batch_file_proto protoreflect.FileDescriptor
 
-const file_proto_file_service_upload_file_check_proto_rawDesc = "" +
+const file_proto_batch_file_proto_rawDesc = "" +
 	"\n" +
-	"*proto/file_service_upload_file_check.proto\x12\x0fuploadFileCheck\"6\n" +
+	"\x16proto/batch_file.proto\x12\tbatchFile\"6\n" +
 	"\x16UploadFileCheckRequest\x12\x1c\n" +
 	"\tcheckDate\x18\x01 \x01(\tR\tcheckDate\"M\n" +
 	"\x17UploadFileCheckResponse\x12\x18\n" +
@@ -345,40 +345,40 @@ const file_proto_file_service_upload_file_check_proto_rawDesc = "" +
 	"\tyesterday\x18\x01 \x01(\tR\tyesterday\"^\n" +
 	"\x1aGetInvalidFileInfoResponse\x12&\n" +
 	"\x0finvalid_file_id\x18\x01 \x03(\tR\rinvalidFileId\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xd6\x02\n" +
-	"\x16UploadFileCheckService\x12d\n" +
-	"\x0fUploadFileCheck\x12'.uploadFileCheck.UploadFileCheckRequest\x1a(.uploadFileCheck.UploadFileCheckResponse\x12g\n" +
-	"\x10ClearFileStorage\x12(.uploadFileCheck.ClearFileStorageRequest\x1a).uploadFileCheck.ClearFileStorageResponse\x12m\n" +
-	"\x12GetInvalidFileInfo\x12*.uploadFileCheck.GetInvalidFileInfoRequest\x1a+.uploadFileCheck.GetInvalidFileInfoResponseB\"Z batch/internal/infrastructure/pbb\x06proto3"
+	"\amessage\x18\x02 \x01(\tR\amessage2\xac\x02\n" +
+	"\x10BatchFileService\x12X\n" +
+	"\x0fUploadFileCheck\x12!.batchFile.UploadFileCheckRequest\x1a\".batchFile.UploadFileCheckResponse\x12[\n" +
+	"\x10ClearFileStorage\x12\".batchFile.ClearFileStorageRequest\x1a#.batchFile.ClearFileStorageResponse\x12a\n" +
+	"\x12GetInvalidFileInfo\x12$.batchFile.GetInvalidFileInfoRequest\x1a%.batchFile.GetInvalidFileInfoResponseB\"Z batch/internal/infrastructure/pbb\x06proto3"
 
 var (
-	file_proto_file_service_upload_file_check_proto_rawDescOnce sync.Once
-	file_proto_file_service_upload_file_check_proto_rawDescData []byte
+	file_proto_batch_file_proto_rawDescOnce sync.Once
+	file_proto_batch_file_proto_rawDescData []byte
 )
 
-func file_proto_file_service_upload_file_check_proto_rawDescGZIP() []byte {
-	file_proto_file_service_upload_file_check_proto_rawDescOnce.Do(func() {
-		file_proto_file_service_upload_file_check_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_file_service_upload_file_check_proto_rawDesc), len(file_proto_file_service_upload_file_check_proto_rawDesc)))
+func file_proto_batch_file_proto_rawDescGZIP() []byte {
+	file_proto_batch_file_proto_rawDescOnce.Do(func() {
+		file_proto_batch_file_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_batch_file_proto_rawDesc), len(file_proto_batch_file_proto_rawDesc)))
 	})
-	return file_proto_file_service_upload_file_check_proto_rawDescData
+	return file_proto_batch_file_proto_rawDescData
 }
 
-var file_proto_file_service_upload_file_check_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_proto_file_service_upload_file_check_proto_goTypes = []any{
-	(*UploadFileCheckRequest)(nil),     // 0: uploadFileCheck.UploadFileCheckRequest
-	(*UploadFileCheckResponse)(nil),    // 1: uploadFileCheck.UploadFileCheckResponse
-	(*ClearFileStorageRequest)(nil),    // 2: uploadFileCheck.ClearFileStorageRequest
-	(*ClearFileStorageResponse)(nil),   // 3: uploadFileCheck.ClearFileStorageResponse
-	(*GetInvalidFileInfoRequest)(nil),  // 4: uploadFileCheck.GetInvalidFileInfoRequest
-	(*GetInvalidFileInfoResponse)(nil), // 5: uploadFileCheck.GetInvalidFileInfoResponse
+var file_proto_batch_file_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_batch_file_proto_goTypes = []any{
+	(*UploadFileCheckRequest)(nil),     // 0: batchFile.UploadFileCheckRequest
+	(*UploadFileCheckResponse)(nil),    // 1: batchFile.UploadFileCheckResponse
+	(*ClearFileStorageRequest)(nil),    // 2: batchFile.ClearFileStorageRequest
+	(*ClearFileStorageResponse)(nil),   // 3: batchFile.ClearFileStorageResponse
+	(*GetInvalidFileInfoRequest)(nil),  // 4: batchFile.GetInvalidFileInfoRequest
+	(*GetInvalidFileInfoResponse)(nil), // 5: batchFile.GetInvalidFileInfoResponse
 }
-var file_proto_file_service_upload_file_check_proto_depIdxs = []int32{
-	0, // 0: uploadFileCheck.UploadFileCheckService.UploadFileCheck:input_type -> uploadFileCheck.UploadFileCheckRequest
-	2, // 1: uploadFileCheck.UploadFileCheckService.ClearFileStorage:input_type -> uploadFileCheck.ClearFileStorageRequest
-	4, // 2: uploadFileCheck.UploadFileCheckService.GetInvalidFileInfo:input_type -> uploadFileCheck.GetInvalidFileInfoRequest
-	1, // 3: uploadFileCheck.UploadFileCheckService.UploadFileCheck:output_type -> uploadFileCheck.UploadFileCheckResponse
-	3, // 4: uploadFileCheck.UploadFileCheckService.ClearFileStorage:output_type -> uploadFileCheck.ClearFileStorageResponse
-	5, // 5: uploadFileCheck.UploadFileCheckService.GetInvalidFileInfo:output_type -> uploadFileCheck.GetInvalidFileInfoResponse
+var file_proto_batch_file_proto_depIdxs = []int32{
+	0, // 0: batchFile.BatchFileService.UploadFileCheck:input_type -> batchFile.UploadFileCheckRequest
+	2, // 1: batchFile.BatchFileService.ClearFileStorage:input_type -> batchFile.ClearFileStorageRequest
+	4, // 2: batchFile.BatchFileService.GetInvalidFileInfo:input_type -> batchFile.GetInvalidFileInfoRequest
+	1, // 3: batchFile.BatchFileService.UploadFileCheck:output_type -> batchFile.UploadFileCheckResponse
+	3, // 4: batchFile.BatchFileService.ClearFileStorage:output_type -> batchFile.ClearFileStorageResponse
+	5, // 5: batchFile.BatchFileService.GetInvalidFileInfo:output_type -> batchFile.GetInvalidFileInfoResponse
 	3, // [3:6] is the sub-list for method output_type
 	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -386,26 +386,26 @@ var file_proto_file_service_upload_file_check_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_proto_file_service_upload_file_check_proto_init() }
-func file_proto_file_service_upload_file_check_proto_init() {
-	if File_proto_file_service_upload_file_check_proto != nil {
+func init() { file_proto_batch_file_proto_init() }
+func file_proto_batch_file_proto_init() {
+	if File_proto_batch_file_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_file_service_upload_file_check_proto_rawDesc), len(file_proto_file_service_upload_file_check_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_batch_file_proto_rawDesc), len(file_proto_batch_file_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_proto_file_service_upload_file_check_proto_goTypes,
-		DependencyIndexes: file_proto_file_service_upload_file_check_proto_depIdxs,
-		MessageInfos:      file_proto_file_service_upload_file_check_proto_msgTypes,
+		GoTypes:           file_proto_batch_file_proto_goTypes,
+		DependencyIndexes: file_proto_batch_file_proto_depIdxs,
+		MessageInfos:      file_proto_batch_file_proto_msgTypes,
 	}.Build()
-	File_proto_file_service_upload_file_check_proto = out.File
-	file_proto_file_service_upload_file_check_proto_goTypes = nil
-	file_proto_file_service_upload_file_check_proto_depIdxs = nil
+	File_proto_batch_file_proto = out.File
+	file_proto_batch_file_proto_goTypes = nil
+	file_proto_batch_file_proto_depIdxs = nil
 }

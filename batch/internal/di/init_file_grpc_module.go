@@ -3,20 +3,20 @@ package di
 import (
 	"batch/internal/application/task"
 	"batch/internal/infrastructure/config"
-	"batch/internal/infrastructure/persistence/repository"
+	"batch/internal/infrastructure/external/rpc"
 
 	"google.golang.org/grpc"
-	"gorm.io/gorm"
 )
 
 type FileGrpcModule struct {
 	Task task.FileGrpcTask
 }
 
-func InitFileGrpcModule(db *gorm.DB, chatFileConfig config.ChatFileConfig, fileServiceGrpcClient *grpc.ClientConn) FileGrpcModule {
+func InitFileGrpcModule(chatFileConfig config.ChatFileConfig, fileServiceGrpcClient *grpc.ClientConn) FileGrpcModule {
 
-	repository := repository.NewFileGrpcRepository(db, fileServiceGrpcClient)
-	task := task.NewFileGrpcTask(repository)
+	// 필요시 db *gorm.DB 주입
+	grpcRepository := rpc.NewFileGrpcRepository(fileServiceGrpcClient)
+	task := task.NewFileGrpcTask(grpcRepository)
 
 	return FileGrpcModule{
 		Task: task,
