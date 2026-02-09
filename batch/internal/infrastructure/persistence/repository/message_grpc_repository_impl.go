@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"batch/internal/consts"
 	"batch/internal/domain/messageGrpc/repository"
 	"batch/internal/infrastructure/pb"
 	"context"
@@ -22,7 +23,7 @@ func NewChatFileRepository(db *gorm.DB, messageServiceGrpcClient *grpc.ClientCon
 	}
 }
 
-func (r *messageGrpcRepository) GetSendFileInfo(ctx context.Context, checkDate string, fileIds []string) error {
+func (r *messageGrpcRepository) GetSendFileInfo(ctx context.Context, checkDate string, fileIds []string) (map[string]string, error) {
 
 	req := &pb.GetSendFileInfoRequest{
 		FileIds: fileIds,
@@ -31,10 +32,16 @@ func (r *messageGrpcRepository) GetSendFileInfo(ctx context.Context, checkDate s
 	res, err := r.messageServiceGrpcClient.GetSendFileInfo(ctx, req)
 
 	if !res.Success || err != nil {
-		log.Panicln("[GetSendFileInfo] error :", err)
+		log.Panicf("[GetSendFileInfo] result : %v error :%s \n", res.Success, err)
+		return nil, consts.ErrSendFileInfoError
 	}
 
-	log.Println("[GetSendFileInfo] res :", res.FileInfo)
+	result := make(map[string]string)
+	for _, value := range res.FileInfo {
+		result[value.FileId] = value.LineKey
+	}
 
-	return nil
+	log.Println("[GetSendFileInfo] result :", result)
+
+	return result, nil
 }

@@ -20,7 +20,6 @@ func NewUploadFileCheckServiceHandler(svc service.UploadFilecheckService) *Uploa
 
 func (h *UploadFileCheckServiceHandler) UploadFileCheck(ctx context.Context, req *pb.UploadFileCheckRequest) (*pb.UploadFileCheckResponse, error) {
 
-	log.Println("변경된 handler ")
 	log.Println("gRPC 요청 수신! checkDate :", req.CheckDate)
 
 	invalidFileIds, err := h.svc.UploadFileCheck.InvalidFileCheck(ctx, req.CheckDate)
@@ -52,6 +51,48 @@ func (h *UploadFileCheckServiceHandler) UploadFileCheck(ctx context.Context, req
 		// 모든 과정 처리 완료
 		Success: true,
 		Message: "upload file check success.",
+	}, nil
+
+}
+
+func (h *UploadFileCheckServiceHandler) GetInvalidFileInfo(ctx context.Context, req *pb.GetInvalidFileInfoRequest) (*pb.GetInvalidFileInfoResponse, error) {
+
+	log.Println("[GetInvalidFileInfo] req :", req.Yesterday)
+	result, err := h.svc.ChatFile.GetInvalidFileInfo(ctx, req.Yesterday)
+
+	log.Println("[GetInvalidFileInfo] result :", result)
+	if err != nil {
+		return &pb.GetInvalidFileInfoResponse{
+			InvalidFileId: nil,
+			Message:       "error",
+		}, err
+	}
+
+	return &pb.GetInvalidFileInfoResponse{
+		InvalidFileId: result,
+		Message:       "success",
+	}, nil
+
+}
+
+func (h *UploadFileCheckServiceHandler) ClearFileStorage(ctx context.Context, req *pb.ClearFileStorageRequest) (*pb.ClearFileStorageResponse, error) {
+
+	log.Println("[ClearFileStorage] clearFileIds :", req.ClearFileIds)
+	log.Println("[ClearFileStorage] sendedFileIds :", req.SendedFileIds)
+
+	err := h.svc.ChatFile.ClearFileStorage(ctx, req.ClearFileIds, req.SendedFileIds)
+
+	if err != nil {
+		return &pb.ClearFileStorageResponse{
+			Success: false,
+			Message: "error",
+		}, err
+	}
+
+	return &pb.ClearFileStorageResponse{
+		// 모든 과정 처리 완료
+		Success: true,
+		Message: "success",
 	}, nil
 
 }

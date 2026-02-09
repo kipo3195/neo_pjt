@@ -21,17 +21,21 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UploadFileCheckService_UploadFileCheck_FullMethodName = "/uploadFileCheck.UploadFileCheckService/UploadFileCheck"
+	UploadFileCheckService_UploadFileCheck_FullMethodName    = "/uploadFileCheck.UploadFileCheckService/UploadFileCheck"
+	UploadFileCheckService_ClearFileStorage_FullMethodName   = "/uploadFileCheck.UploadFileCheckService/ClearFileStorage"
+	UploadFileCheckService_GetInvalidFileInfo_FullMethodName = "/uploadFileCheck.UploadFileCheckService/GetInvalidFileInfo"
 )
 
 // UploadFileCheckServiceClient is the client API for UploadFileCheckService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// 파일 서비스가 외부(Message 서비스 등)에 제공할 기능들
+// 파일 서비스가 외부(Message 서비스 등)에 제공할 기능들 -> 구현시 아마 Client가 붙는듯
 type UploadFileCheckServiceClient interface {
 	// 파일 전송 상태를 업데이트하는 함수 (쪽지 전송 시 호출)
 	UploadFileCheck(ctx context.Context, in *UploadFileCheckRequest, opts ...grpc.CallOption) (*UploadFileCheckResponse, error)
+	ClearFileStorage(ctx context.Context, in *ClearFileStorageRequest, opts ...grpc.CallOption) (*ClearFileStorageResponse, error)
+	GetInvalidFileInfo(ctx context.Context, in *GetInvalidFileInfoRequest, opts ...grpc.CallOption) (*GetInvalidFileInfoResponse, error)
 }
 
 type uploadFileCheckServiceClient struct {
@@ -52,14 +56,36 @@ func (c *uploadFileCheckServiceClient) UploadFileCheck(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *uploadFileCheckServiceClient) ClearFileStorage(ctx context.Context, in *ClearFileStorageRequest, opts ...grpc.CallOption) (*ClearFileStorageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClearFileStorageResponse)
+	err := c.cc.Invoke(ctx, UploadFileCheckService_ClearFileStorage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *uploadFileCheckServiceClient) GetInvalidFileInfo(ctx context.Context, in *GetInvalidFileInfoRequest, opts ...grpc.CallOption) (*GetInvalidFileInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetInvalidFileInfoResponse)
+	err := c.cc.Invoke(ctx, UploadFileCheckService_GetInvalidFileInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UploadFileCheckServiceServer is the server API for UploadFileCheckService service.
 // All implementations must embed UnimplementedUploadFileCheckServiceServer
 // for forward compatibility.
 //
-// 파일 서비스가 외부(Message 서비스 등)에 제공할 기능들
+// 파일 서비스가 외부(Message 서비스 등)에 제공할 기능들 -> 구현시 아마 Client가 붙는듯
 type UploadFileCheckServiceServer interface {
 	// 파일 전송 상태를 업데이트하는 함수 (쪽지 전송 시 호출)
 	UploadFileCheck(context.Context, *UploadFileCheckRequest) (*UploadFileCheckResponse, error)
+	ClearFileStorage(context.Context, *ClearFileStorageRequest) (*ClearFileStorageResponse, error)
+	GetInvalidFileInfo(context.Context, *GetInvalidFileInfoRequest) (*GetInvalidFileInfoResponse, error)
 	mustEmbedUnimplementedUploadFileCheckServiceServer()
 }
 
@@ -72,6 +98,12 @@ type UnimplementedUploadFileCheckServiceServer struct{}
 
 func (UnimplementedUploadFileCheckServiceServer) UploadFileCheck(context.Context, *UploadFileCheckRequest) (*UploadFileCheckResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UploadFileCheck not implemented")
+}
+func (UnimplementedUploadFileCheckServiceServer) ClearFileStorage(context.Context, *ClearFileStorageRequest) (*ClearFileStorageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClearFileStorage not implemented")
+}
+func (UnimplementedUploadFileCheckServiceServer) GetInvalidFileInfo(context.Context, *GetInvalidFileInfoRequest) (*GetInvalidFileInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetInvalidFileInfo not implemented")
 }
 func (UnimplementedUploadFileCheckServiceServer) mustEmbedUnimplementedUploadFileCheckServiceServer() {
 }
@@ -113,6 +145,42 @@ func _UploadFileCheckService_UploadFileCheck_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UploadFileCheckService_ClearFileStorage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClearFileStorageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadFileCheckServiceServer).ClearFileStorage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadFileCheckService_ClearFileStorage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadFileCheckServiceServer).ClearFileStorage(ctx, req.(*ClearFileStorageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UploadFileCheckService_GetInvalidFileInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInvalidFileInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadFileCheckServiceServer).GetInvalidFileInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadFileCheckService_GetInvalidFileInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadFileCheckServiceServer).GetInvalidFileInfo(ctx, req.(*GetInvalidFileInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UploadFileCheckService_ServiceDesc is the grpc.ServiceDesc for UploadFileCheckService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -123,6 +191,14 @@ var UploadFileCheckService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadFileCheck",
 			Handler:    _UploadFileCheckService_UploadFileCheck_Handler,
+		},
+		{
+			MethodName: "ClearFileStorage",
+			Handler:    _UploadFileCheckService_ClearFileStorage_Handler,
+		},
+		{
+			MethodName: "GetInvalidFileInfo",
+			Handler:    _UploadFileCheckService_GetInvalidFileInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

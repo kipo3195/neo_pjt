@@ -20,7 +20,7 @@ func NewChatLineServiceHandler(svc *service.ChatLineService) *ChatLineServiceHan
 
 func (r *ChatLineServiceHandler) GetSendFileInfo(ctx context.Context, in *pb.GetSendFileInfoRequest) (*pb.GetSendFileInfoResponse, error) {
 
-	log.Println("gRPC 데이터 수신 :", in.FileIds)
+	log.Println("[GetSendFileInfo] request :", in.FileIds)
 
 	result, err := r.svc.Chat.GetSendFileInfo(ctx, in.FileIds)
 
@@ -38,7 +38,6 @@ func (r *ChatLineServiceHandler) GetSendFileInfo(ctx context.Context, in *pb.Get
 			FileId:  value.FileId,
 			LineKey: value.LineKey,
 		}
-
 		fileInfo = append(fileInfo, temp)
 	}
 

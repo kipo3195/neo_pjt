@@ -22,13 +22,31 @@ func NewChatFileBatchService(messageTask task.MessageGrpcTask, fileTask task.Fil
 func (r *ChatFileBatchService) Run(ctx context.Context) error {
 	log.Println("ChatFileBatchService start. time : ", time.Now().Format("2006-01-02 15:04:05"))
 
-	r.fileTask.UploadFileCheck(ctx)
+	// 별도의 고루틴으로 동작해야됨.
+	// r.fileTask.UploadFileCheck(ctx)
 
 	// ---------------------------
-	fileIds := make([]string, 0)
-	fileIds = append(fileIds, "imgimg3")
+	// file service 에서 send_flag가 N인 데이터 가져오고
 
-	r.messageTask.GetSendFileInfo(ctx, fileIds)
+	yesterday := time.Now().AddDate(0, 0, -1)
+	formattedDate := yesterday.Format("2006-01-02")
+
+	invalidFileinfo, err := r.fileTask.GetInvalidFileInfo(ctx, formattedDate)
+	if len(invalidFileinfo) == 0 {
+		log.Println("[GetInvalidFileInfo] len = 0")
+		log.Println("ChatFileBatchService end. time : ", time.Now().Format("2006-01-02 15:04:05"))
+		return nil
+	}
+
+	sendFileInfo, err := r.messageTask.GetSendFileInfo(ctx, invalidFileinfo)
+	if err != nil {
+		return err
+	}
+
+	err = r.fileTask.ClearFileStorage(ctx, invalidFileinfo, sendFileInfo)
+	if err != nil {
+		return err
+	}
 
 	log.Println("ChatFileBatchService end. time : ", time.Now().Format("2006-01-02 15:04:05"))
 	return nil

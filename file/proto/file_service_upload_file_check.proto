@@ -10,6 +10,8 @@ package uploadFileCheck;
 service UploadFileCheckService {
   // 파일 전송 상태를 업데이트하는 함수 (쪽지 전송 시 호출)
   rpc UploadFileCheck (UploadFileCheckRequest) returns (UploadFileCheckResponse);
+  rpc ClearFileStorage (ClearFileStorageRequest) returns (ClearFileStorageResponse);
+  rpc GetInvalidFileInfo (GetInvalidFileInfoRequest) returns (GetInvalidFileInfoResponse);
 }
 
 // 요청할 때 보낼 데이터
@@ -20,5 +22,31 @@ message UploadFileCheckRequest {
 // 응답으로 받을 데이터
 message UploadFileCheckResponse {
   bool success = 1;
+  string message = 2;
+}
+
+// 배열은 repeated
+// 스네이크 케이스로 작성해도 Go로 컴파일하면 자동으로 카멜 케이스로 전환 
+
+// 요청할 때 보낼 데이터
+message ClearFileStorageRequest {
+  repeated string clear_file_ids = 1;
+  repeated string sended_file_ids = 2;
+}
+
+// 응답으로 받을 데이터
+message ClearFileStorageResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 요청할 때 보낼 데이터
+message GetInvalidFileInfoRequest{
+  string yesterday = 1;
+}
+
+// 응답으로 받을 데이터
+message GetInvalidFileInfoResponse {
+  repeated string invalid_file_id = 1;
   string message = 2;
 }

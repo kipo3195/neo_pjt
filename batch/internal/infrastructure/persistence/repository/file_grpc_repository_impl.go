@@ -44,3 +44,50 @@ func (r *fileGrpcRepository) CheckUploadFile(ctx context.Context, checkDate stri
 		return err
 	}
 }
+
+func (r *fileGrpcRepository) GetInvalidFileInfo(ctx context.Context, yesterday string) ([]string, error) {
+
+	req := &pb.GetInvalidFileInfoRequest{
+		Yesterday: yesterday,
+	}
+
+	res, err := r.fileServiceGrpcClient.GetInvalidFileInfo(ctx, req)
+
+	if err != nil {
+		log.Printf("[GetInvalidFileInfo] 통신 에러 발생: %v", err)
+		return nil, err
+		// 에러가 있으면 바로 return
+	}
+
+	result := make([]string, 0)
+
+	for _, value := range res.InvalidFileId {
+		result = append(result, value)
+	}
+
+	return result, nil
+
+}
+
+func (r *fileGrpcRepository) ClearFileStorage(ctx context.Context, clearFileId []string, sendedFileId []string) error {
+
+	req := &pb.ClearFileStorageRequest{
+		ClearFileIds:  clearFileId,
+		SendedFileIds: sendedFileId,
+	}
+
+	res, err := r.fileServiceGrpcClient.ClearFileStorage(ctx, req)
+
+	if err != nil {
+		log.Printf("[ClearFileStorage] 통신 에러 발생: %v", err)
+		return err // 에러가 있으면 여
+		//
+		// 기서 바로 리턴해야 합니다.
+	}
+
+	if res.Success {
+		return nil
+	} else {
+		return err
+	}
+}

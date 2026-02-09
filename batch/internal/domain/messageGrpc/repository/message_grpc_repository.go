@@ -1,7 +1,9 @@
 package repository
 
-import "context"
+import (
+	"context"
+)
 
 type MessageGrpcRepository interface {
-	GetSendFileInfo(ctx context.Context, checkDate string, fileIds []string) error
+	GetSendFileInfo(ctx context.Context, checkDate string, fileIds []string) (map[string]string, error)
 }

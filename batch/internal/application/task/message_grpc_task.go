@@ -12,7 +12,7 @@ type messageGrpcTask struct {
 }
 
 type MessageGrpcTask interface {
-	GetSendFileInfo(ctx context.Context, fileIds []string) error
+	GetSendFileInfo(ctx context.Context, fileIds []string) (map[string]string, error)
 }
 
 func NewMessageGrpcTask(repository repository.MessageGrpcRepository) MessageGrpcTask {
@@ -22,13 +22,17 @@ func NewMessageGrpcTask(repository repository.MessageGrpcRepository) MessageGrpc
 	}
 }
 
-func (r *messageGrpcTask) GetSendFileInfo(ctx context.Context, fileIds []string) error {
+func (r *messageGrpcTask) GetSendFileInfo(ctx context.Context, fileIds []string) (map[string]string, error) {
 
 	checkDate := time.Now().AddDate(0, 0, -1)
 	formattedDate := checkDate.Format("2006-01-02")
 
 	log.Println("[sendFileInfo] check Date : ", formattedDate)
 
-	r.repository.GetSendFileInfo(ctx, formattedDate, fileIds)
-	return nil
+	result, err := r.repository.GetSendFileInfo(ctx, formattedDate, fileIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
