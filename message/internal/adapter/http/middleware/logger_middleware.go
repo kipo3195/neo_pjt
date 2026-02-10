@@ -21,6 +21,7 @@ func LoggingMiddleware(logger logger.Logger) gin.HandlerFunc {
 		c.Request = c.Request.WithContext(ctx)
 
 		// defer를 통해 모든 핸들러가 끝난 후 로그 출력
+		// 만약 TimeoutMiddleware에서 504에러가 발생했다면, c.Writer.Status()에 확인시 504가 찍혀 있습니다
 		defer func() {
 
 			// c.Next()를 거치며 미들웨어가 추가하더라도 그 미들웨어에서 업데이트한 데이터를 꺼내 오기 위함

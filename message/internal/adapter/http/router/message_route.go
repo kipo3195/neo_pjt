@@ -39,6 +39,7 @@ func NewMessageRouter(serviceName string, tokenConfig config.TokenHashConfig, lo
 	// 해당 서비스의 모든 API 요청에 대한 로깅 적용
 	// parent 밑에서 로깅 미들웨어 적용시 /wrong-path로 접속했을때 그룹 매칭에 실패하여 미들웨어가 아예 타지 않기 때문.
 	r.Use(middleware.LoggingMiddleware(logger))
+	r.Use(middleware.TimeoutMiddleware())
 	parent := r.Group("/" + serviceName)
 	return &messageRouter{
 		parent:      parent,

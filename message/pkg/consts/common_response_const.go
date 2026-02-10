@@ -6,9 +6,10 @@ const (
 	ERROR   = "error"
 )
 const (
-	BAD_REQUEST  = 400
-	SERVER_ERROR = 500
-	UNAUTHORIZED = 401
+	BAD_REQUEST     = 400
+	SERVER_ERROR    = 500
+	UNAUTHORIZED    = 401
+	GATEWAY_TIMEOUT = 504
 )
 const (
 	// ERROR Code
@@ -44,4 +45,7 @@ const (
 
 	E_500     = "E500"
 	E_500_MSG = "Server error."
+
+	E_504     = "E504"
+	E_504_MSG = "Gateway timeout."
 )

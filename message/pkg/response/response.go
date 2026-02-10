@@ -29,6 +29,7 @@ func SendError(c *gin.Context, status int, result string, code string, msg strin
 		},
 	}
 	c.AbortWithStatusJSON(status, res)
+	// 이미 응답을 보냈는데 뒤늦게 c.Next() 고루틴이 끝나면서 또 다른 응답을 보낼 수 없게 Abort
 }
 
 func SendSuccess[T any](c *gin.Context, t T) {
@@ -37,6 +38,7 @@ func SendSuccess[T any](c *gin.Context, t T) {
 		Data:   t,
 	}
 	c.AbortWithStatusJSON(200, res) // 200 고정
+	// 이미 응답을 보냈는데 뒤늦게 c.Next() 고루틴이 끝나면서 또 다른 응답을 보낼 수 없게 Abort
 }
 
 // 바이트 배열 전송 (메모리에 있는 파일을 전송)
