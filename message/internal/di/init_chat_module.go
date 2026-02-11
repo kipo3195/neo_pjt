@@ -28,7 +28,7 @@ func InitChatModule(db *gorm.DB, connector *nats.Conn, cacheClient *redis.Cluste
 	cacheStorage := cacheStorage.NewChatCache(cacheClient)
 	repository := repository.NewChatRepository(db, cacheStorage)
 
-	// 이 영역에서 구현체를 생성하고 인터페이스 타입으로 Usecase에 주입합니다.
+	// 이 영역에서 구현체를 생성하고 인터페이스 타입으로 Usecase에 주입합니다 .
 	workerPool := workerPool.NewChatWorkerPool(10, repository)
 	workerPool.Init()
 	apiRepository := rpc.NewGrpcChatApiRepositoryImpl(gRPCClient)
