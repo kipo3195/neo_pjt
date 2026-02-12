@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"message/internal/adapter/http/dto/chatLine"
 	"message/internal/adapter/http/dto/chatRoom"
 	"message/internal/adapter/http/dto/chatRoomConfig"
@@ -120,6 +122,10 @@ func (r *ChatRoomServiceHandler) GetChatRoomDetail(c *gin.Context) {
 	output, err := r.svc.ChatRoom.GetChatRoomDetail(ctx, input)
 
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			// 이건 middleware에서 자체적으로 response 하므로
+			return
+		}
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
@@ -218,6 +224,10 @@ func (r *ChatRoomServiceHandler) GetChatRoomList(c *gin.Context) {
 	output, err := r.svc.ChatRoom.GetChatRoomList(ctx, input)
 
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			// 이건 middleware에서 자체적으로 response 하므로
+			return
+		}
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
@@ -310,7 +320,10 @@ func (r *ChatRoomServiceHandler) GetChatRoomUpdateDate(c *gin.Context) {
 	output, err := r.svc.ChatRoom.GetChatRoomUpdateDate(ctx, input)
 
 	if err != nil {
-		if err == consts.ErrRoomUpdateDateTypeError {
+		if errors.Is(err, context.DeadlineExceeded) {
+			// 이건 middleware에서 자체적으로 response 하므로
+			return
+		} else if errors.Is(err, consts.ErrRoomUpdateDateTypeError) {
 			response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.FAIL, consts.MESSAGE_F012, consts.MESSAGE_F012_MSG)
 		} else {
 			response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
@@ -363,6 +376,10 @@ func (r *ChatRoomServiceHandler) GetChatRoomMemberReadDate(c *gin.Context) {
 	out, err := r.svc.ChatRoom.GetChatRoomMemberReadDate(ctx, input)
 
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			// 이건 middleware에서 자체적으로 response 하므로
+			return
+		}
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}
@@ -407,6 +424,10 @@ func (r *ChatRoomServiceHandler) GetChatRoomMy(c *gin.Context) {
 	output, err := r.svc.ChatRoom.GetChatRoomMy(ctx, input)
 
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			// 이건 middleware에서 자체적으로 response 하므로
+			return
+		}
 		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
 		return
 	}

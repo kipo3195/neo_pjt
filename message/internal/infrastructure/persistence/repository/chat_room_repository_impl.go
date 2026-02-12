@@ -139,7 +139,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entit
 	var result []entity.ChatRoomDetailEntity
 
 	// 내가 참여중인 방에 한해서 조회 가능하도록 처리함 20251208
-	err := r.db.Raw(`
+	err := r.db.WithContext(ctx).Raw(`
 		select 
 			detail.*,
 			line.line_key, line.event_type, line.cmd, line.contents, line.send_date,
@@ -181,7 +181,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 	var result []entity.ChatRoomDetailEntity
 
 	// 내가 참여중인 방에 한해서 조회 가능하도록 처리함 20251208
-	err := r.db.Raw(`
+	err := r.db.WithContext(ctx).Raw(`
 		select 
 			detail.*,
 			line.line_key, line.event_type, line.cmd, line.contents, line.send_date,
@@ -214,7 +214,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomList(ctx context.Context, en entity.
 		return nil, err
 	}
 
-	return result, err
+	return result, nil
 
 }
 
@@ -225,7 +225,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomUpdateDate(ctx context.Context, en e
 	var err error
 
 	if en.Type == "A" {
-		err = r.db.Raw(
+		err = r.db.WithContext(ctx).Raw(
 			`select 
 				room.room_key, room.room_type,
 				detail.room_update_date as detail,
@@ -253,7 +253,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomUpdateDate(ctx context.Context, en e
 				on member.room_key = title.room_key and user_hash = ?
 			order by line.send_date desc, detail.room_create_date desc `, en.ReqUserHash, en.ReqUserHash, en.ReqUserHash).Scan(&result).Error
 	} else if en.Type == "S" {
-		err = r.db.Raw(
+		err = r.db.WithContext(ctx).Raw(
 			`select 
 				room.room_key, room.room_type,
 				detail.room_update_date as detail,
@@ -289,7 +289,6 @@ func (r *chatRoomRepositoryImpl) GetChatRoomUpdateDate(ctx context.Context, en e
 	}
 
 	if err != nil {
-		log.Println("[GetChatRoomUpdateDate] DB error :", err)
 		return nil, err
 	}
 
@@ -300,7 +299,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomMemberReadDate(ctx context.Context, 
 
 	var result []entity.ChatRoomMemberReadDateEntity
 
-	err := r.db.Raw(
+	err := r.db.WithContext(ctx).Raw(
 		`select 
 			member.member_hash, case when member.member_read_date is null or member.member_read_date = '' then 'N' else  member.member_read_date end as read_date
 		from chat_room_member as member 
@@ -322,7 +321,7 @@ func (r *chatRoomRepositoryImpl) GetChatRoomMy(ctx context.Context, en entity.Ge
 
 	var result []entity.ChatRoomMyEntity
 
-	err := r.db.Raw(
+	err := r.db.WithContext(ctx).Raw(
 		`select 
 			member.room_key, member.member_read_date as read_date,  member.member_unread_count as unread_count,
 			room.room_type

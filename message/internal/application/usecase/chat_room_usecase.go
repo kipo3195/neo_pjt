@@ -307,7 +307,6 @@ func (r *chatRoomUsecase) GetChatRoomUpdateDate(ctx context.Context, input input
 	updateDate, err := r.repository.GetChatRoomUpdateDate(ctx, en)
 
 	if err != nil {
-
 		return nil, err
 	}
 
