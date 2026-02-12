@@ -21,12 +21,12 @@ func TimeoutMiddleware() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(parentCtx, 10*time.Second)
 		// 10초가 지났을 때 (타임아웃)
 		// 비즈니스 로직이 아직 돌고 있는데 10초가 딱 됩니다.
-		// Go 내부 타이머가 즉시 ctx.Done() 채널에 신호를 보냅니다. (이게 사실상 내부적인 cancel 호출입니다.)
+		// 타임아웃 시점(10초가 되는 순간)**에 Go 내부 타이머가 이미
+		// ctx.Err()를 context.DeadlineExceeded로 채워버립니다. 즉, defer cancel()이 실행되기 전에 이미 하위 레이어들은 에러를 인지할 수 있는 상태가 됩니다.
 		// select 문에서 case <-ctx.Done():이 즉시 실행되어 504 에러를 보냅니다.
-		// 함수가 종료되면서 아래 defer cancel()이 한 번 더 확실하게 자원을 정리합니다.
+
+		// defer cancel() "이미 취소된 거 다시 확인사살하고, 타이머 리소스를 시스템에 반환"하는 마무리 작업만 합니다. 에러 발생 시점에는 영향을 주지 않습니다.
 		defer cancel()
-		// 그럼 미들웨어를 필두로하여 ctx를 전달 받은 handler -> usecase -> repository 순으로 전파됨
-		// 각 layer의 ctx 에러 처리 로직 발동.
 
 		// 새 ctx를 주입
 		c.Request = c.Request.WithContext(ctx)

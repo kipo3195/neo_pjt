@@ -39,7 +39,7 @@ func (r *ChatServiceHandler) ReadChat(c *gin.Context) {
 	}
 
 	// 라인키 생성 -> 사실상 response의 sendDate 값을 구하기 용도
-	_, readDate := r.svc.LineKey.GetLineKey(ctx)
+	_, readDate, _ := r.svc.LineKey.GetLineKey(ctx)
 
 	input := mapper.MakeReadChatInput(req.RoomKey, req.RoomType, userHash, readDate)
 	err := r.svc.Chat.ReadChat(ctx, input)
@@ -82,7 +82,7 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 	}
 
 	// 라인키 생성
-	lineKey, sendDate := r.svc.LineKey.GetLineKey(ctx)
+	lineKey, sendDate, _ := r.svc.LineKey.GetLineKey(ctx)
 
 	if req.TestSender != "" {
 		sendUserHash = req.TestSender
