@@ -78,6 +78,6 @@ jobs:
           
           # 2. Docker Compose를 통한 배포 (변경된 서비스만 재시작)
           # 하이픈 없는 'docker compose' 명령어를 사용하세요.
-          docker compose up -d ${SERVICE_NAME}-service
+          docker compose --env-file ./${SERVICE_NAME}/.env up -d ${SERVICE_NAME}-service
           
           echo "✅ $SERVICE_NAME 배포 완료!"

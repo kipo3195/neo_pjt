@@ -6,35 +6,35 @@ services:
     container_name: user-service
     network_mode: "host"
     restart: "no"
-    env_file: ./user/.env
+    #env_file: ./user/.env
 
   core-service:
     image: messenger-core:latest
     container_name: core-service
     network_mode: "host"
     restart: "no"
-    env_file: ./core/.env
+    #env_file: ./core/.env
 
   common-service:
     image: messenger-common:latest
     container_name: common-service
     network_mode: "host"
     restart: "no"
-    env_file: ./common/.env
+    #env_file: ./common/.env
 
   auth-service:
     image: messenger-auth:latest
     container_name: auth-service
     network_mode: "host"
     restart: "no"
-    env_file: ./auth/.env
+    #env_file: ./auth/.env
 
   org-service:
     image: messenger-org:latest
     container_name: org-service
     network_mode: "host"
     restart: "no"
-    env_file: ./org/.env
+    #env_file: ./org/.env
     volumes:
       - /path/on/host/storage/org_files:/app/storage/org_files
 
@@ -43,34 +43,34 @@ services:
     container_name: admin-service
     network_mode: "host"
     restart: "no"
-    env_file: ./admin/.env
+    #env_file: ./admin/.env
 
   message-service:
     image: messenger-message:latest
     container_name: message-service
     network_mode: "host"
     restart: "no"
-    env_file: ./message/.env
+    #env_file: ./message/.env
 
   batch-service:
     image: messenger-batch:latest
     container_name: batch-service
     network_mode: "host"
     restart: "no"
-    env_file: ./batch/.env
+    #env_file: ./batch/.env
 
   notificator-service:
     image: messenger-notificator:latest
     container_name: notificator-service
     network_mode: "host"
     restart: "no"
-    env_file: ./notificator/.env
+    #env_file: ./notificator/.env
 
   file-service:
     image: messenger-file:latest
     container_name: file-service
     network_mode: "host"
     restart: "no"
-    env_file: ./file/.env
+    #env_file: ./file/.env
     volumes:
       - ./file/private.key:/run/secrets/jwt_private_key:ro
