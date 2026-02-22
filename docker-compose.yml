@@ -1,0 +1,109 @@
+services:
+  batch-service:
+    build:
+      context: ./batch  
+      dockerfile: Dockerfile
+    image: my-repo/batch-service:latest
+    env_file:
+      - .env # env 파일을 별도로 읽을 수 있도록 (생성되는 이미지에는 포함되지 않도록)
+    ports:
+      - "8081:8081"
+
+  notificator-service:
+    build:
+      context: ./notificator  
+      dockerfile: Dockerfile
+    image: my-repo/notificator-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8082:8082"
+
+  message-service:
+    build:
+      context: ./message  # message 폴더 안을 기준으로 빌드
+      dockerfile: Dockerfile
+    image: my-repo/message-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8083:8083"
+      - "50003:50003"
+
+  user-service:
+    build:
+      context: ./user  
+      dockerfile: Dockerfile
+    image: my-repo/user-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8084:8084"
+
+  core-service:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    image: my-repo/core-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8085:8085"
+
+  common-service:
+    build:
+      context: ./common 
+      dockerfile: Dockerfile
+    image: my-repo/common-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8086:8086"
+
+  auth-service:
+    build:
+      context: ./auth     # auth 폴더 안을 기준으로 빌드
+      dockerfile: Dockerfile
+    image: my-repo/auth-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8087:8087"
+
+  org-service:
+    build:
+      context: ./organization  
+      dockerfile: Dockerfile
+    image: my-repo/org-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8088:8088"
+
+  admin-service:
+    build:
+      context: ./admin  # admin 폴더 안을 기준으로 빌드
+      dockerfile: Dockerfile
+    image: my-repo/admin-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8089:8089"
+
+  file-service:
+    build:
+      context: ./file  
+      dockerfile: Dockerfile
+    image: my-repo/file-service:latest
+    env_file:
+      - .env
+    ports:
+      - "8091:8091"
+      - "50001:50001"
+      - "50002:50002"
+
+
+
+
+
+  

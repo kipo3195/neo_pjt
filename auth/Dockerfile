@@ -19,7 +19,7 @@ WORKDIR /root/
 # 빌드된 바이너리만 복사
 COPY --from=builder /app/main .
 
-EXPOSE 8089
+EXPOSE 8087
 CMD ["./main"]
 
 
