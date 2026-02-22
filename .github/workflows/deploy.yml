@@ -44,12 +44,16 @@ jobs:
       # [중요] GitHub Secrets에 저장된 ENV_서비스명 데이터를 .env 파일로 생성
       - name: Create Dynamic .env File
         run: |
-          # matrix.service가 'message'라면 secrets.ENV_MESSAGE를 찾음
-          # Bash의 변수 간접 참조 기능을 활용
-          ENV_CONTENT_VAR="ENV_${{ matrix.service }}"
-          echo "${!ENV_CONTENT_VAR}" > ./${{ matrix.service }}/.env
+         SERVICE_UPPER=$(echo "${{ matrix.service }}" | tr '[:lower:]' '[:upper:]')
+          VAR_NAME="ENV_$SERVICE_UPPER"
+          eval "CONTENT=\$$VAR_NAME"
           
-          echo "✅ ./${{ matrix.service }}/.env 파일이 생성되었습니다."
+          # .env 파일을 서비스 폴더 안에 생성
+          echo "$CONTENT" > ./${{ matrix.service }}/.env
+          
+          # [디버깅용] 파일이 잘 구워졌는지 크기만 확인 (내용 유출 방지)
+          echo "--- Check .env file size ---"
+          ls -lh ./${{ matrix.service }}/.env
         env:
           # 모든 서비스의 Secrets를 환경변수로 미리 매핑해둡니다.
           ENV_ADMIN: ${{ secrets.ENV_ADMIN }}
