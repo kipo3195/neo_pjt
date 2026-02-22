@@ -70,18 +70,23 @@ jobs:
       # 서비스 빌드 및 배포
       - name: Build and Deploy ${{ matrix.service }}
         run: |
-          echo "--- Check Docker ---"
-          docker --version
-          echo "--- Check Docker Compose ---"
-          docker compose version || echo "docker compose not found"
-          which docker-compose || echo "docker-compose not found"
           SERVICE_NAME=${{ matrix.service }}
           
-          # 1. 해당 서비스 이미지 빌드
+          # 1. 이미지 빌드
           docker build -t messenger-$SERVICE_NAME:latest ./$SERVICE_NAME
           
-          # 2. Docker Compose를 통한 배포 (변경된 서비스만 재시작)
-          # 하이픈 없는 'docker compose' 명령어를 사용하세요.
-          docker compose --env-file ./${SERVICE_NAME}/.env up -d ${SERVICE_NAME}-service
+          # 2. 기존 컨테이너 정리 (확실한 갱신을 위해)
+          docker rm -f ${SERVICE_NAME}-service || true
           
-          echo "✅ $SERVICE_NAME 배포 완료!"
+          # 3. docker run으로 직접 실행 (Compose 파일 체크를 우회하는 가장 확실한 방법)
+          # 호스트 네트워크 모드이므로 설정이 복잡하지 않습니다.
+          docker run -d \
+            --name ${SERVICE_NAME}-service \
+            --net="host" \
+            --restart no \
+            --env-file ./${SERVICE_NAME}/.env \
+            $(if [ "$SERVICE_NAME" == "file" ]; then echo "-v $(pwd)/file/private.key:/run/secrets/jwt_private_key:ro"; fi) \
+            $(if [ "$SERVICE_NAME" == "org" ]; then echo "-v /path/on/host/storage/org_files:/app/storage/org_files"; fi) \
+            messenger-$SERVICE_NAME:latest
+
+          echo "🚀 $SERVICE_NAME 배포 및 환경 변수 주입 완료!"
