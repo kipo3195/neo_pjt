@@ -13,6 +13,8 @@ import (
 
 func main() {
 
+	log.Println("notificator 서비스 배포 테스트 1")
+
 	modules, err := di.InitApp()
 
 	if err != nil {
