@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. User Service
   user-service:
     image: messenger-user:latest
     container_name: user-service
@@ -9,7 +8,6 @@ services:
     restart: "no"
     env_file: ./user/.env
 
-  # 2. Core Service
   core-service:
     image: messenger-core:latest
     container_name: core-service
@@ -17,7 +15,6 @@ services:
     restart: "no"
     env_file: ./core/.env
 
-  # 3. Common Service
   common-service:
     image: messenger-common:latest
     container_name: common-service
@@ -25,7 +22,6 @@ services:
     restart: "no"
     env_file: ./common/.env
 
-  # 4. Auth Service
   auth-service:
     image: messenger-auth:latest
     container_name: auth-service
@@ -33,7 +29,6 @@ services:
     restart: "no"
     env_file: ./auth/.env
 
-  # 5. Organization Service
   org-service:
     image: messenger-org:latest
     container_name: org-service
@@ -43,7 +38,6 @@ services:
     volumes:
       - /path/on/host/storage/org_files:/app/storage/org_files
 
-  # 6. Admin Service
   admin-service:
     image: messenger-admin:latest
     container_name: admin-service
@@ -51,7 +45,6 @@ services:
     restart: "no"
     env_file: ./admin/.env
 
-  # 7. Message Service
   message-service:
     image: messenger-message:latest
     container_name: message-service
@@ -59,7 +52,6 @@ services:
     restart: "no"
     env_file: ./message/.env
 
-  # 8. Batch Service
   batch-service:
     image: messenger-batch:latest
     container_name: batch-service
@@ -67,7 +59,6 @@ services:
     restart: "no"
     env_file: ./batch/.env
 
-  # 9. Notificator Service
   notificator-service:
     image: messenger-notificator:latest
     container_name: notificator-service
@@ -75,7 +66,6 @@ services:
     restart: "no"
     env_file: ./notificator/.env
 
-  # 10. File Service
   file-service:
     image: messenger-file:latest
     container_name: file-service

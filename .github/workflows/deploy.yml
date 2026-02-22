@@ -52,13 +52,25 @@ jobs:
           echo "✅ ./${{ matrix.service }}/.env 파일이 생성되었습니다."
         env:
           # 모든 서비스의 Secrets를 환경변수로 미리 매핑해둡니다.
-          ENV_MESSAGE: ${{ secrets.ENV_MESSAGE }}
+          ENV_ADMIN: ${{ secrets.ENV_ADMIN }}
           ENV_AUTH: ${{ secrets.ENV_AUTH }}
+          ENV_BATCH: ${{ secrets.ENV_BATCH }}
+          ENV_COMMON: ${{ secrets.ENV_COMMON }}
+          ENV_CORE: ${{ secrets.ENV_CORE }}
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+          ENV_MESSAGE: ${{ secrets.ENV_MESSAGE }}
+          ENV_NOTIFICATOR: ${{ secrets.ENV_NOTIFICATOR }}
+          ENV_ORG: ${{ secrets.ENV_ORG }}
           ENV_USER: ${{ secrets.ENV_USER }}
 
       # 서비스 빌드 및 배포
       - name: Build and Deploy ${{ matrix.service }}
         run: |
+          echo "--- Check Docker ---"
+          docker --version
+          echo "--- Check Docker Compose ---"
+          docker compose version || echo "docker compose not found"
+          which docker-compose || echo "docker-compose not found"
           SERVICE_NAME=${{ matrix.service }}
           
           # 1. 해당 서비스 이미지 빌드
