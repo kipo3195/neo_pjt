@@ -1,0 +1,72 @@
+name: Mono-Repo Smart Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  # 1. 어떤 서비스가 변경되었는지 감지
+  check-changes:
+    runs-on: self-hosted
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            admin: 'admin/**'
+            auth: 'auth/**'
+            batch: 'batch/**'
+            common: 'common/**'
+            core: 'core/**'
+            file: 'file/**'
+            message: 'message/**'
+            notificator: 'notificator/**'
+            org: 'organization/**'
+            user: 'user/**'
+
+  # 2. 변경된 서비스만 배포 진행
+  deploy:
+    needs: check-changes
+    if: ${{ needs.changes.outputs.services != '[]' }}
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.check-changes.outputs.services) }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # [중요] GitHub Secrets에 저장된 ENV_서비스명 데이터를 .env 파일로 생성
+      - name: Create Dynamic .env File
+        run: |
+          # matrix.service가 'message'라면 secrets.ENV_MESSAGE를 찾음
+          # Bash의 변수 간접 참조 기능을 활용
+          ENV_CONTENT_VAR="ENV_${{ matrix.service }}"
+          echo "${!ENV_CONTENT_VAR}" > ./${{ matrix.service }}/.env
+          
+          echo "✅ ./${{ matrix.service }}/.env 파일이 생성되었습니다."
+        env:
+          # 모든 서비스의 Secrets를 환경변수로 미리 매핑해둡니다.
+          ENV_MESSAGE: ${{ secrets.ENV_MESSAGE }}
+          ENV_AUTH: ${{ secrets.ENV_AUTH }}
+          ENV_USER: ${{ secrets.ENV_USER }}
+
+      # 서비스 빌드 및 배포
+      - name: Build and Deploy ${{ matrix.service }}
+        run: |
+          SERVICE_NAME=${{ matrix.service }}
+          
+          # 1. 빌드 (생성된 .env 파일이 폴더 내에 포함됨)
+          docker build -t messenger-$SERVICE_NAME:latest ./$SERVICE_NAME
+          
+          # 2. 배포 (docker-compose의 서비스명 규칙: 서비스명-service)
+          # 컨테이너 실행 시 ./$SERVICE_NAME/.env를 읽도록 docker-compose.yml이 설정되어야 함
+          docker-compose up -d ${SERVICE_NAME}-service
+          
+          # 3. 정리
+          docker image prune -f
+          echo "🚀 $SERVICE_NAME 배포가 완료되었습니다!"
