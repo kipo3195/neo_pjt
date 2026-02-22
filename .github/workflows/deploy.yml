@@ -30,9 +30,10 @@ jobs:
   # 2. 변경된 서비스만 배포 진행
   deploy:
     needs: check-changes
-    if: ${{ needs.changes.outputs.services != '[]' }}
+    if: ${{ needs.check-changes.outputs.services != '[]' && needs.check-changes.outputs.services != '' }}
     runs-on: self-hosted
     strategy:
+      fail-fast: false  # 하나가 실패해도 나머지는 계속 진행
       matrix:
         service: ${{ fromJson(needs.check-changes.outputs.services) }}
     

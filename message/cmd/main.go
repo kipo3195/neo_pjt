@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	log.Println("자동화 테스트 점검용 로깅 2")
+	log.Println("자동화 테스트 점검용 로깅 3")
 
 	// 서버 및 모듈 초기화
 	modules, err := di.InitApp()
