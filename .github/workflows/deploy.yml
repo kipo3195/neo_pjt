@@ -59,16 +59,13 @@ jobs:
       # 서비스 빌드 및 배포
       - name: Build and Deploy ${{ matrix.service }}
         run: |
-          docker --version
           SERVICE_NAME=${{ matrix.service }}
           
-          # 1. 빌드 (생성된 .env 파일이 폴더 내에 포함됨)
+          # 1. 해당 서비스 이미지 빌드
           docker build -t messenger-$SERVICE_NAME:latest ./$SERVICE_NAME
           
-          # 2. 배포 (docker-compose의 서비스명 규칙: 서비스명-service)
-          # 컨테이너 실행 시 ./$SERVICE_NAME/.env를 읽도록 docker-compose.yml이 설정되어야 함
+          # 2. Docker Compose를 통한 배포 (변경된 서비스만 재시작)
+          # 하이픈 없는 'docker compose' 명령어를 사용하세요.
           docker compose up -d ${SERVICE_NAME}-service
           
-          # 3. 정리
-          docker image prune -f
-          echo "🚀 $SERVICE_NAME 배포가 완료되었습니다!"
+          echo "✅ $SERVICE_NAME 배포 완료!"
