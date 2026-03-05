@@ -71,6 +71,8 @@ func (p *chatCountWorkerPool) worker(id int, ch chan *job.ChatCountJob) {
 			p.handleMessage(ch, j, pendingMap)
 		}
 	}
+
+	// TODO 채널이 닫힌 후 실행되는 Final Flush 로직
 }
 
 func (p *chatCountWorkerPool) AddTask(userHash string, en entity.ChatCountMessageEntity) {
