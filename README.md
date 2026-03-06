@@ -92,7 +92,7 @@ Worker Goroutine
 ### Core Strategy
 - User Hash 기반 Worker Sharding  
 - Worker Local Map 기반 Lock-Free 상태 관리  
-- Timer 기반 Debouncing으로 DB 업데이트 배치 처리  
+- Timer 기반 Debouncing으로 클라이언트 전송 횟수를 개선
 
 ## 3. Full-Duplex WebSocket Architecture
 
