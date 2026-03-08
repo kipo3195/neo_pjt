@@ -5,10 +5,25 @@
 Java 기반 메신저 서버의 세션 관리 구조는 동시 연결 수 증가 시 세션 관리 비용과 자원 사용량이 빠르게 증가하는 문제가 있었습니다.  
 이를 해결하기 위해 **Go의 Goroutine과 Channel 기반 Concurrency 모델을 활용하여 WebSocket 세션 구조를 재설계한 실시간 메시징 서버**를 구현했습니다.
 
-세션별 독립 Goroutine 구조와 Channel 기반 비동기 메시지 전달, Worker Pool 기반 백그라운드 처리 모델을 통해 **고동시성 환경에서도 안정적인 메시지 처리와 장애 격리를 달성**하는 것을 목표로 설계되었습니다.
+세션별 독립 Goroutine 구조와 Channel 기반 비동기 메시지 전달, Worker Pool 기반 백그라운드 처리 모델을 통해 **동시성 환경에서도 안정적인 메시지 처리와 장애 격리를 달성**하는 것을 목표로 설계되었습니다.
 
 ---
+## System Architecture
 
+![architecture](docs/architecture.png)  
+---
+
+## WebSocket Session Architecture
+```
+Client
+   ↓
+WebSocket Conn
+   ├ Read Goroutine
+   └ Write Goroutine
+            ↑
+        Channel
+```  
+---
 ## Tech Stack
 
 **Language**
