@@ -233,16 +233,16 @@ Client
 ---
 
 ### Design
-- **신규 요청 차단**
+- **신규 요청 차단**  
 	HTTP/gRPC 서버에 더 이상 요청이 들어오지 않도록 막음  
     [신규 요청 차단 구현 코드 - 1 HTTP & gRPC Shutdown 실행](https://github.com/kipo3195/neo_pjt/blob/main/message/cmd/main.go#L68-L82)  
 
-- **Worker Pool Job 완료 대기**
-	처리 중인 이벤트가 안전하게 끝날 때까지 대기
-  	[Worker Pool Job 완료 대기 구현 코드 - 1](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_chat_module.go#L45-L62)  
+- **Worker Pool Job 완료 대기**  
+	처리 중인 이벤트가 안전하게 끝날 때까지 대기  
+  	[Worker Pool Job 완료 대기 구현 코드 - 1 채팅 메시지 저장 Worker Pool 대기](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_chat_module.go#L45-L62)  
       
-- **외부 연결 종료**
-  	Redis, NATS, DB 등 연결을 순차적으로 종료
+- **외부 연결 종료**  
+  	Redis, NATS, DB 등 연결을 순차적으로 종료  
     [외부 연결 종료 구현 코드 - 1](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_app.go#L122-L154)  
       
       
@@ -290,12 +290,17 @@ Redis / NATS / DB 연결 종료
 
 ### Design
 
-- **Pub/Sub 패턴**
-  - 채팅 메시지 이벤트를 여러 서비스 노드로 실시간 전파
+- **Pub/Sub 패턴**  
+	채팅 메시지 이벤트를 여러 서비스 노드로 실시간 전파  
+	[Pub/Sub 패턴 구현 코드 - 1 Message Service Publish To Notificator Service](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/application/usecase/chat_usecase.go#L128-L135)  
+	[Pub/Sub 패턴 구현 코드 - 2 Subscribe Topic Notificator Service](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/di/init_app.go#L79-L87)  
+	[Rub/Sub 패턴 구현 코드 - 3 Recv & Handle Message](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/adapter/nats/subscriber/nats_chat_subscriber.go#L31-L87)
 
-- **Request-Reply 패턴**
-  - 채팅방 생성과 같이 **특정 노드에서만 처리해야 하는 요청**이나  
-    **노드 상태 조회와 같은 요청에 대한 응답이 필요한 작업**을 처리하기 위해 사용
+- **Request-Reply 패턴**  
+  채팅방 생성과 같이 **특정 노드에서만 처리해야 하는 요청**이나 **노드 상태 조회와 같은 요청에 대한 응답이 필요한 작업**을 처리하기 위해 사용  
+  [Request-Reply 패턴 구현 코드 - 1 Chat Room Create Event Request To Notificator Service](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/application/usecase/chat_room_usecase.go#L109-L125)  
+  [Request-Reply 패턴 구현 코드 - 2 Subscribe Topic Notificator Service](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/di/init_app.go#L79-L87)  
+  [Request-Reply 패턴 구현 코드 - 3 Recv & Handle Message](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/adapter/nats/subscriber/nats_chat_room_subscriber.go#L69-L113)  
 
 - **경량 메시지 브로커**
   - 고성능 event routing을 통해 낮은 latency로 메시지 전달
@@ -380,24 +385,42 @@ All Notificator Services
 
 ### Design
 
-- **Pre-signed URL 업로드**
-  - 파일 서비스에서 업로드 URL과 Transaction ID(TID) 발급
+- **Pre-signed URL 업로드**  
+	파일 서비스에서 업로드 URL과 Transaction ID(TID) 발급  
+	[Pre-signed URL 업로드 구현 코드 - 1 URL 발급](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/repository/oracle_file_url_storage_repository_impl.go#L59-L79)  
+	[Pre-signed URL 업로드 구현 코드 - 2 Transaction ID 발급](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/application/usecase/file_url_usecase.go#L62-L67)  
 
-- **Redis 기반 업로드 상태 검증**
-  - 파일 업로드 완료 후 TID 기준으로 스토리지 업로드 여부 검증
-  - 모든 파일 업로드 완료 시 Redis에 상태 저장
+- **Redis 기반 업로드 상태 검증**  
+	파일 업로드 완료 후 TID 기준으로 스토리지 업로드 여부 검증  
+    [Redis 기반 업로드 상태 검증 구현 코드 - 1 파일 업로드 체크](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/repository/oracle_file_url_storage_repository_impl.go#L81-L101)  
+  	모든 파일 업로드 완료 시 Redis에 상태 저장  
+  	[Redis 기반 업로드 상태 검증 구현 코드 - 2 Redis에 업로드 상태 저장](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/cacheStorage/file_url_cache_impl.go#L25-L47)   
 
-- **Message Service 검증 로직**
-  - 채팅 메시지 전송 시 TID를 전달
-  - Redis 상태를 확인하여 업로드 완료된 파일만 메시지 처리
+- **Message Service 검증 로직**  
+	채팅 메시지 전송 시 TID를 전달  
+	[Message Service 검증 로직 구현 코드 - 1 TID 수신](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/adapter/http/dto/chatService/send_chat_request.go#L1-L10)  
+	Redis 상태를 확인하여 업로드 완료된 파일만 메시지 처리    
+	[Message Service 검증 로직 구현 코드 - 2 Redis 상태 체크](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/infrastructure/persistence/cacheStorage/chat_cache_impl.go#L24-L47)  
 
-- **gRPC 기반 교차 검증**
-  - 메시지 전송 시 파일 서비스에 gRPC 호출
-  - 해당 파일들의 `sendFlag` 상태 업데이트
+- **gRPC 기반 교차 검증**  
+	메시지 전송 시 파일 서비스에 gRPC 호출  
+	[gRPC 기반 교차 검증 구현 코드 - 1 Batch Service Scheduler Init](https://github.com/kipo3195/neo_pjt/blob/main/batch/internal/adapter/scheduler/batch_scheduler.go#L93-L117)  
+	[gRPC 기반 교차 검증 구현 코드 - 2 gRPC를 통해 File Service 호출 (sendFlag가 'N'인것 조회)](https://github.com/kipo3195/neo_pjt/blob/main/batch/internal/infrastructure/external/rpc/file_grpc_repository_impl.go#L45-L67)  
+	[gRPC 기반 교차 검증 구현 코드 - 3 batch_file_proto](https://github.com/kipo3195/neo_pjt/blob/main/batch/proto/batch_file.proto)  
+	[gRPC 기반 교차 검증 구현 코드 - 4 gRPC를 통해 호출 받은 File Service의 함수 (sendFlag가 'N'인것 조회)](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/adapter/rpc/grpcHandler/batch_file_service_handler.go#L58-L76)  
+	[gRPC 기반 교차 검증 구현 코드 - 5 DB 조회](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/repository/chat_file_repository_impl.go#L31-L56)  
+	해당 파일들의 `sendFlag` 상태 업데이트  
+	[gRPC 기반 교차 검증 구현 코드 - 6 gRPC를 통해 Message Service의 호출 (실제 발송 여부 점검)](https://github.com/kipo3195/neo_pjt/blob/main/batch/internal/application/service/chat_file_batch_service.go#L41-L44)  
+	[gRPC 기반 교차 검증 구현 코드 - 7 gRPC를 통해 호출 받은 Message Service의 함수 (실제 발송 여부 점검](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/adapter/rpc/grpcHandler/batch_message_chat_file_handler.go#L21-L48)  
+	[gRPC 기반 교차 검증 구현 코드 - 8 DB 조회](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/infrastructure/persistence/repository/chat_repository_impl.go#L176-L196)  
 
-- **Batch Cleanup**
-  - 업로드 요청만 하고 실제 메시지에 사용되지 않은 파일을 탐지
-  - 메시지 서비스와 교차 검증 후 스토리지에서 삭제
+- **Batch Cleanup**  
+	업로드 요청만 하고 실제 메시지에 사용되지 않은 파일을 탐지  
+	[Batch Cleanup 구현 코드 - 1 교차 검증](https://github.com/kipo3195/neo_pjt/blob/main/batch/internal/application/task/file_grpc_task.go#L41-L59)  
+	메시지 서비스와 교차 검증 후 스토리지에서 삭제  
+	[Batch Cleanup 구현 코드 - 2 gRPC를 통해 File Service에 스토리지 파일 삭제 요청](https://github.com/kipo3195/neo_pjt/blob/main/batch/internal/infrastructure/external/rpc/file_grpc_repository_impl.go#L69-L90)  
+	[Batch Cleanup 구현 코드 - 3 gRPC를 통해 호출 받은 File Service의 함수 (파일 삭제)](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/application/usecase/chat_file_usecase.go#L32-L38)  
+	[Batch Cleanup 구현 코드 - 4 DB Update 처리](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/repository/chat_file_repository_impl.go#L58-L67)  
 
 ---
 
