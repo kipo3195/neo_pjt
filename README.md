@@ -144,14 +144,19 @@ Client
 
 ### Design
 - **Sticky Worker (User Hash 기반)**  
-  각 사용자의 이벤트를 특정 Worker에 고정 분배하여, Worker 내부에서는 **Lock 없이 상태 관리** 가능.
-
+  각 사용자의 이벤트를 특정 Worker에 고정 분배하여, Worker 내부에서는 **Lock 없이 상태 관리** 가능.  
+  [Sticky Worker (User Hash 기반) 구현 코드 - 1 UserHash Sharding Map](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L57-L76)  
+  [Sticky Worker (User Hash 기반) 구현 코드 - 2 UserHash 기반 인덱스 추출](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L103-L108)  
+  [Sticky Worker (User Hash 기반) 구현 코드 - 3 해당 워커 전용 채널에 전송](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L91-L100)
+  
 - **Timer 기반 Debouncing**  
-  이벤트를 일정 시간 동안 모아서 배칭 처리함으로써 클라이언트 전송 횟수를 최소화하고 **I/O 효율 향상**.
+  이벤트를 일정 시간 동안 모아서 배칭 처리함으로써 클라이언트 전송 횟수를 최소화하고 **I/O 효율 향상**.  
+  [Timer 기반 Debouncing 구현 코드 - 1 Debouncing 처리 함수](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L110-L180)  
 
 - **Worker Pool 구조**  
-  Worker Goroutine이 독립적으로 이벤트를 처리하고, 채널(Channel) 기반으로 이벤트를 전달.
-
+  Worker Goroutine이 독립적으로 이벤트를 처리하고, 채널(Channel) 기반으로 이벤트를 전달.  
+  [Worker Pool 구조 구현 코드 - 1](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L33-L46)  
+  
 ---
 
 ### Data Structure
@@ -229,11 +234,17 @@ Client
 
 ### Design
 - **신규 요청 차단**
-    - HTTP/gRPC 서버에 더 이상 요청이 들어오지 않도록 막음
+	HTTP/gRPC 서버에 더 이상 요청이 들어오지 않도록 막음  
+    [신규 요청 차단 구현 코드 - 1 HTTP & gRPC Shutdown 실행](https://github.com/kipo3195/neo_pjt/blob/main/message/cmd/main.go#L68-L82)  
+
 - **Worker Pool Job 완료 대기**
-    - 처리 중인 이벤트가 안전하게 끝날 때까지 대기
+	처리 중인 이벤트가 안전하게 끝날 때까지 대기
+  	[Worker Pool Job 완료 대기 구현 코드 - 1](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_chat_module.go#L45-L62)  
+      
 - **외부 연결 종료**
-    - Redis, NATS, DB 등 연결을 순차적으로 종료
+  	Redis, NATS, DB 등 연결을 순차적으로 종료
+    [외부 연결 종료 구현 코드 - 1](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_app.go#L122-L154)  
+      
       
 ---
 
