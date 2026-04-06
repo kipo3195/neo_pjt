@@ -522,4 +522,92 @@ Message Service 교차 검증
     - Message Service와 File Service 간 gRPC 교차 검증으로 상태 일관성 유지
 - **스토리지 비용 최적화**
     - Batch Service의 스케쥴링 작업으로 정합성이 확보되지 않은 파일 정리 및 불필요한 파일 저장 비용 감소
+ 
+---
 
+## WebSocket Benchmark (Java Jetty vs Go)
+
+### 1. Test Goal
+
+WebSocket 기반 메신저 서버 구현 시 다음 지표를 비교하기 위해 벤치마크를 수행하였다.
+
+- **Memory per Connection** — 연결당 메모리 사용량
+
+---
+
+### 2. Test Environment
+
+**Server Spec**
+
+- CPU : Intel Xeon Silver 4310 (8 Core)
+- Memory : 62GB
+- Virtualization : KVM
+- OS : Linux
+- CPU(s): 8
+- Model name: Intel(R) Xeon(R) Silver 4310 CPU @ 2.10GHz
+- Architecture: x86_64
+
+### 3. Test Method
+
+각 서버에서 WebSocket 연결 수를 증가시키면서 프로세스 RSS 메모리 증가량을 측정하였다.
+```
+Memory per connection
+=
+(end RSS - start RSS) / connections
+```
+측정 항목
+
+- start RSS : 연결 전 메모리  
+- end RSS : 연결 후 메모리  
+- increase : 증가량  
+- memory / connection : 연결당 메모리  
+
+### 4. Benchmark Result
+
+**Java Jetty WebSocket**  
+Jetty 기반 WebSocket 서버는 다음 구조로 동작한다.  
+- WebSocket Session 객체 생성  
+- Session Map 관리 (중앙에서 관리)
+- Ping / Pong 처리
+- **Idle Session**
+  
+| Connections | Start RSS | End RSS   | Start OU   | End OU      | Increase  | Memory / Conn  |
+| ----------- | --------- | --------- | ---------- | ----------- | --------- | -------------- |
+| 1000        | 446240 KB | 754480 KB | 29293.5 KB | 101198.0 KB | 71905 KB  | **≈ 71.9 KB** |
+| 2000        | 437892 KB | 821192 KB | 29215.5 KB | 157620.0 KB | 128405 KB | **≈ 64.2 KB**  |
+| 3000        | 445944 KB | 1110752 KB| 29146.0 KB | 222371.5 KB | 284104 KB | **≈ 74.1 KB**  |
+
+**Result**  
+```
+≈ 70KB per connection
+```
+
+**Go WebSocket**
+Go 서버는 다음 구조로 동작한다.
+- connection 당 read goroutine  (독립적인 세션 관리)
+- connection 당 write goroutine  (독립적인 세션 관리)
+- ping / pong 처리
+- **Idle Session**
+- 
+| Connections |  Start HeapAlloc | End HeapAlloc | Increase  | Memory / Conn  |
+| ----------- | ---------------- | ------------- | --------- | -------------- |
+| 1000        | 745 KB			 | 19002 KB 	 | 18257 KB  | **≈ 18.2 KB**  |
+| 2000        | 745 KB 			 | 36947 KB      | 36202 KB  | **≈ 18.1 KB**  |
+| 3000        | 744 KB 		     | 54891 KB      | 54147 KB  | **≈ 18.0 KB**  |
+
+**Result**    
+```
+≈ 18KB per connection
+```
+**Go WebSocket은 Jetty 대비 약 70% 적은 메모리를 사용한다.**
+
+### 6. Conclusion
+| Runtime  | Memory / Connection |
+|--------  |---------------------|
+| Java Jetty | **70KB ~ 75KB** |
+| Go WebSocket | **18KB** |
+
+**결론**
+- **Go WebSocket 서버는 Jetty 대비 약 절반 수준의 메모리 사용**  
+- **Go WebSocket 서버는 connection 증가 시 선형적으로 확장**  
+- **대규모 WebSocket 서비스에서 Go가 메모리 효율 측면에서 유리**  
