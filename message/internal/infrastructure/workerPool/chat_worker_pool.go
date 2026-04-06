@@ -23,7 +23,7 @@ type chatWorkerPool struct {
 type ChatWorkerPool interface {
 	AddTask(j *job.ChatLineJob)
 	Init()
-	Stop() // 리소스 정리용 (선택적이지만 권장됨)
+	Stop() bool // 리소스 정리용 (선택적이지만 권장됨)
 }
 
 // 인터페이스 타입으로 반환
@@ -77,12 +77,12 @@ func (p *chatWorkerPool) Init() {
 
 // 워커 풀에서 Stop()의 주요 역할은 새로운 Job의 수신을 중단하고,
 // 대기 중인 Job을 모두 처리한 후, 워커 고루틴들을 정상적으로 종료시키는 것입니다.
-func (p *chatWorkerPool) Stop() {
+func (p *chatWorkerPool) Stop() bool {
 	p.mu.Lock() // 잠금을 걸어서 AddTask가 동시에 실행되지 못하게 함
 	if p.isClosed {
 		// p.jobs가 이미 닫힌 상태면 panic이 발생 할 수 있으므로
 		p.mu.Unlock()
-		return
+		return true
 	}
 	p.isClosed = true // 상태 변경
 	// 1. jobs 채널을 닫아 AddTask 호출을 막고,
@@ -110,15 +110,13 @@ func (p *chatWorkerPool) Stop() {
 	case <-done:
 		// 모든 고루틴이 종료되어 close(done)이 실행됨.
 		log.Println("[chatWorkerPool] All workers stopped gracefully.")
+		return true
 	case <-ctx.Done():
 		// 모든 고루틴이 종료되어 close(done)이 실행되기 전에 ctx의 timeout이 발생함.
 		log.Printf("[chatWorkerPool] Stop timed out after %v. Forcing shutdown.", 30)
 		// 여기서 필요하다면 강제 종료를 위한 추가 로직 수행
+		return false
 	}
-
-	// ctx 타임아웃에 의해 즉시 종료 되길 원한다면 해당 로직 주석처리 필수
-	// p.wg.Wait()
-	log.Println("ChatWorkerPool Stopped. All workers finished safely.")
 }
 
 // worker 메서드는 풀의 내부 구현 상세이며, 외부(Usecase)에서 호출할 필요가 없으므로 인터페이스에 포함되면 안 됩니다.

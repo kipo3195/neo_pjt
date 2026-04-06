@@ -122,14 +122,22 @@ func InitApp() (*AppContainer, error) {
 	cleanup := func() {
 		log.Println("--- Graceful Cleanup Start ---")
 
+		var workerDone bool
+
 		if chatModule != nil {
 			log.Println("Closing chatModule workers...")
-			chatModule.Cleanup() // module에 있는 cleanup은 내부에 별도 고루틴을 통한 workerpool이 존재하는 경우 호출한다.
+			workerDone = chatModule.Cleanup()
 		}
 
 		if mb != nil {
-			log.Println("Closing Message Broker...")
-			mb.Close()
+			if workerDone {
+				log.Println("Closing Message Broker...")
+				mb.Close()
+			} else {
+				log.Println("Skipping Message Broker close due to unfinished workers")
+				// or 강제 flush / retry 전략
+				mb.Close() // 상황에 따라 선택
+			}
 		}
 
 		if fileServiceGrpcClient != nil {
