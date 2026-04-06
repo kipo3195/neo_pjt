@@ -567,76 +567,45 @@ Memory per connection
 **Java Jetty WebSocket**  
 Jetty 기반 WebSocket 서버는 다음 구조로 동작한다.  
 - WebSocket Session 객체 생성  
-- Session Map 관리  
+- Session Map 관리 (중앙에서 관리)
 - Ping / Pong 처리
+- **Idle Session**
   
-| Connections | Start RSS | End RSS   | Increase  | Memory / Conn  |
-| ----------- | --------- | --------- | --------- | -------------- |
-| 100         | 310020 KB | 318128 KB | 8108 KB   | **≈ 80 KB**    |
-| 1000        | 336744 KB | 445484 KB | 108740 KB | **≈ 108.7 KB** |
-| 3000        | 337800 KB | 539868 KB | 202068 KB | **≈ 67.3 KB**  |
-| 3794        | 337888 KB | 621992 KB | 284104 KB | **≈ 74.9 KB**  |
+| Connections | Start RSS | End RSS   | Start OU   | End OU      | Increase  | Memory / Conn  |
+| ----------- | --------- | --------- | ---------- | ----------- | --------- | -------------- |
+| 1000        | 446240 KB | 754480 KB | 29293.5 KB | 101198.0 KB | 71905 KB  | **≈ 71.9 KB** |
+| 2000        | 437892 KB | 821192 KB | 29215.5 KB | 157620.0 KB | 128405 KB | **≈ 64.2 KB**  |
+| 3000        | 445944 KB | 1110752 KB| 29146.0 KB | 222371.5 KB | 284104 KB | **≈ 74.1 KB**  |
 
 **Result**  
 ```
-≈ 70KB ~ 100KB per connection
+≈ 70KB per connection
 ```
 
 **Go WebSocket**
 Go 서버는 다음 구조로 동작한다.
-- connection 당 read goroutine  
-- connection 당 write goroutine  
+- connection 당 read goroutine  (독립적인 세션 관리)
+- connection 당 write goroutine  (독립적인 세션 관리)
 - ping / pong 처리
+- **Idle Session**
+- 
+| Connections |  Start HeapAlloc | End HeapAlloc | Increase  | Memory / Conn  |
+| ----------- | ---------------- | ------------- | --------- | -------------- |
+| 1000        | 745 KB			 | 19002 KB 	 | 18257 KB  | **≈ 18.2 KB**  |
+| 2000        | 745 KB 			 | 36947 KB      | 36202 KB  | **≈ 18.1 KB**  |
+| 3000        | 744 KB 		     | 54891 KB      | 54147 KB  | **≈ 18.0 KB**  |
 
 **Result**    
 ```
-≈ 31KB ~ 33KB per connection
+≈ 18KB per connection
 ```
-**Go WebSocket은 Jetty 대비 약 50~60% 적은 메모리를 사용한다.**
-
-### 5. Analysis
-**JVM Heap Expansion**
-
-JVM Heap은 일반적으로 다음 패턴으로 증가한다.
-```
-Memory usage 증가
-→ GC 발생
-→ Heap Expansion
-```
-따라서 **1000 connection 구간에서 Heap 확장이 발생**했을 가능성이 있다.  
-
-**Jetty ByteBuffer Pool**
-
-Jetty는 내부적으로 ByteBufferPool을 사용한다.
-
-동작 방식
-```
-초기 connection → buffer 생성
-이후 connection → buffer 재사용
-```
-이 때문에
-```
-connection 증가
-→ conn 당 메모리 감소
-```
-현상이 발생할 수 있다.  
-
-**Go Runtime Memory Model**
-
-Go WebSocket은 다음 특징을 가진다.
-
-- goroutine stack이 매우 작음 (~2KB)  
-- runtime memory overhead 낮음  
-- connection 별 메모리 증가가 선형적  
-
-따라서 RSS 증가가 **connection 수에 거의 비례**한다.
-
+**Go WebSocket은 Jetty 대비 약 70% 적은 메모리를 사용한다.**
 
 ### 6. Conclusion
-| Runtime | Memory / Connection |
-|--------|---------------------|
-| Java Jetty | **70KB ~ 100KB** |
-| Go WebSocket | **31KB ~ 33KB** |
+| Runtime  | Memory / Connection |
+|--------  |---------------------|
+| Java Jetty | **70KB ~ 75KB** |
+| Go WebSocket | **18KB** |
 
 **결론**
 - **Go WebSocket 서버는 Jetty 대비 약 절반 수준의 메모리 사용**  
