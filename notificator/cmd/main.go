@@ -7,6 +7,7 @@ import (
 	"notificator/internal/di"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 )
@@ -29,6 +30,9 @@ func main() {
 		}
 	}()
 
+	// 세션당 메모리 사용량 측정용
+	// go measure()
+
 	// 시스템 시그널 대기 (SIGINT, SIGTERM)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -49,4 +53,57 @@ func main() {
 	// modules.NoteModule.Cleanup()
 
 	log.Println("Notificator service exiting.")
+}
+
+func measure() {
+	time.Sleep(5 * time.Second) // 서버 안정화
+
+	before := printMem("before")
+
+	log.Println("👉 3000 connections 붙이세요")
+	time.Sleep(40 * time.Second)
+	after1000 := printMem("after 3000")
+
+	log.Println("===== RESULT =====")
+
+	log.Printf("0→3000   : start=%d KB, end=%d KB, delta=%d KB, per=%d KB",
+		before.HeapKB,
+		after1000.HeapKB,
+		after1000.HeapKB-before.HeapKB,
+		(after1000.HeapKB-before.HeapKB)/3000,
+	)
+
+	// log.Printf("1000→2000: start=%d KB, end=%d KB, delta=%d KB, per=%d KB 🔥",
+	// 	after1000.HeapKB,
+	// 	after2000.HeapKB,
+	// 	after2000.HeapKB-after1000.HeapKB,
+	// 	(after2000.HeapKB-after1000.HeapKB)/1000,
+	// )
+
+	// log.Printf("2000→3000: start=%d KB, end=%d KB, delta=%d KB, per=%d KB",
+	// 	after2000.HeapKB,
+	// 	after3000.HeapKB,
+	// 	after3000.HeapKB-after2000.HeapKB,
+	// 	(after3000.HeapKB-after2000.HeapKB)/1000,
+	// )
+}
+
+type Mem struct {
+	HeapKB uint64
+}
+
+func printMem(tag string) Mem {
+	runtime.GC()
+	runtime.GC()
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	heapKB := m.HeapAlloc / 1024
+
+	log.Printf("[%s] HeapAlloc = %d KB", tag, heapKB)
+
+	return Mem{
+		HeapKB: heapKB,
+	}
 }
