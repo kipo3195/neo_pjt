@@ -88,11 +88,11 @@ Session Channel
 
 ## Implementation
 
-- [Connection Lifecycle Goroutine](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/adapter/http/router/notificator_route.go#L40-L47)
+- [Connection Lifecycle Goroutine](https://github.com/kipo3195/neo_pjt/blob/541be493b081f18b4450cfe269bbe1dab66db33f/notificator/internal/adapter/http/handler/notificator_service_handler.go#L42-L146)
 
-- [WebSocket Read / Write Handling](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/adapter/http/handler/notificator_service_handler.go#L42-L146)
+- [WebSocket Read / Write Handling](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/adapter/http/handler/notificator_service_handler.go#L70-L146)
 
-- [Channel 기반 Message Sending](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/application/usecase/socket_sender_usecase.go#L55-L83)
+- [Channel 기반 Message Sending](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/application/usecase/socket_sender_usecase.go#L38-L41)
 
 ## Result
 
@@ -126,9 +126,9 @@ Session Channel
 
 ## Implementation
 
-- [Worker Pool 구조](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go)
+- [Worker Pool 구조](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L1-L262)
 
-- [UserHash 기반 Worker Sharding](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L57-L76)
+- [UserHash 기반 Worker Sharding](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L78-L108)
 
 - [Debouncing Timer 처리](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/infrastructure/workerPool/chat_count_worker_pool.go#L110-L180)
 
@@ -160,11 +160,11 @@ Redis / NATS / DB 연결 종료
 
 ## Implementation
 
-- [HTTP / gRPC Shutdown 처리](https://github.com/kipo3195/neo_pjt/blob/main/message/cmd/main.go#L68-L82)
+- [HTTP / gRPC Shutdown 처리](https://github.com/kipo3195/neo_pjt/blob/main/message/cmd/main.go#L14-L99)
 
-- [Worker Pool Job 완료 대기](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_chat_module.go#L45-L62)
+- [Worker Pool Job 완료 대기](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/infrastructure/workerPool/chat_worker_pool.go#L78-L120)
 
-- [Redis / NATS / DB Connection Close](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_app.go#L122-L154)
+- [Redis / NATS / DB Connection Close](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/di/init_app.go#L121-L162)
 
 ## Result
 
@@ -192,7 +192,7 @@ Message Service
 NATS Publish
 ↓
 Notificator Services
-### Request / Reply
+↓ pub/sub & Request / Reply
 Message Service
 ↓
 NATS Request
@@ -204,9 +204,9 @@ Reply
 
 ## Implementation
 
-- [NATS Publisher](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/application/usecase/chat_usecase.go)
+- [NATS Publisher](https://github.com/kipo3195/neo_pjt/blob/main/message/internal/infrastructure/workerPool/chat_worker_pool.go#L132-L163)
 
-- [NATS Subscriber](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/adapter/nats/subscriber)
+- [NATS Subscriber](https://github.com/kipo3195/neo_pjt/blob/main/notificator/internal/di/init_app.go#L79-L87)
 
 ## Result
 
@@ -232,6 +232,8 @@ File Service (Upload URL + TID)
 ↓
 Storage Upload
 ↓
+File Service Upload End
+↓
 Redis Upload Status 저장
 ↓
 채팅 발송 (TID)
@@ -248,11 +250,11 @@ Batch Cleanup
 
 ## Implementation
 
-- [Pre-signed URL 발급](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/application/usecase/file_url_usecase.go)
+- [Pre-signed URL 발급](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/repository/oracle_file_url_storage_repository_impl.go#L32-L57)
 
-- [Redis Upload Status 저장](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/cacheStorage/file_url_cache_impl.go)
+- [Redis Upload Status 저장](https://github.com/kipo3195/neo_pjt/blob/main/file/internal/infrastructure/persistence/cacheStorage/file_url_cache_impl.go#L25-L47)
 
-- [Batch Cleanup 작업](https://github.com/kipo3195/neo_pjt/blob/main/batch/internal/application/task)
+- [Batch Cleanup 작업](https://github.com/kipo3195/neo_pjt/blob/main/batch/internal/application/service/chat_file_batch_service.go#L22-L53)
 
 ---
 
