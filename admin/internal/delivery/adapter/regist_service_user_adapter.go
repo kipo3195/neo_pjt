@@ -6,11 +6,14 @@ import (
 	"admin/internal/domain/serviceUser/entity"
 )
 
-func MakeRegistServiceUserInput(org string, userId []string, userAuth string) input.RegistServiceUserInput {
+func MakeRegistServiceUserInput(org string, userId []string, userAuth string, userIdPrefix string, start int, end int) input.RegistServiceUserInput {
 	return input.RegistServiceUserInput{
-		Org:      org,
-		UserId:   userId,
-		UserAuth: userAuth,
+		Org:          org,
+		UserId:       userId,
+		UserAuth:     userAuth,
+		UserIdPrefix: userIdPrefix,
+		Start:        start,
+		End:          end,
 	}
 }
 

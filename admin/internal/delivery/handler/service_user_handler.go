@@ -41,7 +41,7 @@ func (r *ServiceUserHandler) RegistServiceUser(c *gin.Context) {
 		return
 	}
 
-	input := adapter.MakeRegistServiceUserInput(req.Org, req.UserId, req.UserAuth)
+	input := adapter.MakeRegistServiceUserInput(req.Org, req.UserId, req.UserAuth, "", 0, 0)
 	output, err := r.usecase.RegistServiecUser(ctx, input)
 
 	if err != nil {

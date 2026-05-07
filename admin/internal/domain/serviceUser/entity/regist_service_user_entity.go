@@ -1,13 +1,19 @@
 package entity
 
 type RegistServiceUserEntity struct {
-	Org    string
-	UserId []string
+	Org          string
+	UserIdPrefix string
+	UserId       []string
+	Start        int
+	End          int
 }
 
-func MakeRegistServiceUserEntity(org string, userId []string) RegistServiceUserEntity {
+func MakeRegistServiceUserEntity(org string, userId []string, userIdPrefix string, start int, end int) RegistServiceUserEntity {
 	return RegistServiceUserEntity{
-		Org:    org,
-		UserId: userId,
+		Org:          org,
+		UserId:       userId,
+		UserIdPrefix: userIdPrefix,
+		Start:        start,
+		End:          end,
 	}
 }

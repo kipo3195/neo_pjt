@@ -11,6 +11,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"log"
 
 	"github.com/nats-io/nats.go"
@@ -35,11 +36,11 @@ func NewServiceUserUsecase(repo repository.ServiceUserRepository, connector *nat
 
 func (r *serviceUserUsecase) RegistServiecUser(ctx context.Context, input input.RegistServiceUserInput) (output.RegistServiceUserOutput, error) {
 
-	en := entity.MakeRegistServiceUserEntity(input.Org, input.UserId)
+	en := entity.MakeRegistServiceUserEntity(input.Org, input.UserId, input.UserIdPrefix, input.Start, input.End)
 
 	serviceUsers := make([]entity.ServiceUserEntity, 0)
 
-	for _, e := range en.UserId {
+	for i := en.Start; i < en.End; i++ {
 
 		hash, err := generateUserHash()
 
@@ -58,7 +59,7 @@ func (r *serviceUserUsecase) RegistServiecUser(ctx context.Context, input input.
 		}
 
 		temp := entity.ServiceUserEntity{
-			UserId:   e,
+			UserId:   fmt.Sprintf("%s%06d", en.UserIdPrefix, i),
 			UserHash: hash,
 			Salt:     salt,
 			UserAuth: input.UserAuth,
