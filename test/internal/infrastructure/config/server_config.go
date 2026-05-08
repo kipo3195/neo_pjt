@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -20,10 +21,13 @@ func isLocal() bool {
 func NewServerConfig() *ServerConfig {
 
 	if isLocal() {
+		fmt.Println("11")
 		godotenv.Load()
 	}
 
 	targetServerIP := os.Getenv("TARGET_SERVER_IP")
+
+	fmt.Println("targetServerIP :", targetServerIP)
 
 	return &ServerConfig{
 		ServerIP: targetServerIP,

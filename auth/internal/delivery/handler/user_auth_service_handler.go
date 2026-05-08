@@ -105,3 +105,40 @@ func (h *UserAuthServiceHandler) UserAuthAndDeviceCheck(c *gin.Context) {
 		return
 	}
 }
+
+func (h *UserAuthServiceHandler) UserAuthAndTest(c *gin.Context) {
+
+	ctx := c.Request.Context()
+	var req userAuthService.UserAuthServiceTestRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	// 필수 데이터 검증
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	// device가 등록 완료된 상태일때 실행됨
+	// token 도메인. at, rt 발급 체크 및 response
+	userAuthTokenInput := adapter.MakeGenerateAuthTokenInput(req.UserId, req.Uuid, true)
+	output, err := h.svc.Token.GenerateAuthToken(ctx, userAuthTokenInput)
+	if err != nil {
+		log.Println("[UserAuthAndDeviceCheck] 인증 실패 3")
+		response.SendError(c, commonConsts.SERVER_ERROR, commonConsts.ERROR, commonConsts.E_500, commonConsts.E_500_MSG)
+		return
+	}
+
+	res := userAuthService.UserAuthServiceTestResponse{
+		RefreshToken:    output.RefreshToken,
+		RefreshTokenExp: output.RefreshTokenExp,
+		AccessToken:     output.AccessToken,
+	}
+	response.SendSuccess(c, res)
+	return
+
+}

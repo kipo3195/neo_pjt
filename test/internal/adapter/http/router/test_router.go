@@ -33,5 +33,4 @@ func NewTestRouter(serviceName string) TestRouter {
 func (r *testRouter) SetLoginRoutes(handler *handler.LoginHandler) {
 	client := r.parent.Group("/client/v1/login")
 	client.POST("", handler.PutLogin)
-
 }

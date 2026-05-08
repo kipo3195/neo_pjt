@@ -79,6 +79,7 @@ func (r *authRouter) SetUserAuthRoutes(handler *handler.UserAuthHandler) {
 func (r *authRouter) SetUserAuthServiceRoutes(handler *handler.UserAuthServiceHandler) {
 	client := r.parent.Group("/client/v1/user/auth")
 	client.POST("/", handler.UserAuthAndDeviceCheck)
+	client.POST("/test", handler.UserAuthAndTest)
 }
 
 func (r *authRouter) SetUserAuthDeviceServiceRoutes(handler *handler.DeviceAuthServiceHandler) {
