@@ -57,7 +57,7 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 
 	/* header에 있는 AT를 파싱하여 사용자 정보 체크 */
 	user := r.Context().Value(consts.USER_HASH)
-	log.Println("Notificator service connect request userHash :", user)
+	//log.Println("Notificator service connect request userHash :", user)
 
 	if user == nil || user == "" {
 		log.Println("Notificator service connect error. userHash invalid.")
@@ -71,12 +71,12 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	go h.svc.SocketSender.SaveConnection(conn, userHash, h.websocketConfig)
 
 	/* 내가 참여중인 방 notificator 서비스 메모리에 로딩 처리 시작 */
-	err = h.svc.ChatRoom.SubscribeChat(userHash)
-	if err != nil {
-		log.Println("Notificator service connect error. Subscribe chat room error.")
-		// todo error msg
-		return
-	}
+	// err = h.svc.ChatRoom.SubscribeChat(userHash)
+	// if err != nil {
+	// 	log.Println("Notificator service connect error. Subscribe chat room error.")
+	// 	// todo error msg
+	// 	return
+	// }
 	defer h.svc.ChatRoom.UnSubscribeChat(userHash)
 
 	/* pong 처리 */
@@ -101,6 +101,9 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	}
 	response.SendSuccess(conn, res)
 
+	/*C100K 점검용 server stats 연결 성공시*/
+	h.svc.Login.AddStats()
+
 	// 읽기 (client -> server)
 	for {
 		// 메시지는 반복해서 수신, ReadMessage는 블로킹 함수
@@ -108,6 +111,8 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 		if err != nil {
 			// 클라이언트가 끊었을때 websocket: close 1000 (normal)
 			log.Println("Notificator service Read msg error:", err)
+			/*C100K 점검용 server stats 연결 종료시*/
+			h.svc.Login.DelStats()
 			break
 		}
 

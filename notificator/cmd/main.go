@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"notificator/internal/di"
 	"os"
 	"os/signal"
@@ -13,8 +14,6 @@ import (
 )
 
 func main() {
-
-	log.Println("notificator 서비스 배포 테스트 1")
 
 	modules, err := di.InitApp()
 
@@ -32,6 +31,10 @@ func main() {
 
 	// 세션당 메모리 사용량 측정용
 	// go measure()
+
+	/*C100K 점검용 pprof endpoint */
+	enableProfiles()   // block / mutex profile 활성화
+	startDebugServer() // 부하 테스트 pprof endpoint
 
 	// 시스템 시그널 대기 (SIGINT, SIGTERM)
 	quit := make(chan os.Signal, 1)
@@ -88,6 +91,15 @@ func measure() {
 	// )
 }
 
+func startDebugServer() {
+	go func() {
+		log.Println("debug server listening on :6060")
+		if err := http.ListenAndServe(":6060", nil); err != nil {
+			log.Println("debug server error:", err)
+		}
+	}()
+}
+
 type Mem struct {
 	HeapKB uint64
 }
@@ -106,4 +118,9 @@ func printMem(tag string) Mem {
 	return Mem{
 		HeapKB: heapKB,
 	}
+}
+
+func enableProfiles() {
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
 }

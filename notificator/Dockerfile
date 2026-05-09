@@ -22,7 +22,7 @@ WORKDIR /root/
 # 빌드된 바이너리만 복사
 COPY --from=builder /notificator-service .
 
-EXPOSE 8082
+EXPOSE 8082 6060
 CMD ["./notificator-service"]
 
 

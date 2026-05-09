@@ -65,9 +65,10 @@ func InitApp() (*AppContainer, error) {
 	serviceUsersModule := InitServiceUsersModule(db)
 
 	// ---- Service Handler Init ----
-	notificatorServiceModule := InitNotificatorServiceModule(chatRoomModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
+	notificatorServiceModule, statsModule := InitNotificatorServiceModule(chatRoomModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
 
 	router.SetNotificatorServiceRoutes(notificatorServiceModule)
+	router.SetStatRoutes(statsModule)
 
 	// ---- Message Broker Subscribe ----
 	// 각 도메인별 핸들러 정의

@@ -18,6 +18,7 @@ type notificatorRouter struct {
 
 type NotificatorRouter interface {
 	SetNotificatorServiceRoutes(handler *handler.NotificatorServiceHandler)
+	SetStatsRoutes(handler *handler.StatsHandler)
 }
 
 func NewNotificatorRouter(serviceName string, tokenConfig config.TokenHashConfig, logger logger.Logger) notificatorRouter {
@@ -43,5 +44,12 @@ func (r *notificatorRouter) SetNotificatorServiceRoutes(handler *handler.Notific
 	client.Use(middleware.LoggingMiddleware(r.logger))
 	client.Use(middleware.AuthMiddleware(r.logger, r.tokenConfig))
 	client.HandleFunc("/connect", handler.NotificatorConnect).Methods(http.MethodGet)
+
+}
+
+func (r *notificatorRouter) SetStatRoutes(handler *handler.StatsHandler) {
+
+	client := r.R.PathPrefix("/debug").Subrouter()
+	client.HandleFunc("/stats", handler.GetServerStats).Methods(http.MethodGet)
 
 }

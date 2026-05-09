@@ -50,5 +50,5 @@ func (r *sendConnectionStorage) PutConnection(userHash string, entity *entity.Se
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.connectionMap[userHash] = entity
-	log.Println("[PutConnection] userHash : ", userHash)
+	//log.Println("[PutConnection] userHash : ", userHash)
 }

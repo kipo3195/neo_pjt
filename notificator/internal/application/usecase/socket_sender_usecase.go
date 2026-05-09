@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"log"
 	"notificator/internal/domain/socketSender/entity"
 	"notificator/internal/infrastructure/config"
 	"notificator/internal/infrastructure/storage"
@@ -50,7 +49,7 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 		conn.Close()                                       // 소켓 연결 종료
 	}()
 
-	log.Printf("[SaveConnection] Start for user: %s", userHash)
+	//log.Printf("[SaveConnection] Start for user: %s", userHash)
 
 	for {
 		select {
@@ -61,22 +60,22 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 
 			if !ok {
 				// 외부에서 채널을 닫았을 경우 (정상 종료 시나리오)
-				log.Printf("[SaveConnection] Channel closed for user: %s", userHash)
+				//log.Printf("[SaveConnection] Channel closed for user: %s", userHash)
 				conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
 			if err := conn.WriteJSON(message); err != nil {
-				log.Printf("[SaveConnection] WriteJSON error: %v", err)
+				//log.Printf("[SaveConnection] WriteJSON error: %v", err)
 				return // 에러 발생 시 고루틴 종료 (defer 실행)
 			}
 
 		case <-ticker.C: // 주기적인 Ping 발송 시간
 			// 쓰기 타임아웃 설정
 			conn.SetWriteDeadline(time.Now().Add(writeWait))
-			log.Println("[SaveConnection] Sending Ping to user:", userHash)
+			//log.Println("[SaveConnection] Sending Ping to user:", userHash)
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Printf("[SaveConnection] Ping error for user %s: %v", userHash, err)
+				//log.Printf("[SaveConnection] Ping error for user %s: %v", userHash, err)
 				return // 에러 발생 시 고루틴 종료 (defer 실행)
 			}
 		}

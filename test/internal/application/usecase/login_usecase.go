@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"sort"
 	"sync"
@@ -47,7 +48,7 @@ type StatsSnapshot struct {
 	TokenError    int64
 	WSError       int64
 	AvgLatency    time.Duration
-	P95Latency    time.Duration
+	P95Latency    time.Duration // 시작 시점 ~ 웹소켓 연결 시점까지의 기준 시간을 측정
 }
 
 func (s *Stats) Snapshot() StatsSnapshot {
@@ -108,18 +109,56 @@ func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) 
 	fmt.Println("putLogin init!")
 	var wg sync.WaitGroup
 	stats := &Stats{}
-	fmt.Println("PutLogin - 1 : ", input.ConnectionCount)
 	wg.Add(input.ConnectionCount)
 	for i := 1; i <= input.ConnectionCount; i++ {
-		go login(ctx, &wg, r.sfg.ServerIP, i, input.UserIdPrefix, stats)
+		go login(&wg, r.sfg.ServerIP, i, input.UserIdPrefix, stats)
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				snapshot := stats.Snapshot()
+				log.Printf(
+					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d avgLatency=%s p95Latency=%s",
+					snapshot.Attempted,
+					snapshot.Connected,
+					snapshot.Failed,
+					snapshot.Closed,
+					snapshot.CurrentActive,
+					snapshot.TokenError,
+					snapshot.WSError,
+					snapshot.AvgLatency,
+					snapshot.P95Latency,
+				)
+
+			case <-ctx.Done():
+				snapshot := stats.Snapshot()
+				log.Printf(
+					"stats end. attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d avgLatency=%s p95Latency=%s",
+					snapshot.Attempted,
+					snapshot.Connected,
+					snapshot.Failed,
+					snapshot.Closed,
+					snapshot.CurrentActive,
+					snapshot.TokenError,
+					snapshot.WSError,
+					snapshot.AvgLatency,
+					snapshot.P95Latency,
+				)
+				return
+			}
+		}
+	}()
 	wg.Wait()
 	fmt.Println("putLogin time out!")
-	fmt.Println(stats.Snapshot())
+	cancel()
 
 }
 
-func login(ctx context.Context, wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats) {
+func login(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats) {
 	defer wg.Done()
 	// WebSocket 연결을 시도한 총 수
 	stats.Attempted.Add(1)
@@ -146,6 +185,7 @@ func login(ctx context.Context, wg *sync.WaitGroup, serverIP string, i int, user
 		stats.Failed.Add(1)
 		return
 	}
+	// 시작 시점 ~ 인증 토큰 발급 + 웹소켓 연결 시점까지의 기준 시간을 측정
 	latency := time.Since(start)
 	stats.RecordConnectLatency(latency)
 
@@ -162,17 +202,12 @@ func login(ctx context.Context, wg *sync.WaitGroup, serverIP string, i int, user
 		stats.CurrentActive.Add(-1)
 	}()
 	// 연결 유지
-	go func() {
-		for {
-			_, _, err := conn.ReadMessage()
-			if err != nil {
-				return
-			}
+	for {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			return
 		}
-	}()
-	fmt.Println("연결 유지!")
-	<-ctx.Done()
-	fmt.Println("연결 유지 끝")
+	}
 }
 
 func issueToken(serverIP string, userId string) (string, error) {
@@ -184,7 +219,6 @@ func issueToken(serverIP string, userId string) (string, error) {
 		url = fmt.Sprintf("http://%s/auth/client/v1/user/auth/test", serverIP)
 	}
 
-	fmt.Println("issueToken url : ", url)
 	reqBody := dto.TokenRequest{
 		UserId: userId,
 	}
