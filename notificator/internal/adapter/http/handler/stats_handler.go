@@ -22,8 +22,6 @@ func NewStatsHandler(loginUsecase usecase.LoginUsecase) *StatsHandler {
 func (h *StatsHandler) GetServerStats(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("[GetServerStats] call")
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
 
 	ticker := time.NewTicker(1 * time.Second)
 	const mb = 1024 * 1024
@@ -31,6 +29,8 @@ func (h *StatsHandler) GetServerStats(w http.ResponseWriter, r *http.Request) {
 		for {
 			select {
 			case <-ticker.C:
+				var m runtime.MemStats
+				runtime.ReadMemStats(&m)
 				active, connected, closed := h.loginUsecase.GetStats()
 
 				log.Printf(

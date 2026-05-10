@@ -4,43 +4,49 @@ import (
 	"context"
 	"log"
 	"net/http"
-	natsBrocker "notificator/internal/delivery/adapter/nats"
-	router "notificator/internal/delivery/router"
+	_ "net/http/pprof"
 	"notificator/internal/di"
-	"notificator/internal/infrastructure/config"
-	"notificator/internal/infrastructure/logger"
-	"notificator/internal/infrastructure/migration"
-	"notificator/internal/infrastructure/sender"
-	"notificator/internal/infrastructure/storage"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 )
 
 func main() {
-	// 1. 서버 및 모듈 초기화
-	server, modules := InitServer()
 
-	// 2. 서버 실행 (비동기)
+	modules, err := di.InitApp()
+
+	if err != nil {
+		// "DB 연결 실패", "설정 파일 누락" 등 구체적인 원인을 출력하고 종료
+		log.Fatalf("Notificator service init error: %v", err)
+	}
+
 	go func() {
 		log.Println("Notificator service is running on :8082")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+		if err := modules.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Notificator service listen: %s\n", err)
 		}
 	}()
 
-	// 3. 시스템 시그널 대기 (SIGINT, SIGTERM)
+	// 세션당 메모리 사용량 측정용
+	// go measure()
+
+	/*C100K 점검용 pprof endpoint */
+	enableProfiles()   // block / mutex profile 활성화
+	startDebugServer() // 부하 테스트 pprof endpoint
+
+	// 시스템 시그널 대기 (SIGINT, SIGTERM)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutdown Notificator service ...")
 
-	// 4. Graceful Shutdown 실행
+	// Graceful Shutdown 실행
 	// HTTP 서버 먼저 종료 (새로운 요청 차단)
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
+	if err := modules.Server.Shutdown(ctx); err != nil {
 		log.Fatal("Notificator service shutdown:", err)
 	}
 
@@ -49,81 +55,72 @@ func main() {
 	// 필요하다면 다른 모듈의 Cleanup도 호출
 	// modules.NoteModule.Cleanup()
 
-	log.Println("Notificator service exiting")
+	log.Println("Notificator service exiting.")
 }
 
-// 모듈들을 묶어서 반환하기 위한 구조체
-type AppModules struct {
-	ChatModule *di.ChatModule
-	// 다른 모듈들도 Cleanup이 필요하면 여기에 추가
+func measure() {
+	time.Sleep(5 * time.Second) // 서버 안정화
+
+	before := printMem("before")
+
+	log.Println("👉 3000 connections 붙이세요")
+	time.Sleep(40 * time.Second)
+	after1000 := printMem("after 3000")
+
+	log.Println("===== RESULT =====")
+
+	log.Printf("0→3000   : start=%d KB, end=%d KB, delta=%d KB, per=%d KB",
+		before.HeapKB,
+		after1000.HeapKB,
+		after1000.HeapKB-before.HeapKB,
+		(after1000.HeapKB-before.HeapKB)/3000,
+	)
+
+	// log.Printf("1000→2000: start=%d KB, end=%d KB, delta=%d KB, per=%d KB 🔥",
+	// 	after1000.HeapKB,
+	// 	after2000.HeapKB,
+	// 	after2000.HeapKB-after1000.HeapKB,
+	// 	(after2000.HeapKB-after1000.HeapKB)/1000,
+	// )
+
+	// log.Printf("2000→3000: start=%d KB, end=%d KB, delta=%d KB, per=%d KB",
+	// 	after2000.HeapKB,
+	// 	after3000.HeapKB,
+	// 	after3000.HeapKB-after2000.HeapKB,
+	// 	(after3000.HeapKB-after2000.HeapKB)/1000,
+	// )
 }
 
-func InitServer() (*http.Server, *AppModules) {
+func startDebugServer() {
+	go func() {
+		log.Println("debug server listening on :6060")
+		if err := http.ListenAndServe(":6060", nil); err != nil {
+			log.Println("debug server error:", err)
+		}
+	}()
+}
 
-	// ---- Server Config Init -----
-	sfg := config.NewServerConfig()
+type Mem struct {
+	HeapKB uint64
+}
 
-	// ---- DB Connect -----
-	db := config.ConnectDatabase(sfg)
+func printMem(tag string) Mem {
+	runtime.GC()
+	runtime.GC()
 
-	// ---- DB Migration -----
-	if sfg.AutoMigrate {
-		migration.RunAll(db)
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	heapKB := m.HeapAlloc / 1024
+
+	log.Printf("[%s] HeapAlloc = %d KB", tag, heapKB)
+
+	return Mem{
+		HeapKB: heapKB,
 	}
+}
 
-	// ---- Message Broker init ----
-	mb := config.ConnectMessageBroker(sfg)
-	conn := mb
-
-	// ---- LOGGER Init ----
-	logger := logger.NewSlogLogger()
-
-	// ---- Storage Init -----
-	chatRoomStorage := storage.NewChatRoomStorage()
-	sendConnectionStorage := storage.NewSendConnectionStorage()
-
-	// ---- Websocket sender Init
-	messageSender := sender.NewMessageSender(sendConnectionStorage)
-
-	// ---- Data Loader -----
-
-	// ---- Router Init -----
-	router := router.NewNotificatorRouter("notificator", sfg.TokenConfig, logger)
-
-	// ---- Domain Handler Init -----
-	chatRoomModule := di.InitChatRoomModule(db, chatRoomStorage, sendConnectionStorage, conn, messageSender)
-	chatModule := di.InitChatModule(db, chatRoomStorage, messageSender)
-	noteModule := di.InitNoteModule(db)
-	loginModule := di.InitLoginModule(db)
-	socketSendModule := di.InitSocketSendModule(sendConnectionStorage)
-	serviceUsersModule := di.InitServiceUsersModule(db)
-
-	// ---- Service Handler Init ----
-	notificatorServiceModule := di.InitNotificatorServiceModule(chatRoomModule.Usecase, socketSendModule.Usecase, loginModule.Usecase, sfg.WebsocketConnectionConfig)
-	router.SetNotificatorServiceRoutes(notificatorServiceModule)
-
-	// ---- Message Broker Subscribe ----
-	// 각 도메인별 핸들러 정의
-	chatSub := natsBrocker.NewNatsChatSubscriber(conn, chatModule.Usecase, messageSender)
-	noteSub := natsBrocker.NewNatsNoteSubscriber(conn, noteModule.Usecase, socketSendModule.Usecase)
-	chatRoomSub := natsBrocker.NewNatsChatRoomSubscriber(conn, chatRoomModule.Usecase, socketSendModule.Usecase)
-	serviceUsersSub := natsBrocker.NewNatsServiceUsersSubscriber(conn, serviceUsersModule.Usecase)
-
-	// ---- NATS Subscribe ----
-	// 도메인별 토픽만 구독
-	chatSub.AddSubscribe("chat.broadcast")
-	chatSub.AddSubscribe("chat.count.broadcast")
-	chatSub.AddSubscribe("chat.read.broadcast")
-	noteSub.AddSubscribe("note.broadcast")
-	chatRoomSub.AddSubscribe("chat.room.broadcast")
-	chatRoomSub.AddQueueSubscribe("create.chat.room")
-	serviceUsersSub.AddQueueSubscribe("users.registered")
-
-	server := &http.Server{
-		Addr:    ":8082",
-		Handler: router.R,
-	}
-	return server, &AppModules{
-		ChatModule: chatModule,
-	}
+func enableProfiles() {
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
 }
