@@ -36,7 +36,8 @@ func (r *LoginHandler) PutLogin(c *gin.Context) {
 
 	input := mapper.MakePutLoginInput(req.UserIdPrefix, req.ConnectionCount)
 	// 별도의 고루틴으로 처리
-	go r.usecase.PutLogin(ctx, input)
+	//go r.usecase.PutLogin(ctx, input)
+	go r.usecase.PutLoginRampUp(ctx, input)
 
 	response.SendSuccess(c, "success")
 }

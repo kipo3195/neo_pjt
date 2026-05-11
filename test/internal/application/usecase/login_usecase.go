@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"sort"
 	"sync"
@@ -27,16 +28,30 @@ type Stats struct {
 	CurrentActive atomic.Int64
 	TokenError    atomic.Int64
 	WSError       atomic.Int64
+	Pending       atomic.Int64
 
-	latencyMu sync.Mutex
-	latencies []time.Duration
+	latencyMu      sync.Mutex
+	tokenLatencies []time.Duration
+	wsLatencies    []time.Duration
+	totalLatencies []time.Duration
 }
 
-func (s *Stats) RecordConnectLatency(d time.Duration) {
+func (s *Stats) RecordTokenLatency(d time.Duration) {
 	s.latencyMu.Lock()
 	defer s.latencyMu.Unlock()
+	s.tokenLatencies = append(s.tokenLatencies, d)
+}
 
-	s.latencies = append(s.latencies, d)
+func (s *Stats) RecordWSLatency(d time.Duration) {
+	s.latencyMu.Lock()
+	defer s.latencyMu.Unlock()
+	s.wsLatencies = append(s.wsLatencies, d)
+}
+
+func (s *Stats) RecordTotalLatency(d time.Duration) {
+	s.latencyMu.Lock()
+	defer s.latencyMu.Unlock()
+	s.totalLatencies = append(s.totalLatencies, d)
 }
 
 type StatsSnapshot struct {
@@ -47,35 +62,27 @@ type StatsSnapshot struct {
 	CurrentActive int64
 	TokenError    int64
 	WSError       int64
-	AvgLatency    time.Duration
-	P95Latency    time.Duration // 시작 시점 ~ 웹소켓 연결 시점까지의 기준 시간을 측정
+
+	TokenAvgLatency time.Duration
+	TokenP95Latency time.Duration
+
+	WSAvgLatency time.Duration
+	WSP95Latency time.Duration
+
+	TotalAvgLatency time.Duration
+	TotalP95Latency time.Duration
 }
 
 func (s *Stats) Snapshot() StatsSnapshot {
 	s.latencyMu.Lock()
-	copied := append([]time.Duration(nil), s.latencies...)
+	tokenCopied := append([]time.Duration(nil), s.tokenLatencies...)
+	wsCopied := append([]time.Duration(nil), s.wsLatencies...)
+	totalCopied := append([]time.Duration(nil), s.totalLatencies...)
 	s.latencyMu.Unlock()
 
-	sort.Slice(copied, func(i, j int) bool {
-		return copied[i] < copied[j]
-	})
-
-	var avg time.Duration
-	for _, d := range copied {
-		avg += d
-	}
-	if len(copied) > 0 {
-		avg /= time.Duration(len(copied))
-	}
-
-	var p95 time.Duration
-	if len(copied) > 0 {
-		idx := int(float64(len(copied))*0.95) - 1
-		if idx < 0 {
-			idx = 0
-		}
-		p95 = copied[idx]
-	}
+	tokenAvg, tokenP95 := calcAvgP95(tokenCopied)
+	wsAvg, wsP95 := calcAvgP95(wsCopied)
+	totalAvg, totalP95 := calcAvgP95(totalCopied)
 
 	return StatsSnapshot{
 		Attempted:     s.Attempted.Load(),
@@ -85,8 +92,15 @@ func (s *Stats) Snapshot() StatsSnapshot {
 		CurrentActive: s.CurrentActive.Load(),
 		TokenError:    s.TokenError.Load(),
 		WSError:       s.WSError.Load(),
-		AvgLatency:    avg,
-		P95Latency:    p95,
+
+		TokenAvgLatency: tokenAvg,
+		TokenP95Latency: tokenP95,
+
+		WSAvgLatency: wsAvg,
+		WSP95Latency: wsP95,
+
+		TotalAvgLatency: totalAvg,
+		TotalP95Latency: totalP95,
 	}
 }
 
@@ -95,6 +109,7 @@ type loginUsecase struct {
 }
 type LoginUsecase interface {
 	PutLogin(ctx context.Context, input input.PutLoginInput)
+	PutLoginRampUp(ctx context.Context, input input.PutLoginInput)
 }
 
 func NewLoginUsecase(sfg *config.ServerConfig) LoginUsecase {
@@ -102,6 +117,83 @@ func NewLoginUsecase(sfg *config.ServerConfig) LoginUsecase {
 	return &loginUsecase{
 		sfg: sfg,
 	}
+}
+
+func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginInput) {
+	fmt.Println("putLogin init!")
+
+	rps := 500
+
+	var wg sync.WaitGroup
+	stats := &Stats{}
+
+	statsCtx, cancelStats := context.WithCancel(context.Background())
+	defer cancelStats()
+
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				snapshot := stats.Snapshot()
+				log.Printf(
+					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+					snapshot.Attempted,
+					snapshot.Connected,
+					snapshot.Failed,
+					snapshot.Closed,
+					snapshot.CurrentActive,
+					snapshot.TokenError,
+					snapshot.WSError,
+					snapshot.TokenAvgLatency,
+					snapshot.TokenP95Latency,
+					snapshot.WSAvgLatency,
+					snapshot.WSP95Latency,
+					snapshot.TotalAvgLatency,
+					snapshot.TotalP95Latency,
+				)
+			case <-statsCtx.Done():
+				snapshot := stats.Snapshot()
+				log.Printf(
+					"stats end attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+					snapshot.Attempted,
+					snapshot.Connected,
+					snapshot.Failed,
+					snapshot.Closed,
+					snapshot.CurrentActive,
+					snapshot.TokenError,
+					snapshot.WSError,
+					snapshot.TokenAvgLatency,
+					snapshot.TokenP95Latency,
+					snapshot.WSAvgLatency,
+					snapshot.WSP95Latency,
+					snapshot.TotalAvgLatency,
+					snapshot.TotalP95Latency,
+				)
+				return
+			}
+		}
+	}()
+
+	launchTicker := time.NewTicker(time.Second / time.Duration(rps))
+	defer launchTicker.Stop()
+
+	for i := 1; i <= input.ConnectionCount; i++ {
+		select {
+		case <-ctx.Done():
+			log.Printf("putLogin launch stopped: %v", ctx.Err())
+			wg.Wait()
+			return
+		case <-launchTicker.C:
+			wg.Add(1)
+			go login(&wg, r.sfg.ServerIP, i, input.UserIdPrefix, stats)
+		}
+	}
+
+	wg.Wait()
+	fmt.Println("putLogin complete!")
 }
 
 func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) {
@@ -122,7 +214,7 @@ func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) 
 			case <-ticker.C:
 				snapshot := stats.Snapshot()
 				log.Printf(
-					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d avgLatency=%s p95Latency=%s",
+					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
 					snapshot.Attempted,
 					snapshot.Connected,
 					snapshot.Failed,
@@ -130,14 +222,18 @@ func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) 
 					snapshot.CurrentActive,
 					snapshot.TokenError,
 					snapshot.WSError,
-					snapshot.AvgLatency,
-					snapshot.P95Latency,
+					snapshot.TokenAvgLatency,
+					snapshot.TokenP95Latency,
+					snapshot.WSAvgLatency,
+					snapshot.WSP95Latency,
+					snapshot.TotalAvgLatency,
+					snapshot.TotalP95Latency,
 				)
 
 			case <-ctx.Done():
 				snapshot := stats.Snapshot()
 				log.Printf(
-					"stats end. attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d avgLatency=%s p95Latency=%s",
+					"stats end. attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
 					snapshot.Attempted,
 					snapshot.Connected,
 					snapshot.Failed,
@@ -145,8 +241,12 @@ func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) 
 					snapshot.CurrentActive,
 					snapshot.TokenError,
 					snapshot.WSError,
-					snapshot.AvgLatency,
-					snapshot.P95Latency,
+					snapshot.TokenAvgLatency,
+					snapshot.TokenP95Latency,
+					snapshot.WSAvgLatency,
+					snapshot.WSP95Latency,
+					snapshot.TotalAvgLatency,
+					snapshot.TotalP95Latency,
 				)
 				return
 			}
@@ -157,54 +257,59 @@ func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) 
 	cancel()
 
 }
-
 func login(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats) {
 	defer wg.Done()
-	// WebSocket 연결을 시도한 총 수
+
 	stats.Attempted.Add(1)
 
-	start := time.Now()
+	totalStart := time.Now()
 	userID := fmt.Sprintf("%s%06d", userIdPrefix, i)
 
-	token, err := issueToken(serverIP, userID)
+	tokenStart := time.Now()
+	// token, err := issueToken(serverIP, userID)
+	token, err := issueTokenInTest(userID)
+	tokenLatency := time.Since(tokenStart)
+	stats.RecordTokenLatency(tokenLatency)
+
 	if err != nil {
-		// JWT 발급 API 실패 수
 		stats.TokenError.Add(1)
-		// 전체 실패 수
 		stats.Failed.Add(1)
+		log.Printf("issueToken fail userID=%s err=%v", userID, err)
 		return
 	}
-	wsUrl := fmt.Sprintf("ws://%s/notificator/ws/connect", serverIP)
-	conn, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{
+
+	wsURL := fmt.Sprintf("ws://%s/notificator/ws/connect", serverIP)
+
+	wsStart := time.Now()
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, http.Header{
 		"Authorization": []string{"Bearer " + token},
 	})
+	wsLatency := time.Since(wsStart)
+	stats.RecordWSLatency(wsLatency)
+
 	if err != nil {
-		// WebSocket 연결 실패 수
 		stats.WSError.Add(1)
-		// 전체 실패 수
 		stats.Failed.Add(1)
+		log.Printf("ws dial fail userID=%s err=%v", userID, err)
 		return
 	}
-	// 시작 시점 ~ 인증 토큰 발급 + 웹소켓 연결 시점까지의 기준 시간을 측정
-	latency := time.Since(start)
-	stats.RecordConnectLatency(latency)
 
-	// WebSocket 연결까지 성공한 수
+	totalLatency := time.Since(totalStart)
+	stats.RecordTotalLatency(totalLatency)
+
 	stats.Connected.Add(1)
-	// 현재 살아있는 WebSocket 연결 수
 	stats.CurrentActive.Add(1)
 
 	defer func() {
 		conn.Close()
-		// 연결됐다가 끊어진 수
 		stats.Closed.Add(1)
-		// 현재 살아있는 WebSocket 연결 수
 		stats.CurrentActive.Add(-1)
 	}()
-	// 연결 유지
+
 	for {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
+			log.Printf("read close userID=%s err=%v", userID, err)
 			return
 		}
 	}
@@ -216,7 +321,7 @@ func issueToken(serverIP string, userId string) (string, error) {
 	if serverIP == "" {
 		url = fmt.Sprintf("http://172.16.10.114/auth/client/v1/user/auth/test")
 	} else {
-		url = fmt.Sprintf("http://%s/auth/client/v1/user/auth/test", serverIP)
+		url = fmt.Sprintf("http://%s/auth/client/v1/user", serverIP)
 	}
 
 	reqBody := dto.TokenRequest{
@@ -229,7 +334,7 @@ func issueToken(serverIP string, userId string) (string, error) {
 	}
 
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
@@ -264,4 +369,36 @@ func issueToken(serverIP string, userId string) (string, error) {
 	}
 
 	return tokenResp.Data.AccessToken, nil
+}
+
+func issueTokenInTest(userID string) (accessToken string, err error) {
+
+	return userID, nil
+}
+
+func calcAvgP95(values []time.Duration) (time.Duration, time.Duration) {
+	if len(values) == 0 {
+		return 0, 0
+	}
+
+	copied := append([]time.Duration(nil), values...)
+	sort.Slice(copied, func(i, j int) bool {
+		return copied[i] < copied[j]
+	})
+
+	var sum time.Duration
+	for _, v := range copied {
+		sum += v
+	}
+	avg := sum / time.Duration(len(copied))
+
+	idx := int(math.Ceil(float64(len(copied))*0.95)) - 1
+	if idx < 0 {
+		idx = 0
+	}
+	if idx >= len(copied) {
+		idx = len(copied) - 1
+	}
+
+	return avg, copied[idx]
 }
