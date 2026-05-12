@@ -266,8 +266,8 @@ func login(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stat
 	userID := fmt.Sprintf("%s%06d", userIdPrefix, i)
 
 	tokenStart := time.Now()
-	// token, err := issueToken(serverIP, userID)
-	token, err := issueTokenInTest(userID)
+	token, err := issueToken(serverIP, userID)
+	//token, err := issueTokenInTest(userID)
 	tokenLatency := time.Since(tokenStart)
 	stats.RecordTokenLatency(tokenLatency)
 
@@ -317,12 +317,7 @@ func login(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stat
 
 func issueToken(serverIP string, userId string) (string, error) {
 
-	var url string
-	if serverIP == "" {
-		url = fmt.Sprintf("http://172.16.10.114/auth/client/v1/user/auth/test")
-	} else {
-		url = fmt.Sprintf("http://%s/auth/client/v1/user", serverIP)
-	}
+	url := fmt.Sprintf("http://172.16.10.114/auth/client/v1/user/auth/test")
 
 	reqBody := dto.TokenRequest{
 		UserId: userId,
