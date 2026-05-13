@@ -38,6 +38,8 @@ var ErrRoomTypeCheckError = errors.New("room type check error")
 var ErrRoomSecretFlagCheckError = errors.New("room secret flag check error")
 var ErrRoomSecretCheckError = errors.New("room secret check error")
 var ErrRoomUpdateDateTypeError = errors.New("room update date type error")
+var ErrBulkCreateChatRoomMakeCountInvalid = errors.New("bulk create chat room make count invalid")
+var ErrBulkCreateChatRoomUserNotEnough = errors.New("bulk create chat room user not enough")
 
 // chat room title
 var ErrChatRoomTypeMismatch = errors.New("chat room type mismatch")                        // 요청한 타입에 해당하는 방이 없음.

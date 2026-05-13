@@ -85,7 +85,8 @@ func (r *messageRouter) SetOtpRoutes(handler *handler.OtpHandler) {
 }
 
 func (r *messageRouter) SetChatRoomRoutes(handler *handler.ChatRoomHandler) {
-
+	client := r.parent.Group("/client/v1/chat/room")
+	client.POST("/bulk", handler.CreateBulkChatRoom)
 }
 
 func (r *messageRouter) SetChatRoomTitleRoutes(handler *handler.ChatRoomTitleHandler) {

@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"message/internal/application/usecase/input"
 	"message/internal/application/usecase/output"
 	"message/internal/consts"
@@ -26,6 +28,7 @@ type chatRoomUsecase struct {
 
 type ChatRoomUsecase interface {
 	CreateChatRoom(ctx context.Context, input input.CreateChatRoomInput) (string, error)
+	CreateBulkChatRoom(ctx context.Context, input input.BulkCreateChatRoomInput) (output.BulkCreateChatRoomOutput, error)
 	GetChatRoomDetail(ctx context.Context, input input.GetChatRoomDetailInput) ([]output.GetChatRoomDetailOutput, error)
 	GetChatRoomList(ctx context.Context, input input.GetChatRoomListInput) ([]output.GetChatRoomListOutput, error)
 	GetChatRoomUpdateDate(ctx context.Context, input input.GetChatRoomUpdateInput) ([]output.GetChatRoomUpdateDateOutput, error)
@@ -122,6 +125,96 @@ func (u *chatRoomUsecase) CreateChatRoom(ctx context.Context, input input.Create
 	log.Println("[CreateChatRoom] recv notificator response :", string(msg.Data))
 
 	return regDateStr, nil
+}
+
+func (u *chatRoomUsecase) CreateBulkChatRoom(ctx context.Context, in input.BulkCreateChatRoomInput) (output.BulkCreateChatRoomOutput, error) {
+
+	if in.MakeCount <= 0 {
+		return output.BulkCreateChatRoomOutput{}, consts.ErrBulkCreateChatRoomMakeCountInvalid
+	}
+
+	const testUserIDPrefix = "test"
+	users, err := u.repository.GetBulkCreateChatRoomUsers(ctx, testUserIDPrefix)
+	if err != nil {
+		return output.BulkCreateChatRoomOutput{}, err
+	}
+
+	users = uniqueBulkCreateChatRoomUsers(users)
+	if len(users) < 2 {
+		return output.BulkCreateChatRoomOutput{}, consts.ErrBulkCreateChatRoomUserNotEnough
+	}
+
+	maxMemberCount := 300
+	if len(users) < maxMemberCount {
+		maxMemberCount = len(users)
+	}
+
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	room := make([]output.BulkCreateChatRoomItemOutput, 0, in.MakeCount)
+
+	for i := 0; i < in.MakeCount; i++ {
+		memberCount := rng.Intn(maxMemberCount-1) + 2
+		member := make([]input.CreateChatMemberInput, 0, memberCount)
+
+		// rng.Perm : users 배열의 인덱스를 랜덤하게 섞은 배열을 만듭니다.
+		perm := rng.Perm(len(users))
+		// 섞인 인덱스 중에서 앞에서부터 memberCount명만 뽑습니다.
+		for _, userIndex := range perm[:memberCount] {
+			user := users[userIndex]
+			member = append(member, input.CreateChatMemberInput{
+				MemberHash:      user.UserHash,
+				MemberWorksCode: user.Org,
+			})
+		}
+
+		createUser := users[perm[0]]
+		roomKey := fmt.Sprintf("bulk-%d-%06d", time.Now().UnixNano(), i+1)
+		createInput := input.CreateChatRoomInput{
+			CreateUserHash: createUser.UserHash,
+			RoomKey:        roomKey,
+			RoomType:       "N",
+			Title:          fmt.Sprintf("bulk test room %06d", i+1),
+			SecretFlag:     "N",
+			Description:    "bulk test room",
+			WorksCode:      createUser.Org,
+			Member:         member,
+		}
+
+		regDate, err := u.CreateChatRoom(ctx, createInput)
+		if err != nil {
+			return output.BulkCreateChatRoomOutput{}, err
+		}
+
+		room = append(room, output.BulkCreateChatRoomItemOutput{
+			RoomKey:     roomKey,
+			RegDate:     regDate,
+			MemberCount: memberCount,
+		})
+	}
+
+	return output.BulkCreateChatRoomOutput{
+		MakeCount:    in.MakeCount,
+		CreatedCount: len(room),
+		Room:         room,
+	}, nil
+}
+
+func uniqueBulkCreateChatRoomUsers(users []entity.BulkCreateChatRoomUserEntity) []entity.BulkCreateChatRoomUserEntity {
+	unique := make([]entity.BulkCreateChatRoomUserEntity, 0, len(users))
+	seen := make(map[string]struct{}, len(users))
+
+	for _, user := range users {
+		if user.UserHash == "" {
+			continue
+		}
+		if _, exists := seen[user.UserHash]; exists {
+			continue
+		}
+		seen[user.UserHash] = struct{}{}
+		unique = append(unique, user)
+	}
+
+	return unique
 }
 
 func roomTypeCheck(roomType string) (string, error) {

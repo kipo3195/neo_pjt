@@ -134,6 +134,24 @@ func (r *chatRoomRepositoryImpl) PutChatRoom(ctx context.Context, en entity.Crea
 	return nil
 }
 
+func (r *chatRoomRepositoryImpl) GetBulkCreateChatRoomUsers(ctx context.Context, userIDPrefix string) ([]entity.BulkCreateChatRoomUserEntity, error) {
+
+	var result []entity.BulkCreateChatRoomUserEntity
+
+	err := r.db.WithContext(ctx).
+		Model(&model.ServiceUsers{}).
+		Select("org, user_hash").
+		Where("user_id LIKE ? AND use_yn = ? AND user_hash <> ?", userIDPrefix+"%", "Y", "").
+		Order("user_id asc").
+		Scan(&result).Error
+	if err != nil {
+		log.Println("[GetBulkCreateChatRoomUsers] DB error :", err)
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (r *chatRoomRepositoryImpl) GetChatRoomDetail(ctx context.Context, en entity.GetChatRoomDetailEntity) ([]entity.ChatRoomDetailEntity, error) {
 
 	var result []entity.ChatRoomDetailEntity
