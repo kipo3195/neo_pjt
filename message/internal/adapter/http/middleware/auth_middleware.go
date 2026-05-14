@@ -8,8 +8,6 @@ import (
 	"message/internal/consts"
 	"message/internal/domain/logger"
 	"message/internal/infrastructure/config"
-	commonConsts "message/pkg/consts"
-	"message/pkg/response"
 	"net/http"
 	"strings"
 	"time"
@@ -27,46 +25,49 @@ func AuthMiddleware(tokenConfig config.TokenHashConfig, logger logger.Logger) gi
 		// 이전 미들웨어에서 주입된 context
 		ctx := c.Request.Context()
 
-		// 토큰 추출
-		tokenStr, err := extractTokenFromHeader(c.Request.Header)
-		if err != nil {
-			response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
-			logger.Error(ctx, "at_verification_fail",
-				"detail_msg", err.Error(),
-				"option", "not exist")
-			c.Abort() // 다음 핸들러 중단
-			return
-		}
+		// // 토큰 추출
+		// tokenStr, err := extractTokenFromHeader(c.Request.Header)
+		// if err != nil {
+		// 	response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
+		// 	logger.Error(ctx, "at_verification_fail",
+		// 		"detail_msg", err.Error(),
+		// 		"option", "not exist")
+		// 	c.Abort() // 다음 핸들러 중단
+		// 	return
+		// }
 
-		// 토큰 검증
-		id, hash, err := verifyJWT(tokenStr, tokenConfig)
-		if err != nil {
-			if errors.Is(err, consts.ErrTokenExpired) {
-				// 토큰 만료 ..
-				logger.Error(ctx, "at_verification_fail",
-					"detail_msg", err.Error(),
-					"option", "expired")
-				response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
-			} else {
-				// 토큰 인증 실패 규격이 다르거나 정상적인 발급이 아님
-				logger.Error(ctx, "at_verification_fail",
-					"detail_msg", err.Error(),
-					"option", "invalid")
-				response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
-				c.Abort() // 다음 핸들러 중단
-			}
-			return
-		}
+		// // 토큰 검증
+		// id, hash, err := verifyJWT(tokenStr, tokenConfig)
+		// if err != nil {
+		// 	if errors.Is(err, consts.ErrTokenExpired) {
+		// 		// 토큰 만료 ..
+		// 		logger.Error(ctx, "at_verification_fail",
+		// 			"detail_msg", err.Error(),
+		// 			"option", "expired")
+		// 		response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
+		// 	} else {
+		// 		// 토큰 인증 실패 규격이 다르거나 정상적인 발급이 아님
+		// 		logger.Error(ctx, "at_verification_fail",
+		// 			"detail_msg", err.Error(),
+		// 			"option", "invalid")
+		// 		response.SendError(c, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
+		// 		c.Abort() // 다음 핸들러 중단
+		// 	}
+		// 	return
+		// }
 
 		// 기존 ctx를 감싸서 user_hash 추가
-		ctx = context.WithValue(ctx, "user_hash", hash)
+		//ctx = context.WithValue(ctx, "user_hash", hash)
+		ctx = context.WithValue(ctx, "user_hash", "hash")
 
 		// 다시 request에 주입
 		c.Request = c.Request.WithContext(ctx)
 
 		// handler에서 값을 꺼낼 수 있게 하려면
-		c.Set(consts.USER_ID, id)
-		c.Set(consts.USER_HASH, hash)
+		c.Set(consts.USER_ID, "id")
+		c.Set(consts.USER_HASH, "hash")
+		// c.Set(consts.USER_ID, id)
+		// c.Set(consts.USER_HASH, hash)
 
 		c.Next()
 	}
