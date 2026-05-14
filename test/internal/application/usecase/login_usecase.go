@@ -3,6 +3,9 @@ package usecase
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +13,7 @@ import (
 	"math"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"test/internal/application/usecase/input"
@@ -21,14 +25,16 @@ import (
 )
 
 type Stats struct {
-	Attempted     atomic.Int64
-	Connected     atomic.Int64
-	Failed        atomic.Int64
-	Closed        atomic.Int64
-	CurrentActive atomic.Int64
-	TokenError    atomic.Int64
-	WSError       atomic.Int64
-	Pending       atomic.Int64
+	Attempted       atomic.Int64
+	Connected       atomic.Int64
+	Failed          atomic.Int64
+	Closed          atomic.Int64
+	CurrentActive   atomic.Int64
+	TokenError      atomic.Int64
+	WSError         atomic.Int64
+	EventReceived   atomic.Int64
+	EventParseError atomic.Int64
+	Pending         atomic.Int64
 
 	latencyMu      sync.Mutex
 	tokenLatencies []time.Duration
@@ -55,13 +61,15 @@ func (s *Stats) RecordTotalLatency(d time.Duration) {
 }
 
 type StatsSnapshot struct {
-	Attempted     int64
-	Connected     int64
-	Failed        int64
-	Closed        int64
-	CurrentActive int64
-	TokenError    int64
-	WSError       int64
+	Attempted       int64
+	Connected       int64
+	Failed          int64
+	Closed          int64
+	CurrentActive   int64
+	TokenError      int64
+	WSError         int64
+	EventReceived   int64
+	EventParseError int64
 
 	TokenAvgLatency time.Duration
 	TokenP95Latency time.Duration
@@ -85,13 +93,15 @@ func (s *Stats) Snapshot() StatsSnapshot {
 	totalAvg, totalP95 := calcAvgP95(totalCopied)
 
 	return StatsSnapshot{
-		Attempted:     s.Attempted.Load(),
-		Connected:     s.Connected.Load(),
-		Failed:        s.Failed.Load(),
-		Closed:        s.Closed.Load(),
-		CurrentActive: s.CurrentActive.Load(),
-		TokenError:    s.TokenError.Load(),
-		WSError:       s.WSError.Load(),
+		Attempted:       s.Attempted.Load(),
+		Connected:       s.Connected.Load(),
+		Failed:          s.Failed.Load(),
+		Closed:          s.Closed.Load(),
+		CurrentActive:   s.CurrentActive.Load(),
+		TokenError:      s.TokenError.Load(),
+		WSError:         s.WSError.Load(),
+		EventReceived:   s.EventReceived.Load(),
+		EventParseError: s.EventParseError.Load(),
 
 		TokenAvgLatency: tokenAvg,
 		TokenP95Latency: tokenP95,
@@ -107,9 +117,46 @@ func (s *Stats) Snapshot() StatsSnapshot {
 type loginUsecase struct {
 	sfg *config.ServerConfig
 }
+
+type wsResponseDTO[T any] struct {
+	Type      string `json:"type"`
+	EventType string `json:"eventType"`
+	Data      T      `json:"data"`
+}
+
+type chatMessageOutput struct {
+	ChatSession  string               `json:"chatSession"`
+	ChatRoomData chatRoomDataOutput   `json:"chatRoomData"`
+	ChatLineData chatLineDataOutput   `json:"chatLineData"`
+	ChatFileData []chatFileDataOutput `json:"chatFileData,omitempty"`
+}
+
+type chatRoomDataOutput struct {
+	RoomType   string `json:"roomType"`
+	RoomKey    string `json:"roomKey"`
+	SecretFlag string `json:"secretFlag"`
+}
+
+type chatLineDataOutput struct {
+	Cmd           int    `json:"cmd"`
+	Contents      string `json:"contents"`
+	LineKey       string `json:"lineKey"`
+	TargetLineKey string `json:"targetLineKey"`
+	SendUserHash  string `json:"sendUserHash"`
+	SendDate      string `json:"sendDate"`
+}
+
+type chatFileDataOutput struct {
+	FileId       string `json:"fileId"`
+	FileType     string `json:"fileType"`
+	FileName     string `json:"fileName"`
+	ThumbnailUrl string `json:"thumbnailUrl,omitempty"`
+}
+
 type LoginUsecase interface {
 	PutLogin(ctx context.Context, input input.PutLoginInput)
 	PutLoginRampUp(ctx context.Context, input input.PutLoginInput)
+	PutLoginRampUpAndRecvEvent(ctx context.Context, input input.PutLoginInput)
 }
 
 func NewLoginUsecase(sfg *config.ServerConfig) LoginUsecase {
@@ -139,7 +186,7 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 			case <-ticker.C:
 				snapshot := stats.Snapshot()
 				log.Printf(
-					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
 					snapshot.Attempted,
 					snapshot.Connected,
 					snapshot.Failed,
@@ -147,6 +194,8 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 					snapshot.CurrentActive,
 					snapshot.TokenError,
 					snapshot.WSError,
+					snapshot.EventReceived,
+					snapshot.EventParseError,
 					snapshot.TokenAvgLatency,
 					snapshot.TokenP95Latency,
 					snapshot.WSAvgLatency,
@@ -157,7 +206,7 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 			case <-statsCtx.Done():
 				snapshot := stats.Snapshot()
 				log.Printf(
-					"stats end attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+					"stats end attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
 					snapshot.Attempted,
 					snapshot.Connected,
 					snapshot.Failed,
@@ -165,6 +214,8 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 					snapshot.CurrentActive,
 					snapshot.TokenError,
 					snapshot.WSError,
+					snapshot.EventReceived,
+					snapshot.EventParseError,
 					snapshot.TokenAvgLatency,
 					snapshot.TokenP95Latency,
 					snapshot.WSAvgLatency,
@@ -194,6 +245,87 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 
 	wg.Wait()
 	fmt.Println("putLogin complete!")
+}
+
+func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input input.PutLoginInput) {
+	fmt.Println("putLoginAndRecvEvent init!")
+
+	rps := 500
+
+	var wg sync.WaitGroup
+	stats := &Stats{}
+
+	statsCtx, cancelStats := context.WithCancel(context.Background())
+	defer cancelStats()
+
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				snapshot := stats.Snapshot()
+				log.Printf(
+					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+					snapshot.Attempted,
+					snapshot.Connected,
+					snapshot.Failed,
+					snapshot.Closed,
+					snapshot.CurrentActive,
+					snapshot.TokenError,
+					snapshot.WSError,
+					snapshot.EventReceived,
+					snapshot.EventParseError,
+					snapshot.TokenAvgLatency,
+					snapshot.TokenP95Latency,
+					snapshot.WSAvgLatency,
+					snapshot.WSP95Latency,
+					snapshot.TotalAvgLatency,
+					snapshot.TotalP95Latency,
+				)
+			case <-statsCtx.Done():
+				snapshot := stats.Snapshot()
+				log.Printf(
+					"stats end attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+					snapshot.Attempted,
+					snapshot.Connected,
+					snapshot.Failed,
+					snapshot.Closed,
+					snapshot.CurrentActive,
+					snapshot.TokenError,
+					snapshot.WSError,
+					snapshot.EventReceived,
+					snapshot.EventParseError,
+					snapshot.TokenAvgLatency,
+					snapshot.TokenP95Latency,
+					snapshot.WSAvgLatency,
+					snapshot.WSP95Latency,
+					snapshot.TotalAvgLatency,
+					snapshot.TotalP95Latency,
+				)
+				return
+			}
+		}
+	}()
+
+	launchTicker := time.NewTicker(time.Second / time.Duration(rps))
+	defer launchTicker.Stop()
+
+	for i := 1; i <= input.ConnectionCount; i++ {
+		select {
+		case <-ctx.Done():
+			log.Printf("putLoginAndRecvEvent launch stopped: %v", ctx.Err())
+			wg.Wait()
+			return
+		case <-launchTicker.C:
+			wg.Add(1)
+			go loginAndRecvWithTokenIssuer(&wg, r.sfg.ServerIP, i, input.UserIdPrefix, stats, r.issueTestToken)
+		}
+	}
+
+	wg.Wait()
+	fmt.Println("putLoginAndRecvEvent complete!")
 }
 
 func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) {
@@ -257,7 +389,14 @@ func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) 
 	cancel()
 
 }
+
+type tokenIssuer func(serverIP string, userID string) (string, error)
+
 func login(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats) {
+	loginWithTokenIssuer(wg, serverIP, i, userIdPrefix, stats, issueToken)
+}
+
+func loginWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats, issue tokenIssuer) {
 	defer wg.Done()
 
 	stats.Attempted.Add(1)
@@ -266,8 +405,7 @@ func login(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stat
 	userID := fmt.Sprintf("%s%06d", userIdPrefix, i)
 
 	tokenStart := time.Now()
-	token, err := issueToken(serverIP, userID)
-	//token, err := issueTokenInTest(userID)
+	token, err := issue(serverIP, userID)
 	tokenLatency := time.Since(tokenStart)
 	stats.RecordTokenLatency(tokenLatency)
 
@@ -313,6 +451,109 @@ func login(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stat
 			return
 		}
 	}
+}
+
+func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats, issue tokenIssuer) {
+	defer wg.Done()
+
+	stats.Attempted.Add(1)
+
+	totalStart := time.Now()
+	userID := fmt.Sprintf("%s%06d", userIdPrefix, i)
+
+	tokenStart := time.Now()
+	token, err := issueTokenInTest(userID)
+	tokenLatency := time.Since(tokenStart)
+	stats.RecordTokenLatency(tokenLatency)
+
+	if err != nil {
+		stats.TokenError.Add(1)
+		stats.Failed.Add(1)
+		log.Printf("issueToken fail userID=%s err=%v", userID, err)
+		return
+	}
+
+	wsURL := fmt.Sprintf("ws://%s/notificator/ws/connect", serverIP)
+
+	wsStart := time.Now()
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, http.Header{
+		"Authorization": []string{"Bearer " + token},
+	})
+	wsLatency := time.Since(wsStart)
+	stats.RecordWSLatency(wsLatency)
+
+	if err != nil {
+		stats.WSError.Add(1)
+		stats.Failed.Add(1)
+		log.Printf("ws dial fail userID=%s err=%v", userID, err)
+		return
+	}
+
+	totalLatency := time.Since(totalStart)
+	stats.RecordTotalLatency(totalLatency)
+
+	stats.Connected.Add(1)
+	stats.CurrentActive.Add(1)
+
+	defer func() {
+		conn.Close()
+		stats.Closed.Add(1)
+		stats.CurrentActive.Add(-1)
+	}()
+
+	for {
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			log.Printf("read close userID=%s err=%v", userID, err)
+			return
+		}
+
+		res, ok, err := parseChatMessageResponse(msg)
+		if err != nil {
+			stats.EventParseError.Add(1)
+			log.Printf("read parse fail userID=%s err=%v payload=%s", userID, err, trimPayload(msg, 512))
+			continue
+		}
+		if !ok {
+			continue
+		}
+
+		stats.EventReceived.Add(1)
+		if res.Data.ChatSession == "" && res.Data.ChatRoomData.RoomKey == "" && res.Data.ChatLineData.LineKey == "" {
+			log.Printf("read empty chat message userID=%s type=%s eventType=%s", userID, res.Type, res.EventType)
+		}
+	}
+}
+
+func parseChatMessageResponse(msg []byte) (wsResponseDTO[chatMessageOutput], bool, error) {
+	var raw wsResponseDTO[json.RawMessage]
+	if err := json.Unmarshal(msg, &raw); err != nil {
+		return wsResponseDTO[chatMessageOutput]{}, false, err
+	}
+
+	if raw.Type == "" && raw.EventType == "" {
+		return wsResponseDTO[chatMessageOutput]{}, false, nil
+	}
+
+	var data chatMessageOutput
+	if len(raw.Data) > 0 && string(raw.Data) != "null" {
+		if err := json.Unmarshal(raw.Data, &data); err != nil {
+			return wsResponseDTO[chatMessageOutput]{}, false, err
+		}
+	}
+
+	return wsResponseDTO[chatMessageOutput]{
+		Type:      raw.Type,
+		EventType: raw.EventType,
+		Data:      data,
+	}, true, nil
+}
+
+func trimPayload(payload []byte, limit int) string {
+	if len(payload) <= limit {
+		return string(payload)
+	}
+	return string(payload[:limit]) + "...(truncated)"
 }
 
 func issueToken(serverIP string, userId string) (string, error) {
@@ -364,6 +605,48 @@ func issueToken(serverIP string, userId string) (string, error) {
 	}
 
 	return tokenResp.Data.AccessToken, nil
+}
+
+func (r *loginUsecase) issueTestToken(_ string, userID string) (string, error) {
+	if r.sfg.AccessTokenHash == "" {
+		return "", fmt.Errorf("ACCESS_TOKEN_HASH is empty")
+	}
+
+	now := time.Now()
+	header := map[string]string{
+		"alg": "HS256",
+		"typ": "JWT",
+	}
+	claims := map[string]interface{}{
+		"id":   userID,
+		"uuid": fmt.Sprintf("%s-test-device", userID),
+		"hash": userID,
+		"iss":  "device",
+		"iat":  now.Unix(),
+		"exp":  now.Add(24 * time.Hour).Unix(),
+	}
+
+	headerBytes, err := json.Marshal(header)
+	if err != nil {
+		return "", err
+	}
+	claimsBytes, err := json.Marshal(claims)
+	if err != nil {
+		return "", err
+	}
+
+	unsignedToken := strings.Join([]string{
+		base64.RawURLEncoding.EncodeToString(headerBytes),
+		base64.RawURLEncoding.EncodeToString(claimsBytes),
+	}, ".")
+
+	mac := hmac.New(sha256.New, []byte(r.sfg.AccessTokenHash))
+	if _, err := mac.Write([]byte(unsignedToken)); err != nil {
+		return "", err
+	}
+
+	signature := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+	return unsignedToken + "." + signature, nil
 }
 
 func issueTokenInTest(userID string) (accessToken string, err error) {

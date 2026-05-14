@@ -8,7 +8,8 @@ import (
 )
 
 type ServerConfig struct {
-	ServerIP string
+	ServerIP        string
+	AccessTokenHash string
 }
 
 func isLocal() bool {
@@ -26,10 +27,12 @@ func NewServerConfig() *ServerConfig {
 	}
 
 	targetServerIP := os.Getenv("TARGET_SERVER_IP")
+	accessTokenHash := os.Getenv("ACCESS_TOKEN_HASH")
 
 	fmt.Println("targetServerIP :", targetServerIP)
 
 	return &ServerConfig{
-		ServerIP: targetServerIP,
+		ServerIP:        targetServerIP,
+		AccessTokenHash: accessTokenHash,
 	}
 }

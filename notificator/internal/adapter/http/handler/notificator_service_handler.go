@@ -56,7 +56,8 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	defer conn.Close()
 
 	/* header에 있는 AT를 파싱하여 사용자 정보 체크 */
-	user := r.Context().Value(consts.USER_HASH)
+	//user := r.Context().Value(consts.USER_HASH)
+	user := r.Context().Value(consts.USER_ID)
 	//log.Println("Notificator service connect request userHash :", user)
 
 	if user == nil || user == "" {
@@ -71,12 +72,12 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 	go h.svc.SocketSender.SaveConnection(conn, userHash, h.websocketConfig)
 
 	/* 내가 참여중인 방 notificator 서비스 메모리에 로딩 처리 시작 */
-	// err = h.svc.ChatRoom.SubscribeChat(userHash)
-	// if err != nil {
-	// 	log.Println("Notificator service connect error. Subscribe chat room error.")
-	// 	// todo error msg
-	// 	return
-	// }
+	err = h.svc.ChatRoom.SubscribeChat(userHash)
+	if err != nil {
+		log.Println("Notificator service connect error. Subscribe chat room error.")
+		// todo error msg
+		return
+	}
 	defer h.svc.ChatRoom.UnSubscribeChat(userHash)
 
 	/* pong 처리 */

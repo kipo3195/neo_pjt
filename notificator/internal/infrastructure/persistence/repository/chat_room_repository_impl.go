@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"notificator/internal/domain/chatRoom/entity"
 	"notificator/internal/domain/chatRoom/repository"
@@ -50,11 +51,13 @@ func (r *chatRoomRepositoryImpl) GetMyChatRoom(userHash string) (entity.MyChatRo
 	var roomKey []string
 
 	err := r.db.Raw(
-		`select 
-			room_key
-		from chat_room_member
-		where 
-			member_hash = ? and member_state = '1' `,
+		// `select
+		// 	room_key
+		// from chat_room_member
+		// where
+		// 	member_hash = ? and member_state = '1' `,
+
+		`select a.room_key from chat_room_member as a join service_users as b on a.member_hash = b.user_hash where b.user_id = ? and member_state = '1' `,
 		userHash).Scan(&roomKey).Error
 
 	if err != nil {
@@ -65,6 +68,7 @@ func (r *chatRoomRepositoryImpl) GetMyChatRoom(userHash string) (entity.MyChatRo
 	result := entity.MyChatRoomEntity{
 		RoomKey: roomKey,
 	}
+	fmt.Printf("userHash : %s, result : %s", userHash, result)
 
 	return result, nil
 }

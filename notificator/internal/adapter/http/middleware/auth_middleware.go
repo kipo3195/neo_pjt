@@ -9,8 +9,6 @@ import (
 	"notificator/internal/consts"
 	"notificator/internal/domain/logger"
 	"notificator/internal/infrastructure/config"
-	commonConsts "notificator/pkg/consts"
-	"notificator/pkg/response"
 	"strings"
 	"time"
 
@@ -27,38 +25,38 @@ func AuthMiddleware(logger logger.Logger, tokenConfig config.TokenHashConfig) mu
 			ctx := r.Context()
 
 			// 토큰 추출
-			tokenStr, err := extractTokenFromHeader(r.Header)
+			tokenStr, _ := extractTokenFromHeader(r.Header)
 
-			if err != nil {
-				response.SendError(w, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
-				logger.Error(ctx, "at_verification_fail",
-					"detail_msg", err.Error(),
-					"option", "not exist")
-				return
-			}
+			// if err != nil {
+			// 	response.SendError(w, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_105, commonConsts.E_105_MSG)
+			// 	logger.Error(ctx, "at_verification_fail",
+			// 		"detail_msg", err.Error(),
+			// 		"option", "not exist")
+			// 	return
+			// }
 
-			// 토큰 검증
-			id, hash, err := verifyJWT(tokenStr, tokenConfig)
-			if err != nil {
-				if errors.Is(err, consts.ErrTokenExpired) {
-					// 토큰 만료 ..
-					logger.Error(ctx, "at_verification_fail",
-						"detail_msg", err.Error(),
-						"option", "expired")
-					response.SendError(w, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
-				} else {
-					// 토큰 인증 실패 규격이 다르거나 정상적인 발급이 아님
-					logger.Error(ctx, "at_verification_fail",
-						"detail_msg", err.Error(),
-						"option", "invalid")
-					response.SendError(w, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
-				}
-				return
-			}
+			// // 토큰 검증
+			// id, hash, err := verifyJWT(tokenStr, tokenConfig)
+			// if err != nil {
+			// 	if errors.Is(err, consts.ErrTokenExpired) {
+			// 		// 토큰 만료 ..
+			// 		logger.Error(ctx, "at_verification_fail",
+			// 			"detail_msg", err.Error(),
+			// 			"option", "expired")
+			// 		response.SendError(w, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_107, commonConsts.E_107_MSG)
+			// 	} else {
+			// 		// 토큰 인증 실패 규격이 다르거나 정상적인 발급이 아님
+			// 		logger.Error(ctx, "at_verification_fail",
+			// 			"detail_msg", err.Error(),
+			// 			"option", "invalid")
+			// 		response.SendError(w, commonConsts.UNAUTHORIZED, commonConsts.ERROR, commonConsts.E_106, commonConsts.E_106_MSG)
+			// 	}
+			// 	return
+			// }
 
 			// context 저장
-			ctx = context.WithValue(ctx, consts.USER_ID, id)
-			ctx = context.WithValue(ctx, consts.USER_HASH, hash)
+			ctx = context.WithValue(ctx, consts.USER_ID, tokenStr)
+			//	ctx = context.WithValue(ctx, consts.USER_HASH, hash)
 
 			// context 적용
 			r = r.WithContext(ctx)
