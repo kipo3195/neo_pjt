@@ -35,6 +35,7 @@ type ChatUsecase interface {
 	GetChatLineEvent(ctx context.Context, in input.GetChatLineEventInput) ([]output.GetChatLineEventOutput, error)
 	InitChatFileEntity(ctx context.Context, transactionId string) ([]*entity.ChatFileEntity, error)
 	GetSendFileInfo(ctx context.Context, in []string) ([]entity.SendFileInfo, error)
+	GetBulkSendChatTargets(ctx context.Context) ([]output.BulkSendChatTargetOutput, error)
 }
 
 func NewChatUsecase(repository repository.ChatRepository, connector *nats.Conn, workerPool workerPool.ChatWorkerPool, logger logger.Logger, apiRepository repository.ChatApiRepository) ChatUsecase {
@@ -279,4 +280,45 @@ func (r *chatUsecase) GetSendFileInfo(ctx context.Context, in []string) ([]entit
 	}
 
 	return sendFileInfos, nil
+}
+
+func (r *chatUsecase) GetBulkSendChatTargets(ctx context.Context) ([]output.BulkSendChatTargetOutput, error) {
+
+	targets, err := r.repository.GetBulkSendChatTargets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(targets) == 0 {
+		return nil, consts.ErrBulkSendChatTargetNotFound
+	}
+
+	roomIndex := make(map[string]int, len(targets))
+	result := make([]output.BulkSendChatTargetOutput, 0)
+
+	for _, target := range targets {
+		if target.RoomKey == "" || target.UserHash == "" {
+			continue
+		}
+
+		idx, ok := roomIndex[target.RoomKey]
+		if !ok {
+			result = append(result, output.BulkSendChatTargetOutput{
+				RoomKey:    target.RoomKey,
+				RoomType:   target.RoomType,
+				SecretFlag: target.SecretFlag,
+				MemberHash: make([]string, 0),
+			})
+			idx = len(result) - 1
+			roomIndex[target.RoomKey] = idx
+		}
+
+		result[idx].MemberHash = append(result[idx].MemberHash, target.UserHash)
+	}
+
+	if len(result) == 0 {
+		return nil, consts.ErrBulkSendChatTargetNotFound
+	}
+
+	return result, nil
 }

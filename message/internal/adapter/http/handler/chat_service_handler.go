@@ -1,15 +1,19 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"message/internal/adapter/http/dto/chatService"
 	"message/internal/adapter/http/mapper"
 	"message/internal/application/service"
+	"message/internal/application/usecase/input"
 	"message/internal/consts"
 	commonConsts "message/pkg/consts"
 	response "message/pkg/response"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 )
 
 type ChatServiceHandler struct {
@@ -139,6 +143,46 @@ func (r *ChatServiceHandler) SendChat(c *gin.Context) {
 		EventType:   input.EventType,
 		ChatSession: input.ChatSession,
 		ChatFile:    chatFile,
+	}
+
+	response.SendSuccess(c, res)
+}
+
+func (r *ChatServiceHandler) SendBulkChat(c *gin.Context) {
+
+	var req chatService.BulkSendChatRequest
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_103, commonConsts.E_103_MSG)
+		return
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		response.SendError(c, commonConsts.BAD_REQUEST, commonConsts.ERROR, commonConsts.E_108, commonConsts.E_108_MSG)
+		return
+	}
+
+	bulkInput := input.BulkSendChatInput{
+		TotalCount:  req.TotalCount,
+		PerSecond:   req.PerSecond,
+		Contents:    req.Contents,
+		Cmd:         req.Cmd,
+		EventType:   req.EventType,
+		ChatSession: req.ChatSession,
+	}
+
+	go func() {
+		sentCount, err := r.svc.SendBulkChat(context.Background(), bulkInput)
+		if err != nil {
+			log.Println("[SendBulkChat] async failed. sent count :", sentCount, "err :", err)
+			return
+		}
+		log.Println("[SendBulkChat] async finished. sent count :", sentCount)
+	}()
+
+	res := chatService.BulkSendChatResponse{
+		TotalCount: req.TotalCount,
+		PerSecond:  req.PerSecond,
 	}
 
 	response.SendSuccess(c, res)

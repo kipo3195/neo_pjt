@@ -194,3 +194,37 @@ func (r *chatRepository) GetSendFileInfo(ctx context.Context, in []string) ([]en
 
 	return result, nil
 }
+
+func (r *chatRepository) GetBulkSendChatTargets(ctx context.Context) ([]entity.BulkSendChatTargetEntity, error) {
+
+	var result []entity.BulkSendChatTargetEntity
+
+	// 조회 쿼리가 너무 무거움 (의도 파악해서 수정할 필요가 있을듯)
+	err := r.db.WithContext(ctx).Raw(`
+		select
+			member.room_key,
+			room.room_type,
+			coalesce(detail.room_secret_flag, 'N') as secret_flag,
+			su.user_hash
+		from chat_room_member as member
+		join service_users as su
+			on member.member_hash = su.user_hash
+		join chat_room as room
+			on member.room_key = room.room_key
+		left join chat_room_detail as detail
+			on member.room_key = detail.room_key
+		where
+			member.member_state = ?
+			and su.use_yn = ?
+			and su.user_hash <> ?
+		order by member.room_key asc, su.user_hash asc`,
+		"1", "Y", "",
+	).Scan(&result).Error
+
+	if err != nil {
+		log.Println("[GetBulkSendChatTargets] DB error :", err)
+		return nil, err
+	}
+
+	return result, nil
+}

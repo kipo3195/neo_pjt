@@ -25,20 +25,23 @@ import (
 )
 
 type Stats struct {
-	Attempted       atomic.Int64
-	Connected       atomic.Int64
-	Failed          atomic.Int64
-	Closed          atomic.Int64
-	CurrentActive   atomic.Int64
-	TokenError      atomic.Int64
-	WSError         atomic.Int64
-	EventReceived   atomic.Int64
-	EventParseError atomic.Int64
-	Pending         atomic.Int64
+	Attempted        atomic.Int64
+	Connected        atomic.Int64
+	Failed           atomic.Int64
+	Closed           atomic.Int64
+	CurrentActive    atomic.Int64
+	TokenError       atomic.Int64
+	WSError          atomic.Int64
+	EventReceived    atomic.Int64
+	EventParseError  atomic.Int64
+	Pending          atomic.Int64
+	ChatReceived     atomic.Int64
+	ChatLatencyError atomic.Int64
 
 	latencyMu      sync.Mutex
 	tokenLatencies []time.Duration
 	wsLatencies    []time.Duration
+	chatLatencies  []time.Duration
 	totalLatencies []time.Duration
 }
 
@@ -60,6 +63,12 @@ func (s *Stats) RecordTotalLatency(d time.Duration) {
 	s.totalLatencies = append(s.totalLatencies, d)
 }
 
+func (s *Stats) RecordChatLatency(d time.Duration) {
+	s.latencyMu.Lock()
+	defer s.latencyMu.Unlock()
+	s.chatLatencies = append(s.chatLatencies, d)
+}
+
 type StatsSnapshot struct {
 	Attempted       int64
 	Connected       int64
@@ -70,6 +79,7 @@ type StatsSnapshot struct {
 	WSError         int64
 	EventReceived   int64
 	EventParseError int64
+	ChatReceived    int64
 
 	TokenAvgLatency time.Duration
 	TokenP95Latency time.Duration
@@ -77,8 +87,12 @@ type StatsSnapshot struct {
 	WSAvgLatency time.Duration
 	WSP95Latency time.Duration
 
-	TotalAvgLatency time.Duration
-	TotalP95Latency time.Duration
+	TotalAvgLatency  time.Duration
+	TotalP95Latency  time.Duration
+	chatLatencies    []time.Duration
+	ChatLatencyError int64
+	ChatAvgLatency   time.Duration
+	ChatP95Latency   time.Duration
 }
 
 func (s *Stats) Snapshot() StatsSnapshot {
@@ -86,11 +100,13 @@ func (s *Stats) Snapshot() StatsSnapshot {
 	tokenCopied := append([]time.Duration(nil), s.tokenLatencies...)
 	wsCopied := append([]time.Duration(nil), s.wsLatencies...)
 	totalCopied := append([]time.Duration(nil), s.totalLatencies...)
+	chatCopied := append([]time.Duration(nil), s.chatLatencies...)
 	s.latencyMu.Unlock()
 
 	tokenAvg, tokenP95 := calcAvgP95(tokenCopied)
 	wsAvg, wsP95 := calcAvgP95(wsCopied)
 	totalAvg, totalP95 := calcAvgP95(totalCopied)
+	chatAvg, chatP95 := calcAvgP95(chatCopied)
 
 	return StatsSnapshot{
 		Attempted:       s.Attempted.Load(),
@@ -102,12 +118,15 @@ func (s *Stats) Snapshot() StatsSnapshot {
 		WSError:         s.WSError.Load(),
 		EventReceived:   s.EventReceived.Load(),
 		EventParseError: s.EventParseError.Load(),
+		ChatReceived:    s.ChatReceived.Load(),
 
 		TokenAvgLatency: tokenAvg,
 		TokenP95Latency: tokenP95,
 
-		WSAvgLatency: wsAvg,
-		WSP95Latency: wsP95,
+		WSAvgLatency:   wsAvg,
+		WSP95Latency:   wsP95,
+		ChatAvgLatency: chatAvg,
+		ChatP95Latency: chatP95,
 
 		TotalAvgLatency: totalAvg,
 		TotalP95Latency: totalP95,
@@ -184,25 +203,25 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 		for {
 			select {
 			case <-ticker.C:
-				snapshot := stats.Snapshot()
-				log.Printf(
-					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
-					snapshot.Attempted,
-					snapshot.Connected,
-					snapshot.Failed,
-					snapshot.Closed,
-					snapshot.CurrentActive,
-					snapshot.TokenError,
-					snapshot.WSError,
-					snapshot.EventReceived,
-					snapshot.EventParseError,
-					snapshot.TokenAvgLatency,
-					snapshot.TokenP95Latency,
-					snapshot.WSAvgLatency,
-					snapshot.WSP95Latency,
-					snapshot.TotalAvgLatency,
-					snapshot.TotalP95Latency,
-				)
+				//snapshot := stats.Snapshot()
+				// log.Printf(
+				// 	"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+				// 	snapshot.Attempted,
+				// 	snapshot.Connected,
+				// 	snapshot.Failed,
+				// 	snapshot.Closed,
+				// 	snapshot.CurrentActive,
+				// 	snapshot.TokenError,
+				// 	snapshot.WSError,
+				// 	snapshot.EventReceived,
+				// 	snapshot.EventParseError,
+				// 	snapshot.TokenAvgLatency,
+				// 	snapshot.TokenP95Latency,
+				// 	snapshot.WSAvgLatency,
+				// 	snapshot.WSP95Latency,
+				// 	snapshot.TotalAvgLatency,
+				// 	snapshot.TotalP95Latency,
+				// )
 			case <-statsCtx.Done():
 				snapshot := stats.Snapshot()
 				log.Printf(
@@ -255,7 +274,7 @@ func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input inp
 	var wg sync.WaitGroup
 	stats := &Stats{}
 
-	statsCtx, cancelStats := context.WithCancel(context.Background())
+	statsCtx, cancelStats := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelStats()
 
 	go func() {
@@ -265,29 +284,29 @@ func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input inp
 		for {
 			select {
 			case <-ticker.C:
-				snapshot := stats.Snapshot()
-				log.Printf(
-					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
-					snapshot.Attempted,
-					snapshot.Connected,
-					snapshot.Failed,
-					snapshot.Closed,
-					snapshot.CurrentActive,
-					snapshot.TokenError,
-					snapshot.WSError,
-					snapshot.EventReceived,
-					snapshot.EventParseError,
-					snapshot.TokenAvgLatency,
-					snapshot.TokenP95Latency,
-					snapshot.WSAvgLatency,
-					snapshot.WSP95Latency,
-					snapshot.TotalAvgLatency,
-					snapshot.TotalP95Latency,
-				)
+				// snapshot := stats.Snapshot()
+				// log.Printf(
+				// 	"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+				// 	snapshot.Attempted,
+				// 	snapshot.Connected,
+				// 	snapshot.Failed,
+				// 	snapshot.Closed,
+				// 	snapshot.CurrentActive,
+				// 	snapshot.TokenError,
+				// 	snapshot.WSError,
+				// 	snapshot.EventReceived,
+				// 	snapshot.EventParseError,
+				// 	snapshot.TokenAvgLatency,
+				// 	snapshot.TokenP95Latency,
+				// 	snapshot.WSAvgLatency,
+				// 	snapshot.WSP95Latency,
+				// 	snapshot.TotalAvgLatency,
+				// 	snapshot.TotalP95Latency,
+				// )
 			case <-statsCtx.Done():
 				snapshot := stats.Snapshot()
 				log.Printf(
-					"stats end attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d eventParseError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+					"!!! stats end attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d chatReceived=%d chatLatencyError=%d eventParseError=%d chatAvg=%s chatP95=%s tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
 					snapshot.Attempted,
 					snapshot.Connected,
 					snapshot.Failed,
@@ -296,7 +315,11 @@ func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input inp
 					snapshot.TokenError,
 					snapshot.WSError,
 					snapshot.EventReceived,
+					snapshot.ChatReceived,
+					snapshot.ChatLatencyError,
 					snapshot.EventParseError,
+					snapshot.ChatAvgLatency,
+					snapshot.ChatP95Latency,
 					snapshot.TokenAvgLatency,
 					snapshot.TokenP95Latency,
 					snapshot.WSAvgLatency,
@@ -344,23 +367,23 @@ func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) 
 		for {
 			select {
 			case <-ticker.C:
-				snapshot := stats.Snapshot()
-				log.Printf(
-					"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
-					snapshot.Attempted,
-					snapshot.Connected,
-					snapshot.Failed,
-					snapshot.Closed,
-					snapshot.CurrentActive,
-					snapshot.TokenError,
-					snapshot.WSError,
-					snapshot.TokenAvgLatency,
-					snapshot.TokenP95Latency,
-					snapshot.WSAvgLatency,
-					snapshot.WSP95Latency,
-					snapshot.TotalAvgLatency,
-					snapshot.TotalP95Latency,
-				)
+				// snapshot := stats.Snapshot()
+				// log.Printf(
+				// 	"stats attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+				// 	snapshot.Attempted,
+				// 	snapshot.Connected,
+				// 	snapshot.Failed,
+				// 	snapshot.Closed,
+				// 	snapshot.CurrentActive,
+				// 	snapshot.TokenError,
+				// 	snapshot.WSError,
+				// 	snapshot.TokenAvgLatency,
+				// 	snapshot.TokenP95Latency,
+				// 	snapshot.WSAvgLatency,
+				// 	snapshot.WSP95Latency,
+				// 	snapshot.TotalAvgLatency,
+				// 	snapshot.TotalP95Latency,
+				// )
 
 			case <-ctx.Done():
 				snapshot := stats.Snapshot()
@@ -519,10 +542,90 @@ func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, use
 		}
 
 		stats.EventReceived.Add(1)
+		// 미확인 건수 수신
 		if res.Data.ChatSession == "" && res.Data.ChatRoomData.RoomKey == "" && res.Data.ChatLineData.LineKey == "" {
 			log.Printf("read empty chat message userID=%s type=%s eventType=%s", userID, res.Type, res.EventType)
+		} else {
+			// 채팅 데이터 수신
+			lineKey := res.Data.ChatLineData.LineKey
+
+			log.Printf(
+				"read chat message userID=%s type=%s eventType=%s lineKey=%s",
+				userID,
+				res.Type,
+				res.EventType,
+				lineKey,
+			)
+
+			stats.ChatReceived.Add(1)
+
+			createdAt, err := parseULIDTime(lineKey)
+			if err != nil {
+				stats.ChatLatencyError.Add(1)
+				//log.Printf("parse lineKey ulid fail userID=%s lineKey=%s err=%v", userID, lineKey, err)
+				continue
+			}
+			now := time.Now()
+			latency := time.Since(createdAt)
+			if latency < 0 {
+				stats.ChatLatencyError.Add(1)
+				log.Printf(
+					"chat latency negative userID=%s lineKey=%s clientNow=%s ulidCreatedAt=%s latency=%s",
+					userID,
+					lineKey,
+					now.Format(time.RFC3339Nano),
+					createdAt.Format(time.RFC3339Nano),
+					latency,
+				)
+				continue
+			}
+
+			stats.RecordChatLatency(latency)
 		}
 	}
+}
+
+func parseULIDTime(lineKey string) (time.Time, error) {
+	if len(lineKey) < 10 {
+		return time.Time{}, fmt.Errorf("invalid ulid length")
+	}
+
+	var ms uint64
+	for _, c := range lineKey[:10] {
+		v, ok := crockfordBase32Value(c)
+		if !ok {
+			return time.Time{}, fmt.Errorf("invalid ulid char %q", c)
+		}
+		ms = (ms << 5) | uint64(v)
+	}
+
+	// ULID timestamp is 48 bits. The first 10 base32 chars contain 50 bits,
+	// so the top 2 bits must be discarded.
+
+	return time.UnixMilli(int64(ms)), nil
+}
+
+func crockfordBase32Value(c rune) (byte, bool) {
+	switch {
+	case c >= '0' && c <= '9':
+		return byte(c - '0'), true
+	case c >= 'A' && c <= 'Z':
+		return crockfordBase32Upper(c)
+	case c >= 'a' && c <= 'z':
+		return crockfordBase32Upper(c - 'a' + 'A')
+	default:
+		return 0, false
+	}
+}
+
+func crockfordBase32Upper(c rune) (byte, bool) {
+	const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+	for i, a := range alphabet {
+		if c == a {
+			return byte(i), true
+		}
+	}
+	return 0, false
 }
 
 func parseChatMessageResponse(msg []byte) (wsResponseDTO[chatMessageOutput], bool, error) {

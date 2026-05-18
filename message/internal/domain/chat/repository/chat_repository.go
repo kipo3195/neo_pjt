@@ -11,4 +11,5 @@ type ChatRepository interface {
 	GetChatLineEvent(ctx context.Context, en entity.GetChatLineEventEntity) ([]entity.ChatLineEventEntity, error)
 	GetChatFileEntity(ctx context.Context, transactionId string) ([]*entity.ChatFileEntity, error)
 	GetSendFileInfo(ctx context.Context, in []string) ([]entity.SendFileInfo, error)
+	GetBulkSendChatTargets(ctx context.Context) ([]entity.BulkSendChatTargetEntity, error)
 }
