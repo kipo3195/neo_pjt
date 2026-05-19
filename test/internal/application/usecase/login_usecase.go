@@ -269,12 +269,24 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input input.PutLoginInput) {
 	fmt.Println("putLoginAndRecvEvent init!")
 
+	// 동일한 라인키의 채팅 개수 점검 (발신과 수신의 일치 점검)
+	recvLine := make(chan string, input.ConnectionCount*10)
+	recvDone := make(chan int, 1)
+
+	go func() {
+		receivedLines := make(map[string]struct{})
+		for lineKey := range recvLine {
+			receivedLines[lineKey] = struct{}{}
+		}
+		recvDone <- len(receivedLines)
+	}()
+
 	rps := 500
 
 	var wg sync.WaitGroup
 	stats := &Stats{}
 
-	statsCtx, cancelStats := context.WithTimeout(context.Background(), 30*time.Second)
+	statsCtx, cancelStats := context.WithTimeout(context.Background(), 420*time.Second)
 	defer cancelStats()
 
 	go func() {
@@ -343,12 +355,23 @@ func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input inp
 			return
 		case <-launchTicker.C:
 			wg.Add(1)
-			go loginAndRecvWithTokenIssuer(&wg, r.sfg.ServerIP, i, input.UserIdPrefix, stats, r.issueTestToken)
+			go loginAndRecvWithTokenIssuer(
+				&wg,
+				r.sfg.ServerIP,
+				i,
+				input.UserIdPrefix,
+				stats,
+				r.issueTestToken,
+				recvLine,
+			)
 		}
 	}
 
 	wg.Wait()
-	fmt.Println("putLoginAndRecvEvent complete!")
+	// 모든 고루틴 종료 후 recvLine 채널 닫고, map에 라인키의 수 조회
+	close(recvLine)
+	uniqueReceivedLineCount := <-recvDone
+	log.Printf("unique received chat line count=%d", uniqueReceivedLineCount)
 }
 
 func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) {
@@ -476,7 +499,7 @@ func loginWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, userIdPref
 	}
 }
 
-func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats, issue tokenIssuer) {
+func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, userIdPrefix string, stats *Stats, issue tokenIssuer, recvLine chan string) {
 	defer wg.Done()
 
 	stats.Attempted.Add(1)
@@ -548,6 +571,10 @@ func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, use
 		} else {
 			// 채팅 데이터 수신
 			lineKey := res.Data.ChatLineData.LineKey
+
+			if lineKey != "" {
+				recvLine <- lineKey
+			}
 
 			log.Printf(
 				"read chat message userID=%s type=%s eventType=%s lineKey=%s",

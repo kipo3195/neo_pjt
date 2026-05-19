@@ -111,7 +111,7 @@ func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessa
 func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCountMessageInput) {
 
 	chatCountEntity := entity.MakeChatCountEntity(in.RoomKey, in.RoomType, in.EventType, in.SendUserHash, in.Delta)
-	log.Println("[RecvChatUnreadMessage] chatCountEntity: ", chatCountEntity)
+	//log.Println("[RecvChatUnreadMessage] chatCountEntity: ", chatCountEntity)
 
 	chatCountData := entity.ChatCountDataEntity{
 		RoomKey:  chatCountEntity.RoomKey,

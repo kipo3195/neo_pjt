@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"log"
 	"message/internal/domain/lineKey/repository"
 	"message/pkg/util"
 	"time"
@@ -33,7 +32,7 @@ func (u *lineKeyUsecase) GetLineKey(ctx context.Context) (string, string, error)
 
 	t := time.UnixMilli(int64(uid.Time())).Format("2006-01-02 15:04:05.000")
 
-	log.Printf("발급된 라인 : %s, 시간: %v\n", lineKey, t)
+	//log.Printf("발급된 라인 : %s, 시간: %v\n", lineKey, t)
 
 	return lineKey, t, ctx.Err()
 }

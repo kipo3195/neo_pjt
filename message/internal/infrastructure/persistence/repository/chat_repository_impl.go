@@ -199,26 +199,9 @@ func (r *chatRepository) GetBulkSendChatTargets(ctx context.Context) ([]entity.B
 
 	var result []entity.BulkSendChatTargetEntity
 
-	// 조회 쿼리가 너무 무거움 (의도 파악해서 수정할 필요가 있을듯)
 	err := r.db.WithContext(ctx).Raw(`
-		select
-			member.room_key,
-			room.room_type,
-			coalesce(detail.room_secret_flag, 'N') as secret_flag,
-			su.user_hash
-		from chat_room_member as member
-		join service_users as su
-			on member.member_hash = su.user_hash
-		join chat_room as room
-			on member.room_key = room.room_key
-		left join chat_room_detail as detail
-			on member.room_key = detail.room_key
-		where
-			member.member_state = ?
-			and su.use_yn = ?
-			and su.user_hash <> ?
-		order by member.room_key asc, su.user_hash asc`,
-		"1", "Y", "",
+		select room_key from chat_room_member as room join (select user_hash from service_users where user_id >= 'test000000' and user_id < 'test014000')
+as member on room.member_hash = member.user_hash group by room.room_key`,
 	).Scan(&result).Error
 
 	if err != nil {

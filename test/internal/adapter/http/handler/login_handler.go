@@ -43,7 +43,7 @@ func (r *LoginHandler) PutLogin(c *gin.Context) {
 
 func (r *LoginHandler) PutLoginAndRecvEvent(c *gin.Context) {
 
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 300*time.Second)
 	// defer cancel()하게되면 go routine 내부로직이 수행되기도 전에 끝나버림. 그래서 login_usecase.go의 login 함수가 <-ctx.Done()에서 걸릴 틈도 없이 cancel이 수행되버리는 구조.
 
 	var req login.LoginRequest

@@ -293,27 +293,16 @@ func (r *chatUsecase) GetBulkSendChatTargets(ctx context.Context) ([]output.Bulk
 		return nil, consts.ErrBulkSendChatTargetNotFound
 	}
 
-	roomIndex := make(map[string]int, len(targets))
-	result := make([]output.BulkSendChatTargetOutput, 0)
+	result := make([]output.BulkSendChatTargetOutput, 0, len(targets))
 
 	for _, target := range targets {
-		if target.RoomKey == "" || target.UserHash == "" {
+		if target.RoomKey == "" {
 			continue
 		}
 
-		idx, ok := roomIndex[target.RoomKey]
-		if !ok {
-			result = append(result, output.BulkSendChatTargetOutput{
-				RoomKey:    target.RoomKey,
-				RoomType:   target.RoomType,
-				SecretFlag: target.SecretFlag,
-				MemberHash: make([]string, 0),
-			})
-			idx = len(result) - 1
-			roomIndex[target.RoomKey] = idx
-		}
-
-		result[idx].MemberHash = append(result[idx].MemberHash, target.UserHash)
+		result = append(result, output.BulkSendChatTargetOutput{
+			RoomKey: target.RoomKey,
+		})
 	}
 
 	if len(result) == 0 {

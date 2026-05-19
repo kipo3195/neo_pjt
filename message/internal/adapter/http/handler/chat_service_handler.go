@@ -165,12 +165,17 @@ func (r *ChatServiceHandler) SendBulkChat(c *gin.Context) {
 	bulkInput := input.BulkSendChatInput{
 		TotalCount:  req.TotalCount,
 		PerSecond:   req.PerSecond,
+		WorkerCount: req.WorkerCount,
 		Contents:    req.Contents,
 		Cmd:         req.Cmd,
 		EventType:   req.EventType,
 		ChatSession: req.ChatSession,
 	}
+	if bulkInput.WorkerCount == 0 {
+		bulkInput.WorkerCount = 1
+	}
 
+	// 별도의 비동기 처리
 	go func() {
 		sentCount, err := r.svc.SendBulkChat(context.Background(), bulkInput)
 		if err != nil {
@@ -181,8 +186,9 @@ func (r *ChatServiceHandler) SendBulkChat(c *gin.Context) {
 	}()
 
 	res := chatService.BulkSendChatResponse{
-		TotalCount: req.TotalCount,
-		PerSecond:  req.PerSecond,
+		TotalCount:  req.TotalCount,
+		PerSecond:   req.PerSecond,
+		WorkerCount: bulkInput.WorkerCount,
 	}
 
 	response.SendSuccess(c, res)

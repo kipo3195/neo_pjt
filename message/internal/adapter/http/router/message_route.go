@@ -62,7 +62,7 @@ func (r *messageRouter) SetChatRoutes(handler *handler.ChatHandler) {
 
 func (r *messageRouter) SetChatServiceRoutes(handler *handler.ChatServiceHandler) {
 	client := r.parent.Group("/client/v1/chat")
-	client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
+	//client.Use(middleware.AuthMiddleware(r.tokenConfig, r.logger))
 	client.POST("", handler.SendChat)
 	client.POST("/read", handler.ReadChat)
 	client.POST("/bulk", handler.SendBulkChat)

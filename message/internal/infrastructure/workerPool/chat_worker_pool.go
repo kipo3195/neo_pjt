@@ -124,7 +124,7 @@ func (p *chatWorkerPool) worker(id int) {
 	// 종료될 때 wg.Done을 호출합니다. ---- 2
 	defer p.wg.Done()
 	for job := range p.jobs {
-		log.Println("data 수신 worker id ", id)
+		//log.Println("data 수신 worker id ", id)
 		p.Execute(job) // DB 처리 로직 수행 호출
 	}
 }

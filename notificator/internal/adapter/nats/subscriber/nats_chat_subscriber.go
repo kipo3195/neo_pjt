@@ -33,7 +33,7 @@ func (s *NatsChatSubscriber) AddSubscribe(kind string) error {
 	// NATS로부터 메시지를 하나 받을 때마다 go s.handleNatsMessage(kind, msg.Data)를 호출
 	_, err := s.conn.Subscribe(kind, func(msg *nats.Msg) {
 		// 수신 데이터 로깅
-		log.Println("[Notificator] kind : "+kind+" Received message:", string(msg.Data))
+		//log.Println("[Notificator] kind : "+kind+" Received message:", string(msg.Data))
 
 		// 수신 받은 데이터는 별도 고루틴에서 처리
 		go s.handleNatsMessage(kind, msg.Data)
