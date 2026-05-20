@@ -269,6 +269,8 @@ func (r *loginUsecase) PutLoginRampUp(ctx context.Context, input input.PutLoginI
 func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input input.PutLoginInput) {
 	fmt.Println("putLoginAndRecvEvent init!")
 
+	testStart := time.Now()
+
 	// 동일한 라인키의 채팅 개수 점검 (발신과 수신의 일치 점검)
 	recvLine := make(chan string, input.ConnectionCount*10)
 	recvDone := make(chan int, 1)
@@ -286,7 +288,7 @@ func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input inp
 	var wg sync.WaitGroup
 	stats := &Stats{}
 
-	statsCtx, cancelStats := context.WithTimeout(context.Background(), 420*time.Second)
+	statsCtx, cancelStats := context.WithTimeout(context.Background(), 300*time.Second)
 	defer cancelStats()
 
 	go func() {
@@ -371,7 +373,34 @@ func (r *loginUsecase) PutLoginRampUpAndRecvEvent(ctx context.Context, input inp
 	// 모든 고루틴 종료 후 recvLine 채널 닫고, map에 라인키의 수 조회
 	close(recvLine)
 	uniqueReceivedLineCount := <-recvDone
+	testEnd := time.Since(testStart)
+
+	log.Printf("testend=%d", testEnd)
 	log.Printf("unique received chat line count=%d", uniqueReceivedLineCount)
+
+	snapshot := stats.Snapshot()
+	log.Printf(
+		"!!! stats end attempted=%d connected=%d failed=%d closed=%d currentActive=%d tokenError=%d wsError=%d eventReceived=%d chatReceived=%d chatLatencyError=%d eventParseError=%d chatAvg=%s chatP95=%s tokenAvg=%s tokenP95=%s wsAvg=%s wsP95=%s totalAvg=%s totalP95=%s",
+		snapshot.Attempted,
+		snapshot.Connected,
+		snapshot.Failed,
+		snapshot.Closed,
+		snapshot.CurrentActive,
+		snapshot.TokenError,
+		snapshot.WSError,
+		snapshot.EventReceived,
+		snapshot.ChatReceived,
+		snapshot.ChatLatencyError,
+		snapshot.EventParseError,
+		snapshot.ChatAvgLatency,
+		snapshot.ChatP95Latency,
+		snapshot.TokenAvgLatency,
+		snapshot.TokenP95Latency,
+		snapshot.WSAvgLatency,
+		snapshot.WSP95Latency,
+		snapshot.TotalAvgLatency,
+		snapshot.TotalP95Latency,
+	)
 }
 
 func (r *loginUsecase) PutLogin(ctx context.Context, input input.PutLoginInput) {
