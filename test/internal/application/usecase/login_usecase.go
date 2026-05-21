@@ -570,6 +570,23 @@ func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, use
 	stats.Connected.Add(1)
 	stats.CurrentActive.Add(1)
 
+	pingTicker := time.NewTicker(30 * time.Second)
+	defer pingTicker.Stop()
+
+	go func() {
+		for {
+			select {
+			case <-pingTicker.C:
+				deadline := time.Now().Add(5 * time.Second)
+				if err := conn.WriteControl(websocket.PingMessage, nil, deadline); err != nil {
+					log.Printf("ping fail userID=%s err=%v", userID, err)
+					_ = conn.Close()
+					return
+				}
+			}
+		}
+	}()
+
 	defer func() {
 		conn.Close()
 		stats.Closed.Add(1)
@@ -596,7 +613,7 @@ func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, use
 		stats.EventReceived.Add(1)
 		// 미확인 건수 수신
 		if res.Data.ChatSession == "" && res.Data.ChatRoomData.RoomKey == "" && res.Data.ChatLineData.LineKey == "" {
-			log.Printf("read empty chat message userID=%s type=%s eventType=%s", userID, res.Type, res.EventType)
+			//log.Printf("read empty chat message userID=%s type=%s eventType=%s", userID, res.Type, res.EventType)
 		} else {
 			// 채팅 데이터 수신
 			lineKey := res.Data.ChatLineData.LineKey
@@ -606,7 +623,7 @@ func loginAndRecvWithTokenIssuer(wg *sync.WaitGroup, serverIP string, i int, use
 			}
 
 			log.Printf(
-				"read chat message userID=%s type=%s eventType=%s lineKey=%s",
+				//"read chat message userID=%s type=%s eventType=%s lineKey=%s",
 				userID,
 				res.Type,
 				res.EventType,
