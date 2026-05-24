@@ -3,6 +3,7 @@ package usecase
 import (
 	"notificator/internal/domain/socketSender/entity"
 	"notificator/internal/infrastructure/config"
+	"notificator/internal/infrastructure/metrics"
 	"notificator/internal/infrastructure/storage"
 	"time"
 
@@ -62,13 +63,19 @@ func (r *socketSenderUsecase) SaveConnection(conn *websocket.Conn, userHash stri
 				// 외부에서 채널을 닫았을 경우 (정상 종료 시나리오)
 				//log.Printf("[SaveConnection] Channel closed for user: %s", userHash)
 				conn.WriteMessage(websocket.CloseMessage, []byte{})
+				// [metrics call]
+				metrics.WSMessageSent("error")
 				return
 			}
 
 			if err := conn.WriteJSON(message); err != nil {
 				//log.Printf("[SaveConnection] WriteJSON error: %v", err)
+				// [metrics call]
+				metrics.WSMessageSent("error")
 				return // 에러 발생 시 고루틴 종료 (defer 실행)
 			}
+			// [metrics call]
+			metrics.WSMessageSent("success")
 
 		case <-ticker.C: // 주기적인 Ping 발송 시간
 			// 쓰기 타임아웃 설정

@@ -7,7 +7,9 @@ import (
 	"notificator/internal/application/usecase/output"
 	"notificator/internal/consts"
 	"notificator/internal/domain/port"
+	"notificator/internal/infrastructure/metrics"
 	"notificator/pkg/dto"
+	"time"
 
 	"notificator/internal/domain/chat/entity"
 	"notificator/internal/domain/chat/repository"
@@ -44,6 +46,11 @@ func NewChatUsecase(chatRoomStorage storage.ChatRoomStorage, repo repository.Cha
 }
 
 func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessageInput) {
+	start := time.Now()
+	defer func() {
+		// [metrics call]
+		metrics.ObserveDispatchDuration(time.Since(start).Seconds())
+	}()
 
 	chatRoomEntity := entity.MakeChatRoomEntity(input.ChatRoomData.RoomType, input.ChatRoomData.RoomKey, input.ChatRoomData.SecretFlag)
 	chatLineEntity := entity.MakeChatLineEntity(input.ChatLineData.Cmd, input.ChatLineData.Contents, input.ChatLineData.LineKey, input.ChatLineData.TargetLineKey, input.ChatLineData.SendUserHash, input.ChatLineData.SendDate)
@@ -109,6 +116,11 @@ func (r *chatUsecase) RecvChatMessage(ctx context.Context, input input.ChatMessa
 }
 
 func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCountMessageInput) {
+	start := time.Now()
+	defer func() {
+		// [metrics call]
+		metrics.ObserveDispatchDuration(time.Since(start).Seconds())
+	}()
 
 	chatCountEntity := entity.MakeChatCountEntity(in.RoomKey, in.RoomType, in.EventType, in.SendUserHash, in.Delta)
 	//log.Println("[RecvChatUnreadMessage] chatCountEntity: ", chatCountEntity)
@@ -141,6 +153,11 @@ func (r *chatUsecase) RecvChatCountMessage(ctx context.Context, in input.ChatCou
 }
 
 func (r *chatUsecase) RecvChatReadMessage(ctx context.Context, in input.ChatReadMessageInput) {
+	start := time.Now()
+	defer func() {
+		// [metrics call]
+		metrics.ObserveDispatchDuration(time.Since(start).Seconds())
+	}()
 
 	chatReadEntity := entity.MakeChatReadEntity(in.RoomKey, in.RoomType, in.MemberHash, in.ReadDate)
 	log.Println("[RecvChatReadMessage] chatReadEntity: ", chatReadEntity)

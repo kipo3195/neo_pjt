@@ -10,6 +10,7 @@ import (
 	"notificator/internal/application/service"
 	"notificator/internal/consts"
 	"notificator/internal/infrastructure/config"
+	"notificator/internal/infrastructure/metrics"
 	commonConsts "notificator/pkg/consts"
 	"notificator/pkg/response"
 	"time"
@@ -104,6 +105,14 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 
 	/*C100K 점검용 server stats 연결 성공시*/
 	h.svc.Login.AddStats()
+	defer h.svc.Login.DelStats()
+
+	// [metrics call]
+	metrics.WSConnected()
+	defer func() {
+		// [metrics call]
+		metrics.WSDisconnected()
+	}()
 
 	// 읽기 (client -> server)
 	for {
@@ -113,36 +122,45 @@ func (h *NotificatorServiceHandler) NotificatorConnect(w http.ResponseWriter, r 
 			// 클라이언트가 끊었을때 websocket: close 1000 (normal)
 			log.Println("Notificator service Read msg error:", err)
 			/*C100K 점검용 server stats 연결 종료시*/
-			h.svc.Login.DelStats()
+			// [metrics call]
+			metrics.WSMessageReceived("error")
 			break
 		}
-
 		// type 파싱
 		// type 에 따라 data 부분을 다르게 언마샬 하려면, 바깥은 공통 envelope, 안쪽은 json.RawMessage 로 둡니다.
 		var req notificatorService.NotificatorConnectRequest
 		if err := json.Unmarshal(msg, &req); err != nil {
 			log.Println("Notificator service websocket message error:", err)
+			// [metrics call]
+			metrics.WSMessageReceived("error")
 			return
 		}
-
 		// 여기서 각각의 usecase를 활용한 처리
 
 		switch req.Type {
 
 		case consts.AUTH:
+			// [metrics call]
+			metrics.WSMessageReceived("success")
 
 		case consts.LOGIN:
 			var body notificatorService.LoginDto
 			if err := json.Unmarshal(req.Data, &body); err != nil {
 				log.Println("[LOGIN] data unmarshal error:", err)
+				// [metrics call]
+				metrics.WSMessageReceived("error")
 				return
 			}
 
 			input := mapper.MakeLoginInput(body.Uuid, body.DeviceType)
 			h.svc.Login.LoginProcess(input)
+			// [metrics call]
+			metrics.WSMessageReceived("success")
 
 		default:
 			log.Println("unknown message type:", req.Type)
+			// [metrics call]
+			metrics.WSMessageReceived("error")
 			// 타입에 따라 적절한 에러 처리 return도 가능.
 			continue
 		}

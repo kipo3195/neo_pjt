@@ -9,9 +9,11 @@ import (
 	"notificator/internal/domain/chatRoom/entity"
 	"notificator/internal/domain/chatRoom/repository"
 	"notificator/internal/domain/port"
+	"notificator/internal/infrastructure/metrics"
 	"notificator/internal/infrastructure/storage"
 	"notificator/internal/util"
 	"notificator/pkg/dto"
+	"time"
 
 	"github.com/nats-io/nats.go"
 )
@@ -133,6 +135,11 @@ func (r *chatRoomUsecase) RegistChatRoomMember(ctx context.Context, input input.
 }
 
 func (r *chatRoomUsecase) SendChatRoomEvent(ctx context.Context, input input.ChatRoomEventInput) {
+	start := time.Now()
+	defer func() {
+		// [metrics call]
+		metrics.ObserveDispatchDuration(time.Since(start).Seconds())
+	}()
 
 	chatRoomEntity := entity.MakeChatRoomEventEntity(input.Type, input.EventType, input.ChatRoomEventDataInput.CreateUserHash, input.ChatRoomEventDataInput.RegDate, input.ChatRoomEventDataInput.RoomKey, input.ChatRoomEventDataInput.RoomType, input.ChatRoomEventDataInput.Title, input.ChatRoomEventDataInput.SecretFlag, input.ChatRoomEventDataInput.Secret, input.ChatRoomEventDataInput.Description, input.ChatRoomEventDataInput.WorksCode, nil)
 

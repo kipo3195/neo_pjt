@@ -6,11 +6,14 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"notificator/internal/di"
+	"notificator/internal/infrastructure/metrics"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -92,8 +95,13 @@ func measure() {
 }
 
 func startDebugServer() {
+
+	http.Handle("/metrics", promhttp.Handler())
+
 	go func() {
 		log.Println("debug server listening on :6060")
+		// [metrics call]
+		metrics.MetricsRegister()
 		if err := http.ListenAndServe(":6060", nil); err != nil {
 			log.Println("debug server error:", err)
 		}
